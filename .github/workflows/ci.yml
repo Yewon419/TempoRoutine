@@ -21,12 +21,33 @@ jobs:
       - name: Build & test
         run: swift test --package-path TempoCore
 
-  # ── 빌드 2에서 활성화 (게이트: Apple Developer + ASC API 키 → GH Secrets) ──
-  # app-build:
-  #   name: App build + simulator tests (macOS)
-  #   runs-on: macos-latest   # ⚠ 이미지·Xcode 버전 실측 후 고정할 것
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - run: xcodegen generate          # project.yml → .xcodeproj
-  #     - run: xcodebuild -scheme TempoRoutine -destination '...' test
-  #     - # TestFlight 업로드: fastlane pilot / ASC API 키 = secrets.ASC_KEY_ID 등
+  app-build:
+    name: App build (macOS, unsigned simulator)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 실측 — Xcode·SDK (§5.10 추측 금지)
+        run: |
+          sw_vers
+          xcodebuild -version
+          ls /Applications | grep -i xcode || true
+          xcodebuild -showsdks | grep -i ios || true
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build (simulator, unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project TempoRoutine.xcodeproj \
+            -scheme TempoRoutine \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
+  # ── TestFlight 업로드: ASC API 키(GH Secrets) 등록 후 활성화 ──
+  # testflight:
+  #   needs: app-build
+  #   runs-on: macos-latest
+  #   steps: archive(cloud signing, -authenticationKeyPath) → export → upload
+  #   secrets: ASC_KEY_ID / ASC_ISSUER_ID / ASC_PRIVATE_KEY

@@ -1,0 +1,34 @@
+# XcodeGen 프로젝트 정의 — .xcodeproj는 생성물(.gitignore), 이 파일이 소스 (MASTER §5.10)
+name: TempoRoutine
+options:
+  bundleIdPrefix: app.temporoutine
+  deploymentTarget:
+    iOS: "26.0"
+  xcodeVersion: "26.0"
+
+packages:
+  TempoCore:
+    path: TempoCore
+
+targets:
+  TempoRoutine:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - App
+    dependencies:
+      - package: TempoCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.temporoutine.TempoRoutine
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: 1            # P0 = 아이폰만 (§5.10)
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: 템포루틴
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        CODE_SIGN_STYLE: Automatic
+        # DEVELOPMENT_TEAM: 서명 이터레이션에서 주입 (ASC 키 발급 후 — GH Secrets)
