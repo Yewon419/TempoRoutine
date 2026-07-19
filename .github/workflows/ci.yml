@@ -45,9 +45,48 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
 
-  # ── TestFlight 업로드: ASC API 키(GH Secrets) 등록 후 활성화 ──
-  # testflight:
-  #   needs: app-build
-  #   runs-on: macos-latest
-  #   steps: archive(cloud signing, -authenticationKeyPath) → export → upload
-  #   secrets: ASC_KEY_ID / ASC_ISSUER_ID / ASC_PRIVATE_KEY
+  testflight:
+    name: TestFlight upload (archive + cloud signing)
+    needs: [tempocore-tests, app-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: macos-latest
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Restore ASC API key
+        run: |
+          mkdir -p private_keys
+          printf '%s' "${{ secrets.ASC_PRIVATE_KEY }}" > "private_keys/AuthKey_${ASC_KEY_ID}.p8"
+      - name: Archive (cloud signing)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project TempoRoutine.xcodeproj \
+            -scheme TempoRoutine \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/TempoRoutine.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$PWD/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER
+      - name: Export & upload to TestFlight
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath build/TempoRoutine.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$PWD/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+      - name: Cleanup key
+        if: always()
+        run: rm -rf private_keys

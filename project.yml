@@ -31,4 +31,4 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: 템포루틴
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         CODE_SIGN_STYLE: Automatic
-        # DEVELOPMENT_TEAM: 서명 이터레이션에서 주입 (ASC 키 발급 후 — GH Secrets)
+        DEVELOPMENT_TEAM: 4VD7XCCBQN
