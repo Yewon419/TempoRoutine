@@ -11,6 +11,10 @@ struct RootTabView: View {
                 SeasonCalendarView()
             }
             .tabItem { Label("캘린더", systemImage: "calendar") }
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem { Label("설정", systemImage: "gearshape") }
         }
         .tint(Ink.text)
     }

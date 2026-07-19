@@ -30,6 +30,8 @@ enum Ink {
     static let text   = Color(light: .rgb(0x2C, 0x2B, 0x27), dark: .rgb(0xE8, 0xE6, 0xE1))   // 잉크
     static let paper  = Color(light: .rgb(0xF2, 0xF3, 0xF0), dark: .rgb(0x1C, 0x1B, 0x19))   // 지면
     static let coral  = Color(light: .rgb(0xD6, 0x64, 0x4C), dark: .rgb(0xE0, 0x7A, 0x63))
+    /// 파괴적 액션 전용 (--danger) — 기록 코랄·가을 잉크와 역할 분리
+    static let danger = Color(light: .rgb(0xB2, 0x3A, 0x30), dark: .rgb(0xD0, 0x68, 0x5E))
     /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
     static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }
