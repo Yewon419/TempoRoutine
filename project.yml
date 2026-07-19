@@ -31,5 +31,6 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: 템포루틴
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO  # 자체 암호화 없음 — 수출 규정 질문 생략(ASC 실측)
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 4VD7XCCBQN
