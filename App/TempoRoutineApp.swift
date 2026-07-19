@@ -15,6 +15,7 @@ struct TempoRoutineApp: App {
                 .preferredColorScheme(.light)
         }
         .modelContainer(for: [PeriodDay.self, ScheduleItem.self, InputItem.self,
-                              OutputItem.self, OutputSubtask.self, ItemCompletion.self])
+                              OutputItem.self, OutputSubtask.self, ItemCompletion.self,
+                              DailyCheckIn.self])
     }
 }
