@@ -9,10 +9,7 @@ struct TempoRoutineApp: App {
     var body: some Scene {
         WindowGroup {
             RootTabView()
-                // 디자인 언어(종이 지면·먹색 잉크)는 라이트 전용 설계 — 다크 기기에서 시스템
-                // 시트·Form이 다크로 전환되면 먹색 버튼 글자가 안 보임(TestFlight 피드백 2026-07-20).
-                // 다크 외관은 미학 패스(§5.9-8)에서 별도 결정.
-                .preferredColorScheme(.light)
+            // 다크 = 적응형 토큰으로 대응(Ink — 2026-07-20 사용자 결정). 정식 다크 테마는 미학 패스.
         }
         .modelContainer(for: [PeriodDay.self, ScheduleItem.self, InputItem.self,
                               OutputItem.self, OutputSubtask.self, ItemCompletion.self,

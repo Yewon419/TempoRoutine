@@ -6,16 +6,32 @@
 import SwiftUI
 import SwiftData
 import TempoCore
+import UIKit
 
 // ── 디자인 토큰 (ui-mockup DESIGN.md — 계절 잉크·먹색·지면. 정식 미학 패스는 §5.9-8) ──
+// 다크 = 기준 대응 팔레트(2026-07-20 사용자 결정: 정식 다크 테마는 추후, 지금은 가독 대응).
+// 라이트 = 종이 지면 + 먹색 잉크 / 다크 = 먹지 지면 + 종이색 잉크, 계절 잉크는 명도 보정.
+private extension Color {
+    init(light: Color, dark: Color) {
+        self.init(uiColor: UIColor { trait in
+            trait.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+    }
+    static func rgb(_ r: Int, _ g: Int, _ b: Int) -> Color {
+        Color(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255)
+    }
+}
+
 enum Ink {
-    static let winter = Color(red: 0x55 / 255, green: 0x60 / 255, blue: 0x6C / 255)
-    static let spring = Color(red: 0x8F / 255, green: 0x7C / 255, blue: 0x2E / 255)
-    static let summer = Color(red: 0x6E / 255, green: 0x7C / 255, blue: 0x46 / 255)
-    static let autumn = Color(red: 0xA8 / 255, green: 0x4B / 255, blue: 0x38 / 255)
-    static let text   = Color(red: 0x2C / 255, green: 0x2B / 255, blue: 0x27 / 255)   // 먹색
-    static let paper  = Color(red: 0xF2 / 255, green: 0xF3 / 255, blue: 0xF0 / 255)   // paper-frost
-    static let coral  = Color(red: 0xD6 / 255, green: 0x64 / 255, blue: 0x4C / 255)
+    static let winter = Color(light: .rgb(0x55, 0x60, 0x6C), dark: .rgb(0x98, 0xA6, 0xB4))
+    static let spring = Color(light: .rgb(0x8F, 0x7C, 0x2E), dark: .rgb(0xC2, 0xAC, 0x52))
+    static let summer = Color(light: .rgb(0x6E, 0x7C, 0x46), dark: .rgb(0xA3, 0xB3, 0x78))
+    static let autumn = Color(light: .rgb(0xA8, 0x4B, 0x38), dark: .rgb(0xD6, 0x82, 0x6B))
+    static let text   = Color(light: .rgb(0x2C, 0x2B, 0x27), dark: .rgb(0xE8, 0xE6, 0xE1))   // 잉크
+    static let paper  = Color(light: .rgb(0xF2, 0xF3, 0xF0), dark: .rgb(0x1C, 0x1B, 0x19))   // 지면
+    static let coral  = Color(light: .rgb(0xD6, 0x64, 0x4C), dark: .rgb(0xE0, 0x7A, 0x63))
+    /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
+    static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }
 
 struct SeasonMeta {
@@ -220,7 +236,7 @@ struct TodayView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
+        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 
     // ① 일정 (오늘)
@@ -403,7 +419,7 @@ struct TodayView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
+        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 
     private func checkInRow(label: String, options: [String], value: Binding<Int>) -> some View {

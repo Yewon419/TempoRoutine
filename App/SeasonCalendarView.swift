@@ -7,6 +7,7 @@
 import SwiftUI
 import SwiftData
 import TempoCore
+import UIKit
 
 struct SeasonCalendarView: View {
     @Environment(\.modelContext) private var modelContext
@@ -26,7 +27,12 @@ struct SeasonCalendarView: View {
     @State private var gridWidth: CGFloat = 0
 
     private let cellHeight: CGFloat = 54
-    private let highlightGray = Color(red: 0x87 / 255, green: 0x8E / 255, blue: 0x94 / 255)
+    /// 예측 형광펜 회색 — 다크에선 한 단계 밝게 (기준 대응 팔레트)
+    private let highlightGray = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0x9B / 255, green: 0xA2 / 255, blue: 0xA8 / 255, alpha: 1)
+            : UIColor(red: 0x87 / 255, green: 0x8E / 255, blue: 0x94 / 255, alpha: 1)
+    })
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
