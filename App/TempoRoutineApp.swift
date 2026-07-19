@@ -10,7 +10,7 @@ struct TempoRoutineApp: App {
         WindowGroup {
             RootTabView()
         }
-        .modelContainer(for: PeriodDay.self, ScheduleItem.self, InputItem.self,
-                        OutputItem.self, OutputSubtask.self, ItemCompletion.self)
+        .modelContainer(for: [PeriodDay.self, ScheduleItem.self, InputItem.self,
+                              OutputItem.self, OutputSubtask.self, ItemCompletion.self])
     }
 }
