@@ -145,20 +145,30 @@ struct DayDetailView: View {
     private var scheduleRows: [ScheduleItem] { schedules.filter { $0.occurs(on: day) } }
 
     private var scheduleCard: some View {
-        cardShell(scheduleRows.isEmpty, addLabel: "일정 추가") {
-            ForEach(scheduleRows) { item in
-                HStack {
-                    Text(item.title).foregroundStyle(Ink.text)
-                    Spacer()
-                    if !item.isAllDay {
-                        Text(item.date.formatted(date: .omitted, time: .shortened))
-                            .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
-                    }
-                    if item.repeatRule == .yearly {
-                        Text("매년").font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
-                    }
+        cardShell(false, addLabel: "일정 추가") {
+            VStack(alignment: .leading, spacing: 10) {
+                if scheduleRows.isEmpty && EventOverlay.shared.events(on: day).isEmpty {
+                    Text("아직 없어요")
+                        .font(.footnote)
+                        .foregroundStyle(Ink.text.opacity(0.45))
+                        .padding(.vertical, 8)
                 }
-                .font(.subheadline)
+                ForEach(scheduleRows) { item in
+                    HStack {
+                        Text(item.title).foregroundStyle(Ink.text)
+                        Spacer()
+                        if !item.isAllDay {
+                            Text(item.date.formatted(date: .omitted, time: .shortened))
+                                .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
+                        }
+                        if item.repeatRule == .yearly {
+                            Text("매년").font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
+                        }
+                    }
+                    .font(.subheadline)
+                }
+                OverlayEventRows(day: day)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
+                CalendarConnectRow()
             }
         }
     }

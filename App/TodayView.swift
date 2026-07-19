@@ -246,20 +246,21 @@ struct TodayView: View {
 
     @ViewBuilder
     private var scheduleSection: some View {
-        if todaySchedules.isEmpty {
+        if todaySchedules.isEmpty && EventOverlay.shared.events(on: today).isEmpty {
             Text("아직 없어요").font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
-        } else {
-            ForEach(todaySchedules) { item in
-                HStack(spacing: 10) {
-                    Text(item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened))
-                        .font(.caption)
-                        .foregroundStyle(Ink.text.opacity(0.5))
-                        .frame(width: 56, alignment: .leading)
-                    Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
-                    Spacer()
-                }
+        }
+        ForEach(todaySchedules) { item in
+            HStack(spacing: 10) {
+                Text(item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened))
+                    .font(.caption)
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                    .frame(width: 56, alignment: .leading)
+                Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
+                Spacer()
             }
         }
+        OverlayEventRows(day: today)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
+        CalendarConnectRow()
     }
 
     // ② Input (오늘) — 하루 상세와 동일 데이터(ItemCompletion) 양방향 동기화
