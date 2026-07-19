@@ -11,9 +11,13 @@ import TempoCore
 struct SeasonCalendarView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
+    @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]
+    @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
+    @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
 
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
+    @State private var pushedDay: Date?
 
     // 긋기 진행 상태 (커밋은 제스처 종료 시)
     @State private var dragAnchorDay: Date?
@@ -52,6 +56,7 @@ struct SeasonCalendarView: View {
     private var rowCount: Int { (leadingBlanks + daysInMonth + 6) / 7 }
 
     var body: some View {
+        let marks = monthMarks
         ZStack {
             Ink.paper.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 12) {
@@ -60,7 +65,7 @@ struct SeasonCalendarView: View {
                     .font(.system(.subheadline, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.65))
                 weekdayRow
-                grid
+                grid(marks: marks)
                 legend
                 Spacer(minLength: 0)
                 Button {
@@ -79,6 +84,45 @@ struct SeasonCalendarView: View {
         .sheet(isPresented: $showLogSheet) {
             PeriodLogSheet()
         }
+        .navigationDestination(isPresented: Binding(
+            get: { pushedDay != nil },
+            set: { if !$0 { pushedDay = nil } }
+        )) {
+            if let pushedDay {
+                DayDetailView(day: pushedDay)
+            }
+        }
+    }
+
+    /// 이 달의 잉크 글줄(§5.9-4: resolve가 캘린더에 뜨는지) — 일정 + cycle-anchored occurrence.
+    /// 매일 Input은 셀에 그리지 않음(전 셀 노이즈). projected는 faded.
+    private var monthMarks: [Date: [(title: String, projected: Bool)]] {
+        var marks: [Date: [(title: String, projected: Bool)]] = [:]
+        let snap = CycleSnapshot(periodDays: periodDays)
+        for dayNumber in 1...daysInMonth {
+            guard let d = cal.date(byAdding: .day, value: dayNumber - 1, to: monthStart) else { continue }
+            let day = cal.startOfDay(for: d)
+            for s in schedules where s.occurs(on: day) {
+                marks[day, default: []].append((s.title, false))
+            }
+        }
+        guard let monthEnd = cal.date(byAdding: .day, value: daysInMonth, to: monthStart) else { return marks }
+        for item in inputs {
+            if case .cycleAnchored(let r) = item.schedule {
+                for occ in snap.occurrences(of: r, createdAt: cal.startOfDay(for: item.createdAt))
+                where occ.date >= monthStart && occ.date < monthEnd {
+                    marks[cal.startOfDay(for: occ.date), default: []].append((item.title, occ.projected))
+                }
+            }
+        }
+        for item in outputs {
+            for occ in snap.occurrences(of: item.recurrence, createdAt: cal.startOfDay(for: item.createdAt))
+            where occ.date >= monthStart && occ.date < monthEnd {
+                if item.isComplete && occ.projected { continue }   // §5.5.2 완료된 Output 미래 미표시
+                marks[cal.startOfDay(for: occ.date), default: []].append((item.title, occ.projected))
+            }
+        }
+        return marks
     }
 
     // ── 표제 (책력 조판: 거대 월 + 연도, 월 이동) ──
@@ -133,12 +177,12 @@ struct SeasonCalendarView: View {
     }
 
     // ── 그리드 ──
-    private var grid: some View {
+    private func grid(marks: [Date: [(title: String, projected: Bool)]]) -> some View {
         VStack(spacing: 4) {
             ForEach(0..<rowCount, id: \.self) { row in
                 HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { col in
-                        cell(index: row * 7 + col)
+                        cell(index: row * 7 + col, marks: marks)
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -163,12 +207,13 @@ struct SeasonCalendarView: View {
     }
 
     @ViewBuilder
-    private func cell(index: Int) -> some View {
+    private func cell(index: Int, marks: [Date: [(title: String, projected: Bool)]]) -> some View {
         if let date = date(at: index) {
             let style = cellStyle(for: date)
             let recorded = effectiveRecorded.contains(date)
             let predicted = !recorded && isPredictedPeriod(date)
             let isToday = date == today
+            let cellMarks = marks[date] ?? []
             VStack(spacing: 0) {
                 Text("\(cal.component(.day, from: date))")
                     .font(.system(size: 14, weight: isToday ? .bold : .semibold))
@@ -180,17 +225,28 @@ struct SeasonCalendarView: View {
                             Circle().fill(Ink.winter)   // 오늘 = 은필 흑청 채운 원 (먹색은 기각 이력, §8.1)
                         }
                     }
+                // 일정·occurrence = 날짜 밑 작은 잉크 글줄(책력 문법, 프로토 v15)
+                ForEach(Array(cellMarks.prefix(2).enumerated()), id: \.offset) { _, mark in
+                    Text(mark.title)
+                        .font(.system(size: 8, weight: .medium))
+                        .lineLimit(1)
+                        .foregroundStyle(Ink.text.opacity(mark.projected ? 0.45 : 0.78))
+                }
                 Spacer(minLength: 0)
             }
             .padding(.top, 3)
+            .padding(.horizontal, 1)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background {
                 if recorded || predicted {
                     highlightBand(for: date, index: index, recorded: recorded)
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { pushedDay = date }   // 날짜 탭 → 하루 상세 push(§8.2.3)
             .accessibilityElement()
             .accessibilityLabel(accessibilityText(for: date, style: style, recorded: recorded, predicted: predicted))
+            .accessibilityAddTraits(.isButton)
         } else {
             Color.clear
         }

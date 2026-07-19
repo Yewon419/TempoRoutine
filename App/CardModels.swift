@@ -1,0 +1,135 @@
+// 템포루틴 — 3카드 SwiftData 모델 (MASTER §5.5 / §5.5.2 / §5.5.3)
+// §5.5 CloudKit 호환 P0 규칙: 프로퍼티 전부 기본값, 관계는 optional, unique 제약 금지.
+// 값 타입(CycleRecurrence·InputSchedule 등)은 TempoCore 소유 — 참조 방향은 앱→Core만(§5.10).
+
+import Foundation
+import SwiftData
+import TempoCore
+
+// [공통] 발생 완료 — 상대 저장이라 완료는 절대 날짜로. P0에서 Input 전용(§5.5.2).
+@Model
+final class ItemCompletion {
+    var id: UUID = UUID()
+    var itemID: UUID = UUID()
+    var occurredOn: Date = Date()
+    var completedAt: Date = Date()
+
+    init(itemID: UUID, occurredOn: Date) {
+        self.id = UUID()
+        self.itemID = itemID
+        self.occurredOn = Calendar.current.startOfDay(for: occurredOn)
+        self.completedAt = .now
+    }
+}
+
+// ① 일정 카드 — 외부·고정. 절대 날짜 / 연 반복. 계절 레버 X.
+@Model
+final class ScheduleItem {
+    var id: UUID = UUID()
+    var title: String = ""
+    var date: Date = Date()                  // 절대 날짜. 연반복은 month/day만 의미
+    var isAllDay: Bool = true                // false = 시간 지정(프로모드)
+    var repeatRule: ScheduleRepeat = ScheduleRepeat.none
+    var createdAt: Date = Date()
+
+    init(title: String, date: Date, isAllDay: Bool = true, repeatRule: ScheduleRepeat = .none) {
+        self.id = UUID()
+        self.title = title
+        self.date = date
+        self.isAllDay = isAllDay
+        self.repeatRule = repeatRule
+        self.createdAt = .now
+    }
+
+    /// 이 날짜에 표시되는가. 연반복 윤년 규칙: 2/29는 비윤년에 2/28로(§5.6.4).
+    func occurs(on day: Date) -> Bool {
+        let cal = Calendar.current
+        switch repeatRule {
+        case .none:
+            return cal.isDate(date, inSameDayAs: day)
+        case .yearly:
+            let d = cal.dateComponents([.month, .day], from: date)
+            let t = cal.dateComponents([.month, .day], from: day)
+            if d.month == t.month && d.day == t.day { return true }
+            // 2/29 → 비윤년 2/28
+            if d.month == 2 && d.day == 29 && t.month == 2 && t.day == 28 {
+                return cal.range(of: .day, in: .month,
+                                 for: cal.date(from: DateComponents(year: cal.component(.year, from: day), month: 2, day: 1)) ?? day)?.count == 28
+            }
+            return false
+        }
+    }
+}
+
+// ② Input 카드 — 채움. 일일 체크리스트. 완료 = ItemCompletion 존재 여부.
+@Model
+final class InputItem {
+    var id: UUID = UUID()
+    var title: String = ""
+    var category: InputCategory = InputCategory.other
+    var schedule: InputSchedule = InputSchedule.daily
+    var createdAt: Date = Date()
+
+    init(title: String, category: InputCategory = .other, schedule: InputSchedule = .daily) {
+        self.id = UUID()
+        self.title = title
+        self.category = category
+        self.schedule = schedule
+        self.createdAt = .now
+    }
+}
+
+// ③ Output 카드 — 내보냄. 진행도는 아이템 수명 누적, 완료는 파생(§5.5.2).
+@Model
+final class OutputSubtask {
+    var id: UUID = UUID()
+    var title: String = ""
+    var isDone: Bool = false
+    var order: Int = 0
+
+    init(title: String, order: Int) {
+        self.id = UUID()
+        self.title = title
+        self.isDone = false
+        self.order = order
+    }
+}
+
+@Model
+final class OutputItem {
+    var id: UUID = UUID()
+    var title: String = ""
+    var recurrence: CycleRecurrence = CycleRecurrence(anchor: .cycleStart, dayOffset: 0,
+                                                     repeatsEveryCycle: true, overflowRule: .clamp)
+    var progressKind: OutputProgressKind = OutputProgressKind.percent
+    @Relationship(deleteRule: .cascade) var subtasks: [OutputSubtask]? = []   // CloudKit 규칙: optional
+    var targetSessions: Int = 0
+    var loggedSessions: Int = 0
+    var percent: Double = 0
+    var createdAt: Date = Date()
+
+    init(title: String, recurrence: CycleRecurrence, progressKind: OutputProgressKind = .percent) {
+        self.id = UUID()
+        self.title = title
+        self.recurrence = recurrence
+        self.progressKind = progressKind
+        self.subtasks = []
+        self.targetSessions = 0
+        self.loggedSessions = 0
+        self.percent = 0
+        self.createdAt = .now
+    }
+
+    /// 완료 = 파생 상태(§5.5.2). 저장 필드 아님.
+    var isComplete: Bool {
+        switch progressKind {
+        case .subtasks:
+            let list = subtasks ?? []
+            return !list.isEmpty && list.allSatisfy(\.isDone)
+        case .sessions:
+            return targetSessions > 0 && loggedSessions >= targetSessions
+        case .percent:
+            return percent >= 1.0
+        }
+    }
+}

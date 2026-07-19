@@ -7,8 +7,10 @@ struct RootTabView: View {
         TabView {
             TodayView()
                 .tabItem { Label("오늘", systemImage: "circle.inset.filled") }
-            SeasonCalendarView()
-                .tabItem { Label("캘린더", systemImage: "calendar") }
+            NavigationStack {
+                SeasonCalendarView()
+            }
+            .tabItem { Label("캘린더", systemImage: "calendar") }
         }
         .tint(Ink.text)
     }
