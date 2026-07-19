@@ -1,4 +1,4 @@
-// 템포루틴 — 앱 엔트리 (Phase 0 ②: 생리 로깅 + 단계계산)
+// 템포루틴 — 앱 엔트리 (Phase 0 ③까지: 오늘 + 계절 캘린더)
 // 저장은 로컬 SwiftData. 스키마는 §5.5 CloudKit 호환 규칙 준수 — 동기화 활성은 후속 단계.
 
 import SwiftUI
@@ -8,7 +8,7 @@ import SwiftData
 struct TempoRoutineApp: App {
     var body: some Scene {
         WindowGroup {
-            TodayView()
+            RootTabView()
         }
         .modelContainer(for: PeriodDay.self)
     }
