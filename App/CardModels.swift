@@ -67,14 +67,21 @@ final class InputItem {
     var id: UUID = UUID()
     var title: String = ""
     var category: InputCategory = InputCategory.other
-    var schedule: InputSchedule = InputSchedule.daily
+    // 연관값 enum을 SwiftData 속성으로 직접 저장하면 실기기 크래시(§5.5.1 실측 계열)
+    // → Data 인코딩 저장 + computed 노출. 빈 Data = .daily 폴백.
+    var scheduleData: Data = Data()
     var createdAt: Date = Date()
+
+    var schedule: InputSchedule {
+        get { (try? JSONDecoder().decode(InputSchedule.self, from: scheduleData)) ?? .daily }
+        set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
+    }
 
     init(title: String, category: InputCategory = .other, schedule: InputSchedule = .daily) {
         self.id = UUID()
         self.title = title
         self.category = category
-        self.schedule = schedule
+        self.scheduleData = (try? JSONEncoder().encode(schedule)) ?? Data()
         self.createdAt = .now
     }
 }
@@ -86,6 +93,7 @@ final class OutputSubtask {
     var title: String = ""
     var isDone: Bool = false
     var order: Int = 0
+    var owner: OutputItem?   // inverse — CloudKit 호환(관계 optional + 양방향)
 
     init(title: String, order: Int) {
         self.id = UUID()
@@ -99,19 +107,28 @@ final class OutputSubtask {
 final class OutputItem {
     var id: UUID = UUID()
     var title: String = ""
-    var recurrence: CycleRecurrence = CycleRecurrence(anchor: .cycleStart, dayOffset: 0,
-                                                     repeatsEveryCycle: true, overflowRule: .clamp)
+    // CycleRecurrence(내부에 연관값 enum CycleAnchor) 직접 저장 금지 — InputItem.scheduleData와 동일 근거
+    var recurrenceData: Data = Data()
     var progressKind: OutputProgressKind = OutputProgressKind.percent
-    @Relationship(deleteRule: .cascade) var subtasks: [OutputSubtask]? = []   // CloudKit 규칙: optional
+    @Relationship(deleteRule: .cascade, inverse: \OutputSubtask.owner)
+    var subtasks: [OutputSubtask]? = []   // CloudKit 규칙: optional
     var targetSessions: Int = 0
     var loggedSessions: Int = 0
     var percent: Double = 0
     var createdAt: Date = Date()
 
+    var recurrence: CycleRecurrence {
+        get {
+            (try? JSONDecoder().decode(CycleRecurrence.self, from: recurrenceData))
+                ?? CycleRecurrence(anchor: .cycleStart, dayOffset: 0, repeatsEveryCycle: true, overflowRule: .clamp)
+        }
+        set { recurrenceData = (try? JSONEncoder().encode(newValue)) ?? recurrenceData }
+    }
+
     init(title: String, recurrence: CycleRecurrence, progressKind: OutputProgressKind = .percent) {
         self.id = UUID()
         self.title = title
-        self.recurrence = recurrence
+        self.recurrenceData = (try? JSONEncoder().encode(recurrence)) ?? Data()
         self.progressKind = progressKind
         self.subtasks = []
         self.targetSessions = 0
