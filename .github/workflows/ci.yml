@@ -66,15 +66,14 @@ jobs:
       - name: Archive (cloud signing)
         run: |
           set -o pipefail
+          # archive는 무서명 — 기기 미등록 팀에서 개발 프로파일 요구를 피한다.
+          # 배포 서명은 export 단계의 cloud signing이 담당 (실측 이터레이션 1)
           xcodebuild archive \
             -project TempoRoutine.xcodeproj \
             -scheme TempoRoutine \
             -destination 'generic/platform=iOS' \
             -archivePath build/TempoRoutine.xcarchive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$PWD/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CODE_SIGNING_ALLOWED=NO \
             CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER
       - name: Export & upload to TestFlight
         run: |
