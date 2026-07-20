@@ -1,8 +1,8 @@
 // 템포루틴 — 계절 캘린더 (Phase 0 ③, MASTER §5.9-3 / §8.2.3 / §4 보강 I 책력 조판)
 // 계절 = 숫자 잉크색(글리프 정식 이식은 §5.9-8 미학 패스), 오늘 = 은필 채운 원,
 // 생리 = 코랄 형광펜(기록) / 회색 형광펜(예상, 미래만 — 과거 소급 투영 금지 §5.6.2).
-// 긋기(드래그) = 기록 추가/삭제(§5.5.4 데이터 계약, 오늘 캡). 드래그 대체 경로 = 기록 관리 시트.
-// 하루 상세 push는 §5.9-4에서.
+// 기록 편집 = 날짜 길게 누르기 토글(2026-07-20 사용자 결정 — 드래그 긋기 폐기, MASTER I-2b 개정 대기).
+// 대체 경로 = 기록 관리 시트·하루 상세 토글(§5.5.4 접근성 계약 유지). 탭 = 하루 상세 push.
 
 import SwiftUI
 import SwiftData
@@ -19,12 +19,7 @@ struct SeasonCalendarView: View {
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
     @State private var pushedDay: Date?
-
-    // 긋기 진행 상태 (커밋은 제스처 종료 시)
-    @State private var dragAnchorDay: Date?
-    @State private var dragPending: Set<Date> = []
-    @State private var dragErasing = false
-    @State private var gridWidth: CGFloat = 0
+    @State private var recordFeedback = 0   // 햅틱 트리거 — 확정 순간만(§8.1: 생리 기록)
 
     private let cellHeight: CGFloat = 54
     /// 예측 형광펜 회색 — 다크에선 한 단계 밝게 (기준 대응 팔레트)
@@ -195,9 +190,7 @@ struct SeasonCalendarView: View {
                 .frame(height: cellHeight)
             }
         }
-        .contentShape(Rectangle())
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { gridWidth = $0 }
-        .highPriorityGesture(dragGesture)
+        .sensoryFeedback(.impact(weight: .medium), trigger: recordFeedback)
     }
 
     private func date(at index: Int) -> Date? {
@@ -206,17 +199,24 @@ struct SeasonCalendarView: View {
         return cal.date(byAdding: .day, value: dayNumber - 1, to: monthStart).map { cal.startOfDay(for: $0) }
     }
 
-    /// 긋기 미리보기 반영본 — 커밋 전에도 형광펜이 손을 따라온다.
-    private var effectiveRecorded: Set<Date> {
-        dragErasing ? recordedDays.subtracting(dragPending)
-                    : recordedDays.union(dragPending.filter { $0 <= today })
+    /// 길게 누르기 = 그 날짜 기록 토글 (미래 금지 — PeriodStore가 이중 보장)
+    private func togglePeriod(on date: Date) {
+        guard date <= today else { return }
+        let all = periodDays
+        recordFeedback += 1
+        if recordedDays.contains(date) {
+            let records = all.filter { $0.day == date }
+            Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
+        } else {
+            Task { await PeriodStore.add(days: [date], context: modelContext, existing: all) }
+        }
     }
 
     @ViewBuilder
     private func cell(index: Int, marks: [Date: [(title: String, projected: Bool)]]) -> some View {
         if let date = date(at: index) {
             let style = cellStyle(for: date)
-            let recorded = effectiveRecorded.contains(date)
+            let recorded = recordedDays.contains(date)
             let predicted = !recorded && isPredictedPeriod(date)
             let isToday = date == today
             let cellMarks = marks[date] ?? []
@@ -249,9 +249,11 @@ struct SeasonCalendarView: View {
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { pushedDay = date }   // 날짜 탭 → 하루 상세 push(§8.2.3)
+            .onTapGesture { pushedDay = date }                    // 탭 → 하루 상세 push(§8.2.3)
+            .onLongPressGesture { togglePeriod(on: date) }        // 길게 누르기 → 기록 토글
             .accessibilityElement()
             .accessibilityLabel(accessibilityText(for: date, style: style, recorded: recorded, predicted: predicted))
+            .accessibilityHint(date <= today ? "이중 탭은 하루 상세, 길게 누르면 생리 기록 전환" : "이중 탭은 하루 상세")
             .accessibilityAddTraits(.isButton)
         } else {
             Color.clear
@@ -280,8 +282,8 @@ struct SeasonCalendarView: View {
     }
 
     private func sameKind(_ date: Date, recorded: Bool) -> Bool {
-        recorded ? effectiveRecorded.contains(date)
-                 : (!effectiveRecorded.contains(date) && isPredictedPeriod(date))
+        recorded ? recordedDays.contains(date)
+                 : (!recordedDays.contains(date) && isPredictedPeriod(date))
     }
 
     // ── 단계 → 렌더 규칙 ──
@@ -364,49 +366,4 @@ struct SeasonCalendarView: View {
         return parts.joined(separator: ", ")
     }
 
-    // ── 긋기 = 기록 편집 (§5.5.4: 드래그 = day 추가/삭제, 오늘 캡) ──
-    private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 12)
-            .onChanged { value in
-                guard let current = dateAt(location: value.location),
-                      let anchor = dragAnchorDay ?? dateAt(location: value.startLocation) else { return }
-                if dragAnchorDay == nil {
-                    dragAnchorDay = anchor
-                    dragErasing = recordedDays.contains(anchor)   // 기록 위에서 시작 = 지우기
-                }
-                let lo = min(anchor, current)
-                let hi = max(anchor, current)
-                var range: Set<Date> = []
-                var d = lo
-                while d <= hi {
-                    range.insert(d)
-                    guard let next = cal.date(byAdding: .day, value: 1, to: d) else { break }
-                    d = next
-                }
-                dragPending = range
-            }
-            .onEnded { _ in
-                commitDrag()
-            }
-    }
-
-    private func dateAt(location: CGPoint) -> Date? {
-        guard gridWidth > 0 else { return nil }
-        let col = min(6, max(0, Int(location.x / (gridWidth / 7))))
-        let row = min(rowCount - 1, max(0, Int(location.y / (cellHeight + 4))))
-        return date(at: row * 7 + col)
-    }
-
-    private func commitDrag() {
-        defer { dragAnchorDay = nil; dragPending = []; dragErasing = false }
-        guard !dragPending.isEmpty else { return }
-        let pending = dragPending
-        let all = periodDays
-        if dragErasing {
-            let records = all.filter { pending.contains($0.day) }
-            Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
-        } else {
-            Task { await PeriodStore.add(days: Array(pending), context: modelContext, existing: all) }
-        }
-    }
 }
