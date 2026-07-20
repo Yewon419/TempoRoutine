@@ -8,6 +8,7 @@ struct RootTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Query private var periodDays: [PeriodDay]
+    @AppStorage("onboardingDone") private var onboardingDone = false
 
     var body: some View {
         TabView {
@@ -23,6 +24,10 @@ struct RootTabView: View {
             .tabItem { Label("설정", systemImage: "gearshape") }
         }
         .tint(Ink.text)
+        // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
+        .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
+            OnboardingFlow()
+        }
         .task { await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
