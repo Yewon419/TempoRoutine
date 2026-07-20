@@ -89,14 +89,12 @@ struct DayDetailView: View {
         Toggle(isOn: Binding(
             get: { periodDays.contains { $0.day == day } },
             set: { on in
+                let all = periodDays
                 if on {
-                    if !periodDays.contains(where: { $0.day == day }) {
-                        modelContext.insert(PeriodDay(day: day))
-                    }
+                    Task { await PeriodStore.add(days: [day], context: modelContext, existing: all) }
                 } else {
-                    for record in periodDays where record.day == day {
-                        modelContext.delete(record)
-                    }
+                    let records = all.filter { $0.day == day }
+                    Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
                 }
             }
         )) {

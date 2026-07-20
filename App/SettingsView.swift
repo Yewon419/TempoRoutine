@@ -44,6 +44,17 @@ struct SettingsView: View {
                     Text("이 파일엔 생리·컨디션 기록이 들어있어요.")
                 }
 
+                // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)
+                Section {
+                    Toggle("건강 앱과 연동", isOn: healthBinding)
+                        .tint(Ink.text)
+                        .disabled(!mirror.available)
+                } header: {
+                    Text("건강 앱")
+                } footer: {
+                    Text(healthCaption)
+                }
+
                 // 파괴적 액션 — 분리 배치(§8.2.6)
                 Section {
                     Button("모든 기록 삭제", role: .destructive) { showWipeConfirm = true }
@@ -68,10 +79,14 @@ struct SettingsView: View {
             importData(result)
         }
         .confirmationDialog("모든 기록을 삭제할까요?", isPresented: $showWipeConfirm, titleVisibility: .visible) {
-            Button("삭제", role: .destructive) { wipeAll() }
+            Button("기록만 삭제", role: .destructive) { wipeAll(includeHealth: false) }
+            if periodDays.contains(where: { $0.origin == .appAuthored }) {
+                Button("건강 앱에 쓴 기록도 삭제", role: .destructive) { wipeAll(includeHealth: true) }
+            }
             Button("취소", role: .cancel) {}
         } message: {
-            Text("이 기기의 생리·컨디션·계획 기록이 모두 지워져요.")
+            // §5.7: 이 앱이 쓴 것만 지움 — 타 앱·건강앱 원본은 건강 앱에서
+            Text("이 기기의 생리·컨디션·계획 기록이 모두 지워져요. 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.")
         }
         .alert("데이터", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
             Button("확인") { message = nil }
@@ -125,9 +140,44 @@ struct SettingsView: View {
         }
     }
 
-    private func wipeAll() {
+    private let mirror = HealthMirror.shared
+
+    private var healthBinding: Binding<Bool> {
+        Binding(
+            get: { mirror.linked },
+            set: { on in
+                if on {
+                    let current = store
+                    Task {
+                        if await mirror.requestAccess() {
+                            await mirror.sync(context: modelContext, periodDays: current.periodDays)
+                        }
+                    }
+                } else {
+                    mirror.linked = false   // 미러 중지 — 기존 기록은 양쪽 다 유지
+                }
+            }
+        )
+    }
+
+    private var healthCaption: String {
+        if !mirror.available { return "이 기기에선 건강 앱을 사용할 수 없어요." }
+        if mirror.linked && mirror.writeAuthorized {
+            return "생리 기록이 건강 앱에도 저장돼요. 이 앱이 쓴 기록만 건강 앱에서 고칠 수 있어요."
+        }
+        if mirror.linked {
+            return "건강 앱 쓰기가 꺼져 있어요. 설정 앱의 건강 > 데이터 접근에서 허용할 수 있어요."
+        }
+        return "기록은 이 아이폰에만 저장돼요."
+    }
+
+    private func wipeAll(includeHealth: Bool) {
         undoDismissTask?.cancel()
         let snapshot = ExportImport.buildEnvelope(from: store)
+        if includeHealth {
+            let uuids = periodDays.filter { $0.origin == .appAuthored }.compactMap(\.healthKitUUID)
+            Task { await mirror.deleteSamples(uuids: uuids) }
+        }
         ExportImport.wipeAll(store, context: modelContext)
         withAnimation { undoSnapshot = snapshot }
         undoDismissTask = Task {

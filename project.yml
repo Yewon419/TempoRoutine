@@ -34,5 +34,9 @@ targets:
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO  # 자체 암호화 없음 — 수출 규정 질문 생략(ASC 실측)
         # EventKit 읽기(§3.6.1) — iOS 17+ 풀 액세스 필요, 의도는 fetch만
         INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: 기존 캘린더의 약속과 생일을 화면에 비추기 위해서만 읽어요. 기록이 밖으로 나가지 않아요.
+        # HealthKit read-write 미러(§5.7) — 로컬이 단일 출처, Health는 미러
+        CODE_SIGN_ENTITLEMENTS: TempoRoutine.entitlements
+        INFOPLIST_KEY_NSHealthShareUsageDescription: 건강 앱에 기록된 생리 기록을 불러와 계절 계산에 반영해요. 기록이 밖으로 나가지 않아요.
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: 이 앱에서 남긴 생리 기록을 건강 앱에도 저장해요. 원할 때 끌 수 있어요.
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 4VD7XCCBQN

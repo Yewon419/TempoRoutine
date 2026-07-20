@@ -1,8 +1,14 @@
-// 템포루틴 — 루트 탭 (§8.1 Tab Bar. P0 진행분만: 오늘·캘린더. 나의 리듬·설정은 후속 단계에서 추가)
+// 템포루틴 — 루트 탭 (§8.1 Tab Bar. P0 진행분: 오늘·캘린더·설정. 나의 리듬은 후속 단계에서 추가)
+// HK 미러 sync는 여기서 — 실행·포그라운드 복귀 시(§5.7 read 병합 + 삭제 전파).
 
 import SwiftUI
+import SwiftData
 
 struct RootTabView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @Query private var periodDays: [PeriodDay]
+
     var body: some View {
         TabView {
             TodayView()
@@ -17,5 +23,12 @@ struct RootTabView: View {
             .tabItem { Label("설정", systemImage: "gearshape") }
         }
         .tint(Ink.text)
+        .task { await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays) }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                let current = periodDays
+                Task { await HealthMirror.shared.sync(context: modelContext, periodDays: current) }
+            }
+        }
     }
 }

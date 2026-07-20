@@ -66,22 +66,22 @@ struct PeriodLogSheet: View {
 
     private func addRange() {
         let cal = Calendar.current
-        let existing = Set(periodDays.map(\.day))
+        var days: [Date] = []
         var day = cal.startOfDay(for: startDate)
         let end = cal.startOfDay(for: endDate)
         while day <= end {
-            if day <= today && !existing.contains(day) {   // 미래 금지 + dedup=day
-                modelContext.insert(PeriodDay(day: day))
-            }
+            days.append(day)
             guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
             day = next
         }
+        let existing = periodDays
+        Task { await PeriodStore.add(days: days, context: modelContext, existing: existing) }
     }
 
     private func deleteEpisode(_ episode: [Date]) {
         let target = Set(episode)
-        for record in periodDays where target.contains(record.day) {
-            modelContext.delete(record)
-        }
+        let records = periodDays.filter { target.contains($0.day) }
+        let all = periodDays
+        Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
     }
 }

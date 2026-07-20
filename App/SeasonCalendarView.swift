@@ -400,15 +400,13 @@ struct SeasonCalendarView: View {
     private func commitDrag() {
         defer { dragAnchorDay = nil; dragPending = []; dragErasing = false }
         guard !dragPending.isEmpty else { return }
+        let pending = dragPending
+        let all = periodDays
         if dragErasing {
-            for record in periodDays where dragPending.contains(record.day) {
-                modelContext.delete(record)
-            }
+            let records = all.filter { pending.contains($0.day) }
+            Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
         } else {
-            let existing = recordedDays
-            for day in dragPending where day <= today && !existing.contains(day) {
-                modelContext.insert(PeriodDay(day: day))   // 미래 금지 + dedup=day
-            }
+            Task { await PeriodStore.add(days: Array(pending), context: modelContext, existing: all) }
         }
     }
 }
