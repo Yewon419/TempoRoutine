@@ -8,6 +8,7 @@
 import Foundation
 import HealthKit
 import SwiftData
+import TempoCore
 
 @MainActor
 @Observable
@@ -136,7 +137,7 @@ final class HealthMirror {
 
     static func clearTombstones(days: [Date]) {
         var list = UserDefaults.standard.stringArray(forKey: tombstonesKey) ?? []
-        let keys = Set(days.map(ExportCodec.dayString))
+        let keys = Set(days.map { ExportCodec.dayString($0) })
         list.removeAll { keys.contains($0) }
         UserDefaults.standard.set(list, forKey: tombstonesKey)
     }
