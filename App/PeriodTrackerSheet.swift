@@ -42,7 +42,7 @@ struct PeriodTrackerSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
                         Text(dayTitle)
-                            .font(.system(.title2, design: .serif).weight(.bold))
+                            .font(.almanac(size: 22, weight: .bold))
                             .foregroundStyle(Ink.text)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 6)
@@ -165,7 +165,7 @@ struct PeriodTrackerSheet: View {
     private func recordSection(recorded: Set<Date>) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("기록")
-                .font(.system(.headline, design: .serif))
+                .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(Ink.text)
             periodRow(recorded: recorded.contains(selectedDay))
             CheckInEditor(day: selectedDay)

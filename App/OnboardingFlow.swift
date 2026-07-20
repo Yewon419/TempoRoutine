@@ -32,6 +32,7 @@ struct OnboardingFlow: View {
     var body: some View {
         ZStack {
             Ink.paper.ignoresSafeArea()
+            SeasonLight(phase: .menstrual)   // 온보딩 = 겨울 배경 고정(사용자 확정)
             VStack(alignment: .leading, spacing: 0) {
                 topBar
                 Group {
@@ -135,7 +136,7 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text.opacity(0.5))
                 .kerning(2)
             Text("당신 몸의\n템포에 맞게.")
-                .font(.system(size: 38, weight: .bold, design: .serif))
+                .font(.almanac(size: 38, weight: .bold))
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
             VStack(alignment: .leading, spacing: 2) {
@@ -184,7 +185,7 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text.opacity(0.5))
                 .kerning(2)
             Text("리듬에 맞춰\n계획하는 법")
-                .font(.system(size: 32, weight: .bold, design: .serif))
+                .font(.almanac(size: 32, weight: .bold))
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
             VStack(alignment: .leading, spacing: 2) {
@@ -241,7 +242,7 @@ struct OnboardingFlow: View {
     private var sceneSeasons: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("주기를 네 계절로\n볼게요.")
-                .font(.system(size: 32, weight: .bold, design: .serif))
+                .font(.almanac(size: 32, weight: .bold))
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
                 .padding(.bottom, 6)
@@ -489,7 +490,7 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text.opacity(0.5))
                 .kerning(2)
             Text(title)
-                .font(.system(size: 30, weight: .bold, design: .serif))
+                .font(.almanac(size: 30, weight: .bold))
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
         }

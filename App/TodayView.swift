@@ -96,6 +96,7 @@ struct TodayView: View {
     var body: some View {
         ZStack(alignment: .top) {
             Ink.paper.ignoresSafeArea()
+            SeasonLight(phase: snapshot.phase(on: today))   // 계절광(§4) — 지면 위 고정 빛
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     largeHeader
@@ -147,7 +148,7 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let info = todayInfo {
                 Text(info.meta.name)
-                    .font(.system(size: 56, weight: .bold, design: .serif))
+                    .font(.almanac(size: 56, weight: .bold))
                     .foregroundStyle(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
                 HStack(spacing: 6) {
                     Text("\(info.meta.phaseName) \(info.dayInCycle)일차")
@@ -164,7 +165,7 @@ struct TodayView: View {
                     .padding(.top, 2)
             } else {
                 Text("계절 기록 전")
-                    .font(.system(size: 44, weight: .bold, design: .serif))
+                    .font(.almanac(size: 44, weight: .bold))
                     .foregroundStyle(Ink.text)
             }
         }
@@ -176,7 +177,7 @@ struct TodayView: View {
         HStack {
             Spacer()
             Text(todayInfo?.meta.name ?? "템포루틴")
-                .font(.system(.headline, design: .serif))
+                .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(todayInfo?.meta.color ?? Ink.text)
             Spacer()
         }
@@ -227,7 +228,7 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(kind.rawValue)
-                    .font(.system(.headline, design: .serif))
+                    .font(.almanac(size: 17, weight: .bold))
                     .foregroundStyle(Ink.text)
                 Spacer()
                 Button {
@@ -407,7 +408,7 @@ struct TodayView: View {
     private var checkInCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("오늘의 체크인")
-                .font(.system(.headline, design: .serif))
+                .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(Ink.text)
             checkInRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
             checkInRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)

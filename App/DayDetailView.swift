@@ -34,6 +34,7 @@ struct DayDetailView: View {
     var body: some View {
         ZStack {
             Ink.paper.ignoresSafeArea()
+            SeasonLight(phase: snapshot.phase(on: day))
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header
@@ -63,7 +64,7 @@ struct DayDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("\(cal.component(.day, from: day))")
-                    .font(.system(size: 48, weight: .bold, design: .serif))
+                    .font(.almanac(size: 48, weight: .bold))
                     .foregroundStyle(Ink.text)
                 Text(day.formatted(.dateTime.month().weekday(.wide)))
                     .font(.system(.subheadline, design: .serif))

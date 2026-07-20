@@ -23,6 +23,14 @@ struct CycleSnapshot {
     var isColdStart: Bool { starts.isEmpty }
     var isSingleRecord: Bool { starts.count == 1 }   // S1 hedge
 
+    /// 그 날짜의 단계만 (계절광 등 — S0이면 nil)
+    func phase(on date: Date) -> CyclePhase? {
+        guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: averageLength) else {
+            return nil
+        }
+        return CyclePredictor.phaseForDay(r.day, cycleLength: averageLength)
+    }
+
     /// 그 날짜의 계절·단계 (S0이면 nil)
     func phaseInfo(on date: Date) -> (meta: SeasonMeta, dayInCycle: Int, projected: Bool)? {
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: averageLength) else {

@@ -60,6 +60,7 @@ struct SeasonCalendarView: View {
         let marks = monthMarks
         ZStack {
             Ink.paper.ignoresSafeArea()
+            SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: today))
             VStack(alignment: .leading, spacing: 12) {
                 monthHeader
                 HStack(alignment: .firstTextBaseline) {
@@ -137,7 +138,7 @@ struct SeasonCalendarView: View {
     private var monthHeader: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text("\(cal.component(.month, from: monthStart))월")
-                .font(.system(size: 44, weight: .bold, design: .serif))
+                .font(.almanac(size: 44, weight: .bold))
                 .foregroundStyle(Ink.text)
             Text(String(cal.component(.year, from: monthStart)))
                 .font(.system(.footnote, design: .serif))
