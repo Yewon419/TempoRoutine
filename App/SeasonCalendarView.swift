@@ -320,13 +320,13 @@ struct SeasonCalendarView: View {
         return "\(hedge)\(meta.name) · \(meta.phaseName) \(r.day)일차\(projected)"
     }
 
-    // ── 범례 (색만 금지 — 계절명 텍스트가 라벨을 겸함. 글리프는 §5.9-8) ──
+    // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
     private var legend: some View {
         HStack(spacing: 14) {
-            legendItem("겨울", Ink.winter)
-            legendItem("봄", Ink.spring)
-            legendItem("여름", Ink.summer)
-            legendItem("가을", Ink.autumn)
+            legendItem(.menstrual)
+            legendItem(.follicular)
+            legendItem(.ovulation)
+            legendItem(.luteal)
             Spacer()
             legendSwatch(Ink.coral, "기록")
             legendSwatch(highlightGray, "예상")
@@ -334,10 +334,14 @@ struct SeasonCalendarView: View {
         .padding(.top, 6)
     }
 
-    private func legendItem(_ name: String, _ color: Color) -> some View {
-        Text(name)
-            .font(.system(size: 12, weight: .semibold, design: .serif))
-            .foregroundStyle(color)
+    private func legendItem(_ phase: CyclePhase) -> some View {
+        let meta = seasonMeta(for: phase)
+        return HStack(spacing: 4) {
+            SeasonGlyph(phase: phase, size: 12)
+            Text(meta.name)
+                .font(.system(size: 12, weight: .semibold, design: .serif))
+                .foregroundStyle(meta.color)
+        }
     }
 
     private func legendSwatch(_ color: Color, _ label: String) -> some View {

@@ -160,14 +160,15 @@ struct OnboardingFlow: View {
                 .trim(from: 0, to: drawProgress)
                 .stroke(Ink.winter.opacity(0.7), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-            ForEach(Array([(Ink.winter, "겨울"), (Ink.spring, "봄"), (Ink.summer, "여름"), (Ink.autumn, "가을")].enumerated()),
-                    id: \.offset) { index, node in
+            ForEach(Array([CyclePhase.menstrual, .follicular, .ovulation, .luteal].enumerated()),
+                    id: \.offset) { index, phase in
                 let angle = Double(index) * 90.0 - 90.0
+                let meta = seasonMeta(for: phase)
                 VStack(spacing: 4) {
-                    Circle().fill(node.0).frame(width: 9, height: 9)
-                    Text(node.1)
+                    SeasonGlyph(phase: phase, size: 14)
+                    Text(meta.name)
                         .font(.system(size: 11, design: .serif))
-                        .foregroundStyle(node.0)
+                        .foregroundStyle(meta.color)
                 }
                 .opacity(drawProgress > CGFloat(index) * 0.22 + 0.1 ? 1 : 0)
                 .offset(x: 95 * cos(angle * .pi / 180), y: 95 * sin(angle * .pi / 180))
@@ -218,23 +219,24 @@ struct OnboardingFlow: View {
                 EnergyWaveShape()
                     .trim(from: 0, to: drawProgress)
                     .stroke(Ink.winter.opacity(0.7), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
-                waveLabel("겨울", Ink.winter, visible: drawProgress > 0.05)
+                waveLabel(.menstrual, visible: drawProgress > 0.05)
                     .position(x: w * 0.07, y: h * 0.86)
-                waveLabel("봄", Ink.spring, visible: drawProgress > 0.35)
+                waveLabel(.follicular, visible: drawProgress > 0.35)
                     .position(x: w * 0.33, y: h * 0.28)
-                waveLabel("여름", Ink.summer, visible: drawProgress > 0.55)
+                waveLabel(.ovulation, visible: drawProgress > 0.55)
                     .position(x: w * 0.54, y: h * 0.06)
-                waveLabel("가을", Ink.autumn, visible: drawProgress > 0.85)
+                waveLabel(.luteal, visible: drawProgress > 0.85)
                     .position(x: w * 0.81, y: h * 0.76)
             }
         }
         .accessibilityHidden(true)
     }
 
-    private func waveLabel(_ name: String, _ color: Color, visible: Bool) -> some View {
-        VStack(spacing: 3) {
-            Circle().fill(color).frame(width: 7, height: 7)
-            Text(name).font(.system(size: 11, design: .serif)).foregroundStyle(color)
+    private func waveLabel(_ phase: CyclePhase, visible: Bool) -> some View {
+        let meta = seasonMeta(for: phase)
+        return VStack(spacing: 3) {
+            SeasonGlyph(phase: phase, size: 12)
+            Text(meta.name).font(.system(size: 11, design: .serif)).foregroundStyle(meta.color)
         }
         .opacity(visible ? 1 : 0)
     }
@@ -246,10 +248,10 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
                 .padding(.bottom, 6)
-            seasonRow(Ink.winter, "겨울", "월경기 · 쉬어가는 때")
-            seasonRow(Ink.spring, "봄", "난포기 · 가볍게 시작하는 때")
-            seasonRow(Ink.summer, "여름", "배란기 · 빛나도 좋은 때")
-            seasonRow(Ink.autumn, "가을", "황체기 · 매듭짓는 때")
+            seasonRow(.menstrual, "월경기 · 쉬어가는 때")
+            seasonRow(.follicular, "난포기 · 가볍게 시작하는 때")
+            seasonRow(.ovulation, "배란기 · 빛나도 좋은 때")
+            seasonRow(.luteal, "황체기 · 매듭짓는 때")
             Spacer()
             VStack(alignment: .leading, spacing: 2) {
                 Text("일반적인 경향이에요.")
@@ -260,12 +262,13 @@ struct OnboardingFlow: View {
         }
     }
 
-    private func seasonRow(_ color: Color, _ name: String, _ desc: String) -> some View {
-        HStack(spacing: 12) {
-            Circle().fill(color).frame(width: 9, height: 9)
-            Text(name)
+    private func seasonRow(_ phase: CyclePhase, _ desc: String) -> some View {
+        let meta = seasonMeta(for: phase)
+        return HStack(spacing: 12) {
+            SeasonGlyph(phase: phase, size: 14)
+            Text(meta.name)
                 .font(.system(.body, design: .serif).weight(.bold))
-                .foregroundStyle(color)
+                .foregroundStyle(meta.color)
                 .frame(width: 40, alignment: .leading)
             Text(desc)
                 .font(.system(.subheadline, design: .serif))

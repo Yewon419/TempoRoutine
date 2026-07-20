@@ -26,6 +26,61 @@ extension Font {
     }
 }
 
+// ── 계절 글리프 4종 (§8.1 SeasonGlyph — 색맹 담보: 색+형태 병행. 프로토 SVG path 이식) ──
+struct SeasonGlyphShape: Shape {
+    let phase: CyclePhase
+
+    func path(in rect: CGRect) -> Path {
+        let s = rect.width / 16
+        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + x * s, y: rect.minY + y * s)
+        }
+        var path = Path()
+        switch phase {
+        case .menstrual:      // 겨울 = 눈결정 3획
+            path.move(to: p(8, 2)); path.addLine(to: p(8, 14))
+            path.move(to: p(2.8, 5)); path.addLine(to: p(13.2, 11))
+            path.move(to: p(13.2, 5)); path.addLine(to: p(2.8, 11))
+        case .follicular:     // 봄 = 새싹
+            path.move(to: p(8, 14)); path.addLine(to: p(8, 6))
+            path.move(to: p(8, 8))
+            path.addCurve(to: p(4, 4), control1: p(8, 5.4), control2: p(6, 4))
+            path.addCurve(to: p(8, 8), control1: p(4, 6.6), control2: p(6, 8))
+            path.move(to: p(8, 6.6))
+            path.addCurve(to: p(12, 3), control1: p(8, 4.2), control2: p(10, 3))
+            path.addCurve(to: p(8, 6.6), control1: p(12, 5.4), control2: p(10, 6.6))
+        case .ovulation:      // 여름 = 해
+            path.addEllipse(in: CGRect(x: rect.minX + 4.8 * s, y: rect.minY + 4.8 * s,
+                                       width: 6.4 * s, height: 6.4 * s))
+            path.move(to: p(8, 1.5)); path.addLine(to: p(8, 3.2))
+            path.move(to: p(8, 12.8)); path.addLine(to: p(8, 14.5))
+            path.move(to: p(1.5, 8)); path.addLine(to: p(3.2, 8))
+            path.move(to: p(12.8, 8)); path.addLine(to: p(14.5, 8))
+        case .luteal:         // 가을 = 잎
+            path.move(to: p(13, 3))
+            path.addCurve(to: p(3, 12), control1: p(8, 3), control2: p(4, 6))
+            path.addCurve(to: p(13, 3), control1: p(9, 11), control2: p(12, 8))
+            path.closeSubpath()
+            path.move(to: p(3, 12)); path.addLine(to: p(9, 6))
+        }
+        return path
+    }
+}
+
+struct SeasonGlyph: View {
+    let phase: CyclePhase
+    var size: CGFloat = 13
+    var color: Color?
+
+    var body: some View {
+        SeasonGlyphShape(phase: phase)
+            .stroke(color ?? seasonMeta(for: phase).color,
+                    style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)   // 계절명 텍스트가 라벨 담당
+    }
+}
+
 /// 계절광 — 시안 .season-light 3겹 radial 이식. 지면(paper) 위에 얹는 상단 빛.
 struct SeasonLight: View {
     let phase: CyclePhase?   // nil = 콜드(겨울 광)

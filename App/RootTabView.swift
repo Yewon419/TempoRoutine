@@ -18,6 +18,8 @@ struct RootTabView: View {
                 SeasonCalendarView()
             }
             .tabItem { Label("캘린더", systemImage: "calendar") }
+            RhythmView()
+                .tabItem { Label("나의 리듬", systemImage: "chart.xyaxis.line") }
             NavigationStack {
                 SettingsView()
             }

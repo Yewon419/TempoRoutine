@@ -17,3 +17,5 @@
   PS 5.1 기본 인코딩이 UTF-8 소스를 깨뜨림(2026-07-20 TodayView 파손→git 복원). 편집은 Edit 도구로만.
 - ASC 업로드 일일 한도 존재(실측 2026-07-20: 하루 ~16빌드에서 차단, Upload limit reached).
   한도 중엔 컴파일 잡 그린이면 코드 검증은 유효, TestFlight만 다음 날 재개.
+- **빌드는 몰아서(2026-07-20 사용자 결정):** TestFlight 잡 = workflow_dispatch 수동 전용.
+  작업 여러 개를 커밋으로 쌓고, 배포는 `gh workflow run CI --ref main` 1회. push는 컴파일 검증만.
