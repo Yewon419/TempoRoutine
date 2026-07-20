@@ -15,6 +15,12 @@ struct PeriodTrackerSheet: View {
     @State private var centeredDay: Date? = Calendar.current.startOfDay(for: .now)
     @State private var recordFeedback = 0
 
+    // 지연 제거(사용자 결정): 시트 안은 로컬 드래프트로 즉시 토글,
+    // 저장·에피소드 재계산·HK 미러는 완료/닫기 때 일괄 커밋
+    @State private var draftRecorded: Set<Date> = []
+    @State private var draftLoaded = false
+    @State private var committed = false
+
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var recordedDays: Set<Date> { Set(periodDays.map(\.day)) }
@@ -28,8 +34,8 @@ struct PeriodTrackerSheet: View {
     }
 
     var body: some View {
-        // 성능: 파생 Set은 렌더당 1회만 (칸마다 재계산 금지)
-        let recorded = recordedDays
+        // 렌더 소스 = 로컬 드래프트 (즉시 반영, 저장은 커밋 때)
+        let recorded = draftRecorded
         NavigationStack {
             ZStack {
                 Ink.paper.ignoresSafeArea()
@@ -50,11 +56,41 @@ struct PeriodTrackerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("완료") { dismiss() }
+                    Button("완료") {
+                        commit()
+                        dismiss()
+                    }
                 }
             }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: recordFeedback)
+        .onAppear {
+            if !draftLoaded {
+                draftLoaded = true
+                draftRecorded = recordedDays
+            }
+        }
+        .onDisappear { commit() }   // 스와이프로 닫아도 커밋 보장
+    }
+
+    /// 드래프트 ↔ 실제 차이만 일괄 반영 — PeriodStore가 dedup·미래 금지·HK 미러 담당
+    private func commit() {
+        guard !committed else { return }
+        committed = true
+        let actual = recordedDays
+        let adds = draftRecorded.subtracting(actual).filter { $0 <= today }
+        let removeDays = actual.subtracting(draftRecorded)
+        guard !adds.isEmpty || !removeDays.isEmpty else { return }
+        let records = periodDays.filter { removeDays.contains($0.day) }
+        let all = periodDays
+        Task {
+            if !records.isEmpty {
+                await PeriodStore.remove(records: records, context: modelContext, all: all)
+            }
+            if !adds.isEmpty {
+                await PeriodStore.add(days: Array(adds), context: modelContext, existing: all.filter { !removeDays.contains($0.day) })
+            }
+        }
     }
 
     private var dayTitle: String {
@@ -160,13 +196,11 @@ struct PeriodTrackerSheet: View {
 
     private func togglePeriod(on day: Date) {
         guard day <= today else { return }
-        let all = periodDays
         recordFeedback += 1
-        if recordedDays.contains(day) {
-            let records = all.filter { $0.day == day }
-            Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
+        if draftRecorded.contains(day) {
+            draftRecorded.remove(day)   // 로컬 즉시 — 저장은 commit()
         } else {
-            Task { await PeriodStore.add(days: [day], context: modelContext, existing: all) }
+            draftRecorded.insert(day)
         }
     }
 }
