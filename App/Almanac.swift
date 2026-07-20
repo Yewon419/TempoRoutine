@@ -26,6 +26,41 @@ extension Font {
     }
 }
 
+// ── 재질 위계 (§4 보강 I: 크롬 유리 / 밀크 글래스 2단) ──
+// 콘텐츠 카드 = 밀크 글래스(반투명 지면 + 은필 실선), 배경 계절광이 비쳐 유리감이 성립.
+struct MilkGlass: ViewModifier {
+    var radius: CGFloat = 16
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: radius)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: radius).fill(Ink.surface)
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: radius)
+                            .stroke(Ink.winter.opacity(0.18), lineWidth: 1)   // 은필 테두리
+                    }
+            }
+    }
+}
+
+extension View {
+    /// 콘텐츠 표면 — 카드류 전부 이 재질(§4 보강 I)
+    func milkGlass(radius: CGFloat = 16) -> some View {
+        modifier(MilkGlass(radius: radius))
+    }
+
+    /// 책력 괘선 — 항목 구분(§4 조판)
+    func almanacRule(opacity: Double = 0.14) -> some View {
+        overlay(alignment: .bottom) {
+            Rectangle().fill(Ink.winter.opacity(opacity)).frame(height: 1)
+        }
+    }
+}
+
 // ── 계절 글리프 4종 (§8.1 SeasonGlyph — 색맹 담보: 색+형태 병행. 프로토 SVG path 이식) ──
 struct SeasonGlyphShape: Shape {
     let phase: CyclePhase

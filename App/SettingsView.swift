@@ -62,7 +62,13 @@ struct SettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Ink.paper.ignoresSafeArea())
+            .background {
+                ZStack {
+                    Ink.paper
+                    SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)))
+                }
+                .ignoresSafeArea()
+            }
 
             if undoSnapshot != nil {
                 undoToast

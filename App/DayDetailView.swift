@@ -137,7 +137,7 @@ struct DayDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+        .milkGlass()
     }
 
     // ① 일정

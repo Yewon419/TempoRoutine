@@ -244,7 +244,7 @@ struct TodayView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+        .milkGlass()
     }
 
     // ① 일정 (오늘)
@@ -428,7 +428,7 @@ struct TodayView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+        .milkGlass()
     }
 
     private func checkInRow(label: String, options: [String], value: Binding<Int>) -> some View {

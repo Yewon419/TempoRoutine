@@ -20,6 +20,7 @@ struct PeriodTrackerSheet: View {
     @State private var draftRecorded: Set<Date> = []
     @State private var draftLoaded = false
     @State private var committed = false
+    private let mirror = HealthMirror.shared
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -39,6 +40,7 @@ struct PeriodTrackerSheet: View {
         NavigationStack {
             ZStack {
                 Ink.paper.ignoresSafeArea()
+                SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: selectedDay))
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
                         Text(dayTitle)
@@ -169,8 +171,57 @@ struct PeriodTrackerSheet: View {
                 .foregroundStyle(Ink.text)
             periodRow(recorded: recorded.contains(selectedDay))
             CheckInEditor(day: selectedDay)
+            healthLinkRow
         }
         .padding(.horizontal, 20)
+    }
+
+    // ── 건강 앱 연동 진입 (설정과 동일 동작 — 기록 맥락에서 바로 접근) ──
+    @ViewBuilder
+    private var healthLinkRow: some View {
+        if mirror.available {
+            let on = mirror.linked && mirror.writeAuthorized
+            Button {
+                if on {
+                    mirror.linked = false
+                } else {
+                    let current = periodDays
+                    Task {
+                        if await mirror.requestAccess() {
+                            await mirror.sync(context: modelContext, periodDays: current)
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "heart")
+                        .font(.footnote)
+                        .foregroundStyle(Ink.text.opacity(0.6))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("건강 앱과 연동")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Ink.text)
+                        Text(on ? "생리 기록이 건강 앱에도 저장돼요." : "건강 앱의 기록을 함께 보고, 이 앱의 기록도 저장해요.")
+                            .font(.caption)
+                            .foregroundStyle(Ink.text.opacity(0.55))
+                    }
+                    Spacer()
+                    Text(on ? "켜짐" : "연동")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(on ? Ink.paper : Ink.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background {
+                            if on { Capsule().fill(Ink.text) }
+                            else { Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1) }
+                        }
+                }
+                .padding(16)
+                .milkGlass(radius: 14)
+                .transaction { $0.animation = nil }
+            }
+            .accessibilityValue(on ? "켜짐" : "꺼짐")
+        }
     }
 
     private func periodRow(recorded: Bool) -> some View {
@@ -239,7 +290,7 @@ struct CheckInEditor: View {
                 .onChange(of: draftNote) { persist() }
         }
         .padding(16)
-        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 14))
+        .milkGlass(radius: 14)
         .opacity(isFuture ? 0.45 : 1.0)
         .disabled(isFuture)
         .onAppear(perform: load)

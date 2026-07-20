@@ -276,9 +276,7 @@ struct OnboardingFlow: View {
             Spacer()
         }
         .padding(.vertical, 9)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Ink.winter.opacity(0.18)).frame(height: 1)
-        }
+        .almanacRule(opacity: 0.18)
     }
 
     // ══ ② 기준일 ══
@@ -308,7 +306,7 @@ struct OnboardingFlow: View {
                 }
             }
             .padding(16)
-            .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+            .milkGlass()
             Spacer()
             primaryButton("다음") { step = 3 }
             Button {
@@ -404,7 +402,7 @@ struct OnboardingFlow: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
-            .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+            .milkGlass()
             Spacer()
             primaryButton("다음") {
                 AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: trackPain,
@@ -467,7 +465,7 @@ struct OnboardingFlow: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
-            .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+            .milkGlass()
             Text("내보내기와 전체 삭제는 언제든 설정에서.")
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))

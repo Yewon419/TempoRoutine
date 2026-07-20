@@ -76,7 +76,7 @@ struct RhythmView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+        .milkGlass()
     }
 
     private var meanwhileCard: some View {
@@ -90,7 +90,7 @@ struct RhythmView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 16))
+        .milkGlass()
     }
 
     // ── 나의 사계 낱장 (§3.5.1 — 기본 노출, 개방형 4단 책력) ──
@@ -137,7 +137,7 @@ struct RhythmView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 18))
+        .milkGlass(radius: 18)
     }
 
     private func seasonRow(phase: CyclePhase, routines: [String]) -> some View {
@@ -163,9 +163,7 @@ struct RhythmView: View {
             }
         }
         .padding(.vertical, 8)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Ink.winter.opacity(0.14)).frame(height: 1)
-        }
+        .almanacRule()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(meta.name), \(routines.isEmpty ? "루틴 없음" : routines.joined(separator: ", "))")
     }

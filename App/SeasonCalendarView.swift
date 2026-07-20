@@ -180,9 +180,7 @@ struct SeasonCalendarView: View {
             }
         }
         .padding(.bottom, 4)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Ink.winter.opacity(0.28)).frame(height: 1)   // 은필 괘선
-        }
+        .almanacRule(opacity: 0.28)   // 은필 괘선
     }
 
     // ── 그리드 ──
