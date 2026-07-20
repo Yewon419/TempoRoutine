@@ -119,9 +119,9 @@ struct TodayView: View {
                             let shouldCollapse = offset < -56
                             let shouldExpand = offset > -40
                             if shouldCollapse && !isCollapsed {
-                                withAnimation(.easeOut(duration: 0.2)) { isCollapsed = true }
+                                isCollapsed = true
                             } else if shouldExpand && isCollapsed {
-                                withAnimation(.easeOut(duration: 0.2)) { isCollapsed = false }
+                                isCollapsed = false
                             }
                         }
                         .frame(width: geo.size.width, height: 1)
