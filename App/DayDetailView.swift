@@ -64,7 +64,7 @@ struct DayDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("\(cal.component(.day, from: day))")
-                    .font(.almanac(size: 48, weight: .bold))
+                    .font(.almanac(size: 56, weight: .bold))   // v6 확정: 하루 상세 표제 56px
                     .foregroundStyle(Ink.text)
                 Text(day.formatted(.dateTime.month().weekday(.wide)))
                     .font(.system(.subheadline, design: .serif))
@@ -220,7 +220,7 @@ struct DayDetailView: View {
                             .foregroundStyle(checked ? Ink.text : Ink.text.opacity(0.35))
                         Text(row.item.title)
                             .foregroundStyle(Ink.text.opacity(row.projected ? 0.55 : 1.0))
-                            .strikethrough(checked, color: Ink.text.opacity(0.5))
+                            .strikethrough(checked, color: Ink.dim)
                         if row.projected {
                             Text("예상").font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
                         }
@@ -290,7 +290,7 @@ struct DayDetailView: View {
                         Text(sub.title)
                             .font(.footnote)
                             .foregroundStyle(Ink.text)
-                            .strikethrough(sub.isDone, color: Ink.text.opacity(0.5))
+                            .strikethrough(sub.isDone, color: Ink.dim)
                         Spacer()
                     }
                 }

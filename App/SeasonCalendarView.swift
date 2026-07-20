@@ -21,7 +21,9 @@ struct SeasonCalendarView: View {
     @State private var showLogSheet = false
     @State private var pushedDay: Date?
 
-    private let cellHeight: CGFloat = 54
+    // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
+    // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
+    private let minCellHeight: CGFloat = 54
     /// 예측 형광펜 회색 — 다크에선 한 단계 밝게 (기준 대응 팔레트)
     private let highlightGray = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark
@@ -138,7 +140,7 @@ struct SeasonCalendarView: View {
     private var monthHeader: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text("\(cal.component(.month, from: monthStart))월")
-                .font(.almanac(size: 44, weight: .bold))
+                .font(.almanac(size: 58, weight: .bold))   // v6 거대 표제부 확정 치수
                 .foregroundStyle(Ink.text)
             Text(String(cal.component(.year, from: monthStart)))
                 .font(.system(.footnote, design: .serif))
@@ -193,9 +195,10 @@ struct SeasonCalendarView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .frame(height: cellHeight)
+                .frame(minHeight: minCellHeight, maxHeight: .infinity)   // 풀하이트 균등 분할
             }
         }
+        .frame(maxHeight: .infinity)
     }
 
     private func date(at index: Int) -> Date? {
@@ -224,11 +227,13 @@ struct SeasonCalendarView: View {
                         }
                     }
                 // 일정·occurrence = 날짜 밑 작은 잉크 글줄(책력 문법, 프로토 v15)
+                // 잉크 글줄(v16): 먹색 78% / 과거는 산화색 75% / 예상은 옅게
                 ForEach(Array(cellMarks.prefix(2).enumerated()), id: \.offset) { _, mark in
                     Text(mark.title)
-                        .font(.system(size: 8, weight: .medium))
+                        .font(.system(size: 8.5, weight: .medium))
                         .lineLimit(1)
-                        .foregroundStyle(Ink.text.opacity(mark.projected ? 0.45 : 0.78))
+                        .foregroundStyle(mark.projected ? Ink.text.opacity(0.45)
+                                         : (date < today ? Ink.oxide.opacity(0.75) : Ink.text.opacity(0.78)))
                 }
                 Spacer(minLength: 0)
             }

@@ -32,6 +32,11 @@ enum Ink {
     static let coral  = Color(light: .rgb(0xD6, 0x64, 0x4C), dark: .rgb(0xE0, 0x7A, 0x63))
     /// 파괴적 액션 전용 (--danger) — 기록 코랄·가을 잉크와 역할 분리
     static let danger = Color(light: .rgb(0xB2, 0x3A, 0x30), dark: .rgb(0xD0, 0x68, 0x5E))
+    /// 완료 상태 = 짙은 회색(--ink-dim). 산화 갈색은 캘린더 타임라인 전용(v29 정정)
+    static let dim = Color(light: Color(red: 44 / 255, green: 43 / 255, blue: 39 / 255).opacity(0.55),
+                           dark: Color(red: 232 / 255, green: 230 / 255, blue: 225 / 255).opacity(0.5))
+    /// 산화 은필 — 캘린더 과거 일정 글줄 전용
+    static let oxide = Color(light: .rgb(0x8B, 0x6F, 0x55), dark: .rgb(0xB2, 0x94, 0x77))
     /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
     static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }
@@ -148,7 +153,7 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let info = todayInfo {
                 Text(info.meta.name)
-                    .font(.almanac(size: 56, weight: .bold))
+                    .font(.almanac(size: 58, weight: .bold))   // v39~41 확정: 계절 표제 58px
                     .foregroundStyle(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
                 HStack(spacing: 6) {
                     Text("\(info.meta.phaseName) \(info.dayInCycle)일차")
@@ -177,7 +182,7 @@ struct TodayView: View {
         HStack {
             Spacer()
             Text(todayInfo?.meta.name ?? "템포루틴")
-                .font(.almanac(size: 17, weight: .bold))
+                .font(.almanac(size: 28, weight: .bold))   // v39~41: 58 → 28px 컴팩트 바
                 .foregroundStyle(todayInfo?.meta.color ?? Ink.text)
             Spacer()
         }
@@ -309,7 +314,7 @@ struct TodayView: View {
                         Text(item.title)
                             .font(.subheadline)
                             .foregroundStyle(Ink.text)
-                            .strikethrough(checked, color: Ink.text.opacity(0.5))
+                            .strikethrough(checked, color: Ink.dim)
                         Spacer()
                     }
                 }
@@ -369,7 +374,7 @@ struct TodayView: View {
                         Image(systemName: sub.isDone ? "checkmark.square.fill" : "square")
                             .foregroundStyle(sub.isDone ? Ink.text : Ink.text.opacity(0.35))
                         Text(sub.title).font(.footnote).foregroundStyle(Ink.text)
-                            .strikethrough(sub.isDone, color: Ink.text.opacity(0.5))
+                            .strikethrough(sub.isDone, color: Ink.dim)
                         Spacer()
                     }
                 }
