@@ -1,7 +1,7 @@
-// 템포루틴 — 생리 기록 트래커 (2026-07-20 사용자 결정: 캘린더 탭은 조회 전용,
-// 편집은 이 전용 화면 — 애플 건강 주기 추적 문법: 날짜 스트립 + 기록 행 토글)
-// 데이터 계약은 불변: PeriodStore 경유(dedup=day·미래 금지·HK 미러·§5.5.4).
-// 접근성 대체 경로 = 하루 상세 "생리 기록" 토글 유지.
+// 템포루틴 — 생리 기록 트래커 (2026-07-20 사용자 결정 2차: 애플 건강 주기 추적 문법 정합)
+// - 날짜 선택 = 스크롤 중앙(▼ 마커) / 날짜 칸 탭 = 그 날짜 기록 즉시 토글 (건강 앱과 동일)
+// - 기록 섹션 = 생리 행 + 컨디션(체크인 §3.4 — 선택 날짜의 에너지·기분·잠·한 줄)
+// 데이터 계약 불변: PeriodStore 경유(dedup=day·미래 금지·HK 미러), DailyCheckIn day 키 upsert.
 
 import SwiftUI
 import SwiftData
@@ -12,13 +12,14 @@ struct PeriodTrackerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
 
-    @State private var selectedDay = Calendar.current.startOfDay(for: .now)
+    @State private var centeredDay: Date? = Calendar.current.startOfDay(for: .now)
     @State private var recordFeedback = 0
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var recordedDays: Set<Date> { Set(periodDays.map(\.day)) }
-    private var isSelectedRecorded: Bool { recordedDays.contains(selectedDay) }
+    private var selectedDay: Date { centeredDay ?? today }
+    private var isSelectedFuture: Bool { selectedDay > today }
 
     /// 스트립 범위: 과거 90일 ~ 미래 6일(미래는 표시만, 기록 불가)
     private var stripDays: [Date] {
@@ -30,17 +31,18 @@ struct PeriodTrackerSheet: View {
         NavigationStack {
             ZStack {
                 Ink.paper.ignoresSafeArea()
-                VStack(alignment: .leading, spacing: 20) {
-                    Text(dayTitle)
-                        .font(.system(.title2, design: .serif).weight(.bold))
-                        .foregroundStyle(Ink.text)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 8)
-                    dayStrip
-                    recordSection
-                    Spacer(minLength: 0)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text(dayTitle)
+                            .font(.system(.title2, design: .serif).weight(.bold))
+                            .foregroundStyle(Ink.text)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.top, 6)
+                        dayStrip
+                        recordSection
+                    }
+                    .padding(.vertical, 10)
                 }
-                .padding(.vertical, 12)
             }
             .navigationTitle("생리 기록")
             .navigationBarTitleDisplayMode(.inline)
@@ -58,26 +60,29 @@ struct PeriodTrackerSheet: View {
         return selectedDay == today ? "\(base), 오늘" : base
     }
 
-    // ── 날짜 스트립 (가로 스크롤, 선택일 중앙) ──
+    // ── 날짜 스트립: 스크롤 중앙 = 선택(▼), 칸 탭 = 기록 토글 ──
     private var dayStrip: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 10) {
-                    ForEach(stripDays, id: \.self) { day in
-                        dayPill(day)
-                            .id(day)
+        VStack(spacing: 2) {
+            Image(systemName: "arrowtriangle.down.fill")
+                .font(.system(size: 10))
+                .foregroundStyle(Ink.text)
+                .frame(maxWidth: .infinity)
+            GeometryReader { geo in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 10) {
+                        ForEach(stripDays, id: \.self) { day in
+                            dayPill(day)
+                                .id(day)
+                        }
                     }
+                    .scrollTargetLayout()
                 }
-                .padding(.horizontal, 20)
+                .contentMargins(.horizontal, max(0, (geo.size.width - 38) / 2), for: .scrollContent)
+                .scrollPosition(id: $centeredDay, anchor: .center)
+                .scrollTargetBehavior(.viewAligned)
             }
-            .onAppear {
-                proxy.scrollTo(selectedDay, anchor: .center)
-            }
-            .onChange(of: selectedDay) { _, day in
-                withAnimation { proxy.scrollTo(day, anchor: .center) }
-            }
+            .frame(height: 86)
         }
-        .frame(height: 96)
     }
 
     private func dayPill(_ day: Date) -> some View {
@@ -85,7 +90,7 @@ struct PeriodTrackerSheet: View {
         let selected = day == selectedDay
         let future = day > today
         return Button {
-            selectedDay = day
+            togglePeriod(on: day)   // 건강 앱 문법: 칸 탭 = 그 날짜 기록 토글
         } label: {
             VStack(spacing: 6) {
                 Text(weekdayLetter(day))
@@ -96,12 +101,8 @@ struct PeriodTrackerSheet: View {
                         if selected { Circle().fill(Ink.text) }
                     }
                 RoundedRectangle(cornerRadius: 19)
-                    .fill(recorded ? Ink.coral.opacity(0.35) : Ink.text.opacity(0.06))
-                    .frame(width: 38, height: 56)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 19)
-                            .stroke(selected ? Ink.text.opacity(0.6) : .clear, lineWidth: 1.5)
-                    }
+                    .fill(recorded ? Ink.coral.opacity(0.38) : Ink.text.opacity(0.06))
+                    .frame(width: 38, height: 52)
                     .overlay(alignment: .bottom) {
                         Text("\(cal.component(.day, from: day))")
                             .font(.system(size: 11, weight: .medium))
@@ -112,56 +113,155 @@ struct PeriodTrackerSheet: View {
             }
             .opacity(future ? 0.4 : 1.0)
         }
-        .accessibilityLabel("\(day.formatted(.dateTime.month().day()))\(recorded ? ", 생리 기록" : "")\(future ? ", 미래" : "")")
+        .disabled(future)
+        .accessibilityLabel("\(day.formatted(.dateTime.month().day()))\(recorded ? ", 생리 기록됨" : "")\(future ? ", 미래" : "")")
+        .accessibilityHint(future ? "" : "이중 탭으로 생리 기록 전환")
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     private func weekdayLetter(_ day: Date) -> String {
-        let symbols = cal.veryShortWeekdaySymbols
-        return symbols[cal.component(.weekday, from: day) - 1]
+        cal.veryShortWeekdaySymbols[cal.component(.weekday, from: day) - 1]
     }
 
-    // ── 기록 섹션 (건강 앱 문법: 행 탭 = 해당 날짜 기록 토글) ──
+    // ── 기록 섹션: 생리 + 컨디션(체크인) ──
     private var recordSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("기록")
                 .font(.system(.headline, design: .serif))
                 .foregroundStyle(Ink.text)
-            Button {
-                togglePeriod()
-            } label: {
-                HStack(spacing: 10) {
-                    Circle().fill(Ink.coral).frame(width: 8, height: 8)
-                    Text("생리")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Ink.text)
-                    Spacer()
-                    Image(systemName: isSelectedRecorded ? "checkmark.circle.fill" : "plus")
-                        .foregroundStyle(isSelectedRecorded ? Ink.coral : Ink.text.opacity(0.5))
-                }
-                .padding(16)
-                .background(Ink.coral.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
-            }
-            .disabled(selectedDay > today)   // 미래 기록 금지(원칙 4)
-            .accessibilityValue(isSelectedRecorded ? "기록됨" : "기록 없음")
-            if selectedDay > today {
-                Text("미래 날짜는 기록할 수 없어요.")
-                    .font(.caption)
-                    .foregroundStyle(Ink.text.opacity(0.45))
-            }
+            periodRow
+            CheckInEditor(day: selectedDay)
         }
         .padding(.horizontal, 20)
     }
 
-    private func togglePeriod() {
+    private var periodRow: some View {
+        let recorded = recordedDays.contains(selectedDay)
+        return Button {
+            togglePeriod(on: selectedDay)
+        } label: {
+            HStack(spacing: 10) {
+                Circle().fill(Ink.coral).frame(width: 8, height: 8)
+                Text("생리")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Ink.text)
+                Spacer()
+                Image(systemName: recorded ? "checkmark.circle.fill" : "plus")
+                    .foregroundStyle(recorded ? Ink.coral : Ink.text.opacity(0.5))
+            }
+            .padding(16)
+            .background(Ink.coral.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .disabled(isSelectedFuture)
+        .accessibilityValue(recorded ? "기록됨" : "기록 없음")
+    }
+
+    private func togglePeriod(on day: Date) {
+        guard day <= today else { return }
         let all = periodDays
-        let day = selectedDay
         recordFeedback += 1
         if recordedDays.contains(day) {
             let records = all.filter { $0.day == day }
             Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
         } else {
             Task { await PeriodStore.add(days: [day], context: modelContext, existing: all) }
+        }
+    }
+}
+
+// ── 컨디션 편집기 — 선택 날짜의 DailyCheckIn (§3.4: 3탭=1·3·5, 스킵 무벌점, 미래 금지) ──
+struct CheckInEditor: View {
+    let day: Date
+
+    @Environment(\.modelContext) private var modelContext
+    @Query private var checkIns: [DailyCheckIn]
+
+    @State private var draftEnergy = 0
+    @State private var draftMood = 0
+    @State private var draftSleep = 0
+    @State private var draftNote = ""
+
+    private var today: Date { Calendar.current.startOfDay(for: .now) }
+    private var isFuture: Bool { day > today }
+    private var record: DailyCheckIn? { checkIns.first { $0.day == day } }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Circle().fill(Ink.winter).frame(width: 8, height: 8)
+                Text("컨디션")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Ink.text)
+                Spacer()
+            }
+            signalRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
+            signalRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
+            signalRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
+            TextField("남기고 싶은 만큼만, 짧게.", text: $draftNote, axis: .vertical)
+                .font(.footnote)
+                .foregroundStyle(Ink.text)
+                .onChange(of: draftNote) { persist() }
+        }
+        .padding(16)
+        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 14))
+        .opacity(isFuture ? 0.45 : 1.0)
+        .disabled(isFuture)
+        .onAppear(perform: load)
+        .onChange(of: day) { load() }
+    }
+
+    private func signalRow(label: String, options: [String], value: Binding<Int>) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.footnote)
+                .foregroundStyle(Ink.text.opacity(0.7))
+                .frame(width: 84, alignment: .leading)
+            ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                let mapped = index * 2 + 1   // 3탭 = 1·3·5
+                let selected = value.wrappedValue == mapped
+                Button {
+                    value.wrappedValue = selected ? 0 : mapped
+                    persist()
+                } label: {
+                    Text(option)
+                        .font(.caption2)
+                        .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 6)
+                        .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.08)),
+                                    in: Capsule())
+                }
+                .accessibilityLabel("\(label) \(option)")
+                .accessibilityAddTraits(selected ? [.isSelected] : [])
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func load() {
+        draftEnergy = record?.energy ?? 0
+        draftMood = record?.mood ?? 0
+        draftSleep = record?.sleep ?? 0
+        draftNote = record?.note ?? ""
+    }
+
+    /// energy·mood 둘 다 있으면 upsert — 저장 행은 항상 §5.5 계약(1...5). 해제 = 기록 철회.
+    private func persist() {
+        guard !isFuture else { return }
+        if let existing = record {
+            if draftEnergy > 0 && draftMood > 0 {
+                existing.energy = draftEnergy
+                existing.mood = draftMood
+                existing.sleep = draftSleep > 0 ? draftSleep : nil
+                existing.note = draftNote.isEmpty ? nil : draftNote
+            } else {
+                modelContext.delete(existing)
+            }
+        } else if draftEnergy > 0 && draftMood > 0 {
+            let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood)
+            new.sleep = draftSleep > 0 ? draftSleep : nil
+            new.note = draftNote.isEmpty ? nil : draftNote
+            modelContext.insert(new)
         }
     }
 }
