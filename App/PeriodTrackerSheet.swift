@@ -113,6 +113,7 @@ struct PeriodTrackerSheet: View {
                     }
             }
             .opacity(future ? 0.4 : 1.0)
+            .transaction { $0.animation = nil }   // 기록 on/off는 즉시 전환(페이드 금지 — 사용자 결정)
         }
         .disabled(future)
         .accessibilityLabel("\(day.formatted(.dateTime.month().day()))\(recorded ? ", 생리 기록됨" : "")\(future ? ", 미래" : "")")
@@ -151,6 +152,7 @@ struct PeriodTrackerSheet: View {
             }
             .padding(16)
             .background(Ink.coral.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+            .transaction { $0.animation = nil }
         }
         .disabled(isSelectedFuture)
         .accessibilityValue(recorded ? "기록됨" : "기록 없음")

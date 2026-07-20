@@ -239,6 +239,7 @@ struct SeasonCalendarView: View {
             .background {
                 if recorded || predicted {
                     highlightBand(for: date, index: index, recorded: recorded)
+                        .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
                 }
             }
             .contentShape(Rectangle())
