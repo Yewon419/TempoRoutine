@@ -1,8 +1,9 @@
 // 템포루틴 — 계절 캘린더 (Phase 0 ③, MASTER §5.9-3 / §8.2.3 / §4 보강 I 책력 조판)
 // 계절 = 숫자 잉크색(글리프 정식 이식은 §5.9-8 미학 패스), 오늘 = 은필 채운 원,
 // 생리 = 코랄 형광펜(기록) / 회색 형광펜(예상, 미래만 — 과거 소급 투영 금지 §5.6.2).
-// 기록 편집 = 날짜 길게 누르기 토글(2026-07-20 사용자 결정 — 드래그 긋기 폐기, MASTER I-2b 개정 대기).
-// 대체 경로 = 기록 관리 시트·하루 상세 토글(§5.5.4 접근성 계약 유지). 탭 = 하루 상세 push.
+// 캘린더 탭은 조회 전용(2026-07-20 사용자 결정 — 드래그·길게 누르기 편집 폐기, MASTER I-2b 개정 대기).
+// 기록 편집 = 상단 "생리 기록" 버튼 → PeriodTrackerSheet(건강 앱 문법) + 하루 상세 토글(접근성 유지).
+// 탭 = 하루 상세 push.
 
 import SwiftUI
 import SwiftData
@@ -19,7 +20,6 @@ struct SeasonCalendarView: View {
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
     @State private var pushedDay: Date?
-    @State private var recordFeedback = 0   // 햅틱 트리거 — 확정 순간만(§8.1: 생리 기록)
 
     private let cellHeight: CGFloat = 54
     /// 예측 형광펜 회색 — 다크에선 한 단계 밝게 (기준 대응 팔레트)
@@ -62,28 +62,35 @@ struct SeasonCalendarView: View {
             Ink.paper.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 12) {
                 monthHeader
-                Text(seasonLine)
-                    .font(.system(.subheadline, design: .serif))
-                    .foregroundStyle(Ink.text.opacity(0.65))
+                HStack(alignment: .firstTextBaseline) {
+                    Text(seasonLine)
+                        .font(.system(.subheadline, design: .serif))
+                        .foregroundStyle(Ink.text.opacity(0.65))
+                    Spacer()
+                    // 기록 편집 진입 — 캘린더 탭 자체는 조회 전용
+                    Button {
+                        showLogSheet = true
+                    } label: {
+                        HStack(spacing: 5) {
+                            Circle().fill(Ink.coral).frame(width: 7, height: 7)
+                            Text("생리 기록")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Ink.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+                    }
+                }
                 weekdayRow
                 grid(marks: marks)
                 legend
                 Spacer(minLength: 0)
-                Button {
-                    showLogSheet = true
-                } label: {
-                    Text("기록 관리")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Ink.text)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .overlay(Capsule().stroke(Ink.text.opacity(0.35), lineWidth: 1))
-                }
             }
             .padding(20)
         }
         .sheet(isPresented: $showLogSheet) {
-            PeriodLogSheet()
+            PeriodTrackerSheet()
         }
         .navigationDestination(isPresented: Binding(
             get: { pushedDay != nil },
@@ -190,26 +197,12 @@ struct SeasonCalendarView: View {
                 .frame(height: cellHeight)
             }
         }
-        .sensoryFeedback(.impact(weight: .medium), trigger: recordFeedback)
     }
 
     private func date(at index: Int) -> Date? {
         let dayNumber = index - leadingBlanks + 1
         guard dayNumber >= 1 && dayNumber <= daysInMonth else { return nil }
         return cal.date(byAdding: .day, value: dayNumber - 1, to: monthStart).map { cal.startOfDay(for: $0) }
-    }
-
-    /// 길게 누르기 = 그 날짜 기록 토글 (미래 금지 — PeriodStore가 이중 보장)
-    private func togglePeriod(on date: Date) {
-        guard date <= today else { return }
-        let all = periodDays
-        recordFeedback += 1
-        if recordedDays.contains(date) {
-            let records = all.filter { $0.day == date }
-            Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
-        } else {
-            Task { await PeriodStore.add(days: [date], context: modelContext, existing: all) }
-        }
     }
 
     @ViewBuilder
@@ -249,11 +242,9 @@ struct SeasonCalendarView: View {
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { pushedDay = date }                    // 탭 → 하루 상세 push(§8.2.3)
-            .onLongPressGesture { togglePeriod(on: date) }        // 길게 누르기 → 기록 토글
+            .onTapGesture { pushedDay = date }   // 탭 → 하루 상세 push(§8.2.3). 기록 편집은 트래커·하루 상세만
             .accessibilityElement()
             .accessibilityLabel(accessibilityText(for: date, style: style, recorded: recorded, predicted: predicted))
-            .accessibilityHint(date <= today ? "이중 탭은 하루 상세, 길게 누르면 생리 기록 전환" : "이중 탭은 하루 상세")
             .accessibilityAddTraits(.isButton)
         } else {
             Color.clear

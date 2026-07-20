@@ -124,7 +124,7 @@ struct TodayView: View {
             .coordinateSpace(name: "todayScroll")
             compactBar
         }
-        .sheet(isPresented: $showLogSheet) { PeriodLogSheet() }
+        .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet() }
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: today)
