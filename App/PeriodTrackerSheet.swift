@@ -28,6 +28,8 @@ struct PeriodTrackerSheet: View {
     }
 
     var body: some View {
+        // 성능: 파생 Set은 렌더당 1회만 (칸마다 재계산 금지)
+        let recorded = recordedDays
         NavigationStack {
             ZStack {
                 Ink.paper.ignoresSafeArea()
@@ -38,8 +40,8 @@ struct PeriodTrackerSheet: View {
                             .foregroundStyle(Ink.text)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 6)
-                        dayStrip
-                        recordSection
+                        dayStrip(recorded: recorded)
+                        recordSection(recorded: recorded)
                     }
                     .padding(.vertical, 10)
                 }
@@ -61,7 +63,7 @@ struct PeriodTrackerSheet: View {
     }
 
     // ── 날짜 스트립: 스크롤 중앙 = 선택(▼), 칸 탭 = 기록 토글 ──
-    private var dayStrip: some View {
+    private func dayStrip(recorded: Set<Date>) -> some View {
         VStack(spacing: 2) {
             Image(systemName: "arrowtriangle.down.fill")
                 .font(.system(size: 10))
@@ -71,7 +73,7 @@ struct PeriodTrackerSheet: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 10) {
                         ForEach(stripDays, id: \.self) { day in
-                            dayPill(day)
+                            dayPill(day, recorded: recorded.contains(day))
                                 .id(day)
                         }
                     }
@@ -85,8 +87,7 @@ struct PeriodTrackerSheet: View {
         }
     }
 
-    private func dayPill(_ day: Date) -> some View {
-        let recorded = recordedDays.contains(day)
+    private func dayPill(_ day: Date, recorded: Bool) -> some View {
         let selected = day == selectedDay
         let future = day > today
         return Button {
@@ -124,20 +125,19 @@ struct PeriodTrackerSheet: View {
     }
 
     // ── 기록 섹션: 생리 + 컨디션(체크인) ──
-    private var recordSection: some View {
+    private func recordSection(recorded: Set<Date>) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("기록")
                 .font(.system(.headline, design: .serif))
                 .foregroundStyle(Ink.text)
-            periodRow
+            periodRow(recorded: recorded.contains(selectedDay))
             CheckInEditor(day: selectedDay)
         }
         .padding(.horizontal, 20)
     }
 
-    private var periodRow: some View {
-        let recorded = recordedDays.contains(selectedDay)
-        return Button {
+    private func periodRow(recorded: Bool) -> some View {
+        Button {
             togglePeriod(on: selectedDay)
         } label: {
             HStack(spacing: 10) {

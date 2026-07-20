@@ -79,7 +79,7 @@ struct TodayView: View {
 
     @State private var showLogSheet = false
     @State private var addSheet: CardKind?
-    @State private var scrollOffset: CGFloat = 0
+    @State private var isCollapsed = false
 
     // 체크인 드래프트 — energy·mood 둘 다 기록되는 순간 upsert(§5.5: 저장 행은 항상 1...5)
     @State private var draftEnergy = 0
@@ -92,9 +92,6 @@ struct TodayView: View {
     private var today: Date { cal.startOfDay(for: .now) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
     private var todayInfo: (meta: SeasonMeta, dayInCycle: Int, projected: Bool)? { snapshot.phaseInfo(on: today) }
-
-    /// 컬랩스 진행도 0...1 (transform·opacity 전용 — 레이아웃 시프트 금지)
-    private var collapse: CGFloat { min(1, max(0, (-scrollOffset - 24) / 48)) }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -116,7 +113,17 @@ struct TodayView: View {
                     GeometryReader { geo in
                         Color.clear.onGeometryChange(for: CGFloat.self) {
                             $0.frame(in: .named("todayScroll")).minY
-                        } action: { scrollOffset = $0 }
+                        } action: { offset in
+                            // 성능: 프레임마다 상태 갱신 금지 — 임계 통과 순간에만 flip
+                            // (연속 crossfade가 매 프레임 전체 재계산을 유발해 스크롤 버벅임)
+                            let shouldCollapse = offset < -56
+                            let shouldExpand = offset > -40
+                            if shouldCollapse && !isCollapsed {
+                                withAnimation(.easeOut(duration: 0.2)) { isCollapsed = true }
+                            } else if shouldExpand && isCollapsed {
+                                withAnimation(.easeOut(duration: 0.2)) { isCollapsed = false }
+                            }
+                        }
                         .frame(width: geo.size.width, height: 1)
                     }
                 }
@@ -161,8 +168,6 @@ struct TodayView: View {
                     .foregroundStyle(Ink.text)
             }
         }
-        .opacity(1 - Double(collapse))
-        .offset(y: -12 * collapse)
         .padding(.top, 24)
     }
 
@@ -177,7 +182,7 @@ struct TodayView: View {
         }
         .padding(.vertical, 10)
         .background(.ultraThinMaterial)
-        .opacity(Double(collapse))
+        .opacity(isCollapsed ? 1 : 0)
         .allowsHitTesting(false)
     }
 
