@@ -65,7 +65,7 @@ struct SettingsView: View {
             .background {
                 ZStack {
                     Ink.paper
-                    SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)))
+                    SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)
                 }
                 .ignoresSafeArea()
             }

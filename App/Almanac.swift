@@ -116,9 +116,13 @@ struct SeasonGlyph: View {
     }
 }
 
+/// 은필 선화 텍스처 노출 방식(§4 보강 I) — 카드류 뒤=전면, 개방 구간=중단부 마스크(v42), 온보딩=전면 감쇠(v63)
+enum MotifStyle: Equatable { case card, open, onboarding }
+
 /// 계절광 — 시안 .season-light 3겹 radial 이식. 지면(paper) 위에 얹는 상단 빛.
 struct SeasonLight: View {
     let phase: CyclePhase?   // nil = 콜드(겨울 광)
+    var motif: MotifStyle = .card
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -143,6 +147,16 @@ struct SeasonLight: View {
         }
     }
 
+    /// 계절 연동 배경 모티프(v30 — 겨울=마른 가지 은필화, 그 외 계절 대응 선화)
+    private var motifImage: Image {
+        switch phase {
+        case .follicular: Image("MotifSpring")
+        case .ovulation:  Image("MotifSummer")
+        case .luteal:     Image("MotifAutumn")
+        default:          Image("MotifWinter")   // menstrual · 콜드(nil) · 온보딩 고정
+        }
+    }
+
     var body: some View {
         let l = lights
         ZStack {
@@ -155,10 +169,56 @@ struct SeasonLight: View {
             Rectangle().fill(RadialGradient(colors: [l.c, .clear],
                                             center: UnitPoint(x: 0.5, y: 1.08),
                                             startRadius: 0, endRadius: 420))
+            motifLayer
         }
         .opacity(colorScheme == .dark ? 0.35 : 1.0)   // 다크 = 감쇠(먹지 위 은은한 빛)
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    /// 은필 선화 텍스처 — 시안 `.season-light::after` 이식(v30 계절 연동·v42 개방구간 마스크·v63 온보딩 감쇠).
+    /// 대비 낮춘 두 겹(상단좌측·하단우측, background-size 175%/240% 근사) + multiply — 피사체 아닌 질감.
+    private var motifLayer: some View {
+        ZStack {
+            motifTile(scale: 1.75, alignment: .topLeading)
+            motifTile(scale: 2.40, alignment: .bottomTrailing)
+        }
+        .compositingGroup()
+        .blendMode(.multiply)
+        .contrast(motif == .onboarding ? 0.88 : 0.95)
+        .opacity(motif == .onboarding ? 0.11 : 0.30)
+        .mask(motifMask)
+    }
+
+    private func motifTile(scale: CGFloat, alignment: Alignment) -> some View {
+        GeometryReader { geo in
+            motifImage
+                .resizable()
+                .frame(width: geo.size.width * scale, height: geo.size.width * scale)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: alignment)
+                .clipped()
+        }
+    }
+
+    /// 개방 구간(캘린더·나의 리듬·설정) = 표제·탭바 뒤만 노출, 본문 중단부는 마스크(v42/v63 확장).
+    /// 그 외(카드류·온보딩)는 전면 노출 — 온보딩은 opacity 자체가 낮아 별도 마스크 불필요(v63).
+    @ViewBuilder
+    private var motifMask: some View {
+        if motif == .open {
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0.0),
+                    .init(color: .black, location: 0.20),
+                    .init(color: .clear, location: 0.30),
+                    .init(color: .clear, location: 0.78),
+                    .init(color: .black, location: 0.90),
+                    .init(color: .black, location: 1.0),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+        } else {
+            Rectangle().fill(Color.black)
+        }
     }
 }

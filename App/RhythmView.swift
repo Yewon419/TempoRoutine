@@ -18,7 +18,7 @@ struct RhythmView: View {
     var body: some View {
         ZStack {
             Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: snapshot.phase(on: today))
+            SeasonLight(phase: snapshot.phase(on: today), motif: .open)
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("나의 리듬")

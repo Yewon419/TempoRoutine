@@ -32,7 +32,7 @@ struct OnboardingFlow: View {
     var body: some View {
         ZStack {
             Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: .menstrual)   // 온보딩 = 겨울 배경 고정(사용자 확정)
+            SeasonLight(phase: .menstrual, motif: .onboarding)   // 온보딩 = 겨울 배경 고정(사용자 확정)
             VStack(alignment: .leading, spacing: 0) {
                 topBar
                 Group {

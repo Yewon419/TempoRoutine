@@ -62,7 +62,7 @@ struct SeasonCalendarView: View {
         let marks = monthMarks
         ZStack {
             Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: today))
+            SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: today), motif: .open)
             VStack(alignment: .leading, spacing: 12) {
                 monthHeader
                 HStack(alignment: .firstTextBaseline) {
