@@ -24,6 +24,7 @@ struct SettingsView: View {
     @State private var message: String?
     @State private var undoSnapshot: ExportEnvelopeV1?
     @State private var undoDismissTask: Task<Void, Never>?
+    @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
 
     private var store: StoreArrays {
         StoreArrays(periodDays: periodDays, schedules: schedules, inputs: inputs,
@@ -49,6 +50,7 @@ struct SettingsView: View {
                     Toggle("건강 앱과 연동", isOn: healthBinding)
                         .tint(Ink.text)
                         .disabled(!mirror.available)
+                        .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
                 } header: {
                     Text("건강 앱")
                 } footer: {
@@ -99,6 +101,7 @@ struct SettingsView: View {
         } message: {
             Text(message ?? "")
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
     }
 
     // ── undo 토스트 ──

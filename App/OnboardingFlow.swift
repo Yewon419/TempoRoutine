@@ -17,6 +17,7 @@ struct OnboardingFlow: View {
     @State private var step = 1
     @State private var introScene = 0          // 0=A 브랜드·원 / 1=B 곡선 / 2=C 네 계절
     @State private var drawProgress: CGFloat = 0
+    @State private var lightFeedback = 0        // 작은 햅틱(§4 — 단계 진행·토글, 확정 아님)
 
     // ② 기준일
     @State private var dateSource = 0          // 0=건강 앱 / 1=직접 입력 / 2=기억 안 나요
@@ -49,6 +50,7 @@ struct OnboardingFlow: View {
             .padding(24)
         }
         .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
     }
 
     // ── 상단: back (2단계부터) ──
@@ -56,6 +58,7 @@ struct OnboardingFlow: View {
         HStack {
             if step >= 2 {
                 Button {
+                    lightFeedback += 1
                     step -= 1
                     if step == 1 { introScene = 2 }
                 } label: {
@@ -83,7 +86,10 @@ struct OnboardingFlow: View {
     }
 
     private func primaryButton(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            lightFeedback += 1
+            action()
+        } label: {
             Text(title)
                 .font(.body.weight(.semibold))
                 .foregroundStyle(Ink.paper)
@@ -340,6 +346,7 @@ struct OnboardingFlow: View {
             .font(.subheadline)
             .tint(Ink.text)
             .disabled(!mirror.available)
+            .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
             Group {
                 if !mirror.available {
                     Text("이 기기에선 건강 앱을 사용할 수 없어요.")
@@ -360,6 +367,7 @@ struct OnboardingFlow: View {
     private var manualSource: some View {
         VStack(alignment: .leading, spacing: 10) {
             Button {
+                lightFeedback += 1
                 showTracker = true
             } label: {
                 HStack(spacing: 8) {
@@ -438,6 +446,7 @@ struct OnboardingFlow: View {
             .font(.subheadline)
             .tint(Ink.text)
             .padding(.vertical, 7)
+            .onChange(of: value.wrappedValue) { _, _ in lightFeedback += 1 }
     }
 
     // ══ ④ 저장 위치 ══

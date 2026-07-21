@@ -15,6 +15,7 @@ struct PeriodTrackerSheet: View {
     @State private var centeredDay: Date? = Calendar.current.startOfDay(for: .now)
     @State private var recordFeedback = 0
     @State private var seasonFeedback = 0   // 계절 전환 확정 순간(§4 — 생리 기록·아이템 완료와 구분되는 특별한 순간)
+    @State private var lightFeedback = 0    // 작은 햅틱(§4 — 연동 토글 등, 확정 아님)
 
     // 지연 제거(사용자 결정): 시트 안은 로컬 드래프트로 즉시 토글,
     // 저장·에피소드 재계산·HK 미러는 완료/닫기 때 일괄 커밋
@@ -68,6 +69,7 @@ struct PeriodTrackerSheet: View {
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: recordFeedback)
         .sensoryFeedback(.success, trigger: seasonFeedback)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .onAppear {
             if !draftLoaded {
                 draftLoaded = true
@@ -190,6 +192,7 @@ struct PeriodTrackerSheet: View {
         if mirror.available {
             let on = mirror.linked && mirror.writeAuthorized
             Button {
+                lightFeedback += 1
                 if on {
                     mirror.linked = false
                 } else {
@@ -275,6 +278,7 @@ struct CheckInEditor: View {
     @State private var draftMood = 0
     @State private var draftSleep = 0
     @State private var draftNote = ""
+    @State private var lightFeedback = 0   // 작은 햅틱(§4 — 신호 선택, 확정 아님)
 
     private var today: Date { Calendar.current.startOfDay(for: .now) }
     private var isFuture: Bool { day > today }
@@ -301,6 +305,7 @@ struct CheckInEditor: View {
         .milkGlass(radius: 14)
         .opacity(isFuture ? 0.45 : 1.0)
         .disabled(isFuture)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .onAppear(perform: load)
         .onChange(of: day) { load() }
     }
@@ -315,6 +320,7 @@ struct CheckInEditor: View {
                 let mapped = index * 2 + 1   // 3탭 = 1·3·5
                 let selected = value.wrappedValue == mapped
                 Button {
+                    lightFeedback += 1
                     value.wrappedValue = selected ? 0 : mapped
                     persist()
                 } label: {

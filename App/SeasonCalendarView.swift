@@ -20,6 +20,7 @@ struct SeasonCalendarView: View {
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
     @State private var pushedDay: Date?
+    @State private var lightFeedback = 0   // 작은 햅틱(§4 — 이동·선택, 확정 아님)
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
@@ -95,6 +96,7 @@ struct SeasonCalendarView: View {
         .sheet(isPresented: $showLogSheet) {
             PeriodTrackerSheet()
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .navigationDestination(isPresented: Binding(
             get: { pushedDay != nil },
             set: { if !$0 { pushedDay = nil } }
@@ -147,11 +149,13 @@ struct SeasonCalendarView: View {
                 .foregroundStyle(Ink.text.opacity(0.5))
             Spacer()
             Button {
+                lightFeedback += 1
                 shiftMonth(-1)
             } label: {
                 Image(systemName: "chevron.left").frame(width: 44, height: 44)
             }
             Button {
+                lightFeedback += 1
                 shiftMonth(1)
             } label: {
                 Image(systemName: "chevron.right").frame(width: 44, height: 44)
@@ -247,7 +251,7 @@ struct SeasonCalendarView: View {
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { pushedDay = date }   // 탭 → 하루 상세 push(§8.2.3). 기록 편집은 트래커·하루 상세만
+            .onTapGesture { lightFeedback += 1; pushedDay = date }   // 탭 → 하루 상세 push(§8.2.3). 기록 편집은 트래커·하루 상세만
             .accessibilityElement()
             .accessibilityLabel(accessibilityText(for: date, style: style, recorded: recorded, predicted: predicted))
             .accessibilityAddTraits(.isButton)

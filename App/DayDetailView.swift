@@ -26,6 +26,7 @@ struct DayDetailView: View {
     @State private var selectedCard: CardKind = .schedule
     @State private var addSheet: CardKind?
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 생리 기록·아이템 완료)
+    @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정·월 이동 등, 확정 아님)
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -52,6 +53,7 @@ struct DayDetailView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: day)
@@ -309,9 +311,11 @@ struct DayDetailView: View {
                     .monospacedDigit()
                     .foregroundStyle(Ink.text.opacity(0.7))
                 Button {
+                    lightFeedback += 1
                     if item.loggedSessions > 0 { item.loggedSessions -= 1 }
                 } label: { Image(systemName: "minus.circle") }
                 Button {
+                    lightFeedback += 1
                     item.loggedSessions += 1
                 } label: { Image(systemName: "plus.circle") }
             }

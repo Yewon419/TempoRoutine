@@ -85,6 +85,8 @@ struct TodayView: View {
     @State private var showLogSheet = false
     @State private var addSheet: CardKind?
     @State private var isCollapsed = false
+    @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
+    @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
 
     // 체크인 드래프트 — energy·mood 둘 다 기록되는 순간 upsert(§5.5: 저장 행은 항상 1...5)
     @State private var draftEnergy = 0
@@ -146,6 +148,8 @@ struct TodayView: View {
             }
         }
         .onAppear(perform: loadDraft)
+        .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
     }
 
     // ── 컬랩싱 헤더: 큰 층 ──
@@ -306,6 +310,7 @@ struct TodayView: View {
             ForEach(todayInputs) { item in
                 let checked = isChecked(item.id)
                 Button {
+                    confirmFeedback += 1
                     toggleCheck(item.id)
                 } label: {
                     HStack(spacing: 10) {
@@ -368,6 +373,7 @@ struct TodayView: View {
             let list = (item.subtasks ?? []).sorted { $0.order < $1.order }
             ForEach(list) { sub in
                 Button {
+                    confirmFeedback += 1
                     sub.isDone.toggle()
                 } label: {
                     HStack(spacing: 8) {
@@ -386,9 +392,11 @@ struct TodayView: View {
                                              : "\(item.loggedSessions) 세션")
                     .font(.footnote).monospacedDigit().foregroundStyle(Ink.text.opacity(0.7))
                 Button {
+                    lightFeedback += 1
                     if item.loggedSessions > 0 { item.loggedSessions -= 1 }
                 } label: { Image(systemName: "minus.circle") }
                 Button {
+                    lightFeedback += 1
                     item.loggedSessions += 1
                 } label: { Image(systemName: "plus.circle") }
             }
