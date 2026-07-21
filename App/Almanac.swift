@@ -132,10 +132,10 @@ struct SeasonLight: View {
             (Color(red: 216 / 255, green: 196 / 255, blue: 132 / 255).opacity(0.55),
              Color(red: 228 / 255, green: 214 / 255, blue: 164 / 255).opacity(0.38),
              Color(red: 208 / 255, green: 190 / 255, blue: 138 / 255).opacity(0.42))
-        case .ovulation:
-            (Color(red: 178 / 255, green: 200 / 255, blue: 142 / 255).opacity(0.55),
-             Color(red: 200 / 255, green: 214 / 255, blue: 166 / 255).opacity(0.38),
-             Color(red: 168 / 255, green: 194 / 255, blue: 140 / 255).opacity(0.42))
+        case .ovulation:   // 연두 보정(채도↓명도↑, 2026-07-21 사용자 결정)
+            (Color(red: 207 / 255, green: 221 / 255, blue: 179 / 255).opacity(0.55),
+             Color(red: 231 / 255, green: 237 / 255, blue: 214 / 255).opacity(0.38),
+             Color(red: 198 / 255, green: 214 / 255, blue: 172 / 255).opacity(0.42))
         case .luteal:
             (Color(red: 206 / 255, green: 158 / 255, blue: 132 / 255).opacity(0.52),
              Color(red: 219 / 255, green: 184 / 255, blue: 162 / 255).opacity(0.36),
