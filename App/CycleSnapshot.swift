@@ -10,7 +10,11 @@ struct CycleSnapshot {
     let horizonCycles: Int   // §5.6.2 투영 지평: low=1 / medium=2 / high=3
 
     init(periodDays: [PeriodDay]) {
-        let days = periodDays.map(\.day)
+        self.init(days: periodDays.map(\.day))
+    }
+
+    /// PeriodDay 모델 없이 day만으로 스냅샷 계산 — 아직 커밋 전인 드래프트 미리보기용(§4 계절 전환 판정 등)
+    init(days: [Date]) {
         self.starts = PeriodMath.episodeStarts(days: days)
         self.averageLength = CyclePredictor.averageLength(startDates: starts)
         self.horizonCycles = switch CyclePredictor.confidence(periodStarts: starts) {

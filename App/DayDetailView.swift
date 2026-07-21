@@ -25,6 +25,7 @@ struct DayDetailView: View {
 
     @State private var selectedCard: CardKind = .schedule
     @State private var addSheet: CardKind?
+    @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 생리 기록·아이템 완료)
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -50,6 +51,7 @@ struct DayDetailView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: day)
@@ -90,6 +92,7 @@ struct DayDetailView: View {
         Toggle(isOn: Binding(
             get: { periodDays.contains { $0.day == day } },
             set: { on in
+                confirmFeedback += 1
                 let all = periodDays
                 if on {
                     Task { await PeriodStore.add(days: [day], context: modelContext, existing: all) }
@@ -213,6 +216,7 @@ struct DayDetailView: View {
             ForEach(inputRows) { row in
                 let checked = isCompleted(row.item.id)
                 Button {
+                    confirmFeedback += 1
                     toggleCompletion(row.item.id)
                 } label: {
                     HStack(spacing: 10) {
@@ -282,6 +286,7 @@ struct DayDetailView: View {
             let list = (item.subtasks ?? []).sorted { $0.order < $1.order }
             ForEach(list) { sub in
                 Button {
+                    confirmFeedback += 1
                     sub.isDone.toggle()
                 } label: {
                     HStack(spacing: 8) {

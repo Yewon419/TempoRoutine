@@ -14,6 +14,7 @@ struct PeriodTrackerSheet: View {
 
     @State private var centeredDay: Date? = Calendar.current.startOfDay(for: .now)
     @State private var recordFeedback = 0
+    @State private var seasonFeedback = 0   // 계절 전환 확정 순간(§4 — 생리 기록·아이템 완료와 구분되는 특별한 순간)
 
     // 지연 제거(사용자 결정): 시트 안은 로컬 드래프트로 즉시 토글,
     // 저장·에피소드 재계산·HK 미러는 완료/닫기 때 일괄 커밋
@@ -66,6 +67,7 @@ struct PeriodTrackerSheet: View {
             }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: recordFeedback)
+        .sensoryFeedback(.success, trigger: seasonFeedback)
         .onAppear {
             if !draftLoaded {
                 draftLoaded = true
@@ -85,6 +87,12 @@ struct PeriodTrackerSheet: View {
         guard !adds.isEmpty || !removeDays.isEmpty else { return }
         let records = periodDays.filter { removeDays.contains($0.day) }
         let all = periodDays
+        let phaseBefore = CycleSnapshot(periodDays: all).phase(on: today)
+        let projectedDays = all.map(\.day).filter { !removeDays.contains($0) } + adds
+        let phaseAfter = CycleSnapshot(days: projectedDays).phase(on: today)
+        if phaseAfter != phaseBefore {
+            seasonFeedback += 1   // 오늘의 계절이 이 편집으로 바뀜 — 확정 순간(§4)
+        }
         Task {
             if !records.isEmpty {
                 await PeriodStore.remove(records: records, context: modelContext, all: all)
