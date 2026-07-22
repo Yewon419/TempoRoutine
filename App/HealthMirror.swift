@@ -80,9 +80,11 @@ final class HealthMirror {
         try? await store.delete(samples)   // .appAuthored만 우리가 지울 수 있음(HK가 강제)
     }
 
-    // ── read 병합 + 삭제 전파 ──
-    func sync(context: ModelContext, periodDays: [PeriodDay]) async {
-        guard linked, available else { return }
+    // ── read 병합 + 삭제 전파 ── 반환값 = 새로 가져온 건수(진단·사용자 피드백용, 2026-07-22)
+    @discardableResult
+    func sync(context: ModelContext, periodDays: [PeriodDay]) async -> Int {
+        guard linked else { return 0 }
+        guard available else { return 0 }
         let anchor = loadAnchor()
         let result: (samples: [HKSample], deleted: [HKDeletedObject], anchor: HKQueryAnchor?) =
             await withCheckedContinuation { continuation in
@@ -110,6 +112,7 @@ final class HealthMirror {
         var existingDays = Set(remaining.map(\.day))
         let knownUUIDs = Set(remaining.compactMap(\.healthKitUUID))
         let tombstones = Set(UserDefaults.standard.stringArray(forKey: Self.tombstonesKey) ?? [])
+        var imported = 0
         for sample in result.samples {
             guard let category = sample as? HKCategorySample else { continue }
             let day = cal.startOfDay(for: category.startDate)
@@ -121,8 +124,10 @@ final class HealthMirror {
             context.insert(PeriodDay(day: day, origin: ours ? .appAuthored : .healthKitImported,
                                      healthKitUUID: category.uuid))
             existingDays.insert(day)
+            imported += 1
         }
         saveAnchor(result.anchor)
+        return imported
     }
 
     // ── imported 로컬 삭제 재부활 방지 (§5.7 "로컬 편집만" 선택지의 귀결) ──

@@ -40,6 +40,7 @@ struct OnboardingFlow: View {
     // ② 기준일
     @State private var dateSource = 0          // 0=건강 앱 / 1=직접 입력 / 2=기억 안 나요
     @State private var showTracker = false
+    @State private var syncMessage: String?    // 건강 앱 동기화 결과 안내(2026-07-22 — 침묵 실패 진단용)
     private let mirror = HealthMirror.shared
 
     // ③ 추적 항목
@@ -70,6 +71,11 @@ struct OnboardingFlow: View {
         }
         .safeAreaInset(edge: .bottom) { bottomBar }
         .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
+        .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil }, set: { if !$0 { syncMessage = nil } })) {
+            Button("확인") { syncMessage = nil }
+        } message: {
+            Text(syncMessage ?? "")
+        }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .task(id: step) {
             guard step == 1 else { return }
@@ -435,9 +441,13 @@ struct OnboardingFlow: View {
                 set: { on in
                     if on {
                         Task {
-                            if await mirror.requestAccess() {
-                                await mirror.sync(context: modelContext, periodDays: periodDays)
+                            guard await mirror.requestAccess() else {
+                                syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
+                                return
                             }
+                            let imported = await mirror.sync(context: modelContext, periodDays: periodDays)
+                            syncMessage = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요."
+                                                        : "건강 앱에 가져올 새 생리 기록이 없어요."
                         }
                     } else {
                         mirror.linked = false

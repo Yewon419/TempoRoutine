@@ -23,6 +23,7 @@ struct PeriodTrackerSheet: View {
     @State private var draftLoaded = false
     @State private var committed = false
     @State private var showDatePicker = false   // 날짜 제목 탭 → 날짜 피커 점프(2026-07-22 베타 피드백)
+    @State private var syncMessage: String?     // 건강 앱 동기화 결과 안내(2026-07-22 — 침묵 실패 진단용)
     private let mirror = HealthMirror.shared
 
     private var cal: Calendar { Calendar.current }
@@ -96,6 +97,11 @@ struct PeriodTrackerSheet: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: recordFeedback)
         .sensoryFeedback(.success, trigger: seasonFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil }, set: { if !$0 { syncMessage = nil } })) {
+            Button("확인") { syncMessage = nil }
+        } message: {
+            Text(syncMessage ?? "")
+        }
         .onAppear {
             if !draftLoaded {
                 draftLoaded = true
@@ -224,9 +230,13 @@ struct PeriodTrackerSheet: View {
                 } else {
                     let current = periodDays
                     Task {
-                        if await mirror.requestAccess() {
-                            await mirror.sync(context: modelContext, periodDays: current)
+                        guard await mirror.requestAccess() else {
+                            syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
+                            return
                         }
+                        let imported = await mirror.sync(context: modelContext, periodDays: current)
+                        syncMessage = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요."
+                                                    : "건강 앱에 가져올 새 생리 기록이 없어요."
                     }
                 }
             } label: {

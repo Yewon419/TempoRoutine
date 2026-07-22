@@ -158,9 +158,13 @@ struct SettingsView: View {
                 if on {
                     let current = store
                     Task {
-                        if await mirror.requestAccess() {
-                            await mirror.sync(context: modelContext, periodDays: current.periodDays)
+                        guard await mirror.requestAccess() else {
+                            message = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
+                            return
                         }
+                        let imported = await mirror.sync(context: modelContext, periodDays: current.periodDays)
+                        message = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요."
+                                                : "건강 앱에 가져올 새 생리 기록이 없어요."
                     }
                 } else {
                     mirror.linked = false   // 미러 중지 — 기존 기록은 양쪽 다 유지
