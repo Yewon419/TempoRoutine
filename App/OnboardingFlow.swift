@@ -238,6 +238,7 @@ struct OnboardingFlow: View {
     /// 주기 원 드로잉 — 은필 원(1.5s, 1.3s 지연 후) + 4계절 노드(원이 지나가는 시점에 개별 페이드인)
     private var cycleWheel: some View {
         ZStack {
+            if !reduceMotion { orbitDot }   // 원보다 아래 레이어(2026-07-22 사용자 결정) — 완성 후 도는 잉크 점, Reduce Motion엔 숨김
             Circle()
                 .trim(from: 0, to: sceneAppeared ? 1 : 0)
                 .stroke(Ink.winter.opacity(0.7), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
@@ -256,7 +257,6 @@ struct OnboardingFlow: View {
                 .fadeIn(sceneAppeared, delay: Self.wheelNodeDelays[index], reduceMotion: reduceMotion)
                 .offset(x: 95 * cos(angle * .pi / 180), y: 95 * sin(angle * .pi / 180))
             }
-            if !reduceMotion { orbitDot }   // 완성 후 원을 도는 잉크 점(시안 26s 루프) — Reduce Motion에선 숨김(§8.2.1)
         }
         .frame(width: 190, height: 190)
         .padding(.vertical, 12)
