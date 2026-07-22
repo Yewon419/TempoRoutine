@@ -17,7 +17,7 @@ final class ExportSchemaTests: XCTestCase {
             inputItems: [InputItemDTO(id: itemID, title: "가볍게 걷기", category: .exercise,
                                       schedule: .cycleAnchored(r),
                                       createdAt: Date(timeIntervalSince1970: 1_799_000_000))],
-            outputItems: [OutputItemDTO(id: UUID(), title: "자격증 공부", recurrence: r, progressKind: .subtasks,
+            outputItems: [OutputItemDTO(id: UUID(), title: "자격증 공부", schedule: .cycleAnchored(r), progressKind: .subtasks,
                                         subtasks: [OutputSubtaskDTO(id: UUID(), title: "1챕터", isDone: true, order: 0)],
                                         targetSessions: 0, loggedSessions: 0, percent: 0,
                                         createdAt: Date(timeIntervalSince1970: 1_799_000_000))],
