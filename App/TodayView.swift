@@ -94,6 +94,7 @@ struct TodayView: View {
     @State private var draftSleep = 0
     @State private var draftNote = ""
     @State private var draftLoaded = false
+    @FocusState private var noteFocused: Bool   // 키보드 닫기 경로(베타 피드백 2026-07-22)
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -137,7 +138,14 @@ struct TodayView: View {
                 }
             }
             .coordinateSpace(name: "todayScroll")
+            .scrollDismissesKeyboard(.interactively)   // 스크롤로도 키보드 닫힘
             compactBar
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
+            }
         }
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet() }
         .sheet(item: $addSheet) { kind in
@@ -446,6 +454,7 @@ struct TodayView: View {
                 TextField("남기고 싶은 만큼만, 짧게.", text: $draftNote, axis: .vertical)
                     .font(.subheadline)
                     .foregroundStyle(Ink.text)
+                    .focused($noteFocused)
                     .onChange(of: draftNote) { persistDraft() }
             }
             if draftEnergy > 0 && draftMood > 0 {

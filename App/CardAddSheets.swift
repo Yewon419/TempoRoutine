@@ -40,44 +40,92 @@ enum SeasonAnchor: String, CaseIterable, Identifiable {
     }
 }
 
-// ── ① 일정 추가 ──
+// ── ① 일정 추가 (2026-07-22 베타 피드백 개편 — 캘린더 이벤트 편집 문법: 제목·시작→종료·하루종일·반복·알림) ──
 struct ScheduleAddSheet: View {
     let defaultDate: Date
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @FocusState private var titleFocused: Bool
     @State private var title = ""
-    @State private var date: Date
-    @State private var timed = false
+    @State private var allDay = true
+    @State private var start: Date
+    @State private var end: Date
     @State private var repeatRule: ScheduleRepeat = .none
+    @State private var reminderMinutes = -1
 
     private static let repeatChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly, .yearly]
+    /// 시간 지정 일정 — 시작 기준 N분 전
+    private static let timedReminders: [(label: String, minutes: Int)] =
+        [("없음", -1), ("정시", 0), ("10분 전", 10), ("30분 전", 30), ("1시간 전", 60), ("1일 전", 1440)]
+    /// 하루종일 일정 — 기준 시각 오전 9시(ScheduleReminder.allDayHour)
+    private static let allDayReminders: [(label: String, minutes: Int)] =
+        [("없음", -1), ("당일 아침", 0), ("전날 아침", 1440)]
 
     init(defaultDate: Date) {
         self.defaultDate = defaultDate
-        _date = State(initialValue: defaultDate)
+        // 시간 지정 전환 시의 기본 시각 — 선택 날짜 + (지금 시각의 다음 정시), 1시간짜리
+        let cal = Calendar.current
+        var comps = cal.dateComponents([.year, .month, .day], from: defaultDate)
+        comps.hour = min(23, cal.component(.hour, from: .now) + 1)
+        let base = cal.date(from: comps) ?? defaultDate
+        _start = State(initialValue: base)
+        _end = State(initialValue: base.addingTimeInterval(3600))
+    }
+
+    private var reminderChoices: [(label: String, minutes: Int)] {
+        allDay ? Self.allDayReminders : Self.timedReminders
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                TextField("예: 병원 예약", text: $title)
-                DatePicker("날짜", selection: $date, displayedComponents: timed ? [.date, .hourAndMinute] : [.date])
-                Toggle("시간 지정", isOn: $timed)
-                Toggle("반복", isOn: Binding(
-                    get: { repeatRule != .none },
-                    set: { on in repeatRule = on ? .daily : .none }
-                ))
-                .tint(Ink.text)
-                if repeatRule != .none {
-                    HStack(spacing: 6) {
-                        ForEach(Self.repeatChoices, id: \.self) { freq in
-                            FreqChip(label: freq.shortLabel ?? "", selected: repeatRule == freq) {
-                                repeatRule = freq
+                Section {
+                    TextField("제목", text: $title)
+                        .font(.title3.weight(.semibold))
+                        .focused($titleFocused)
+                }
+                Section {
+                    Toggle("하루종일", isOn: $allDay)
+                        .tint(Ink.text)
+                    DatePicker("시작", selection: $start,
+                               displayedComponents: allDay ? [.date] : [.date, .hourAndMinute])
+                    if !allDay {
+                        DatePicker("종료", selection: $end, in: start...,
+                                   displayedComponents: [.date, .hourAndMinute])
+                    }
+                }
+                Section {
+                    Toggle("반복", isOn: Binding(
+                        get: { repeatRule != .none },
+                        set: { on in repeatRule = on ? .daily : .none }
+                    ))
+                    .tint(Ink.text)
+                    if repeatRule != .none {
+                        HStack(spacing: 6) {
+                            ForEach(Self.repeatChoices, id: \.self) { freq in
+                                FreqChip(label: freq.shortLabel ?? "", selected: repeatRule == freq) {
+                                    repeatRule = freq
+                                }
                             }
                         }
                     }
                 }
+                Section {
+                    Picker("알림", selection: $reminderMinutes) {
+                        ForEach(reminderChoices, id: \.minutes) { choice in
+                            Text(choice.label).tag(choice.minutes)
+                        }
+                    }
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: start) {
+                if end <= start { end = start.addingTimeInterval(3600) }
+            }
+            .onChange(of: allDay) {
+                // 하루종일 전환 시 알림 선택지가 달라짐 — 유효하지 않은 값은 없음으로
+                if !reminderChoices.contains(where: { $0.minutes == reminderMinutes }) { reminderMinutes = -1 }
             }
             .navigationTitle("일정 추가")
             .navigationBarTitleDisplayMode(.inline)
@@ -88,12 +136,22 @@ struct ScheduleAddSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
-                        modelContext.insert(ScheduleItem(title: title, date: date,
-                                                         isAllDay: !timed, repeatRule: repeatRule))
+                        let item = ScheduleItem(title: title, date: start, isAllDay: allDay,
+                                                repeatRule: repeatRule,
+                                                endDate: allDay ? nil : end,
+                                                reminderMinutes: reminderMinutes)
+                        modelContext.insert(item)
+                        ScheduleReminder.schedule(id: item.id, title: item.title, date: start,
+                                                  isAllDay: allDay, repeatRule: repeatRule,
+                                                  reminderMinutes: reminderMinutes)
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("완료") { titleFocused = false }.foregroundStyle(Ink.text)
                 }
             }
         }

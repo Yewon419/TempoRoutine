@@ -41,14 +41,20 @@ public struct ScheduleItemDTO: Codable, Equatable, Sendable {
     public var isAllDay: Bool
     public var repeatRule: ScheduleRepeat
     public var createdAt: Date
+    // v1 내 추가 필드(2026-07-22 일정 시트 개편) — optional이라 구 백업 decode 시 nil로 흡수
+    public var endDate: String?         // 시간 지정 일정의 종료(ISO8601 instant). 하루종일이면 nil
+    public var reminderMinutes: Int?    // nil·음수 = 알림 없음 / 0 = 정시 / N = N분 전
 
-    public init(id: UUID, title: String, date: String, isAllDay: Bool, repeatRule: ScheduleRepeat, createdAt: Date) {
+    public init(id: UUID, title: String, date: String, isAllDay: Bool, repeatRule: ScheduleRepeat,
+                createdAt: Date, endDate: String? = nil, reminderMinutes: Int? = nil) {
         self.id = id
         self.title = title
         self.date = date
         self.isAllDay = isAllDay
         self.repeatRule = repeatRule
         self.createdAt = createdAt
+        self.endDate = endDate
+        self.reminderMinutes = reminderMinutes
     }
 }
 

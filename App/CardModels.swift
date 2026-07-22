@@ -27,17 +27,22 @@ final class ItemCompletion {
 final class ScheduleItem {
     var id: UUID = UUID()
     var title: String = ""
-    var date: Date = Date()                  // 절대 날짜. 연반복은 month/day만 의미
+    var date: Date = Date()                  // 절대 날짜(시작). 연반복은 month/day만 의미
+    var endDate: Date? = nil                 // 시간 지정 시 종료 시각. 하루종일이면 nil (2026-07-22 시트 개편)
     var isAllDay: Bool = true                // false = 시간 지정(프로모드)
     var repeatRule: ScheduleRepeat = ScheduleRepeat.none
+    var reminderMinutes: Int = -1            // -1 = 알림 없음 / 0 = 정시(하루종일=당일 9시) / N = N분 전
     var createdAt: Date = Date()
 
-    init(title: String, date: Date, isAllDay: Bool = true, repeatRule: ScheduleRepeat = .none) {
+    init(title: String, date: Date, isAllDay: Bool = true, repeatRule: ScheduleRepeat = .none,
+         endDate: Date? = nil, reminderMinutes: Int = -1) {
         self.id = UUID()
         self.title = title
         self.date = date
+        self.endDate = endDate
         self.isAllDay = isAllDay
         self.repeatRule = repeatRule
+        self.reminderMinutes = reminderMinutes
         self.createdAt = .now
     }
 

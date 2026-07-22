@@ -164,7 +164,8 @@ struct DayDetailView: View {
                         Text(item.title).foregroundStyle(Ink.text)
                         Spacer()
                         if !item.isAllDay {
-                            Text(item.date.formatted(date: .omitted, time: .shortened))
+                            let startText = item.date.formatted(date: .omitted, time: .shortened)
+                            Text(item.endDate.map { "\(startText)~\($0.formatted(date: .omitted, time: .shortened))" } ?? startText)
                                 .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
                         }
                         if let label = item.repeatRule.shortLabel {

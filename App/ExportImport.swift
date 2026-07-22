@@ -46,7 +46,9 @@ enum ExportImport {
             scheduleItems: store.schedules.map {
                 ScheduleItemDTO(id: $0.id, title: $0.title,
                                 date: $0.isAllDay ? ExportCodec.dayString($0.date) : ExportCodec.instantString($0.date),
-                                isAllDay: $0.isAllDay, repeatRule: $0.repeatRule, createdAt: $0.createdAt)
+                                isAllDay: $0.isAllDay, repeatRule: $0.repeatRule, createdAt: $0.createdAt,
+                                endDate: $0.endDate.map { ExportCodec.instantString($0) },
+                                reminderMinutes: $0.reminderMinutes >= 0 ? $0.reminderMinutes : nil)
             },
             inputItems: store.inputs.map {
                 InputItemDTO(id: $0.id, title: $0.title, category: $0.category,
@@ -90,11 +92,17 @@ enum ExportImport {
         for dto in envelope.scheduleItems where !scheduleIDs.contains(dto.id) {
             let date = dto.isAllDay ? ExportCodec.day(from: dto.date) : ExportCodec.instant(from: dto.date)
             guard let date else { continue }
-            let item = ScheduleItem(title: dto.title, date: date, isAllDay: dto.isAllDay, repeatRule: dto.repeatRule)
+            let item = ScheduleItem(title: dto.title, date: date, isAllDay: dto.isAllDay, repeatRule: dto.repeatRule,
+                                    endDate: dto.endDate.flatMap { ExportCodec.instant(from: $0) },
+                                    reminderMinutes: dto.reminderMinutes ?? -1)
             item.id = dto.id
             item.createdAt = dto.createdAt
             context.insert(item)
             added += 1
+            // 백업 복원 일정의 알림 재스케줄(HK 재기록 금지 원칙과 달리 노티는 로컬 파생 상태라 재생성이 맞음)
+            ScheduleReminder.schedule(id: item.id, title: item.title, date: item.date,
+                                      isAllDay: item.isAllDay, repeatRule: item.repeatRule,
+                                      reminderMinutes: item.reminderMinutes)
         }
 
         let inputIDs = Set(store.inputs.map(\.id))
@@ -151,8 +159,9 @@ enum ExportImport {
         return added
     }
 
-    // ── 전체 삭제 (§8.2.6 — undo는 호출측이 스냅샷으로) ──
+    // ── 전체 삭제 (§8.2.6 — undo는 호출측이 스냅샷으로. 알림은 undo 미복원 — 재저장 시 재스케줄) ──
     static func wipeAll(_ store: StoreArrays, context: ModelContext) {
+        store.schedules.forEach { ScheduleReminder.cancel(id: $0.id) }
         store.periodDays.forEach { context.delete($0) }
         store.schedules.forEach { context.delete($0) }
         store.inputs.forEach { context.delete($0) }
