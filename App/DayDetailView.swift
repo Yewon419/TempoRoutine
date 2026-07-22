@@ -251,18 +251,29 @@ struct DayDetailView: View {
 
     private var outputRows: [OutputRow] {
         outputs.compactMap { item in
-            guard let occ = snapshot.occurrence(of: item.recurrence,
-                                                createdAt: cal.startOfDay(for: item.createdAt), on: day) else {
-                return nil
+            switch item.schedule {
+            case .daily, .weekly, .monthly:
+                guard item.occursByCalendar(on: day) else { return nil }
+                let future = day > today
+                if item.isComplete && future { return nil }
+                return OutputRow(item: item, projected: future)
+            case .cycleAnchored(let r):
+                guard let occ = snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: day) else {
+                    return nil
+                }
+                if item.isComplete && occ.projected { return nil }
+                return OutputRow(item: item, projected: occ.projected)
             }
-            if item.isComplete && occ.projected { return nil }
-            return OutputRow(item: item, projected: occ.projected)
         }
     }
 
     /// 콜드스타트(생리 미기록)에서는 Output이 있어도 주기 앵커를 못 풀어 전부 안 보임 — 이유를 밝힌다.
     private var outputEmptyMessage: String {
-        (!outputs.isEmpty && snapshot.isColdStart) ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
+        let hasColdBlocked = snapshot.isColdStart && outputs.contains {
+            if case .cycleAnchored = $0.schedule { return true }
+            return false
+        }
+        return hasColdBlocked ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
     }
 
     private var outputCard: some View {

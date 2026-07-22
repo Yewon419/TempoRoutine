@@ -333,17 +333,25 @@ struct TodayView: View {
     // ③ Output (오늘 occurrence) + 계절 레버 카피
     private var todayOutputs: [OutputItem] {
         outputs.filter { item in
-            guard let occ = snapshot.occurrence(of: item.recurrence,
-                                                createdAt: cal.startOfDay(for: item.createdAt), on: today) else {
-                return false
+            switch item.schedule {
+            case .daily, .weekly, .monthly:
+                return item.occursByCalendar(on: today)
+            case .cycleAnchored(let r):
+                guard let occ = snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: today) else {
+                    return false
+                }
+                return !(item.isComplete && occ.projected)
             }
-            return !(item.isComplete && occ.projected)
         }
     }
 
     /// 콜드스타트(생리 미기록)에서는 Output이 있어도 주기 앵커를 못 풀어 전부 안 보임 — 이유를 밝힌다.
     private var outputEmptyMessage: String {
-        (!outputs.isEmpty && snapshot.isColdStart) ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
+        let hasColdBlocked = snapshot.isColdStart && outputs.contains {
+            if case .cycleAnchored = $0.schedule { return true }
+            return false
+        }
+        return hasColdBlocked ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
     }
 
     @ViewBuilder

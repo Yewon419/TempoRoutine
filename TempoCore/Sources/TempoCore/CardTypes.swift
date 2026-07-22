@@ -47,3 +47,39 @@ extension InputSchedule {
 
 // ③ Output 카드 — 진행도 종류 (§5.5.2: 진행은 아이템 수명 누적, 완료는 파생)
 public enum OutputProgressKind: String, Codable, Sendable { case subtasks, sessions, percent }
+
+/// Output 반복 — InputSchedule과 동형(2026-07-22 확장, 주기 데이터 없어도 daily/weekly/monthly는 동작해야 함).
+public enum OutputSchedule: Codable, Equatable, Sendable {
+    case daily                          // 매일
+    case weekly                         // 매주 — 생성일(createdAt)과 같은 요일
+    case monthly                        // 매달 — 생성일과 같은 일(day), 말일 클램프
+    case cycleAnchored(CycleRecurrence) // 주기 기준 (resolveDate 사용)
+}
+
+extension OutputSchedule {
+    enum CodingKeys: String, CodingKey { case type, recurrence }
+    enum Kind: String, Codable { case daily, weekly, monthly, cycleAnchored }
+    public func encode(to e: Encoder) throws {
+        var c = e.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .daily:
+            try c.encode(Kind.daily, forKey: .type)
+        case .weekly:
+            try c.encode(Kind.weekly, forKey: .type)
+        case .monthly:
+            try c.encode(Kind.monthly, forKey: .type)
+        case .cycleAnchored(let r):
+            try c.encode(Kind.cycleAnchored, forKey: .type)
+            try c.encode(r, forKey: .recurrence)
+        }
+    }
+    public init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        switch try c.decode(Kind.self, forKey: .type) {
+        case .daily:          self = .daily
+        case .weekly:         self = .weekly
+        case .monthly:        self = .monthly
+        case .cycleAnchored:  self = .cycleAnchored(try c.decode(CycleRecurrence.self, forKey: .recurrence))
+        }
+    }
+}

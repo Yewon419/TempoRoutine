@@ -159,8 +159,8 @@ final class OutputSubtask {
 final class OutputItem {
     var id: UUID = UUID()
     var title: String = ""
-    // CycleRecurrence(내부에 연관값 enum CycleAnchor) 직접 저장 금지 — InputItem.scheduleData와 동일 근거
-    var recurrenceData: Data = Data()
+    // 연관값 enum(OutputSchedule) 직접 저장 금지 — InputItem.scheduleData와 동일 근거
+    var scheduleData: Data = Data()
     var progressKind: OutputProgressKind = OutputProgressKind.percent
     @Relationship(deleteRule: .cascade, inverse: \OutputSubtask.owner)
     var subtasks: [OutputSubtask]? = []   // CloudKit 규칙: optional
@@ -169,24 +169,43 @@ final class OutputItem {
     var percent: Double = 0
     var createdAt: Date = Date()
 
-    var recurrence: CycleRecurrence {
-        get {
-            (try? JSONDecoder().decode(CycleRecurrence.self, from: recurrenceData))
-                ?? CycleRecurrence(anchor: .cycleStart, dayOffset: 0, repeatsEveryCycle: true, overflowRule: .clamp)
-        }
-        set { recurrenceData = (try? JSONEncoder().encode(newValue)) ?? recurrenceData }
+    var schedule: OutputSchedule {
+        get { (try? JSONDecoder().decode(OutputSchedule.self, from: scheduleData)) ?? .daily }
+        set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
     }
 
-    init(title: String, recurrence: CycleRecurrence, progressKind: OutputProgressKind = .percent) {
+    init(title: String, schedule: OutputSchedule, progressKind: OutputProgressKind = .percent) {
         self.id = UUID()
         self.title = title
-        self.recurrenceData = (try? JSONEncoder().encode(recurrence)) ?? Data()
+        self.scheduleData = (try? JSONEncoder().encode(schedule)) ?? Data()
         self.progressKind = progressKind
         self.subtasks = []
         self.targetSessions = 0
         self.loggedSessions = 0
         self.percent = 0
         self.createdAt = .now
+    }
+
+    /// .daily·.weekly·.monthly 판정(달력 기준) — InputItem.occursByCalendar와 동형(§ 반복 통일).
+    func occursByCalendar(on day: Date) -> Bool {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: createdAt)
+        let target = cal.startOfDay(for: day)
+        guard target >= start else { return false }
+        switch schedule {
+        case .daily:
+            return true
+        case .weekly:
+            return cal.component(.weekday, from: createdAt) == cal.component(.weekday, from: day)
+        case .monthly:
+            let startDay = cal.component(.day, from: createdAt)
+            let targetDay = cal.component(.day, from: day)
+            if startDay == targetDay { return true }
+            let daysInTargetMonth = cal.range(of: .day, in: .month, for: day)?.count ?? 31
+            return startDay > daysInTargetMonth && targetDay == daysInTargetMonth
+        case .cycleAnchored:
+            return false
+        }
     }
 
     /// 완료 = 파생 상태(§5.5.2). 저장 필드 아님.

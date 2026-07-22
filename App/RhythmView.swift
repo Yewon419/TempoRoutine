@@ -102,7 +102,9 @@ struct RhythmView: View {
             }
         }
         for item in outputs {
-            map[anchorPhase(item.recurrence), default: []].append(item.title)
+            if case .cycleAnchored(let r) = item.schedule {
+                map[anchorPhase(r), default: []].append(item.title)
+            }
         }
         return map
     }

@@ -131,7 +131,8 @@ struct SeasonCalendarView: View {
             }
         }
         for item in outputs {
-            for occ in snap.occurrences(of: item.recurrence, createdAt: cal.startOfDay(for: item.createdAt))
+            guard case .cycleAnchored(let r) = item.schedule else { continue }   // 매일 Input과 동일 — 노이즈 방지
+            for occ in snap.occurrences(of: r, createdAt: cal.startOfDay(for: item.createdAt))
             where occ.date >= monthStart && occ.date < monthEnd {
                 if item.isComplete && occ.projected { continue }   // §5.5.2 완료된 Output 미래 미표시
                 marks[cal.startOfDay(for: occ.date), default: []].append((item.title, occ.projected))

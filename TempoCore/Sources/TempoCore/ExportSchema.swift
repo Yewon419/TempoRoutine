@@ -85,7 +85,7 @@ public struct OutputSubtaskDTO: Codable, Equatable, Sendable {
 public struct OutputItemDTO: Codable, Equatable, Sendable {
     public var id: UUID
     public var title: String
-    public var recurrence: CycleRecurrence
+    public var schedule: OutputSchedule
     public var progressKind: OutputProgressKind
     public var subtasks: [OutputSubtaskDTO]
     public var targetSessions: Int
@@ -93,12 +93,12 @@ public struct OutputItemDTO: Codable, Equatable, Sendable {
     public var percent: Double
     public var createdAt: Date
 
-    public init(id: UUID, title: String, recurrence: CycleRecurrence, progressKind: OutputProgressKind,
+    public init(id: UUID, title: String, schedule: OutputSchedule, progressKind: OutputProgressKind,
                 subtasks: [OutputSubtaskDTO], targetSessions: Int, loggedSessions: Int,
                 percent: Double, createdAt: Date) {
         self.id = id
         self.title = title
-        self.recurrence = recurrence
+        self.schedule = schedule
         self.progressKind = progressKind
         self.subtasks = subtasks
         self.targetSessions = targetSessions

@@ -53,7 +53,7 @@ enum ExportImport {
                              schedule: $0.schedule, createdAt: $0.createdAt)
             },
             outputItems: store.outputs.map { item in
-                OutputItemDTO(id: item.id, title: item.title, recurrence: item.recurrence,
+                OutputItemDTO(id: item.id, title: item.title, schedule: item.schedule,
                               progressKind: item.progressKind,
                               subtasks: (item.subtasks ?? []).sorted { $0.order < $1.order }.map {
                                   OutputSubtaskDTO(id: $0.id, title: $0.title, isDone: $0.isDone, order: $0.order)
@@ -108,7 +108,7 @@ enum ExportImport {
 
         let outputIDs = Set(store.outputs.map(\.id))
         for dto in envelope.outputItems where !outputIDs.contains(dto.id) {
-            let item = OutputItem(title: dto.title, recurrence: dto.recurrence, progressKind: dto.progressKind)
+            let item = OutputItem(title: dto.title, schedule: dto.schedule, progressKind: dto.progressKind)
             item.id = dto.id
             item.createdAt = dto.createdAt
             item.targetSessions = dto.targetSessions
