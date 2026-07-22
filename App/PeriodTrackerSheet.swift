@@ -382,22 +382,25 @@ struct CheckInEditor: View {
         draftNote = record?.note ?? ""
     }
 
-    /// energy·mood 둘 다 있으면 upsert — 저장 행은 항상 §5.5 계약(1...5). 해제 = 기록 철회.
+    /// 저장 조건 = 필수 2신호(energy·mood) 또는 노트(§5.5 개정 2026-07-22 — 노트 단독 저장 허용).
+    /// 전부 해제 = 기록 철회. 리듬 집계는 energy·mood 둘 다 1...5인 행만(§5.6.3).
     private func persist() {
         guard !isFuture else { return }
+        let hasSignals = draftEnergy > 0 && draftMood > 0
+        let hasNote = !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         if let existing = record {
-            if draftEnergy > 0 && draftMood > 0 {
+            if hasSignals || hasNote {
                 existing.energy = draftEnergy
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
-                existing.note = draftNote.isEmpty ? nil : draftNote
+                existing.note = hasNote ? draftNote : nil
             } else {
                 modelContext.delete(existing)
             }
-        } else if draftEnergy > 0 && draftMood > 0 {
+        } else if hasSignals || hasNote {
             let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood)
             new.sleep = draftSleep > 0 ? draftSleep : nil
-            new.note = draftNote.isEmpty ? nil : draftNote
+            new.note = hasNote ? draftNote : nil
             modelContext.insert(new)
         }
     }

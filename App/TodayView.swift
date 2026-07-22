@@ -507,21 +507,24 @@ struct TodayView: View {
         }
     }
 
-    /// energy·mood 둘 다 있으면 upsert — 저장 행은 항상 §5.5 계약(1...5)을 지킨다.
+    /// 저장 조건 = 필수 2신호(energy·mood) 또는 노트(§5.5 개정 2026-07-22 — 노트 단독 저장 허용,
+    /// 한 줄 일기 유실 방지). 리듬 집계는 energy·mood 둘 다 1...5인 행만 쓴다(§5.6.3).
     private func persistDraft() {
+        let hasSignals = draftEnergy > 0 && draftMood > 0
+        let hasNote = !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         if let existing = todayCheckIn {
-            if draftEnergy > 0 && draftMood > 0 {
+            if hasSignals || hasNote {
                 existing.energy = draftEnergy
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
-                existing.note = draftNote.isEmpty ? nil : draftNote
+                existing.note = hasNote ? draftNote : nil
             } else {
-                modelContext.delete(existing)   // 필수 신호 해제 = 기록 철회(스킵 무벌점)
+                modelContext.delete(existing)   // 전부 해제 = 기록 철회(스킵 무벌점)
             }
-        } else if draftEnergy > 0 && draftMood > 0 {
+        } else if hasSignals || hasNote {
             let record = DailyCheckIn(day: today, energy: draftEnergy, mood: draftMood)
             record.sleep = draftSleep > 0 ? draftSleep : nil
-            record.note = draftNote.isEmpty ? nil : draftNote
+            record.note = hasNote ? draftNote : nil
             modelContext.insert(record)
         }
     }
