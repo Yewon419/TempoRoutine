@@ -122,10 +122,11 @@ struct DayDetailView: View {
         }
     }
 
-    private func cardShell(_ empty: Bool, addLabel: String, @ViewBuilder rows: () -> some View) -> some View {
+    private func cardShell(_ empty: Bool, addLabel: String, emptyMessage: String = "아직 없어요",
+                            @ViewBuilder rows: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             if empty {
-                Text("아직 없어요")
+                Text(emptyMessage)
                     .font(.footnote)
                     .foregroundStyle(Ink.text.opacity(0.45))
                     .padding(.vertical, 8)
@@ -188,8 +189,8 @@ struct DayDetailView: View {
     private var inputRows: [InputRow] {
         inputs.compactMap { item in
             switch item.schedule {
-            case .daily:
-                return InputRow(item: item, projected: false)
+            case .daily, .weekly, .monthly:
+                return item.occursByCalendar(on: day) ? InputRow(item: item, projected: false) : nil
             case .cycleAnchored(let r):
                 if let occ = snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: day) {
                     return InputRow(item: item, projected: occ.projected)
@@ -259,8 +260,13 @@ struct DayDetailView: View {
         }
     }
 
+    /// 콜드스타트(생리 미기록)에서는 Output이 있어도 주기 앵커를 못 풀어 전부 안 보임 — 이유를 밝힌다.
+    private var outputEmptyMessage: String {
+        (!outputs.isEmpty && snapshot.isColdStart) ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
+    }
+
     private var outputCard: some View {
-        cardShell(outputRows.isEmpty, addLabel: "Output 추가") {
+        cardShell(outputRows.isEmpty, addLabel: "Output 추가", emptyMessage: outputEmptyMessage) {
             ForEach(outputRows) { row in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {

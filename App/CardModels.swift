@@ -113,6 +113,29 @@ final class InputItem {
         self.scheduleData = (try? JSONEncoder().encode(schedule)) ?? Data()
         self.createdAt = .now
     }
+
+    /// .daily·.weekly·.monthly 판정(달력 기준 — 주기 기준은 CycleSnapshot 필요라 호출부에서 별도 처리).
+    /// 생성일(createdAt) 이전은 발생 안 함. .cycleAnchored는 항상 false(호출부 분기 전용 가드).
+    func occursByCalendar(on day: Date) -> Bool {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: createdAt)
+        let target = cal.startOfDay(for: day)
+        guard target >= start else { return false }
+        switch schedule {
+        case .daily:
+            return true
+        case .weekly:
+            return cal.component(.weekday, from: createdAt) == cal.component(.weekday, from: day)
+        case .monthly:
+            let startDay = cal.component(.day, from: createdAt)
+            let targetDay = cal.component(.day, from: day)
+            if startDay == targetDay { return true }
+            let daysInTargetMonth = cal.range(of: .day, in: .month, for: day)?.count ?? 31
+            return startDay > daysInTargetMonth && targetDay == daysInTargetMonth
+        case .cycleAnchored:
+            return false
+        }
+    }
 }
 
 // ③ Output 카드 — 내보냄. 진행도는 아이템 수명 누적, 완료는 파생(§5.5.2).

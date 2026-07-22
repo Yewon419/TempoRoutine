@@ -86,7 +86,7 @@ final class CycleOccurrencesTests: XCTestCase {
     // T36: InputSchedule 커스텀 Codable 왕복 (§5.5.1 discriminator)
     func testT36_inputScheduleCodableRoundTrip() throws {
         let r = CycleRecurrence(anchor: .phase(.luteal), dayOffset: 3, repeatsEveryCycle: true, overflowRule: .carry)
-        for original in [InputSchedule.daily, .cycleAnchored(r)] {
+        for original in [InputSchedule.daily, .weekly, .monthly, .cycleAnchored(r)] {
             let data = try JSONEncoder().encode(original)
             let decoded = try JSONDecoder().decode(InputSchedule.self, from: data)
             XCTAssertEqual(decoded, original)

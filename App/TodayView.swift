@@ -283,7 +283,8 @@ struct TodayView: View {
     private var todayInputs: [InputItem] {
         inputs.filter { item in
             switch item.schedule {
-            case .daily: true
+            case .daily, .weekly, .monthly:
+                item.occursByCalendar(on: today)
             case .cycleAnchored(let r):
                 snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: today) != nil
                     || isChecked(item.id)
@@ -340,10 +341,15 @@ struct TodayView: View {
         }
     }
 
+    /// 콜드스타트(생리 미기록)에서는 Output이 있어도 주기 앵커를 못 풀어 전부 안 보임 — 이유를 밝힌다.
+    private var outputEmptyMessage: String {
+        (!outputs.isEmpty && snapshot.isColdStart) ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
+    }
+
     @ViewBuilder
     private var outputSection: some View {
         if todayOutputs.isEmpty {
-            Text("아직 없어요").font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
+            Text(outputEmptyMessage).font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
         } else {
             ForEach(todayOutputs) { item in
                 VStack(alignment: .leading, spacing: 8) {
