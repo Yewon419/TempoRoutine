@@ -8,6 +8,21 @@ import SwiftUI
 import SwiftData
 import TempoCore
 
+extension View {
+    /// 스태거 등장 — 시안 `ob-in` 이식(fade + translateY 10px, ease-out + delay). reduceMotion=true면 애니메이션 없이 즉시 표시.
+    func staggerIn(_ appeared: Bool, delay: Double, duration: Double = 0.42, reduceMotion: Bool) -> some View {
+        opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 10)
+            .animation(reduceMotion ? nil : .easeOut(duration: duration).delay(delay), value: appeared)
+    }
+
+    /// 페이드만(오프셋 없음) — 시안 `node-in` 이식. SVG 노드처럼 이미 배치된 요소에 사용(§ 노드 opacity만).
+    func fadeIn(_ appeared: Bool, delay: Double, duration: Double = 0.38, reduceMotion: Bool) -> some View {
+        opacity(appeared ? 1 : 0)
+            .animation(reduceMotion ? nil : .easeOut(duration: duration).delay(delay), value: appeared)
+    }
+}
+
 struct OnboardingFlow: View {
     @AppStorage("onboardingDone") private var onboardingDone = false
     @Environment(\.modelContext) private var modelContext
@@ -17,6 +32,8 @@ struct OnboardingFlow: View {
     @State private var step = 1
     @State private var introScene = 0          // 0=A 브랜드·원 / 1=B 곡선 / 2=C 네 계절
     @State private var drawProgress: CGFloat = 0
+    @State private var sceneAppeared = false    // 씬A 전용 스태거 트리거(Phase 1 — 씬B·C는 기존 drawProgress 유지, Phase 2에서 정합)
+    @State private var introEntered = false     // "시작/다음" 버튼 1000ms 지연 노출 — 스텝1 (재)진입마다 리셋
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 단계 진행·토글, 확정 아님)
 
     // ② 기준일
@@ -51,6 +68,13 @@ struct OnboardingFlow: View {
         }
         .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .task(id: step) {
+            guard step == 1 else { return }
+            introEntered = false
+            guard !reduceMotion else { introEntered = true; return }
+            try? await Task.sleep(nanoseconds: 30_000_000)
+            introEntered = true
+        }
     }
 
     // ── 상단: back (2단계부터) ──
@@ -72,13 +96,14 @@ struct OnboardingFlow: View {
         .frame(height: 44)
     }
 
-    // ── 진행 점 (인트로 숨김) ──
+    // ── 진행 점 (인트로 숨김) — 지난·현재 스텝 채움 + 현재 스텝만 알약형(시안 .ob-dot 이식) ──
     private var dots: some View {
         HStack(spacing: 8) {
             ForEach(1...4, id: \.self) { i in
-                Circle()
-                    .fill(i == step ? Ink.text : Ink.text.opacity(0.2))
-                    .frame(width: 7, height: 7)
+                Capsule()
+                    .fill(i <= step ? Ink.text : Ink.text.opacity(0.22))
+                    .frame(width: i == step ? 16 : 6, height: 6)
+                    .animation(.easeOut(duration: 0.2), value: step)
             }
         }
         .frame(maxWidth: .infinity)
@@ -112,15 +137,23 @@ struct OnboardingFlow: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .contentShape(Rectangle())
             .onTapGesture { advanceIntro() }
+            .transition(.opacity)   // 씬 전환 크로스페이드(시안 500ms — advanceIntro의 withAnimation이 구동)
             primaryButton(introScene == 0 ? "시작" : "다음") { advanceIntro() }
+                .staggerIn(introEntered, delay: 1.0, reduceMotion: reduceMotion)
+                .allowsHitTesting(introEntered || reduceMotion)
         }
-        .onAppear { startDrawing() }
+        .task(id: introScene) {
+            sceneAppeared = false
+            if introScene != 0 { startDrawing() }   // 씬B·C는 기존 방식 유지(Phase 2에서 정합)
+            guard !reduceMotion else { sceneAppeared = true; return }
+            try? await Task.sleep(nanoseconds: 30_000_000)   // 상태 변화가 관측되도록 한 틱 양보
+            sceneAppeared = true
+        }
     }
 
     private func advanceIntro() {
         if introScene < 2 {
-            introScene += 1
-            startDrawing()
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { introScene += 1 }
         } else {
             step = 2
         }
@@ -147,8 +180,11 @@ struct OnboardingFlow: View {
                 .lineSpacing(4)
             VStack(alignment: .leading, spacing: 2) {
                 Text("몰아치지 않아도 괜찮아요.")
+                    .staggerIn(sceneAppeared, delay: 0.30, duration: 0.48, reduceMotion: reduceMotion)
                 Text("주기를 네 계절로 보고,")
+                    .staggerIn(sceneAppeared, delay: 0.56, duration: 0.48, reduceMotion: reduceMotion)
                 Text("계절에 맞게 계획하는 플래너예요.")
+                    .staggerIn(sceneAppeared, delay: 0.82, duration: 0.48, reduceMotion: reduceMotion)
             }
             .font(.system(.body, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.75))
@@ -159,24 +195,30 @@ struct OnboardingFlow: View {
         }
     }
 
-    /// 주기 원 드로잉 — 은필 원 + 4계절 노드
+    private static let wheelPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
+    private static let wheelNodeDelays: [Double] = [1.36, 1.68, 2.06, 2.44]   // 시안 ob-node-winter~autumn
+
+    /// 주기 원 드로잉 — 은필 원(1.5s, 1.3s 지연 후) + 4계절 노드(원이 지나가는 시점에 개별 페이드인)
     private var cycleWheel: some View {
         ZStack {
             Circle()
-                .trim(from: 0, to: drawProgress)
+                .trim(from: 0, to: sceneAppeared ? 1 : 0)
                 .stroke(Ink.winter.opacity(0.7), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-            ForEach(Array([CyclePhase.menstrual, .follicular, .ovulation, .luteal].enumerated()),
-                    id: \.offset) { index, phase in
+                .animation(reduceMotion ? nil : .easeInOut(duration: 1.5).delay(1.3), value: sceneAppeared)
+            ForEach(Array(Self.wheelPhases.enumerated()), id: \.offset) { index, phase in
                 let angle = Double(index) * 90.0 - 90.0
                 let meta = seasonMeta(for: phase)
-                VStack(spacing: 4) {
-                    SeasonGlyph(phase: phase, size: 14)
-                    Text(meta.name)
-                        .font(.system(size: 11, design: .serif))
-                        .foregroundStyle(meta.color)
+                ZStack {
+                    Circle().fill(Ink.paper).frame(width: 34, height: 34)   // halo — 원 획이 노드 뒤로 지나가는 자리 정리
+                    VStack(spacing: 4) {
+                        SeasonGlyph(phase: phase, size: 14)
+                        Text(meta.name)
+                            .font(.system(size: 11, design: .serif))
+                            .foregroundStyle(meta.color)
+                    }
                 }
-                .opacity(drawProgress > CGFloat(index) * 0.22 + 0.1 ? 1 : 0)
+                .fadeIn(sceneAppeared, delay: Self.wheelNodeDelays[index], reduceMotion: reduceMotion)
                 .offset(x: 95 * cos(angle * .pi / 180), y: 95 * sin(angle * .pi / 180))
             }
         }
