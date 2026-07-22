@@ -111,14 +111,18 @@ struct OnboardingFlow: View {
         }
     }
 
-    // ── 상단: back (2단계부터) ──
+    // ── 상단: back — 2단계부터, 그리고 인트로 씬B·C에서도 이전 씬으로(2026-07-22 사용자 요청) ──
     private var topBar: some View {
         HStack {
-            if step >= 2 {
+            if step >= 2 || (step == 1 && introScene > 0) {
                 Button {
                     lightFeedback += 1
-                    step -= 1
-                    if step == 1 { introScene = 2 }
+                    if step == 1 {
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { introScene -= 1 }
+                    } else {
+                        step -= 1
+                        if step == 1 { introScene = 2 }
+                    }
                 } label: {
                     Image(systemName: "chevron.left")
                         .foregroundStyle(Ink.text.opacity(0.6))
