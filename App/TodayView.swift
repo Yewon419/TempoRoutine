@@ -342,7 +342,7 @@ struct TodayView: View {
     private var todayOutputs: [OutputItem] {
         outputs.filter { item in
             switch item.schedule {
-            case .daily, .weekly, .monthly:
+            case .once, .daily, .weekly, .monthly:
                 return item.occursByCalendar(on: today)
             case .cycleAnchored(let r):
                 guard let occ = snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: today) else {

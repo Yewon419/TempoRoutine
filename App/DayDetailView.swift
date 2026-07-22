@@ -253,7 +253,7 @@ struct DayDetailView: View {
     private var outputRows: [OutputRow] {
         outputs.compactMap { item in
             switch item.schedule {
-            case .daily, .weekly, .monthly:
+            case .once, .daily, .weekly, .monthly:
                 guard item.occursByCalendar(on: day) else { return nil }
                 let future = day > today
                 if item.isComplete && future { return nil }

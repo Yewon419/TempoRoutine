@@ -191,13 +191,15 @@ final class OutputItem {
         self.createdAt = .now
     }
 
-    /// .daily·.weekly·.monthly 판정(달력 기준) — InputItem.occursByCalendar와 동형(§ 반복 통일).
+    /// .once·.daily·.weekly·.monthly 판정(달력 기준) — InputItem.occursByCalendar와 동형(§ 반복 통일).
     func occursByCalendar(on day: Date) -> Bool {
         let cal = Calendar.current
         let start = cal.startOfDay(for: createdAt)
         let target = cal.startOfDay(for: day)
         guard target >= start else { return false }
         switch schedule {
+        case .once:     // 반복 없음 — 완료까지 계속 표시(완료 후 미래 미표시는 렌더 규칙 §5.5.2)
+            return true
         case .daily:
             return true
         case .weekly:

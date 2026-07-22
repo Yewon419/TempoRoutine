@@ -49,7 +49,9 @@ extension InputSchedule {
 public enum OutputProgressKind: String, Codable, Sendable { case subtasks, sessions, percent }
 
 /// Output 반복 — InputSchedule과 동형(2026-07-22 확장, 주기 데이터 없어도 daily/weekly/monthly는 동작해야 함).
+/// .once = 반복 없음(2026-07-22 2차 확장): 케이던스 없는 단발 목표 — 생성일부터 완료까지 계속 표시.
 public enum OutputSchedule: Codable, Equatable, Sendable {
+    case once                           // 반복 없음 — 완료까지 계속 표시
     case daily                          // 매일
     case weekly                         // 매주 — 생성일(createdAt)과 같은 요일
     case monthly                        // 매달 — 생성일과 같은 일(day), 말일 클램프
@@ -58,10 +60,12 @@ public enum OutputSchedule: Codable, Equatable, Sendable {
 
 extension OutputSchedule {
     enum CodingKeys: String, CodingKey { case type, recurrence }
-    enum Kind: String, Codable { case daily, weekly, monthly, cycleAnchored }
+    enum Kind: String, Codable { case once, daily, weekly, monthly, cycleAnchored }
     public func encode(to e: Encoder) throws {
         var c = e.container(keyedBy: CodingKeys.self)
         switch self {
+        case .once:
+            try c.encode(Kind.once, forKey: .type)
         case .daily:
             try c.encode(Kind.daily, forKey: .type)
         case .weekly:
@@ -76,6 +80,7 @@ extension OutputSchedule {
     public init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
         switch try c.decode(Kind.self, forKey: .type) {
+        case .once:           self = .once
         case .daily:          self = .daily
         case .weekly:         self = .weekly
         case .monthly:        self = .monthly
