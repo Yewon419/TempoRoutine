@@ -4,7 +4,7 @@
 import Foundation
 
 // ① 일정 카드 — 절대 날짜 / 연 반복 (cycle-anchored 모델 밖, resolveDate 안 씀)
-public enum ScheduleRepeat: String, Codable, Sendable { case none, yearly }
+public enum ScheduleRepeat: String, Codable, Sendable, CaseIterable { case none, daily, weekly, monthly, yearly }
 
 // ② Input 카드
 public enum InputCategory: String, Codable, CaseIterable, Sendable { case food, exercise, media, other }

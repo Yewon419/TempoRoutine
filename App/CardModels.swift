@@ -42,11 +42,27 @@ final class ScheduleItem {
     }
 
     /// 이 날짜에 표시되는가. 연반복 윤년 규칙: 2/29는 비윤년에 2/28로(§5.6.4).
+    /// 매일·매주·매달 반복은 시작일(date) 이전에는 표시하지 않는다.
     func occurs(on day: Date) -> Bool {
         let cal = Calendar.current
+        let start = cal.startOfDay(for: date)
+        let target = cal.startOfDay(for: day)
         switch repeatRule {
         case .none:
             return cal.isDate(date, inSameDayAs: day)
+        case .daily:
+            return target >= start
+        case .weekly:
+            guard target >= start else { return false }
+            return cal.component(.weekday, from: date) == cal.component(.weekday, from: day)
+        case .monthly:
+            guard target >= start else { return false }
+            let startDayOfMonth = cal.component(.day, from: date)
+            let targetDayOfMonth = cal.component(.day, from: day)
+            if startDayOfMonth == targetDayOfMonth { return true }
+            // 시작일이 그 달엔 없는 날짜(예: 31일)면 그 달의 마지막 날에 표시
+            let daysInTargetMonth = cal.range(of: .day, in: .month, for: day)?.count ?? 31
+            return startDayOfMonth > daysInTargetMonth && targetDayOfMonth == daysInTargetMonth
         case .yearly:
             let d = cal.dateComponents([.month, .day], from: date)
             let t = cal.dateComponents([.month, .day], from: day)
@@ -57,6 +73,19 @@ final class ScheduleItem {
                                  for: cal.date(from: DateComponents(year: cal.component(.year, from: day), month: 2, day: 1)) ?? day)?.count == 28
             }
             return false
+        }
+    }
+}
+
+extension ScheduleRepeat {
+    /// 반복 배지·칩 라벨. .none은 표시할 게 없어 nil.
+    var shortLabel: String? {
+        switch self {
+        case .none: nil
+        case .daily: "매일"
+        case .weekly: "매주"
+        case .monthly: "매달"
+        case .yearly: "매년"
         }
     }
 }

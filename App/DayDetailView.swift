@@ -133,6 +133,7 @@ struct DayDetailView: View {
                 rows()
             }
             Button {
+                lightFeedback += 1
                 addSheet = selectedCard
             } label: {
                 Label(addLabel, systemImage: "plus")
@@ -165,8 +166,8 @@ struct DayDetailView: View {
                             Text(item.date.formatted(date: .omitted, time: .shortened))
                                 .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
                         }
-                        if item.repeatRule == .yearly {
-                            Text("매년").font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
+                        if let label = item.repeatRule.shortLabel {
+                            Text(label).font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
                         }
                     }
                     .font(.subheadline)

@@ -31,6 +31,8 @@ struct ScheduleAddSheet: View {
     @State private var timed = false
     @State private var repeatRule: ScheduleRepeat = .none
 
+    private static let repeatChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly, .yearly]
+
     init(defaultDate: Date) {
         self.defaultDate = defaultDate
         _date = State(initialValue: defaultDate)
@@ -42,9 +44,29 @@ struct ScheduleAddSheet: View {
                 TextField("예: 병원 예약", text: $title)
                 DatePicker("날짜", selection: $date, displayedComponents: timed ? [.date, .hourAndMinute] : [.date])
                 Toggle("시간 지정", isOn: $timed)
-                Picker("반복", selection: $repeatRule) {
-                    Text("없음").tag(ScheduleRepeat.none)
-                    Text("매년").tag(ScheduleRepeat.yearly)
+                Toggle("반복", isOn: Binding(
+                    get: { repeatRule != .none },
+                    set: { on in repeatRule = on ? .daily : .none }
+                ))
+                .tint(Ink.text)
+                if repeatRule != .none {
+                    HStack(spacing: 6) {
+                        ForEach(Self.repeatChoices, id: \.self) { freq in
+                            let selected = repeatRule == freq
+                            Button {
+                                repeatRule = freq
+                            } label: {
+                                Text(freq.shortLabel ?? "")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 5)
+                                    .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.08)),
+                                                in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
             .navigationTitle("일정 추가")
@@ -155,6 +177,7 @@ struct OutputAddSheet: View {
     @State private var targetSessions = 3
     @State private var subtaskDraft = ""
     @State private var subtasks: [String] = []
+    @State private var initialPercent: Double = 0
 
     var body: some View {
         NavigationStack {
@@ -188,6 +211,17 @@ struct OutputAddSheet: View {
                             .disabled(subtaskDraft.trimmingCharacters(in: .whitespaces).isEmpty)
                         }
                     }
+                    if kind == .percent {
+                        HStack(spacing: 10) {
+                            Slider(value: $initialPercent, in: 0...1)
+                                .tint(Ink.text)
+                            Text(initialPercent.formatted(.percent.precision(.fractionLength(0))))
+                                .font(.footnote)
+                                .monospacedDigit()
+                                .foregroundStyle(Ink.text.opacity(0.7))
+                                .frame(width: 44, alignment: .trailing)
+                        }
+                    }
                 }
             }
             .navigationTitle("Output 추가")
@@ -206,6 +240,7 @@ struct OutputAddSheet: View {
                         if kind == .subtasks {
                             item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
                         }
+                        if kind == .percent { item.percent = initialPercent }
                         modelContext.insert(item)
                         dismiss()
                     }

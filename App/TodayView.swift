@@ -241,6 +241,7 @@ struct TodayView: View {
                     .foregroundStyle(Ink.text)
                 Spacer()
                 Button {
+                    lightFeedback += 1
                     addSheet = kind
                 } label: {
                     Image(systemName: "plus")
