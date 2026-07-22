@@ -10,6 +10,7 @@ struct RhythmView: View {
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
+    @Query(sort: \DailyCheckIn.day, order: .reverse) private var checkIns: [DailyCheckIn]
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -28,6 +29,7 @@ struct RhythmView: View {
                     coldCard
                     meanwhileCard
                     seasonsSheet
+                    diarySheet
                 }
                 .padding(20)
             }
@@ -140,6 +142,64 @@ struct RhythmView: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass(radius: 18)
+    }
+
+    // ── 한 줄 일기 모음 (2026-07-22 사용자 요청 — 오늘 탭 "오늘 한 줄"의 열람 표면) ──
+    // 나의 사계 낱장과 별도 카드: 사계는 공유 안전 화면(§3.5.1 메모 렌더 금지)이라 일기는 섞지 않는다.
+    private var diaryEntries: [DailyCheckIn] {
+        checkIns.filter { !($0.note ?? "").isEmpty }
+    }
+
+    private var diarySheet: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("오늘 한 줄 모음")
+                    .font(.system(.footnote, design: .serif))
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                    .kerning(2)
+                Text("한 줄 일기")
+                    .font(.almanac(size: 28, weight: .bold))
+                    .foregroundStyle(Ink.text)
+            }
+            if diaryEntries.isEmpty {
+                Text("오늘 탭에서 한 줄을 남기면 여기에 모여요.")
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.text.opacity(0.6))
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(diaryEntries) { entry in
+                    diaryRow(entry)
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .milkGlass(radius: 18)
+    }
+
+    private func diaryRow(_ entry: DailyCheckIn) -> some View {
+        let phase = snapshot.phase(on: entry.day)
+        let meta = phase.map(seasonMeta(for:))
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text(entry.day.formatted(.dateTime.month().day().weekday(.abbreviated)))
+                    .font(.system(.caption, design: .serif))
+                    .foregroundStyle(Ink.text.opacity(0.55))
+                if let meta {
+                    Text(meta.name)
+                        .font(.system(.caption, design: .serif))
+                        .foregroundStyle(meta.color.opacity(0.85))
+                }
+                Spacer()
+            }
+            Text(entry.note ?? "")
+                .font(.system(.subheadline, design: .serif))
+                .foregroundStyle(Ink.text)
+        }
+        .padding(.vertical, 8)
+        .almanacRule()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(entry.day.formatted(.dateTime.month().day())), \(meta?.name ?? ""), \(entry.note ?? "")")
     }
 
     private func seasonRow(phase: CyclePhase, routines: [String]) -> some View {
