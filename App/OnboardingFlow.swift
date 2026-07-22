@@ -33,6 +33,7 @@ struct OnboardingFlow: View {
     @State private var introScene = 0          // 0=A 브랜드·원 / 1=B 곡선 / 2=C 네 계절
     @State private var drawProgress: CGFloat = 0
     @State private var sceneAppeared = false    // 씬A 전용 스태거 트리거(Phase 1 — 씬B·C는 기존 drawProgress 유지, Phase 2에서 정합)
+    @State private var orbitAngle: Double = 0   // 궤도 도는 잉크 점 회전각(3.1s 후 26s 무한 선형 회전)
     @State private var introEntered = false     // "시작/다음" 버튼 1000ms 지연 노출 — 스텝1 (재)진입마다 리셋
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 단계 진행·토글, 확정 아님)
 
@@ -172,10 +173,17 @@ struct OnboardingFlow: View {
         .transition(.opacity)   // 씬 전환 크로스페이드(시안 500ms — advanceIntro의 withAnimation이 구동)
         .task(id: introScene) {
             sceneAppeared = false
+            orbitAngle = 0
             if introScene != 0 { startDrawing() }   // 씬B·C는 기존 방식 유지(Phase 2에서 정합)
             guard !reduceMotion else { sceneAppeared = true; return }
             try? await Task.sleep(nanoseconds: 30_000_000)   // 상태 변화가 관측되도록 한 틱 양보
             sceneAppeared = true
+            guard introScene == 0 else { return }
+            try? await Task.sleep(nanoseconds: 3_070_000_000)   // 원 완성 후(1.3+1.5=2.8s) 여유 두고 궤도 시작(총 3.1s)
+            guard introScene == 0, !Task.isCancelled else { return }
+            withAnimation(.linear(duration: 26).repeatForever(autoreverses: false)) {
+                orbitAngle = 360
+            }
         }
     }
 
@@ -248,10 +256,21 @@ struct OnboardingFlow: View {
                 .fadeIn(sceneAppeared, delay: Self.wheelNodeDelays[index], reduceMotion: reduceMotion)
                 .offset(x: 95 * cos(angle * .pi / 180), y: 95 * sin(angle * .pi / 180))
             }
+            if !reduceMotion { orbitDot }   // 완성 후 원을 도는 잉크 점(시안 26s 루프) — Reduce Motion에선 숨김(§8.2.1)
         }
         .frame(width: 190, height: 190)
         .padding(.vertical, 12)
         .accessibilityHidden(true)
+    }
+
+    /// 원이 완성된 뒤 천천히 도는 잉크 점(3.1s 지연 페이드인 + 26s 무한 선형 회전)
+    private var orbitDot: some View {
+        Circle()
+            .fill(Ink.winter)
+            .frame(width: 5, height: 5)
+            .offset(y: -95)
+            .rotationEffect(.degrees(orbitAngle))
+            .fadeIn(sceneAppeared, delay: 3.1, duration: 0.6, reduceMotion: reduceMotion)
     }
 
     /// 계절 노드 위치에서 원 스트로크를 끊는다 — 헤일로 대신(2026-07-22 베타 피드백: "가독성 높이지 말고 큰 원을 계절 위치에서 끊는 식으로")
