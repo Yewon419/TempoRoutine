@@ -83,17 +83,6 @@ struct OnboardingFlow: View {
             primaryButton(primaryLabel, action: primaryAction)
                 .staggerIn(step == 1 ? introEntered : true, delay: step == 1 ? 1.0 : 0, reduceMotion: reduceMotion)
                 .allowsHitTesting(step != 1 || introEntered || reduceMotion)
-            if step == 2 {
-                Button {
-                    lightFeedback += 1
-                    step = 3
-                } label: {
-                    Text("건너뛰기")
-                        .font(.subheadline)
-                        .foregroundStyle(Ink.text.opacity(0.55))
-                        .frame(maxWidth: .infinity)
-                }
-            }
             if step >= 2 { dots }
         }
         .padding(.horizontal, 24)
@@ -236,7 +225,7 @@ struct OnboardingFlow: View {
 
     private static let wheelPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
     private static let wheelNodeDelays: [Double] = [1.36, 1.68, 2.06, 2.44]   // 시안 ob-node-winter~autumn
-    private static let wheelGapHalf: CGFloat = 0.011   // 노드당 원 스트로크 gap 절반 폭(트림 프랙션, 약 4°)
+    private static let wheelGapHalf: CGFloat = 0.035   // 노드당 원 스트로크 gap 절반 폭(트림 프랙션, 약 12.6° — 글리프+라벨 폭 커버, 2026-07-22 재조정)
 
     /// 주기 원 드로잉 — 은필 원(1.5s, 1.3s 지연 후) + 4계절 노드(원이 지나가는 시점에 개별 페이드인)
     private var cycleWheel: some View {
@@ -379,7 +368,7 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text.opacity(0.7))
             Spacer()
         }
-        .padding(.vertical, 9)
+        .padding(.vertical, 13)   // 계절 행 간 간격 확대(2026-07-22 베타 피드백)
         .almanacRule(opacity: 0.18)
     }
 
