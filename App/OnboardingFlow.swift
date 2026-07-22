@@ -62,10 +62,10 @@ struct OnboardingFlow: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                if step >= 2 { dots }
             }
             .padding(24)
         }
+        .safeAreaInset(edge: .bottom) { bottomBar }
         .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .task(id: step) {
@@ -74,6 +74,50 @@ struct OnboardingFlow: View {
             guard !reduceMotion else { introEntered = true; return }
             try? await Task.sleep(nanoseconds: 30_000_000)
             introEntered = true
+        }
+    }
+
+    // ── 하단 액션 바 — 전 스텝 공통 위치(2026-07-22 베타 피드백: 버튼 위치 통일·점과 겹침 정정) ──
+    private var bottomBar: some View {
+        VStack(spacing: 10) {
+            primaryButton(primaryLabel, action: primaryAction)
+                .staggerIn(step == 1 ? introEntered : true, delay: step == 1 ? 1.0 : 0, reduceMotion: reduceMotion)
+                .allowsHitTesting(step != 1 || introEntered || reduceMotion)
+            if step == 2 {
+                Button {
+                    lightFeedback += 1
+                    step = 3
+                } label: {
+                    Text("건너뛰기")
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.text.opacity(0.55))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            if step >= 2 { dots }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+    }
+
+    private var primaryLabel: String {
+        switch step {
+        case 1: introScene == 0 ? "시작" : "다음"
+        case 2, 3: "다음"
+        default: "오늘 화면으로"
+        }
+    }
+
+    private func primaryAction() {
+        switch step {
+        case 1: advanceIntro()
+        case 2: step = 3
+        case 3:
+            AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: trackPain,
+                                                        appetite: trackAppetite, note: trackNote)
+            step = 4
+        default: onboardingDone = true
         }
     }
 
@@ -126,22 +170,17 @@ struct OnboardingFlow: View {
 
     // ══ ① 인트로 3장면 ══
     private var intro: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Group {
-                switch introScene {
-                case 0: sceneBrand
-                case 1: sceneWave
-                default: sceneSeasons
-                }
+        Group {
+            switch introScene {
+            case 0: sceneBrand
+            case 1: sceneWave
+            default: sceneSeasons
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .contentShape(Rectangle())
-            .onTapGesture { advanceIntro() }
-            .transition(.opacity)   // 씬 전환 크로스페이드(시안 500ms — advanceIntro의 withAnimation이 구동)
-            primaryButton(introScene == 0 ? "시작" : "다음") { advanceIntro() }
-                .staggerIn(introEntered, delay: 1.0, reduceMotion: reduceMotion)
-                .allowsHitTesting(introEntered || reduceMotion)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .contentShape(Rectangle())
+        .onTapGesture { advanceIntro() }
+        .transition(.opacity)   // 씬 전환 크로스페이드(시안 500ms — advanceIntro의 withAnimation이 구동)
         .task(id: introScene) {
             sceneAppeared = false
             if introScene != 0 { startDrawing() }   // 씬B·C는 기존 방식 유지(Phase 2에서 정합)
@@ -197,6 +236,7 @@ struct OnboardingFlow: View {
 
     private static let wheelPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
     private static let wheelNodeDelays: [Double] = [1.36, 1.68, 2.06, 2.44]   // 시안 ob-node-winter~autumn
+    private static let wheelGapHalf: CGFloat = 0.011   // 노드당 원 스트로크 gap 절반 폭(트림 프랙션, 약 4°)
 
     /// 주기 원 드로잉 — 은필 원(1.5s, 1.3s 지연 후) + 4계절 노드(원이 지나가는 시점에 개별 페이드인)
     private var cycleWheel: some View {
@@ -206,17 +246,15 @@ struct OnboardingFlow: View {
                 .stroke(Ink.winter.opacity(0.7), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(reduceMotion ? nil : .easeInOut(duration: 1.5).delay(1.3), value: sceneAppeared)
+            if sceneAppeared { ringGapErasers }   // 헤일로 대신 원 자체를 노드 위치에서 끊음(2026-07-22 베타 피드백)
             ForEach(Array(Self.wheelPhases.enumerated()), id: \.offset) { index, phase in
                 let angle = Double(index) * 90.0 - 90.0
                 let meta = seasonMeta(for: phase)
-                ZStack {
-                    Circle().fill(Ink.paper).frame(width: 34, height: 34)   // halo — 원 획이 노드 뒤로 지나가는 자리 정리
-                    VStack(spacing: 4) {
-                        SeasonGlyph(phase: phase, size: 14)
-                        Text(meta.name)
-                            .font(.system(size: 11, design: .serif))
-                            .foregroundStyle(meta.color)
-                    }
+                VStack(spacing: 4) {
+                    SeasonGlyph(phase: phase, size: 14)
+                    Text(meta.name)
+                        .font(.system(size: 11, design: .serif))
+                        .foregroundStyle(meta.color)
                 }
                 .fadeIn(sceneAppeared, delay: Self.wheelNodeDelays[index], reduceMotion: reduceMotion)
                 .offset(x: 95 * cos(angle * .pi / 180), y: 95 * sin(angle * .pi / 180))
@@ -225,6 +263,24 @@ struct OnboardingFlow: View {
         .frame(width: 190, height: 190)
         .padding(.vertical, 12)
         .accessibilityHidden(true)
+    }
+
+    /// 계절 노드 위치에서 원 스트로크를 끊는다 — 헤일로 대신(2026-07-22 베타 피드백: "가독성 높이지 말고 큰 원을 계절 위치에서 끊는 식으로")
+    private var ringGapErasers: some View {
+        ForEach(0..<4, id: \.self) { index in
+            let t = CGFloat(index) * 0.25
+            let half = Self.wheelGapHalf
+            Circle()
+                .trim(from: max(0, t - half), to: min(1, t + half))
+                .stroke(Ink.paper, style: StrokeStyle(lineWidth: 1.4 + 2, lineCap: .butt))
+                .rotationEffect(.degrees(-90))
+            if index == 0 {
+                Circle()   // 이음매(0≡1 = 겨울 위치) 반대편도 지워야 대칭으로 끊김
+                    .trim(from: 1 - half, to: 1)
+                    .stroke(Ink.paper, style: StrokeStyle(lineWidth: 1.4 + 2, lineCap: .butt))
+                    .rotationEffect(.degrees(-90))
+            }
+        }
     }
 
     private var sceneWave: some View {
@@ -355,17 +411,6 @@ struct OnboardingFlow: View {
             }
             .padding(16)
             .milkGlass()
-            Spacer()
-            primaryButton("다음") { step = 3 }
-            Button {
-                step = 3
-            } label: {
-                Text("건너뛰기")
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.text.opacity(0.55))
-                    .frame(maxWidth: .infinity)
-            }
-            .padding(.top, 2)
         }
     }
 
@@ -453,12 +498,6 @@ struct OnboardingFlow: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
             .milkGlass()
-            Spacer()
-            primaryButton("다음") {
-                AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: trackPain,
-                                                            appetite: trackAppetite, note: trackNote)
-                step = 4
-            }
         }
         .onAppear {
             let current = AppSettings.trackedSignals
@@ -520,8 +559,6 @@ struct OnboardingFlow: View {
             Text("내보내기와 전체 삭제는 언제든 설정에서.")
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))
-            Spacer()
-            primaryButton("오늘 화면으로") { onboardingDone = true }
         }
     }
 

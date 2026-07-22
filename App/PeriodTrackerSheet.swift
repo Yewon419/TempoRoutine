@@ -22,6 +22,7 @@ struct PeriodTrackerSheet: View {
     @State private var draftRecorded: Set<Date> = []
     @State private var draftLoaded = false
     @State private var committed = false
+    @State private var showDatePicker = false   // 날짜 제목 탭 → 날짜 피커 점프(2026-07-22 베타 피드백)
     private let mirror = HealthMirror.shared
 
     private var cal: Calendar { Calendar.current }
@@ -45,11 +46,35 @@ struct PeriodTrackerSheet: View {
                 SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: selectedDay))
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        Text(dayTitle)
-                            .font(.almanac(size: 22, weight: .bold))
-                            .foregroundStyle(Ink.text)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.top, 6)
+                        Button {
+                            lightFeedback += 1
+                            showDatePicker = true
+                        } label: {
+                            Text(dayTitle)
+                                .font(.almanac(size: 22, weight: .bold))
+                                .foregroundStyle(Ink.text)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 6)
+                        .popover(isPresented: $showDatePicker) {
+                            DatePicker(
+                                "날짜 선택",
+                                selection: Binding(
+                                    get: { selectedDay },
+                                    set: { newDay in
+                                        centeredDay = cal.startOfDay(for: newDay)
+                                        showDatePicker = false
+                                    }
+                                ),
+                                in: (stripDays.first ?? today)...(stripDays.last ?? today),
+                                displayedComponents: .date
+                            )
+                            .datePickerStyle(.graphical)
+                            .tint(Ink.text)
+                            .padding()
+                            .presentationCompactAdaptation(.popover)
+                        }
                         dayStrip(recorded: recorded)
                         recordSection(recorded: recorded)
                     }
@@ -64,6 +89,7 @@ struct PeriodTrackerSheet: View {
                         commit()
                         dismiss()
                     }
+                    .foregroundStyle(Ink.text)
                 }
             }
         }

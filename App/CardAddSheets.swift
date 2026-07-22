@@ -51,13 +51,16 @@ struct ScheduleAddSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
                         modelContext.insert(ScheduleItem(title: title, date: date,
                                                          isAllDay: !timed, repeatRule: repeatRule))
                         dismiss()
                     }
+                    .foregroundStyle(Ink.text)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
@@ -120,7 +123,9 @@ struct InputAddSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
                         let schedule: InputSchedule = cycleBased
@@ -130,6 +135,7 @@ struct InputAddSheet: View {
                         modelContext.insert(InputItem(title: title, category: category, schedule: schedule))
                         dismiss()
                     }
+                    .foregroundStyle(Ink.text)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
@@ -188,7 +194,9 @@ struct OutputAddSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
                         let recurrence = CycleRecurrence(anchor: .phase(anchor.phase), dayOffset: offset,
@@ -201,6 +209,7 @@ struct OutputAddSheet: View {
                         modelContext.insert(item)
                         dismiss()
                     }
+                    .foregroundStyle(Ink.text)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
