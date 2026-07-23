@@ -449,7 +449,7 @@ struct OnboardingFlow: View {
                             let imported = await mirror.sync(context: modelContext, periodDays: periodDays)
                             // 0건 = read 거부일 수 있음(§5.7 — 판별 불가라 안내로 보완, 2026-07-23)
                             syncMessage = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요."
-                                                        : "가져올 생리 기록이 없었어요. 건강 앱에 기록이 있다면 읽기 권한이 꺼져 있을 수 있어요. 설정 앱 > 개인정보 보호 및 보안 > 건강 > 템포루틴에서 확인해 주세요."
+                                                        : "가져올 생리 기록이 없었어요. 진단: \(HealthMirror.shared.lastSyncReport). 원본이 0건이면 이 기기 건강 앱에 기록이 없거나 읽기 권한이 꺼진 경우예요. 설정 앱 > 개인정보 보호 및 보안 > 건강 > 템포루틴에서 확인해 주세요."
                         }
                     } else {
                         mirror.linked = false

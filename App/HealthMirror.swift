@@ -44,7 +44,9 @@ final class HealthMirror {
             try await store.requestAuthorization(toShare: [flowType], read: [flowType])
             // 재연동 = 처음부터 다시 비춘다(2026-07-23 실기기 결함 — 앵커가 남아 있으면 기존
             // Health 데이터가 "앵커 이후 없음"으로 떨어져 불러올 게 없다고 나온다. dedup=day·UUID라 안전)
+            // 툼스톤도 함께 리셋(2026-07-23 2차) — 재연동의 의도는 "전부 다시 비추기"다.
             UserDefaults.standard.removeObject(forKey: Self.anchorKey)
+            UserDefaults.standard.removeObject(forKey: Self.tombstonesKey)
             linked = true
             return true
         } catch {
@@ -90,11 +92,14 @@ final class HealthMirror {
         try? await store.delete(samples)   // .appAuthored만 우리가 지울 수 있음(HK가 강제)
     }
 
+    /// 직전 sync의 필터 내역 — 0건의 "왜"를 사용자에게 보여주기 위한 진단(2026-07-23)
+    private(set) var lastSyncReport = ""
+
     // ── read 병합 + 삭제 전파 ── 반환값 = 새로 가져온 건수(진단·사용자 피드백용, 2026-07-22)
     @discardableResult
     func sync(context: ModelContext, periodDays: [PeriodDay]) async -> Int {
-        guard linked else { return 0 }
-        guard available else { return 0 }
+        guard linked else { lastSyncReport = "연동 꺼짐"; return 0 }
+        guard available else { lastSyncReport = "건강 앱 사용 불가"; return 0 }
         let anchor = loadAnchor()
         let result: (samples: [HKSample], deleted: [HKDeletedObject], anchor: HKQueryAnchor?) =
             await withCheckedContinuation { continuation in
@@ -123,19 +128,24 @@ final class HealthMirror {
         let knownUUIDs = Set(remaining.compactMap(\.healthKitUUID))
         let tombstones = Set(UserDefaults.standard.stringArray(forKey: Self.tombstonesKey) ?? [])
         var imported = 0
+        var skippedKnown = 0, skippedDeleted = 0, skippedDup = 0, skippedTombstone = 0
         for sample in result.samples {
             guard let category = sample as? HKCategorySample else { continue }
             let day = cal.startOfDay(for: category.startDate)
-            if knownUUIDs.contains(category.uuid) { continue }
-            if deletedUUIDs.contains(category.uuid) { continue }
-            if existingDays.contains(day) { continue }
-            if tombstones.contains(ExportCodec.dayString(day)) { continue }
+            if knownUUIDs.contains(category.uuid) { skippedKnown += 1; continue }
+            if deletedUUIDs.contains(category.uuid) { skippedDeleted += 1; continue }
+            if existingDays.contains(day) { skippedDup += 1; continue }
+            if tombstones.contains(ExportCodec.dayString(day)) { skippedTombstone += 1; continue }
             let ours = category.sourceRevision.source == HKSource.default()   // 재설치 잔재 등
             context.insert(PeriodDay(day: day, origin: ours ? .appAuthored : .healthKitImported,
                                      healthKitUUID: category.uuid))
             existingDays.insert(day)
             imported += 1
         }
+        lastSyncReport = "건강 앱 원본 \(result.samples.count)건, 가져옴 \(imported)건"
+            + (skippedKnown + skippedDup > 0 ? ", 이미 있음 \(skippedKnown + skippedDup)건" : "")
+            + (skippedTombstone > 0 ? ", 이전에 지운 날 \(skippedTombstone)건" : "")
+            + (skippedDeleted > 0 ? ", 삭제된 기록 \(skippedDeleted)건" : "")
         saveAnchor(result.anchor)
         try? context.save()   // 가져온 기록 즉시 영속화 — autosave에 걸지 않는다(2026-07-23)
         return imported
