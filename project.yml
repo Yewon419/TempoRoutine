@@ -25,12 +25,14 @@ targets:
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 1
         SWIFT_VERSION: 6.0
-        TARGETED_DEVICE_FAMILY: 1            # P0 = 아이폰만 (§5.10)
+        TARGETED_DEVICE_FAMILY: "1,2"        # 아이폰 + 아이패드 (§5.10 — CloudKit 동기화 시점에 iPad 동시 추가, 2026-07-23)
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: 템포루틴
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UIBackgroundModes: remote-notification   # CloudKit 변경 푸시 수신(동기화)
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO  # 자체 암호화 없음 — 수출 규정 질문 생략(ASC 실측)
         # EventKit 읽기(§3.6.1) — iOS 17+ 풀 액세스 필요, 의도는 fetch만
         INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: 기존 캘린더의 약속과 생일을 화면에 비추기 위해서만 읽어요. 기록이 밖으로 나가지 않아요.

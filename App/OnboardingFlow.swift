@@ -555,32 +555,40 @@ struct OnboardingFlow: View {
     }
 
     // ══ ④ 저장 위치 ══
+    // 2026-07-23 개정(§5.2 동기화 실장): iCloud 행·카피는 실제 활성일 때만(정확성 — §7 privacy-washing 금지).
+    // iPad 타깃 추가로 "이 아이폰" → "이 기기". 마지막 줄 = §3.10 공유·통제 고정 한 줄.
     private var storageStep: some View {
         let healthOn = mirror.linked && mirror.writeAuthorized
+        let cloudOn = AppStores.cloudEnabled
         return VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "저장 위치", title: "기록은 여기에만\n저장돼요.")
-            Group {
+            VStack(alignment: .leading, spacing: 2) {
                 if healthOn {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("기록은 이 아이폰과 Apple 건강 앱에 저장돼요.")
-                        Text("건강 앱 설정에 따라 동기화될 수 있어요.")
-                    }
+                    Text("기록은 이 기기와 Apple 건강 앱에 저장돼요.")
+                    Text("건강 앱 설정에 따라 동기화될 수 있어요.")
                 } else {
-                    Text("기록은 이 아이폰에만 저장돼요.")
+                    Text(cloudOn ? "기록은 이 기기에 저장돼요." : "기록은 이 기기에만 저장돼요.")
+                }
+                if cloudOn {
+                    Text("플래너와 체크인은 당신의 iCloud로 기기 간에 이어져요.")
+                    Text("생리 기록은 iCloud로 보내지 않아요.")
                 }
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.65))
             VStack(spacing: 0) {
-                placeRow(icon: "iphone", name: "이 아이폰")
+                placeRow(icon: "iphone", name: "이 기기")
                 if healthOn {
                     placeRow(icon: "heart", name: "Apple 건강 앱")
+                }
+                if cloudOn {
+                    placeRow(icon: "icloud", name: "iCloud (플래너·체크인)")
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
             .milkGlass()
-            Text("내보내기와 전체 삭제는 언제든 설정에서.")
+            Text("아무와도 공유하지 않아요. 언제든 내보내고 지울 수 있어요.")
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))
         }
