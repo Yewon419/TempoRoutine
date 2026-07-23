@@ -21,3 +21,6 @@
   작업 여러 개를 커밋으로 쌓고, 배포는 `gh workflow run CI --ref main` 1회. push는 컴파일 검증만.
 - push 직후 dispatch하면 런이 2개 생긴다 — `gh run list` 최신 1개는 push 런(업로드 skipped)일 수
   있으니 배포 확인은 `event=workflow_dispatch`인 런으로 (2026-07-22 혼동 실측).
+- exportArchive "The data couldn't be read because it isn't in the correct format" = ASC cloud
+  signing 일시 오류 사례 있음(2026-07-23, 동일 설정 30분 전 성공·재시도 즉시 성공) — 설정 무변경이면
+  원인 파기 전에 1회 재디스패치 먼저.
