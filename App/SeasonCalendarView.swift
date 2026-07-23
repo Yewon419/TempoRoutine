@@ -12,6 +12,7 @@ import UIKit
 
 struct SeasonCalendarView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var hSize   // 아이패드 분할 뷰(2026-07-23)
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
@@ -20,6 +21,7 @@ struct SeasonCalendarView: View {
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
     @State private var pushedDay: Date?
+    @State private var selectedDay: Date?       // regular 분할 뷰의 우측 하루 상세 선택(2026-07-23)
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동, 확정 아님)
     @State private var selectionFeedback = 0    // 더 가벼운 선택 햅틱(§4 — 날짜 셀 탭, 2026-07-21 조정)
 
@@ -65,34 +67,19 @@ struct SeasonCalendarView: View {
         ZStack {
             Ink.paper.ignoresSafeArea()
             SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: today), motif: .open)
-            VStack(alignment: .leading, spacing: 12) {
-                monthHeader
-                HStack(alignment: .firstTextBaseline) {
-                    Text(seasonLine)
-                        .font(.system(.subheadline, design: .serif))
-                        .foregroundStyle(Ink.text.opacity(0.65))
-                    Spacer()
-                    // 기록 편집 진입 — 캘린더 탭 자체는 조회 전용
-                    Button {
-                        showLogSheet = true
-                    } label: {
-                        HStack(spacing: 5) {
-                            Circle().fill(Ink.coral).frame(width: 7, height: 7)
-                            Text("생리 기록")
-                        }
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Ink.text)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
-                    }
+            if hSize == .regular {
+                // 아이패드: 캘린더 + 하루 상세 분할(2026-07-23). 우측 계절광은 선택일 단계를 따름.
+                HStack(alignment: .top, spacing: 0) {
+                    calendarColumn(marks: marks)
+                        .frame(maxWidth: 560)
+                    Divider().overlay(Ink.text.opacity(0.12))
+                    DayDetailView(day: selectedDay ?? today)
+                        .id(selectedDay ?? today)
+                        .frame(maxWidth: .infinity)
                 }
-                weekdayRow
-                grid(marks: marks)
-                legend
-                Spacer(minLength: 0)
+            } else {
+                calendarColumn(marks: marks)
             }
-            .padding(20)
         }
         .sheet(isPresented: $showLogSheet) {
             PeriodTrackerSheet()
@@ -107,6 +94,38 @@ struct SeasonCalendarView: View {
                 DayDetailView(day: pushedDay)
             }
         }
+    }
+
+    /// 캘린더 열 — compact에선 전체 화면, regular에선 분할 좌측(2026-07-23)
+    private func calendarColumn(marks: [Date: [(title: String, projected: Bool)]]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            monthHeader
+            HStack(alignment: .firstTextBaseline) {
+                Text(seasonLine)
+                    .font(.system(.subheadline, design: .serif))
+                    .foregroundStyle(Ink.text.opacity(0.65))
+                Spacer()
+                // 기록 편집 진입 — 캘린더 탭 자체는 조회 전용
+                Button {
+                    showLogSheet = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Circle().fill(Ink.coral).frame(width: 7, height: 7)
+                        Text("생리 기록")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Ink.text)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+                }
+            }
+            weekdayRow
+            grid(marks: marks)
+            legend
+            Spacer(minLength: 0)
+        }
+        .padding(20)
     }
 
     /// 이 달의 잉크 글줄(§5.9-4: resolve가 캘린더에 뜨는지) — 일정 + cycle-anchored occurrence.
@@ -253,8 +272,18 @@ struct SeasonCalendarView: View {
                         .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
                 }
             }
+            .overlay {
+                // regular 분할 뷰의 선택일 표시(색만 X — 테두리)
+                if hSize == .regular && (selectedDay ?? today) == date {
+                    RoundedRectangle(cornerRadius: 10).stroke(Ink.text.opacity(0.28), lineWidth: 1)
+                }
+            }
             .contentShape(Rectangle())
-            .onTapGesture { selectionFeedback += 1; pushedDay = date }   // 탭 → 하루 상세 push(§8.2.3). 기록 편집은 트래커·하루 상세만
+            .onTapGesture {
+                selectionFeedback += 1
+                // 탭: compact = 하루 상세 push(§8.2.3) / regular = 우측 패널 선택(2026-07-23)
+                if hSize == .regular { selectedDay = date } else { pushedDay = date }
+            }
             .accessibilityElement()
             .accessibilityLabel(accessibilityText(for: date, style: style, recorded: recorded, predicted: predicted))
             .accessibilityAddTraits(.isButton)

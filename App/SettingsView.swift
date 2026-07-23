@@ -64,17 +64,18 @@ struct SettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background {
-                ZStack {
-                    Ink.paper
-                    SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)
-                }
-                .ignoresSafeArea()
-            }
+            .centeredColumn(680)   // 아이패드 중앙 조판(2026-07-23) — 배경은 루트로 이동
 
             if undoSnapshot != nil {
                 undoToast
             }
+        }
+        .background {
+            ZStack {
+                Ink.paper
+                SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)
+            }
+            .ignoresSafeArea()
         }
         .navigationTitle("설정")
         .sheet(item: Binding(

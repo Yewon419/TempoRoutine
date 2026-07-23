@@ -38,6 +38,7 @@ struct RhythmView: View {
                     diarySheet
                 }
                 .padding(20)
+                .centeredColumn(720)   // 아이패드 중앙 조판(2026-07-23)
             }
         }
     }

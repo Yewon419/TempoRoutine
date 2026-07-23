@@ -75,6 +75,7 @@ struct TodayView: View {
     static let overdueGraceDays = 2
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var hSize   // 아이패드 2열(2026-07-23)
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
@@ -122,15 +123,29 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     largeHeader
                     stateSurfaces
-                    if !snapshot.isColdStart {
-                        section(kind: .schedule) { scheduleSection }
-                        section(kind: .input) { inputSection }
-                        section(kind: .output) { outputSection }
+                    if hSize == .regular && !snapshot.isColdStart {
+                        // 아이패드: 3구획 좌열 + 체크인 우측 레일(2026-07-23)
+                        HStack(alignment: .top, spacing: 16) {
+                            VStack(spacing: 16) {
+                                section(kind: .schedule) { scheduleSection }
+                                section(kind: .input) { inputSection }
+                                section(kind: .output) { outputSection }
+                            }
+                            .frame(maxWidth: .infinity)
+                            checkInCard.frame(width: 360)
+                        }
+                    } else {
+                        if !snapshot.isColdStart {
+                            section(kind: .schedule) { scheduleSection }
+                            section(kind: .input) { inputSection }
+                            section(kind: .output) { outputSection }
+                        }
+                        checkInCard
                     }
-                    checkInCard
                 }
                 .padding(20)
                 .padding(.top, 4)
+                .centeredColumn(1000)
                 .background {
                     GeometryReader { geo in
                         Color.clear.onGeometryChange(for: CGFloat.self) {

@@ -68,8 +68,9 @@ struct OnboardingFlow: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
             .padding(.top, 8)   // 뒤로가기 버튼을 위로(2026-07-22 사용자 요청)
+            .centeredColumn(560)   // 아이패드 중앙 조판(2026-07-23)
         }
-        .safeAreaInset(edge: .bottom) { bottomBar }
+        .safeAreaInset(edge: .bottom) { bottomBar.centeredColumn(560) }
         .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
         .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil }, set: { if !$0 { syncMessage = nil } })) {
             Button("확인") { syncMessage = nil }
