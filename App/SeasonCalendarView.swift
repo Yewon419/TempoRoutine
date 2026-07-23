@@ -22,8 +22,7 @@ struct SeasonCalendarView: View {
     @State private var showLogSheet = false
     @State private var pushedDay: Date?
     @State private var selectedDay: Date?       // regular 분할 뷰의 우측 하루 상세 선택(2026-07-23)
-    @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동, 확정 아님)
-    @State private var selectionFeedback = 0    // 더 가벼운 선택 햅틱(§4 — 날짜 셀 탭, 2026-07-21 조정)
+    @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
@@ -86,7 +85,6 @@ struct SeasonCalendarView: View {
         }
         .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
-        .sensoryFeedback(.selection, trigger: selectionFeedback)
         .navigationDestination(isPresented: Binding(
             get: { pushedDay != nil },
             set: { if !$0 { pushedDay = nil } }
@@ -283,7 +281,7 @@ struct SeasonCalendarView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                selectionFeedback += 1
+                lightFeedback += 1
                 // 탭: compact = 하루 상세 push(§8.2.3) / regular = 우측 패널 선택(2026-07-23)
                 if hSize == .regular { selectedDay = date } else { pushedDay = date }
             }
