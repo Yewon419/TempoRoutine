@@ -26,6 +26,7 @@ struct DayDetailView: View {
 
     @State private var selectedCard: CardKind = .schedule
     @State private var addSheet: CardKind?
+    @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 생리 기록·아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정·월 이동 등, 확정 아님)
 
@@ -64,6 +65,9 @@ struct DayDetailView: View {
                                           })
             case .output:   OutputAddSheet()
             }
+        }
+        .sheet(item: $editingSchedule) { item in
+            ScheduleAddSheet(defaultDate: day, editing: item)
         }
     }
 
@@ -164,19 +168,27 @@ struct DayDetailView: View {
                         .padding(.vertical, 8)
                 }
                 ForEach(scheduleRows) { item in
-                    HStack {
-                        Text(item.title).foregroundStyle(Ink.text)
-                        Spacer()
-                        if !item.isAllDay {
-                            let startText = item.date.formatted(date: .omitted, time: .shortened)
-                            Text(item.endDate.map { "\(startText)~\($0.formatted(date: .omitted, time: .shortened))" } ?? startText)
-                                .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
+                    Button {
+                        lightFeedback += 1
+                        editingSchedule = item
+                    } label: {
+                        HStack {
+                            Text(item.title).foregroundStyle(Ink.text)
+                            Spacer()
+                            if !item.isAllDay {
+                                let startText = item.date.formatted(date: .omitted, time: .shortened)
+                                Text(item.endDate.map { "\(startText)~\($0.formatted(date: .omitted, time: .shortened))" } ?? startText)
+                                    .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
+                            }
+                            if let label = item.repeatRule.shortLabel {
+                                Text(label).font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
+                            }
                         }
-                        if let label = item.repeatRule.shortLabel {
-                            Text(label).font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
-                        }
+                        .font(.subheadline)
+                        .contentShape(Rectangle())
                     }
-                    .font(.subheadline)
+                    .buttonStyle(.plain)
+                    .accessibilityHint("탭하면 수정하거나 삭제할 수 있어요")
                 }
                 OverlayEventRows(day: day)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
                 CalendarConnectRow()

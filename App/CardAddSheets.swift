@@ -40,9 +40,10 @@ enum SeasonAnchor: String, CaseIterable, Identifiable {
     }
 }
 
-// ── ① 일정 추가 (2026-07-22 베타 피드백 개편 — 캘린더 이벤트 편집 문법: 제목·시작→종료·하루종일·반복·알림) ──
+// ── ① 일정 추가·수정 (2026-07-22 캘린더 이벤트 문법 / 2026-07-23 수정·삭제 추가 — 행 탭 = 이 시트) ──
 struct ScheduleAddSheet: View {
     let defaultDate: Date
+    var editing: ScheduleItem? = nil   // nil = 추가 / 값 = 수정(삭제 버튼 노출)
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -53,6 +54,7 @@ struct ScheduleAddSheet: View {
     @State private var end: Date
     @State private var repeatRule: ScheduleRepeat = .none
     @State private var reminderMinutes = -1
+    @State private var showDeleteConfirm = false
 
     private static let repeatChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly, .yearly]
     /// 시간 지정 일정 — 시작 기준 N분 전
@@ -62,15 +64,25 @@ struct ScheduleAddSheet: View {
     private static let allDayReminders: [(label: String, minutes: Int)] =
         [("없음", -1), ("당일 아침", 0), ("전날 아침", 1440)]
 
-    init(defaultDate: Date) {
+    init(defaultDate: Date, editing: ScheduleItem? = nil) {
         self.defaultDate = defaultDate
-        // 시간 지정 전환 시의 기본 시각 — 선택 날짜 + (지금 시각의 다음 정시), 1시간짜리
-        let cal = Calendar.current
-        var comps = cal.dateComponents([.year, .month, .day], from: defaultDate)
-        comps.hour = min(23, cal.component(.hour, from: .now) + 1)
-        let base = cal.date(from: comps) ?? defaultDate
-        _start = State(initialValue: base)
-        _end = State(initialValue: base.addingTimeInterval(3600))
+        self.editing = editing
+        if let item = editing {
+            _title = State(initialValue: item.title)
+            _allDay = State(initialValue: item.isAllDay)
+            _start = State(initialValue: item.date)
+            _end = State(initialValue: item.endDate ?? item.date.addingTimeInterval(3600))
+            _repeatRule = State(initialValue: item.repeatRule)
+            _reminderMinutes = State(initialValue: item.reminderMinutes)
+        } else {
+            // 시간 지정 전환 시의 기본 시각 — 선택 날짜 + (지금 시각의 다음 정시), 1시간짜리
+            let cal = Calendar.current
+            var comps = cal.dateComponents([.year, .month, .day], from: defaultDate)
+            comps.hour = min(23, cal.component(.hour, from: .now) + 1)
+            let base = cal.date(from: comps) ?? defaultDate
+            _start = State(initialValue: base)
+            _end = State(initialValue: base.addingTimeInterval(3600))
+        }
     }
 
     private var reminderChoices: [(label: String, minutes: Int)] {
@@ -118,6 +130,23 @@ struct ScheduleAddSheet: View {
                         }
                     }
                 }
+                if editing != nil {
+                    // 파괴 액션 분리 배치 + 확인(§8.2.6 문법)
+                    Section {
+                        Button("일정 삭제", role: .destructive) { showDeleteConfirm = true }
+                            .foregroundStyle(Ink.danger)
+                    }
+                }
+            }
+            .confirmationDialog("이 일정을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("삭제", role: .destructive) {
+                    if let item = editing {
+                        ScheduleReminder.cancel(id: item.id)
+                        modelContext.delete(item)
+                    }
+                    dismiss()
+                }
+                Button("취소", role: .cancel) {}
             }
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: start) {
@@ -127,7 +156,7 @@ struct ScheduleAddSheet: View {
                 // 하루종일 전환 시 알림 선택지가 달라짐 — 유효하지 않은 값은 없음으로
                 if !reminderChoices.contains(where: { $0.minutes == reminderMinutes }) { reminderMinutes = -1 }
             }
-            .navigationTitle("일정 추가")
+            .navigationTitle(editing == nil ? "일정 추가" : "일정 수정")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
@@ -136,14 +165,27 @@ struct ScheduleAddSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
-                        let item = ScheduleItem(title: title, date: start, isAllDay: allDay,
-                                                repeatRule: repeatRule,
-                                                endDate: allDay ? nil : end,
-                                                reminderMinutes: reminderMinutes)
-                        modelContext.insert(item)
-                        ScheduleReminder.schedule(id: item.id, title: item.title, date: start,
-                                                  isAllDay: allDay, repeatRule: repeatRule,
-                                                  reminderMinutes: reminderMinutes)
+                        if let item = editing {
+                            item.title = title
+                            item.date = start
+                            item.isAllDay = allDay
+                            item.repeatRule = repeatRule
+                            item.endDate = allDay ? nil : end
+                            item.reminderMinutes = reminderMinutes
+                            ScheduleReminder.cancel(id: item.id)   // 알림 재예약 — 시간·반복이 바뀌었을 수 있음
+                            ScheduleReminder.schedule(id: item.id, title: title, date: start,
+                                                      isAllDay: allDay, repeatRule: repeatRule,
+                                                      reminderMinutes: reminderMinutes)
+                        } else {
+                            let item = ScheduleItem(title: title, date: start, isAllDay: allDay,
+                                                    repeatRule: repeatRule,
+                                                    endDate: allDay ? nil : end,
+                                                    reminderMinutes: reminderMinutes)
+                            modelContext.insert(item)
+                            ScheduleReminder.schedule(id: item.id, title: item.title, date: start,
+                                                      isAllDay: allDay, repeatRule: repeatRule,
+                                                      reminderMinutes: reminderMinutes)
+                        }
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)

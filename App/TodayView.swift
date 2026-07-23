@@ -85,6 +85,7 @@ struct TodayView: View {
 
     @State private var showLogSheet = false
     @State private var addSheet: CardKind?
+    @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var isCollapsed = false
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
@@ -182,6 +183,9 @@ struct TodayView: View {
             case .input:    InputAddSheet(currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel)
             case .output:   OutputAddSheet()
             }
+        }
+        .sheet(item: $editingSchedule) { item in
+            ScheduleAddSheet(defaultDate: today, editing: item)
         }
         .onAppear(perform: loadDraft)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
@@ -304,14 +308,22 @@ struct TodayView: View {
             Text("아직 없어요").font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
         }
         ForEach(todaySchedules) { item in
-            HStack(spacing: 10) {
-                Text(item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened))
-                    .font(.caption)
-                    .foregroundStyle(Ink.text.opacity(0.5))
-                    .frame(width: 56, alignment: .leading)
-                Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
-                Spacer()
+            Button {
+                lightFeedback += 1
+                editingSchedule = item
+            } label: {
+                HStack(spacing: 10) {
+                    Text(item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened))
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.5))
+                        .frame(width: 56, alignment: .leading)
+                    Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
+                    Spacer()
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityHint("탭하면 수정하거나 삭제할 수 있어요")
         }
         OverlayEventRows(day: today)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
         CalendarConnectRow()
