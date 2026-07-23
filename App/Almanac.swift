@@ -193,9 +193,12 @@ struct SeasonLight: View {
 
     private func motifTile(scale: CGFloat, alignment: Alignment) -> some View {
         GeometryReader { geo in
+            // 타일 기준 폭은 아이폰 폭 수준으로 캡핑(2026-07-23) — 아이패드에서 폭 비례로 키우면
+            // 타일이 화면보다 훨씬 커져 그림 본체가 밖으로 밀리고 소스 여백만 보인다.
+            let base = min(geo.size.width, 430)
             motifImage
                 .resizable()
-                .frame(width: geo.size.width * scale, height: geo.size.width * scale)
+                .frame(width: base * scale, height: base * scale)
                 .frame(width: geo.size.width, height: geo.size.height, alignment: alignment)
                 .clipped()
         }
