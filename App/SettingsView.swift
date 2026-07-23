@@ -57,6 +57,17 @@ struct SettingsView: View {
                     Text(healthCaption)
                 }
 
+                // 기능 튜토리얼 리셋(2026-07-23 — JejuNow 「사용법 다시 보기」 동형)
+                Section {
+                    Button("사용법 다시 보기") {
+                        lightFeedback += 1
+                        CoachStore.resetAll()
+                    }
+                    .foregroundStyle(Ink.text)
+                } footer: {
+                    Text("다음에 각 화면을 열면 처음 안내가 다시 나와요.")
+                }
+
                 // 파괴적 액션 — 분리 배치(§8.2.6)
                 Section {
                     Button("모든 기록 삭제", role: .destructive) { showWipeConfirm = true }

@@ -186,6 +186,7 @@ struct TodayView: View {
         .onAppear(perform: loadDraft)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .coachOverlay(id: .today, steps: CoachSteps.today)   // 기능 튜토리얼(2026-07-23)
     }
 
     // ── 컬랩싱 헤더: 큰 층 ──
@@ -291,6 +292,7 @@ struct TodayView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
+        .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)
     }
 
     // ① 일정 (오늘)

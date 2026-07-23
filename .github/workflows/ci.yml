@@ -77,6 +77,11 @@ jobs:
             -archivePath build/TempoRoutine.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER
+      - name: 실측 — 아이패드 지원 확인 (UIDeviceFamily·방향)
+        run: |
+          # 폰모드(호환 모드) 진단용 — 2가 없으면 아이패드 네이티브가 아니다 (2026-07-23)
+          plutil -p build/TempoRoutine.xcarchive/Products/Applications/TempoRoutine.app/Info.plist \
+            | grep -E -A 4 "UIDeviceFamily|UISupportedInterfaceOrientations" || true
       - name: Embed entitlements (ad-hoc sign)
         run: |
           # 무서명 archive는 entitlements가 비어 export 재서명 IPA에서 HealthKit이 빠짐(실측: 빌드 20).

@@ -84,6 +84,7 @@ struct SeasonCalendarView: View {
         .sheet(isPresented: $showLogSheet) {
             PeriodTrackerSheet()
         }
+        .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sensoryFeedback(.selection, trigger: selectionFeedback)
         .navigationDestination(isPresented: Binding(
@@ -119,9 +120,11 @@ struct SeasonCalendarView: View {
                     .padding(.vertical, 8)
                     .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
                 }
+                .coachAnchor(.calendarLog)   // 기능 튜토리얼(2026-07-23)
             }
             weekdayRow
             grid(marks: marks)
+                .coachAnchor(.calendarGrid)
             legend
             Spacer(minLength: 0)
         }
