@@ -119,14 +119,17 @@ final class InputItem {
         self.createdAt = .now
     }
 
-    /// .daily·.weekly·.monthly 판정(달력 기준 — 주기 기준은 CycleSnapshot 필요라 호출부에서 별도 처리).
+    /// .once·.daily·.weekly·.monthly 판정(달력 기준 — 주기 기준은 CycleSnapshot 필요라 호출부에서 별도 처리).
     /// 생성일(createdAt) 이전은 발생 안 함. .cycleAnchored는 항상 false(호출부 분기 전용 가드).
+    /// .once의 "완료 후 다른 날 숨김"은 completions가 필요해 호출부(뷰) 책임.
     func occursByCalendar(on day: Date) -> Bool {
         let cal = Calendar.current
         let start = cal.startOfDay(for: createdAt)
         let target = cal.startOfDay(for: day)
         guard target >= start else { return false }
         switch schedule {
+        case .once:
+            return true
         case .daily:
             return true
         case .weekly:

@@ -190,6 +190,13 @@ struct DayDetailView: View {
     private var inputRows: [InputRow] {
         inputs.compactMap { item in
             switch item.schedule {
+            case .once:
+                // 단발 체크(2026-07-23): 완료된 날엔 기록으로, 미완료면 생성일 이후 모든 날에 대기로
+                if isCompleted(item.id) { return InputRow(item: item, projected: false) }
+                if !hasAnyCompletion(item.id) && item.occursByCalendar(on: day) {
+                    return InputRow(item: item, projected: false)
+                }
+                return nil
             case .daily, .weekly, .monthly:
                 return item.occursByCalendar(on: day) ? InputRow(item: item, projected: false) : nil
             case .cycleAnchored(let r):
@@ -206,6 +213,10 @@ struct DayDetailView: View {
 
     private func isCompleted(_ itemID: UUID) -> Bool {
         completions.contains { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: day) }
+    }
+
+    private func hasAnyCompletion(_ itemID: UUID) -> Bool {
+        completions.contains { $0.itemID == itemID }
     }
 
     private func toggleCompletion(_ itemID: UUID) {

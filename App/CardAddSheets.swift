@@ -166,6 +166,7 @@ struct InputAddSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var category: InputCategory = .other
+    @State private var repeats = true      // 기본 = 매일(체크리스트가 본질). 반복+주기 둘 다 끔 = .once(2026-07-23)
     @State private var cycleBased = false
     @State private var calendarFreq: ScheduleRepeat = .daily   // 반복(달력 기준) 칩 선택 — daily/weekly/monthly만 사용
     @State private var anchor: SeasonAnchor = .winter
@@ -198,13 +199,13 @@ struct InputAddSheet: View {
                     Text("기타").tag(InputCategory.other)
                 }
                 Section {
-                    // 상호 배타(프로토 data-excl="rep") — 한 불리언의 두 얼굴이라 항상 정확히 하나만 켜짐
+                    // 상호 배타(둘 다 끔 = 단발 체크 — Output과 동일 문법, 2026-07-23)
                     Toggle("반복", isOn: Binding(
-                        get: { !cycleBased },
-                        set: { on in cycleBased = !on }
+                        get: { repeats },
+                        set: { on in repeats = on; if on { cycleBased = false } }
                     ))
                     .tint(Ink.text)
-                    if !cycleBased {
+                    if repeats {
                         HStack(spacing: 6) {
                             ForEach(Self.calendarChoices, id: \.self) { freq in
                                 FreqChip(label: freq.shortLabel ?? "", selected: calendarFreq == freq) {
@@ -213,14 +214,22 @@ struct InputAddSheet: View {
                             }
                         }
                     }
-                    Toggle("주기 기준", isOn: $cycleBased)
-                        .tint(Ink.text)
+                    Toggle("주기 기준", isOn: Binding(
+                        get: { cycleBased },
+                        set: { on in cycleBased = on; if on { repeats = false } }
+                    ))
+                    .tint(Ink.text)
                     if cycleBased {
                         Picker("시작 계절", selection: $anchor) {
                             ForEach(SeasonAnchor.allCases) { Text($0.rawValue).tag($0) }
                         }
                         Stepper("계절 시작 +\(offset)일", value: $offset, in: 0...13)
                         Toggle("매 주기 반복", isOn: $everyCycle)
+                    }
+                    if !repeats && !cycleBased {
+                        Text("반복 없이, 체크할 때까지 계속 보여요.")
+                            .font(.footnote)
+                            .foregroundStyle(Ink.text.opacity(0.5))
                     }
                 }
             }
@@ -237,12 +246,14 @@ struct InputAddSheet: View {
                         if cycleBased {
                             schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase), dayOffset: offset,
                                                                       repeatsEveryCycle: everyCycle, overflowRule: .clamp))
-                        } else {
+                        } else if repeats {
                             switch calendarFreq {
                             case .weekly:  schedule = .weekly
                             case .monthly: schedule = .monthly
                             default:       schedule = .daily
                             }
+                        } else {
+                            schedule = .once
                         }
                         modelContext.insert(InputItem(title: title, category: category, schedule: schedule))
                         dismiss()

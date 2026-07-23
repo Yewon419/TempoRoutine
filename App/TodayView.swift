@@ -291,6 +291,9 @@ struct TodayView: View {
     private var todayInputs: [InputItem] {
         inputs.filter { item in
             switch item.schedule {
+            case .once:
+                // 단발 체크(2026-07-23): 완료 전까지 계속, 완료하면 완료한 그날만 남음
+                item.occursByCalendar(on: today) && (!hasAnyCompletion(item.id) || isChecked(item.id))
             case .daily, .weekly, .monthly:
                 item.occursByCalendar(on: today)
             case .cycleAnchored(let r):
@@ -302,6 +305,10 @@ struct TodayView: View {
 
     private func isChecked(_ itemID: UUID) -> Bool {
         completions.contains { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: today) }
+    }
+
+    private func hasAnyCompletion(_ itemID: UUID) -> Bool {
+        completions.contains { $0.itemID == itemID }
     }
 
     private func toggleCheck(_ itemID: UUID) {

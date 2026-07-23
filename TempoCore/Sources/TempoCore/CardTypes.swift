@@ -9,7 +9,9 @@ public enum ScheduleRepeat: String, Codable, Sendable, CaseIterable { case none,
 // ② Input 카드
 public enum InputCategory: String, Codable, CaseIterable, Sendable { case food, exercise, media, other }
 
+/// .once = 반복 없음(2026-07-23 확장): 단발 체크 — 완료 전까지 계속 표시, 완료하면 그날만 기록으로 남음.
 public enum InputSchedule: Codable, Equatable, Sendable {
+    case once                           // 반복 없음 — 단발 체크
     case daily                          // 매일
     case weekly                         // 매주 — 생성일(createdAt)과 같은 요일(2026-07-22 확장)
     case monthly                        // 매달 — 생성일과 같은 일(day), 말일 클램프(2026-07-22 확장)
@@ -19,10 +21,12 @@ public enum InputSchedule: Codable, Equatable, Sendable {
 // 연관값 enum auto-synthesis는 실기기서 불안정(§5.5.1 실측) → discriminator 커스텀 Codable.
 extension InputSchedule {
     enum CodingKeys: String, CodingKey { case type, recurrence }
-    enum Kind: String, Codable { case daily, weekly, monthly, cycleAnchored }
+    enum Kind: String, Codable { case once, daily, weekly, monthly, cycleAnchored }
     public func encode(to e: Encoder) throws {
         var c = e.container(keyedBy: CodingKeys.self)
         switch self {
+        case .once:
+            try c.encode(Kind.once, forKey: .type)
         case .daily:
             try c.encode(Kind.daily, forKey: .type)
         case .weekly:
@@ -37,6 +41,7 @@ extension InputSchedule {
     public init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
         switch try c.decode(Kind.self, forKey: .type) {
+        case .once:           self = .once
         case .daily:          self = .daily
         case .weekly:         self = .weekly
         case .monthly:        self = .monthly
