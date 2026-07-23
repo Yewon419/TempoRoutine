@@ -161,6 +161,8 @@ struct ScheduleAddSheet: View {
 // ── ② Input 추가 ──
 struct InputAddSheet: View {
     let currentSeason: SeasonMeta?
+    /// 기록상 에너지 수준(2026-07-23) — 있으면 제목 예시를 에너지별로, 없으면 계절 매트릭스 폴백
+    var energyLevel: EnergyLevel? = nil
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -183,6 +185,9 @@ struct InputAddSheet: View {
     ]
 
     private var placeholder: String {
+        if let level = energyLevel {
+            return "예: \(EnergyProfile.inputExample(category: category, level: level))"
+        }
         let byCat = Self.examples[category] ?? [:]
         let ex = currentSeason.flatMap { byCat[$0.name] } ?? "스트레칭 10분"
         return "예: \(ex)"

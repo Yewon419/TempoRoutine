@@ -22,6 +22,7 @@ struct DayDetailView: View {
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query private var completions: [ItemCompletion]
+    @Query private var checkIns: [DailyCheckIn]
 
     @State private var selectedCard: CardKind = .schedule
     @State private var addSheet: CardKind?
@@ -57,7 +58,10 @@ struct DayDetailView: View {
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: day)
-            case .input:    InputAddSheet(currentSeason: snapshot.phaseInfo(on: today)?.meta)
+            case .input:    InputAddSheet(currentSeason: snapshot.phaseInfo(on: today)?.meta,
+                                          energyLevel: snapshot.phase(on: today).flatMap {
+                                              EnergyProfile(checkIns: checkIns, snapshot: snapshot).level(for: $0)
+                                          })
             case .output:   OutputAddSheet()
             }
         }

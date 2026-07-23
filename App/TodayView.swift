@@ -101,6 +101,19 @@ struct TodayView: View {
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
     private var todayInfo: (meta: SeasonMeta, dayInCycle: Int, projected: Bool)? { snapshot.phaseInfo(on: today) }
 
+    // 단계별 에너지 프로필(2026-07-23) — 표본 3개+면 무드라인·Input 예시 개인화, 미달이면 기본 유지
+    private var energyProfile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
+    private var todayEnergyLevel: EnergyLevel? {
+        snapshot.phase(on: today).flatMap { energyProfile.level(for: $0) }
+    }
+    private var moodlineText: String? {
+        guard let info = todayInfo else { return nil }
+        if let phase = snapshot.phase(on: today), let level = todayEnergyLevel {
+            return EnergyProfile.moodline(for: phase, level: level)
+        }
+        return info.meta.moodline
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             Ink.paper.ignoresSafeArea()
@@ -151,7 +164,7 @@ struct TodayView: View {
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: today)
-            case .input:    InputAddSheet(currentSeason: todayInfo?.meta)
+            case .input:    InputAddSheet(currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel)
             case .output:   OutputAddSheet()
             }
         }
@@ -176,7 +189,7 @@ struct TodayView: View {
                     else if info.projected { Text("예상").foregroundStyle(Ink.text.opacity(0.45)) }
                 }
                 .font(.system(.footnote, design: .serif))
-                Text(info.meta.moodline)
+                Text(moodlineText ?? info.meta.moodline)
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.85))
                     .padding(.top, 2)
