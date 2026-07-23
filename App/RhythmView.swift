@@ -12,9 +12,13 @@ struct RhythmView: View {
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query(sort: \DailyCheckIn.day, order: .reverse) private var checkIns: [DailyCheckIn]
 
+    private static let allPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
+
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
+    private var profile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
+    private var unlockedPhases: [CyclePhase] { Self.allPhases.filter { profile.level(for: $0) != nil } }
 
     var body: some View {
         ZStack {
@@ -27,7 +31,9 @@ struct RhythmView: View {
                         .foregroundStyle(Ink.text)
                         .padding(.top, 12)
                     coldCard
-                    meanwhileCard
+                    if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
+                        meanwhileCard
+                    }
                     seasonsSheet
                     diarySheet
                 }
@@ -36,29 +42,41 @@ struct RhythmView: View {
         }
     }
 
-    // ── 콜드스타트 카드 (§8.2.5 P0) — 목표 = 2주기 완주 근사, 진행은 정보성 ──
-    private var progressInfo: (progress: Double, remaining: Int, label: String) {
-        guard let first = snapshot.starts.first, let last = snapshot.starts.last else {
-            return (0, 0, "첫 생리일을 기록하면 시작돼요")
+    // ── 콜드스타트 카드 (§8.2.5 개정 2026-07-23 — "약 41일" 폐기) ──
+    // 날짜 약속 대신 가까운 마일스톤: 이번 계절 기록 3회(EnergyProfile.minSamples) → 네 계절 채우기.
+    private var progressInfo: (progress: Double, title: String, body: String, label: String) {
+        if snapshot.isColdStart {
+            return (0, "첫 패턴을 기다리는 중", "당신만의 패턴이 보이기 시작할 거예요.",
+                    "첫 생리일을 기록하면 시작돼요")
         }
-        let avg = snapshot.averageLength
-        let total = avg * 2
-        let done = cal.dateComponents([.day], from: first, to: today).day ?? 0
-        let progress = min(1.0, Double(done) / Double(total))
-        let remaining = max(0, total - done)
-        let dayInCycle = (cal.dateComponents([.day], from: last, to: today).day ?? 0) + 1
-        return (progress, remaining, "\(snapshot.starts.count)주기차 · \(min(dayInCycle, avg))일째 기록 중")
+        let goal = EnergyProfile.minSamples
+        let curPhase = snapshot.phase(on: today)
+        let curName = curPhase.map { seasonMeta(for: $0).name } ?? "이번 계절"
+        let curCount = curPhase.map { min(goal, profile.sampleCount(for: $0)) } ?? 0
+        let unlocked = unlockedPhases
+        if unlocked.isEmpty {
+            let body = curCount == 0
+                ? "\(curName)의 에너지를 세 번 기록하면, 이 계절의 첫 패턴이 보여요."
+                : "\(curName)의 에너지 기록이 \(curCount)번 쌓였어요. 세 번이면 이 계절의 첫 패턴이 보여요."
+            return (Double(curCount) / Double(goal), "첫 패턴을 기다리는 중", body,
+                    "\(curName) 기록 \(curCount) / \(goal)")
+        }
+        let names = unlocked.map { seasonMeta(for: $0).name }.joined(separator: "·")
+        var body = "\(names)의 패턴이 열렸어요. 네 계절이 모두 채워지면 리듬 전체가 이어져요."
+        if let phase = curPhase, profile.level(for: phase) == nil {
+            body += " \(curName)은 \(curCount) / \(goal)회째예요."
+        }
+        return (Double(unlocked.count) / 4.0, "패턴이 보이기 시작했어요", body,
+                "네 계절 중 \(unlocked.count)")
     }
 
     private var coldCard: some View {
         let info = progressInfo
         return VStack(alignment: .leading, spacing: 10) {
-            Text("첫 패턴을 기다리는 중")
+            Text(info.title)
                 .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(Ink.text)
-            Text(info.remaining > 0 && !snapshot.isColdStart
-                 ? "앞으로 약 \(info.remaining)일이면 당신만의 패턴이 보이기 시작해요."
-                 : "당신만의 패턴이 보이기 시작할 거예요.")
+            Text(info.body)
                 .font(.subheadline)
                 .foregroundStyle(Ink.text.opacity(0.75))
             GeometryReader { geo in

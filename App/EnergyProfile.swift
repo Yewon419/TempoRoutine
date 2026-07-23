@@ -27,6 +27,11 @@ struct EnergyProfile {
         stats = acc
     }
 
+    /// 해당 단계의 비투영 energy 표본 수 — 콜드 카드 진행 표시용(2026-07-23)
+    func sampleCount(for phase: CyclePhase) -> Int {
+        stats[phase]?.count ?? 0
+    }
+
     /// 표본 3개 미만이면 nil(기본 문구 유지). 경계: 평균 ≤2.5 low / ≥3.5 high / 그 외 mid.
     func level(for phase: CyclePhase) -> EnergyLevel? {
         guard let s = stats[phase], s.count >= Self.minSamples else { return nil }
