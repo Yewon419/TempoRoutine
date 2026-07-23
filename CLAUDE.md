@@ -25,3 +25,7 @@
 - exportArchive "The data couldn't be read because it isn't in the correct format" = ASC cloud
   signing 일시 오류 사례 있음(2026-07-23, 동일 설정 30분 전 성공·재시도 즉시 성공) — 설정 무변경이면
   원인 파기 전에 1회 재디스패치 먼저.
+- 수동 생성 ModelContainer는 `mainContext.autosaveEnabled = true` 명시 + 대량 쓰기 후 `save()`.
+  암묵 기본값 의존 금지 — .modelContainer(for:) 모디파이어와 달리 보장이 불명확(2026-07-23).
+- HealthKit 권한은 앱 삭제·재설치로 초기화되지 않는다 — 재설치해도 권한 시트가 다시 안 뜨고
+  이전 거부 상태를 물려받아 read가 조용히 빈 배열이 된다(2026-07-23 실기기 실측).
