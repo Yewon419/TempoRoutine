@@ -42,11 +42,21 @@ final class HealthMirror {
         guard available else { return false }
         do {
             try await store.requestAuthorization(toShare: [flowType], read: [flowType])
+            // 재연동 = 처음부터 다시 비춘다(2026-07-23 실기기 결함 — 앵커가 남아 있으면 기존
+            // Health 데이터가 "앵커 이후 없음"으로 떨어져 불러올 게 없다고 나온다. dedup=day·UUID라 안전)
+            UserDefaults.standard.removeObject(forKey: Self.anchorKey)
             linked = true
             return true
         } catch {
             return false
         }
+    }
+
+    /// 전체 삭제(§8.2.6 wipeAll) 동반 리셋 — 다음 연동이 깨끗한 초기 가져오기가 되도록
+    /// 앵커와 툼스톤을 지운다(툼스톤은 삭제된 로컬 기록에 대한 것이라 기록이 사라지면 의미도 소멸).
+    static func resetImportState() {
+        UserDefaults.standard.removeObject(forKey: anchorKey)
+        UserDefaults.standard.removeObject(forKey: tombstonesKey)
     }
 
     // ── write: PeriodDay 1개 = menstrualFlow 샘플 1개 (§5.5.4) ──

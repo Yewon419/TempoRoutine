@@ -193,7 +193,7 @@ struct SettingsView: View {
         if mirror.linked {
             return "건강 앱 쓰기가 꺼져 있어요. 설정 앱의 건강 > 데이터 접근에서 허용할 수 있어요."
         }
-        return "기록은 이 아이폰에만 저장돼요."
+        return "기록은 이 기기에만 저장돼요."   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
     }
 
     private func wipeAll(includeHealth: Bool) {
@@ -203,6 +203,7 @@ struct SettingsView: View {
             let uuids = periodDays.filter { $0.origin == .appAuthored }.compactMap(\.healthKitUUID)
             Task { await mirror.deleteSamples(uuids: uuids) }
         }
+        HealthMirror.resetImportState()   // 앵커·툼스톤 리셋 — 재연동이 초기 가져오기가 되도록(2026-07-23)
         ExportImport.wipeAll(store, context: modelContext)
         withAnimation { undoSnapshot = snapshot }
         undoDismissTask = Task {
