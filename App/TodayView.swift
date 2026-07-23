@@ -417,20 +417,9 @@ struct TodayView: View {
                 .accessibilityValue(sub.isDone ? "완료" : "미완료")
             }
         case .sessions:
-            HStack(spacing: 12) {
-                Text(item.targetSessions > 0 ? "\(item.loggedSessions) / \(item.targetSessions) 세션"
-                                             : "\(item.loggedSessions) 세션")
-                    .font(.footnote).monospacedDigit().foregroundStyle(Ink.text.opacity(0.7))
-                Button {
-                    lightFeedback += 1
-                    if item.loggedSessions > 0 { item.loggedSessions -= 1 }
-                } label: { Image(systemName: "minus.circle") }
-                Button {
-                    lightFeedback += 1
-                    item.loggedSessions += 1
-                } label: { Image(systemName: "plus.circle") }
+            SessionProgressControl(item: item) { completed in
+                if completed { confirmFeedback += 1 } else { lightFeedback += 1 }
             }
-            .foregroundStyle(Ink.text)
         case .percent:
             HStack(spacing: 10) {
                 Slider(value: Binding(get: { item.percent }, set: { item.percent = $0 }), in: 0...1)
