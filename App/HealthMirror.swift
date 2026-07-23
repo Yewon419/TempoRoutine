@@ -137,6 +137,7 @@ final class HealthMirror {
             imported += 1
         }
         saveAnchor(result.anchor)
+        try? context.save()   // 가져온 기록 즉시 영속화 — autosave에 걸지 않는다(2026-07-23)
         return imported
     }
 

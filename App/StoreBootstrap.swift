@@ -27,6 +27,7 @@ enum AppStores {
             let planner = ModelConfiguration("tempo-planner", schema: Schema(plannerModels),
                                              cloudKitDatabase: .private(cloudContainerID))
             let container = try ModelContainer(for: fullSchema, configurations: [sensitive, planner])
+            container.mainContext.autosaveEnabled = true   // 수동 생성 컨테이너 — 암묵 기본값에 걸지 않는다(2026-07-23)
             cloudEnabled = true
             return container
         } catch {
@@ -34,6 +35,7 @@ enum AppStores {
             let planner = ModelConfiguration("tempo-planner", schema: Schema(plannerModels),
                                              cloudKitDatabase: .none)
             if let local = try? ModelContainer(for: fullSchema, configurations: [sensitive, planner]) {
+                local.mainContext.autosaveEnabled = true
                 return local
             }
             // 최후 폴백 — 단일 기본 스토어(여기 도달하면 스토어 계층 자체가 손상된 상황)

@@ -42,7 +42,8 @@ struct SettingsView: View {
                 } header: {
                     Text("데이터")
                 } footer: {
-                    Text("이 파일엔 생리·컨디션 기록이 들어있어요.")
+                    // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
+                    Text("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \(periodDays.count)일 · 체크인 \(checkIns.count)건")
                 }
 
                 // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)
