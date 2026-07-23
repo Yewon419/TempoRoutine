@@ -7,6 +7,7 @@
 import Foundation
 import SwiftData
 
+@MainActor
 enum AppStores {
     static let cloudContainerID = "iCloud.app.temporoutine.TempoRoutine"
 
@@ -42,7 +43,6 @@ enum AppStores {
 
     /// 구 단일 스토어 → 2층 스토어 1회성 이관. 봉투(§5.5.1) 경유라 dedup·UUID 보존·알림 재스케줄 승계.
     /// 실패 시 플래그를 남기지 않아 다음 실행에 재시도. 구 파일은 지우지 않는다(안전망 — 수동 정리).
-    @MainActor
     static func migrateLegacyStoreIfNeeded(into container: ModelContainer) {
         let flagKey = "storeSplitMigrated.v1"
         let defaults = UserDefaults.standard
