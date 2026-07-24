@@ -21,6 +21,7 @@ enum AppStores {
 
     static func makeContainer() -> ModelContainer {
         let fullSchema = Schema(sensitiveModels + plannerModels)
+        // 민감층 config는 클라우드/로컬 폴백에서 동일 — PeriodDay 저장 위치가 실행마다 안 바뀐다.
         let sensitive = ModelConfiguration("tempo-sensitive", schema: Schema(sensitiveModels),
                                            cloudKitDatabase: .none)
         do {
@@ -31,31 +32,25 @@ enum AppStores {
             cloudEnabled = true
             return container
         } catch {
-            // iCloud 미로그인·컨테이너 불가 등 — 로컬 전용 폴백. 스토어 이름이 같아 복구 시 그대로 이어짐.
+            // iCloud 미로그인·컨테이너 불가 등 — 로컬 전용 폴백. **반드시 같은 named 스토어**를 쓴다.
+            // ⚠ default.store로 갈라지면 실행마다 스토어가 바뀌어 "저장됐는데 재시작하면 0"이 된다
+            //   (2026-07-24 split-brain 결함 수정 — 옛 `try! ModelContainer(for: fullSchema)` 제거).
             let planner = ModelConfiguration("tempo-planner", schema: Schema(plannerModels),
                                              cloudKitDatabase: .none)
-            if let local = try? ModelContainer(for: fullSchema, configurations: [sensitive, planner]) {
-                local.mainContext.autosaveEnabled = true
-                return local
-            }
-            // 최후 폴백 — 단일 기본 스토어(여기 도달하면 스토어 계층 자체가 손상된 상황)
-            return try! ModelContainer(for: fullSchema)
+            let container = try! ModelContainer(for: fullSchema, configurations: [sensitive, planner])
+            container.mainContext.autosaveEnabled = true
+            cloudEnabled = false
+            return container
         }
     }
 
-    /// 구 단일 스토어 → 2층 스토어 1회성 이관. 봉투(§5.5.1) 경유라 dedup·UUID 보존·알림 재스케줄 승계.
-    /// 실패 시 플래그를 남기지 않아 다음 실행에 재시도. 구 파일은 지우지 않는다(안전망 — 수동 정리).
-    static func migrateLegacyStoreIfNeeded(into container: ModelContainer) {
-        let flagKey = "storeSplitMigrated.v1"
-        let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: flagKey) else { return }
-
+    /// default.store에 남은 데이터를 named 2층 스토어로 회수. **매 실행 재실행 가능**(dedup=day·UUID라
+    /// 멱등 — 다 옮겨지면 added=0 no-op). 이전 split-brain 실행이 default.store에 남긴 기록(예: HealthKit
+    /// 가져오기 93건)까지 회수한다(2026-07-24). 플래그 제거 — 한 번 놓치면 영영 갇히던 문제 해소.
+    @discardableResult
+    static func migrateLegacyStoreIfNeeded(into container: ModelContainer) -> Int {
         let legacyURL = URL.applicationSupportDirectory.appending(path: "default.store")
-        guard FileManager.default.fileExists(atPath: legacyURL.path) else {
-            defaults.set(true, forKey: flagKey)   // 신규 설치 — 이관할 것 없음
-            return
-        }
-
+        guard FileManager.default.fileExists(atPath: legacyURL.path) else { return 0 }
         do {
             let fullSchema = Schema(sensitiveModels + plannerModels)
             let legacyConfig = ModelConfiguration(schema: fullSchema, url: legacyURL,
@@ -79,11 +74,11 @@ enum AppStores {
                 outputs: try dst.fetch(FetchDescriptor<OutputItem>()),
                 completions: try dst.fetch(FetchDescriptor<ItemCompletion>()),
                 checkIns: try dst.fetch(FetchDescriptor<DailyCheckIn>()))
-            ExportImport.merge(envelope, into: dst, existing: dstArrays)
-            try dst.save()
-            defaults.set(true, forKey: flagKey)
+            let added = ExportImport.merge(envelope, into: dst, existing: dstArrays)
+            if added > 0 { try dst.save() }
+            return added
         } catch {
-            // 이관 실패 — 플래그 미설정으로 다음 실행 재시도. 새 스토어는 비어 있어도 동작엔 지장 없음.
+            return 0   // 이관 실패 — 다음 실행 재시도. 새 스토어는 비어 있어도 동작엔 지장 없음.
         }
     }
 }
