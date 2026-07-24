@@ -29,3 +29,7 @@
   암묵 기본값 의존 금지 — .modelContainer(for:) 모디파이어와 달리 보장이 불명확(2026-07-23).
 - HealthKit 권한은 앱 삭제·재설치로 초기화되지 않는다 — 재설치해도 권한 시트가 다시 안 뜨고
   이전 거부 상태를 물려받아 read가 조용히 빈 배열이 된다(2026-07-23 실기기 실측).
+- **2층 스토어 폴백은 절대 default.store로 갈라지지 않는다**(2026-07-24 split-brain 실측): 폴백까지
+  같은 named config(tempo-sensitive/tempo-planner)를 써야 저장 위치가 실행마다 안 바뀐다. `try!
+  ModelContainer(for: fullSchema)`(무설정=default.store)는 금지. 증상 = "저장 후 fetchCount N, 재시작
+  후 @Query 0". 회수는 migrateLegacyStoreIfNeeded 재실행(멱등 merge)으로 default.store를 drain.
