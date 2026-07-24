@@ -2,10 +2,14 @@
 
 제품·설계 SSOT는 `..\MASTER.md`, 시안 SSOT는 `..\ui-mockup\DESIGN.md`. 여기는 코드 함정만.
 
-- **새 `@Model` 추가 시 `StoreBootstrap.swift`의 AppStores 모델 목록에 반드시 등록**(2026-07-23
-  2층 분리 후 등록처 이동 — 민감층 vs 플래너층 배치도 §5.2 계약으로 판단. HK read 데이터는 절대
-  CloudKit 층 금지). 스키마 밖 모델은 컴파일은 통과하지만 실기기에서 insert/@Query가 조용히
-  실패한다(2026-07-19 "Input 추가 안 됨" — CI 3잡 그린이어도 못 잡는 유형).
+- **새 `@Model` 추가 시 `TempoRoutineApp`의 `.modelContainer(for:)` 배열에 반드시 등록.**
+  스키마 밖 모델은 컴파일은 통과하지만 실기기에서 insert/@Query가 조용히 실패한다
+  (2026-07-19 "Input 추가 안 됨" — CI 3잡 그린이어도 못 잡는 유형).
+- **⚠ 2층 CloudKit 스토어 = 2026-07-24 롤백.** 2-configuration ModelContainer가 실기기서
+  저장 후 재시작 시 @Query 0을 읽는 결함(저장은 됨=fetchCount N, 재시작 후 0). split-brain
+  폴백 수정·재실행 마이그레이션 회수 모두 실패. **Windows/CI-only로는 재현·디버그 불가** —
+  시뮬레이터 없이 SwiftData 멀티컨피그를 깜깜이 왕복으로 잡으려다 10빌드 소진. 단일
+  default.store로 복귀. 재도전은 맥+시뮬레이터 확보 후에만.
 - CI는 컴파일·순수 로직만 검증한다. SwiftData 스키마·권한·제스처 같은 런타임 동작은
   TestFlight 실기기 확인 전까지 "완료"가 아니다.
 - 연관값 enum을 저장·직렬화할 땐 discriminator 커스텀 Codable (§5.5.1, 실기기 실측 결함).

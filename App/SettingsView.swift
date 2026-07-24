@@ -58,23 +58,6 @@ struct SettingsView: View {
                     Text(healthCaption)
                 }
 
-                // iCloud 동기화 상태(2026-07-23 — 기기 간 연동 진단 표면. 인앱 계정 로그인은 §5.2 기각 유지)
-                Section {
-                    HStack {
-                        Text("iCloud 동기화 (플래너·체크인)")
-                        Spacer()
-                        Text(AppStores.cloudEnabled ? "켜짐" : "꺼짐")
-                            .foregroundStyle(AppStores.cloudEnabled ? Ink.text.opacity(0.55) : Ink.danger)
-                    }
-                    .font(.subheadline)
-                } header: {
-                    Text("동기화")
-                } footer: {
-                    Text(AppStores.cloudEnabled
-                         ? "이 기기의 Apple 계정 iCloud로 이어져요. 기기끼리 같은 Apple 계정으로 로그인돼 있어야 해요. 생리 기록은 건강 앱 동기화로만 이동해요."
-                         : "이 기기에서 iCloud를 쓸 수 없어 기기 안에만 저장 중이에요. 설정 앱에서 iCloud 로그인을 확인해 주세요.")
-                }
-
                 // 기능 튜토리얼 리셋(2026-07-23 — JejuNow 「사용법 다시 보기」 동형)
                 Section {
                     Button("사용법 다시 보기") {
