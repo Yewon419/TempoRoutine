@@ -129,6 +129,7 @@ final class HealthMirror {
         let tombstones = Set(UserDefaults.standard.stringArray(forKey: Self.tombstonesKey) ?? [])
         var imported = 0
         var skippedKnown = 0, skippedDeleted = 0, skippedDup = 0, skippedTombstone = 0
+        var importedMin: Date?, importedMax: Date?
         for sample in result.samples {
             guard let category = sample as? HKCategorySample else { continue }
             let day = cal.startOfDay(for: category.startDate)
@@ -140,14 +141,25 @@ final class HealthMirror {
             context.insert(PeriodDay(day: day, origin: ours ? .appAuthored : .healthKitImported,
                                      healthKitUUID: category.uuid))
             existingDays.insert(day)
+            importedMin = min(importedMin ?? day, day)
+            importedMax = max(importedMax ?? day, day)
             imported += 1
         }
-        lastSyncReport = "건강 앱 원본 \(result.samples.count)건, 가져옴 \(imported)건"
+        saveAnchor(result.anchor)
+        // 저장 실측(2026-07-23 — "가져옴 vs 캘린더 미반영" 판별): 오류를 삼키지 않고,
+        // 저장 후 스토어를 재조회한 실제 일수까지 진단에 담는다.
+        var saveNote = ""
+        do { try context.save() } catch { saveNote = " / 저장 오류: \(error.localizedDescription)" }
+        let savedCount = (try? context.fetchCount(FetchDescriptor<PeriodDay>())) ?? -1
+        var range = ""
+        if let lo = importedMin, let hi = importedMax {
+            range = " / 범위 \(ExportCodec.dayString(lo))~\(ExportCodec.dayString(hi))"
+        }
+        lastSyncReport = "원본 \(result.samples.count)건, 가져옴 \(imported)건"
             + (skippedKnown + skippedDup > 0 ? ", 이미 있음 \(skippedKnown + skippedDup)건" : "")
             + (skippedTombstone > 0 ? ", 이전에 지운 날 \(skippedTombstone)건" : "")
             + (skippedDeleted > 0 ? ", 삭제된 기록 \(skippedDeleted)건" : "")
-        saveAnchor(result.anchor)
-        try? context.save()   // 가져온 기록 즉시 영속화 — autosave에 걸지 않는다(2026-07-23)
+            + " / 저장 후 스토어 \(savedCount)일" + range + saveNote
         return imported
     }
 
