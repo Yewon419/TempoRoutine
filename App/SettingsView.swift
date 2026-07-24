@@ -52,6 +52,11 @@ struct SettingsView: View {
                         .tint(Ink.text)
                         .disabled(!mirror.available)
                         .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
+                    if mirror.available {
+                        // 읽기 권한 재요청은 애플이 막음(§5.7) — 설정 앱 원탭 이동이 최선(2026-07-24)
+                        Button("건강 권한 설정 열기") { openAppSettings() }
+                            .foregroundStyle(Ink.text)
+                    }
                 } header: {
                     Text("건강 앱")
                 } footer: {
@@ -164,6 +169,14 @@ struct SettingsView: View {
 
     private let mirror = HealthMirror.shared
 
+    /// 앱 설정 페이지 원탭 이동 — HealthKit 읽기 권한은 앱이 재요청 불가라 설정이 유일 경로(§5.7)
+    private func openAppSettings() {
+        lightFeedback += 1
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
+    }
+
     private var healthBinding: Binding<Bool> {
         Binding(
             get: { mirror.linked },
@@ -192,7 +205,7 @@ struct SettingsView: View {
             return "생리 기록이 건강 앱에도 저장돼요. 이 앱이 쓴 기록만 건강 앱에서 고칠 수 있어요."
         }
         if mirror.linked {
-            return "건강 앱 쓰기가 꺼져 있어요. 설정 앱의 건강 > 데이터 접근에서 허용할 수 있어요."
+            return "가져올 기록이 없다면 읽기 권한이 꺼진 경우가 많아요. 아래 ‘건강 권한 설정 열기’를 눌러 템포루틴의 ‘생리’ 읽기를 켜주세요. (애플 정책상 앱이 이 권한 창을 다시 띄울 수 없어 설정에서만 켤 수 있어요.)"
         }
         return "기록은 이 기기에만 저장돼요."   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
     }

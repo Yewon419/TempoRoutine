@@ -7,6 +7,7 @@
 import SwiftUI
 import SwiftData
 import TempoCore
+import UIKit
 
 extension View {
     /// 스태거 등장 — 시안 `ob-in` 이식(fade + translateY 10px, ease-out + delay). reduceMotion=true면 애니메이션 없이 즉시 표시.
@@ -463,8 +464,6 @@ struct OnboardingFlow: View {
             Group {
                 if !mirror.available {
                     Text("이 기기에선 건강 앱을 사용할 수 없어요.")
-                } else if mirror.linked && !mirror.writeAuthorized {
-                    Text("건강 앱 접근이 꺼져 있어요. 설정 앱의 건강 > 데이터 접근에서 허용할 수 있어요.")
                 } else {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("스위치를 켜면 건강 앱 권한을 요청해요.")
@@ -474,6 +473,17 @@ struct OnboardingFlow: View {
             }
             .font(.caption)
             .foregroundStyle(Ink.text.opacity(0.55))
+            if mirror.available && mirror.linked {
+                // 읽기 권한은 애플이 재요청 못 하게 막음 — 안 불러와지면 설정 원탭 이동(2026-07-24)
+                Button("가져와지지 않나요? 건강 권한 설정 열기") {
+                    lightFeedback += 1
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Ink.text)
+            }
         }
     }
 
