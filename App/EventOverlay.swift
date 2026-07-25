@@ -1,6 +1,7 @@
 // 템포루틴 — EventKit read-only 오버레이 (Phase 0 ⑥, MASTER §3.6.1 LOCKED)
 // 시스템 캘린더가 출처 — SwiftData 미저장, 런타임 fetch만. 로컬 일정과 dedup 없음(신뢰 식별자 없음),
-// 출처 배지("캘린더")로 구분만. 더블 컨센트: 앱 카드 → '불러올게요'에만 시스템 권한(기회 보존), 후통보 X.
+// 출처 배지("캘린더")로 구분만. 더블 컨센트: 앱 카드 → '가져올게요'에만 시스템 권한(기회 보존), 후통보 X.
+// 문구는 "가져오기"로 통일(2026-07-25 사용자 지시 — 구 "비추기"·"불러오기" 혼용 폐기).
 // 거부/미연동 폴백 = 직접 입력(기능 잠금 없음).
 
 import EventKit
@@ -34,7 +35,7 @@ final class EventOverlay {
         }
     }
 
-    /// '불러올게요'를 눌렀을 때만 호출 — 더블 컨센트의 2단계
+    /// '가져올게요'를 눌렀을 때만 호출 — 더블 컨센트의 2단계
     func requestAccess() async {
         let granted = (try? await store.requestFullAccessToEvents()) ?? false
         authorized = granted
@@ -81,7 +82,7 @@ struct OverlayEventRows: View {
                     .overlay(Capsule().stroke(Ink.text.opacity(0.25), lineWidth: 1))
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(event.title), 캘린더에서 불러옴, 읽기 전용")
+            .accessibilityLabel("\(event.title), 캘린더에서 가져옴, 읽기 전용")
         }
     }
 }
@@ -121,7 +122,7 @@ struct CalendarConsentSheet: View {
                 .font(.system(.title2, design: .serif).weight(.bold))
                 .foregroundStyle(Ink.text)
             if overlay.systemDenied {
-                Text("캘린더 접근이 꺼져 있어요. 설정 앱의 개인정보 보호에서 캘린더 접근을 허용하면 다시 비출 수 있어요.")
+                Text("캘린더 접근이 꺼져 있어요. 설정 앱의 개인정보 보호에서 캘린더 접근을 허용하면 다시 가져올 수 있어요.")
                     .font(.body)
                     .foregroundStyle(Ink.text.opacity(0.75))
                 Button {
@@ -138,7 +139,7 @@ struct CalendarConsentSheet: View {
                         .background(Ink.text, in: Capsule())
                 }
             } else {
-                Text("기존 캘린더의 약속과 생일을 비춰드릴게요. 불러올까요?")
+                Text("기존 캘린더의 약속과 생일을 가져올게요. 지금 가져올까요?")
                     .font(.body)
                     .foregroundStyle(Ink.text.opacity(0.75))
                 Text("읽기만 해요. 기록이 밖으로 나가지 않아요.")
@@ -150,7 +151,7 @@ struct CalendarConsentSheet: View {
                         dismiss()
                     }
                 } label: {
-                    Text("불러올게요")
+                    Text("가져올게요")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Ink.paper)
                         .frame(maxWidth: .infinity)

@@ -47,7 +47,7 @@ enum CoachSteps {
         CoachStep(anchor: .calendarLog, title: "생리 기록은 여기서",
                   body: "이 버튼이 기록의 입구예요. 날짜 칸을 탭해서 기록하고, 지난 기록도 같은 화면에서 고칠 수 있어요."),
         CoachStep(anchor: .calendarGrid, title: "숫자 색이 계절이에요",
-                  body: "날짜를 탭하면 그날의 일정과 계획이 열려요. 코랄 형광펜은 기록한 날, 회색은 예상이에요."),
+                  body: "날짜를 탭하면 그날의 일정과 계획이 열려요. 길게 누르면 그 날짜에 일정을 바로 적을 수 있어요. 코랄 형광펜은 기록한 날, 회색은 예상이에요."),
     ]
 }
 
@@ -149,7 +149,7 @@ private struct CoachOverlay: View {
 
     private func card(step: CoachStep, shownIndex: Int, isLast: Bool,
                       rect: CGRect, size: CGSize) -> some View {
-        let cardHeight: CGFloat = 220
+        let cardHeight: CGFloat = 250   // 배치용 추정치 — 본문이 길어져 상향(2026-07-25)
         let below = rect.maxY + cardHeight + 20 < size.height
         let y = below ? min(rect.maxY + 14, size.height - cardHeight - 20)
                       : max(rect.minY - cardHeight - 14, 20)
