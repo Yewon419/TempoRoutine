@@ -200,8 +200,10 @@ struct ScheduleAddSheet: View {
     }
 }
 
-// ── ①-b 빠른 일정 (2026-07-25 사용자 지시: 캘린더 날짜 길게 누르기 → 제목만 적고 바로 저장) ──
-// 하루종일·반복 없음·알림 없음으로 굳힌다. 세부는 저장 후 일정 행 탭 → 수정 시트에서.
+// ── ①-b 빠른 일정 (2026-07-25 사용자 지시: 캘린더 날짜 길게 누르기 → 제목 한 줄로 저장) ──
+// 시각은 제목에서 읽는다(`ScheduleTextParser`, TempoCore) — "회의 3시" → 오후 3:00 + 제목 "회의".
+// 입력 중엔 원문을 고치지 않는다(한글 조합 깨짐 방지): 읽은 결과는 칩·근거 줄로만 보여주고,
+// 실제 적용은 저장 시점. 시각·반복은 칩으로 덮어쓸 수 있다. 알림은 여기서 다루지 않는다(수정 시트).
 // 시트 크기는 기본(large) 고정 — 작은 detent는 키보드가 입력칸을 덮는 사례가 보고돼 있어 쓰지 않는다.
 struct QuickScheduleSheet: View {
     let day: Date
@@ -210,9 +212,37 @@ struct QuickScheduleSheet: View {
     @Environment(\.dismiss) private var dismiss
     @FocusState private var titleFocused: Bool
     @State private var title = ""
+    @State private var pickedTime: Date?           // 칩으로 직접 정한 시각 — 있으면 파싱값보다 우선
+    @State private var ignoreParsed = false        // 읽은 시각을 물린 상태(하루종일로 되돌림)
+    @State private var repeatRule: ScheduleRepeat = .none
+    @State private var showTimePicker = false
+    @State private var showRepeatChips = false
+
+    private static let repeatChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly, .yearly]
 
     private var cal: Calendar { Calendar.current }
-    private var trimmed: String { title.trimmingCharacters(in: .whitespaces) }
+    private var parsed: ParsedScheduleText { ScheduleTextParser.parse(title) }
+    private var parsedStart: ParsedTime? { ignoreParsed ? nil : parsed.start }
+
+    /// 저장에 쓰는 시각 — 칩 지정이 우선, 없으면 제목에서 읽은 값
+    private var startTime: ParsedTime? {
+        if let pickedTime {
+            let c = cal.dateComponents([.hour, .minute], from: pickedTime)
+            return ParsedTime(hour: c.hour ?? 0, minute: c.minute ?? 0)
+        }
+        return parsedStart
+    }
+
+    /// 종료 시각은 제목에서 범위를 읽었을 때만("3시~5시"). 칩으로 정했으면 1시간.
+    private var endTime: ParsedTime? {
+        guard pickedTime == nil, !ignoreParsed else { return nil }
+        return parsed.end
+    }
+
+    /// 시각 표현을 실제로 쓸 때만 제목을 정제한다
+    private var effectiveTitle: String {
+        parsedStart != nil ? parsed.title : title.trimmingCharacters(in: .whitespaces)
+    }
 
     var body: some View {
         NavigationStack {
@@ -236,16 +266,17 @@ struct QuickScheduleSheet: View {
                         .onSubmit(save)
                         .padding(.bottom, 8)
                         .almanacRule(opacity: 0.28)
-                    Text("하루종일 일정으로 적어둬요. 시간·반복·알림은 저장한 뒤 일정을 탭해서 정할 수 있어요.")
-                        .font(.footnote)
-                        .foregroundStyle(Ink.text.opacity(0.5))
+                    chips
+                    if showTimePicker { timePicker }
+                    if showRepeatChips { repeatChips }
+                    if let hint { readingHint(hint) }
                     Spacer(minLength: 0)
                 }
                 .padding(20)
             }
             .navigationTitle("빠른 일정")
             .navigationBarTitleDisplayMode(.inline)
-            .interactiveDismissDisabled(!trimmed.isEmpty)   // 적던 내용 날리지 않기(§8.2.4)
+            .interactiveDismissDisabled(!title.trimmingCharacters(in: .whitespaces).isEmpty)   // 적던 내용 날리지 않기(§8.2.4)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("취소") { dismiss() }.foregroundStyle(Ink.text)
@@ -253,7 +284,7 @@ struct QuickScheduleSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("추가", action: save)
                         .foregroundStyle(Ink.text)
-                        .disabled(trimmed.isEmpty)
+                        .disabled(effectiveTitle.isEmpty)
                 }
             }
         }
@@ -264,9 +295,131 @@ struct QuickScheduleSheet: View {
         }
     }
 
+    // ── 칩 행: 시간 · 반복 ──
+    private var chips: some View {
+        HStack(spacing: 8) {
+            chipButton(icon: "clock", label: timeLabel, filled: startTime != nil) {
+                showTimePicker.toggle()
+                if showTimePicker {
+                    showRepeatChips = false
+                    // 제목에서 읽은 시각이 있으면 그걸 이어받고, 없으면 다음 정시
+                    if pickedTime == nil { pickedTime = parsedStart.flatMap(date(at:)) ?? defaultPickerTime }
+                }
+            }
+            chipButton(icon: "repeat", label: repeatRule.shortLabel ?? "반복 없음",
+                       filled: repeatRule != .none) {
+                showRepeatChips.toggle()
+                if showRepeatChips { showTimePicker = false }
+            }
+            Spacer()
+        }
+    }
+
+    private var timeLabel: String {
+        guard let start = startTime else { return "하루종일" }
+        let startText = clockText(start)
+        guard let end = endTime else { return startText }
+        return "\(startText) – \(clockText(end))"
+    }
+
+    private func chipButton(icon: String, label: String, filled: Bool,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon).font(.caption2)
+                Text(label).font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(filled ? Ink.paper : Ink.text.opacity(0.7))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(filled ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.08)),
+                        in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var timePicker: some View {
+        HStack {
+            DatePicker("시각", selection: Binding(
+                get: { pickedTime ?? defaultPickerTime },
+                set: { pickedTime = $0; ignoreParsed = false }
+            ), displayedComponents: [.hourAndMinute])
+            .labelsHidden()
+            Spacer()
+            Button("하루종일로") {
+                pickedTime = nil
+                ignoreParsed = true          // 제목에서 읽은 시각도 함께 물린다
+                showTimePicker = false
+            }
+            .font(.caption)
+            .foregroundStyle(Ink.text.opacity(0.6))
+        }
+    }
+
+    private var repeatChips: some View {
+        HStack(spacing: 6) {
+            FreqChip(label: "없음", selected: repeatRule == .none) { repeatRule = .none }
+            ForEach(Self.repeatChoices, id: \.self) { freq in
+                FreqChip(label: freq.shortLabel ?? "", selected: repeatRule == freq) {
+                    repeatRule = freq
+                }
+            }
+        }
+    }
+
+    /// 제목에서 읽은 근거 — 무엇을 어떻게 읽었고 제목이 뭐가 되는지 미리 보여준다
+    private var hint: String? {
+        guard pickedTime == nil, !ignoreParsed,
+              let matched = parsed.matchedText, let start = parsed.start else { return nil }
+        var text = "「\(matched)」를 \(clockText(start))"
+        if let end = parsed.end { text += "–\(clockText(end))" }
+        text += "으로 읽었어요"
+        if !parsed.title.isEmpty { text += " · 제목은 「\(parsed.title)」" }
+        return text
+    }
+
+    private func readingHint(_ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(text)
+                .font(.footnote)
+                .foregroundStyle(Ink.text.opacity(0.55))
+                .fixedSize(horizontal: false, vertical: true)
+            Button("아니요") { ignoreParsed = true }
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Ink.text.opacity(0.75))
+        }
+    }
+
+    private var defaultPickerTime: Date {
+        let base = cal.startOfDay(for: day)
+        return date(at: ParsedTime(hour: min(23, cal.component(.hour, from: .now) + 1), minute: 0)) ?? base
+    }
+
+    private func clockText(_ time: ParsedTime) -> String {
+        guard let d = date(at: time) else { return "" }
+        return d.formatted(date: .omitted, time: .shortened)
+    }
+
+    /// 누른 날짜 + 시:분 — DateComponents로 직접 조립(bySettingHour의 전진 탐색 회피)
+    private func date(at time: ParsedTime) -> Date? {
+        var comps = cal.dateComponents([.year, .month, .day], from: day)
+        comps.hour = time.hour
+        comps.minute = time.minute
+        return cal.date(from: comps)
+    }
+
     private func save() {
-        guard !trimmed.isEmpty else { return }
-        modelContext.insert(ScheduleItem(title: trimmed, date: cal.startOfDay(for: day)))
+        let name = effectiveTitle
+        guard !name.isEmpty else { return }
+        if let start = startTime, let startDate = date(at: start) {
+            var endDate = startDate.addingTimeInterval(3600)
+            if let end = endTime, let d = date(at: end), d > startDate { endDate = d }
+            modelContext.insert(ScheduleItem(title: name, date: startDate, isAllDay: false,
+                                             repeatRule: repeatRule, endDate: endDate))
+        } else {
+            modelContext.insert(ScheduleItem(title: name, date: cal.startOfDay(for: day),
+                                             isAllDay: true, repeatRule: repeatRule))
+        }
         dismiss()
     }
 }
