@@ -203,7 +203,8 @@ struct ScheduleAddSheet: View {
 // ── ①-b 빠른 일정 (2026-07-25 사용자 지시: 캘린더 날짜 길게 누르기 → 제목 한 줄로 저장) ──
 // 시각은 제목에서 읽는다(`ScheduleTextParser`, TempoCore) — "회의 3시" → 오후 3:00 + 제목 "회의".
 // 입력 중엔 원문을 고치지 않는다(한글 조합 깨짐 방지): 읽은 결과는 칩·근거 줄로만 보여주고,
-// 실제 적용은 저장 시점. 시각·반복은 칩으로 덮어쓸 수 있다. 알림은 여기서 다루지 않는다(수정 시트).
+// 실제 적용은 저장 시점. 시각만 칩으로 덮어쓸 수 있다 — **반복 없음·알림 없음은 고정**
+// (2026-07-25 사용자 결정), 둘 다 저장 후 일정 행 탭 → 수정 시트에서 정한다.
 // 시트 크기는 기본(large) 고정 — 작은 detent는 키보드가 입력칸을 덮는 사례가 보고돼 있어 쓰지 않는다.
 struct QuickScheduleSheet: View {
     let day: Date
@@ -214,11 +215,7 @@ struct QuickScheduleSheet: View {
     @State private var title = ""
     @State private var pickedTime: Date?           // 칩으로 직접 정한 시각 — 있으면 파싱값보다 우선
     @State private var ignoreParsed = false        // 읽은 시각을 물린 상태(하루종일로 되돌림)
-    @State private var repeatRule: ScheduleRepeat = .none
     @State private var showTimePicker = false
-    @State private var showRepeatChips = false
-
-    private static let repeatChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly, .yearly]
 
     private var cal: Calendar { Calendar.current }
     private var parsed: ParsedScheduleText { ScheduleTextParser.parse(title) }
@@ -268,7 +265,6 @@ struct QuickScheduleSheet: View {
                         .almanacRule(opacity: 0.28)
                     chips
                     if showTimePicker { timePicker }
-                    if showRepeatChips { repeatChips }
                     if let hint { readingHint(hint) }
                     Spacer(minLength: 0)
                 }
@@ -295,21 +291,15 @@ struct QuickScheduleSheet: View {
         }
     }
 
-    // ── 칩 행: 시간 · 반복 ──
+    // ── 칩 행: 시간 (반복은 여기서 다루지 않는다 — 2026-07-25 사용자 결정: 반복 없음 고정 유지) ──
     private var chips: some View {
         HStack(spacing: 8) {
             chipButton(icon: "clock", label: timeLabel, filled: startTime != nil) {
                 showTimePicker.toggle()
-                if showTimePicker {
-                    showRepeatChips = false
-                    // 제목에서 읽은 시각이 있으면 그걸 이어받고, 없으면 다음 정시
-                    if pickedTime == nil { pickedTime = parsedStart.flatMap(date(at:)) ?? defaultPickerTime }
+                // 제목에서 읽은 시각이 있으면 그걸 이어받고, 없으면 다음 정시
+                if showTimePicker, pickedTime == nil {
+                    pickedTime = parsedStart.flatMap(date(at:)) ?? defaultPickerTime
                 }
-            }
-            chipButton(icon: "repeat", label: repeatRule.shortLabel ?? "반복 없음",
-                       filled: repeatRule != .none) {
-                showRepeatChips.toggle()
-                if showRepeatChips { showTimePicker = false }
             }
             Spacer()
         }
@@ -353,17 +343,6 @@ struct QuickScheduleSheet: View {
             }
             .font(.caption)
             .foregroundStyle(Ink.text.opacity(0.6))
-        }
-    }
-
-    private var repeatChips: some View {
-        HStack(spacing: 6) {
-            FreqChip(label: "없음", selected: repeatRule == .none) { repeatRule = .none }
-            ForEach(Self.repeatChoices, id: \.self) { freq in
-                FreqChip(label: freq.shortLabel ?? "", selected: repeatRule == freq) {
-                    repeatRule = freq
-                }
-            }
         }
     }
 
@@ -414,11 +393,11 @@ struct QuickScheduleSheet: View {
         if let start = startTime, let startDate = date(at: start) {
             var endDate = startDate.addingTimeInterval(3600)
             if let end = endTime, let d = date(at: end), d > startDate { endDate = d }
+            // 반복은 빠른 일정에서 다루지 않는다 — 기본 .none 유지(2026-07-25 사용자 결정)
             modelContext.insert(ScheduleItem(title: name, date: startDate, isAllDay: false,
-                                             repeatRule: repeatRule, endDate: endDate))
+                                             endDate: endDate))
         } else {
-            modelContext.insert(ScheduleItem(title: name, date: cal.startOfDay(for: day),
-                                             isAllDay: true, repeatRule: repeatRule))
+            modelContext.insert(ScheduleItem(title: name, date: cal.startOfDay(for: day)))
         }
         dismiss()
     }
