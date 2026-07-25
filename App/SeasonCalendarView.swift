@@ -1,9 +1,9 @@
 // 템포루틴 — 계절 캘린더 (Phase 0 ③, MASTER §5.9-3 / §8.2.3 / §4 보강 I 책력 조판)
 // 계절 = 숫자 잉크색(글리프 정식 이식은 §5.9-8 미학 패스), 오늘 = 은필 채운 원,
 // 생리 = 코랄 형광펜(기록) / 회색 형광펜(예상, 미래만 — 과거 소급 투영 금지 §5.6.2).
-// 캘린더 탭은 조회 전용(2026-07-20 사용자 결정 — 드래그·길게 누르기 편집 폐기, MASTER I-2b 개정 대기).
+// 생리 기록은 조회 전용(2026-07-20 사용자 결정 — 드래그·길게 누르기 편집 폐기, MASTER I-2b 개정 대기).
 // 기록 편집 = 상단 "생리 기록" 버튼 → PeriodTrackerSheet(건강 앱 문법) + 하루 상세 토글(접근성 유지).
-// 탭 = 하루 상세 push.
+// 탭 = 하루 상세 push / 길게 누르기 = 빠른 일정 추가(2026-07-25 사용자 지시 — 일정 한정, 생리 기록과 무관).
 
 import SwiftUI
 import SwiftData
@@ -22,6 +22,8 @@ struct SeasonCalendarView: View {
     @State private var showLogSheet = false
     @State private var pushedDay: Date?
     @State private var selectedDay: Date?       // regular 분할 뷰의 우측 하루 상세 선택(2026-07-23)
+    @State private var quickAddDay: Date?       // 길게 누른 날짜 → 빠른 일정 시트(2026-07-25)
+    @State private var pressFeedback = 0        // 길게 누르기 진입 햅틱(중간 — 탭보다 강하게)
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
@@ -83,8 +85,17 @@ struct SeasonCalendarView: View {
         .sheet(isPresented: $showLogSheet) {
             PeriodTrackerSheet()
         }
+        .sheet(isPresented: Binding(
+            get: { quickAddDay != nil },
+            set: { if !$0 { quickAddDay = nil } }
+        )) {
+            if let quickAddDay {
+                QuickScheduleSheet(day: quickAddDay)
+            }
+        }
         .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .sensoryFeedback(.impact(weight: .medium), trigger: pressFeedback)
         .navigationDestination(isPresented: Binding(
             get: { pushedDay != nil },
             set: { if !$0 { pushedDay = nil } }
@@ -285,9 +296,15 @@ struct SeasonCalendarView: View {
                 // 탭: compact = 하루 상세 push(§8.2.3) / regular = 우측 패널 선택(2026-07-23)
                 if hSize == .regular { selectedDay = date } else { pushedDay = date }
             }
+            .onLongPressGesture(minimumDuration: 0.4) {
+                // 길게 누르기 = 그 날짜에 빠른 일정(2026-07-25 사용자 지시)
+                pressFeedback += 1
+                quickAddDay = date
+            }
             .accessibilityElement()
             .accessibilityLabel(accessibilityText(for: date, style: style, recorded: recorded, predicted: predicted))
             .accessibilityAddTraits(.isButton)
+            .accessibilityAction(named: "빠른 일정 추가") { quickAddDay = date }   // 길게 누르기 대체
         } else {
             Color.clear
         }

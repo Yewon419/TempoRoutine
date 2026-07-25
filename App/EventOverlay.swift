@@ -97,7 +97,7 @@ struct CalendarConnectRow: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "calendar.badge.plus")
-                    Text("캘린더 비추기")
+                    Text("캘린더 가져오기")
                 }
                 .font(.caption)
                 .foregroundStyle(Ink.text.opacity(0.55))
@@ -117,7 +117,7 @@ struct CalendarConsentSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("캘린더 비추기")
+            Text("캘린더 가져오기")
                 .font(.system(.title2, design: .serif).weight(.bold))
                 .foregroundStyle(Ink.text)
             if overlay.systemDenied {

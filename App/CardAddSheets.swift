@@ -200,6 +200,77 @@ struct ScheduleAddSheet: View {
     }
 }
 
+// ── ①-b 빠른 일정 (2026-07-25 사용자 지시: 캘린더 날짜 길게 누르기 → 제목만 적고 바로 저장) ──
+// 하루종일·반복 없음·알림 없음으로 굳힌다. 세부는 저장 후 일정 행 탭 → 수정 시트에서.
+// 시트 크기는 기본(large) 고정 — 작은 detent는 키보드가 입력칸을 덮는 사례가 보고돼 있어 쓰지 않는다.
+struct QuickScheduleSheet: View {
+    let day: Date
+
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var titleFocused: Bool
+    @State private var title = ""
+
+    private var cal: Calendar { Calendar.current }
+    private var trimmed: String { title.trimmingCharacters(in: .whitespaces) }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Ink.paper.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: 16) {
+                    // 하루 상세와 같은 책력 표제(§4 조판) — 어느 날짜에 적는지가 먼저 보이게
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text("\(cal.component(.day, from: day))")
+                            .font(.almanac(size: 56, weight: .bold))
+                            .foregroundStyle(Ink.text)
+                        Text(day.formatted(.dateTime.month().weekday(.wide)))
+                            .font(.system(.subheadline, design: .serif))
+                            .foregroundStyle(Ink.text.opacity(0.6))
+                    }
+                    TextField("무엇을 적어둘까요?", text: $title)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Ink.text)
+                        .focused($titleFocused)
+                        .submitLabel(.done)
+                        .onSubmit(save)
+                        .padding(.bottom, 8)
+                        .almanacRule(opacity: 0.28)
+                    Text("하루종일 일정으로 적어둬요. 시간·반복·알림은 저장한 뒤 일정을 탭해서 정할 수 있어요.")
+                        .font(.footnote)
+                        .foregroundStyle(Ink.text.opacity(0.5))
+                    Spacer(minLength: 0)
+                }
+                .padding(20)
+            }
+            .navigationTitle("빠른 일정")
+            .navigationBarTitleDisplayMode(.inline)
+            .interactiveDismissDisabled(!trimmed.isEmpty)   // 적던 내용 날리지 않기(§8.2.4)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("추가", action: save)
+                        .foregroundStyle(Ink.text)
+                        .disabled(trimmed.isEmpty)
+                }
+            }
+        }
+        .task {
+            // 시트 전환이 끝난 뒤 포커스 — 즉시 지정은 키보드가 올라오지 않는 사례가 있다
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            titleFocused = true
+        }
+    }
+
+    private func save() {
+        guard !trimmed.isEmpty else { return }
+        modelContext.insert(ScheduleItem(title: trimmed, date: cal.startOfDay(for: day)))
+        dismiss()
+    }
+}
+
 // ── ② Input 추가 ──
 struct InputAddSheet: View {
     let currentSeason: SeasonMeta?
