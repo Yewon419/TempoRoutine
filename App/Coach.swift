@@ -92,6 +92,11 @@ private struct CoachOverlay: View {
                 let rect = proxy[anchors[step.anchor]!].insetBy(dx: -pad, dy: -pad)
                 let isLast = resolvedIndex(from: shownIndex + 1) == nil
                 ZStack(alignment: .topLeading) {
+                    // 빈 공간 탭 = 다음 (2026-07-25 사용자 지시). 카드 버튼이 위에 있어 탭을 먼저 받는다
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { advance(from: shownIndex) }
+                        .accessibilityHidden(true)
                     // 구멍 뚫린 배경(even-odd) + 링
                     Path { p in
                         p.addRect(CGRect(origin: .zero, size: proxy.size))
@@ -129,6 +134,11 @@ private struct CoachOverlay: View {
         return nil
     }
 
+    /// 다음 단계로 — 남은 단계가 없으면 종료 (버튼·빈 공간 탭 공용)
+    private func advance(from shownIndex: Int) {
+        if resolvedIndex(from: shownIndex + 1) == nil { finish() } else { index = shownIndex + 1 }
+    }
+
     private func finish() {
         if shownAny {
             CoachStore.markDone(id)
@@ -160,7 +170,7 @@ private struct CoachOverlay: View {
                     .foregroundStyle(Ink.text.opacity(0.55))
                 Spacer()
                 Button {
-                    if isLast { finish() } else { index = shownIndex + 1 }
+                    advance(from: shownIndex)
                 } label: {
                     Text(isLast ? "알겠어요" : "다음")
                         .font(.subheadline.weight(.bold))
