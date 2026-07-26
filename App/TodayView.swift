@@ -318,6 +318,12 @@ struct TodayView: View {
                         .foregroundStyle(Ink.text.opacity(0.5))
                         .frame(width: 56, alignment: .leading)
                     Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
+                    // 여러 날 일정 — 오늘이 몇 일차인지(§8.2.3)
+                    if let index = item.dayIndex(on: today) {
+                        Text("\(index)/\(item.spanDays)일차")
+                            .font(.caption2)
+                            .foregroundStyle(Ink.text.opacity(0.5))
+                    }
                     Spacer()
                 }
                 .contentShape(Rectangle())

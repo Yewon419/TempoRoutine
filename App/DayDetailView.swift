@@ -174,6 +174,15 @@ struct DayDetailView: View {
                     } label: {
                         HStack {
                             Text(item.title).foregroundStyle(Ink.text)
+                            // 여러 날 일정 — 그날이 몇 일차인지(§8.2.3)
+                            if let index = item.dayIndex(on: day) {
+                                Text("\(index)/\(item.spanDays)일차")
+                                    .font(.caption2)
+                                    .foregroundStyle(Ink.text.opacity(0.5))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .overlay(Capsule().stroke(Ink.text.opacity(0.2), lineWidth: 1))
+                            }
                             Spacer()
                             if !item.isAllDay {
                                 let startText = item.date.formatted(date: .omitted, time: .shortened)

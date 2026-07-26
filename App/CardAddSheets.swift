@@ -52,6 +52,7 @@ struct ScheduleAddSheet: View {
     @State private var allDay = true
     @State private var start: Date
     @State private var end: Date
+    @State private var endDay: Date       // 하루종일 일정의 종료 "날짜" — 시작일과 같으면 하루짜리(§8.2.3)
     @State private var repeatRule: ScheduleRepeat = .none
     @State private var reminderMinutes = -1
     @State private var showDeleteConfirm = false
@@ -72,6 +73,7 @@ struct ScheduleAddSheet: View {
             _allDay = State(initialValue: item.isAllDay)
             _start = State(initialValue: item.date)
             _end = State(initialValue: item.endDate ?? item.date.addingTimeInterval(3600))
+            _endDay = State(initialValue: item.isAllDay ? (item.endDate ?? item.date) : item.date)
             _repeatRule = State(initialValue: item.repeatRule)
             _reminderMinutes = State(initialValue: item.reminderMinutes)
         } else {
@@ -82,11 +84,26 @@ struct ScheduleAddSheet: View {
             let base = cal.date(from: comps) ?? defaultDate
             _start = State(initialValue: base)
             _end = State(initialValue: base.addingTimeInterval(3600))
+            _endDay = State(initialValue: defaultDate)
         }
     }
 
     private var reminderChoices: [(label: String, minutes: Int)] {
         allDay ? Self.allDayReminders : Self.timedReminders
+    }
+
+    /// 하루종일 일정의 종료 날짜 — 시작일과 같으면 nil(하루짜리)
+    private var allDayEndDate: Date? {
+        let cal = Calendar.current
+        let s = cal.startOfDay(for: start)
+        let e = cal.startOfDay(for: endDay)
+        return e > s ? e : nil
+    }
+
+    private var multiDaySpanLabel: String? {
+        guard allDay, allDayEndDate != nil else { return nil }
+        let days = ScheduleSpan.dayCount(start: start, end: endDay, calendar: Calendar.current)
+        return "\(days)일에 걸친 일정이에요"
     }
 
     var body: some View {
@@ -102,7 +119,16 @@ struct ScheduleAddSheet: View {
                         .tint(Ink.text)
                     DatePicker("시작", selection: $start,
                                displayedComponents: allDay ? [.date] : [.date, .hourAndMinute])
-                    if !allDay {
+                    if allDay {
+                        // 종료일을 시작일보다 뒤로 잡으면 여러 날 일정(§8.2.3 — 캘린더에 띠로)
+                        DatePicker("종료", selection: $endDay, in: start...,
+                                   displayedComponents: [.date])
+                        if let span = multiDaySpanLabel {
+                            Text(span)
+                                .font(.footnote)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                        }
+                    } else {
                         DatePicker("종료", selection: $end, in: start...,
                                    displayedComponents: [.date, .hourAndMinute])
                     }
@@ -151,6 +177,9 @@ struct ScheduleAddSheet: View {
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: start) {
                 if end <= start { end = start.addingTimeInterval(3600) }
+                if Calendar.current.startOfDay(for: endDay) < Calendar.current.startOfDay(for: start) {
+                    endDay = start
+                }
             }
             .onChange(of: allDay) {
                 // 하루종일 전환 시 알림 선택지가 달라짐 — 유효하지 않은 값은 없음으로
@@ -170,7 +199,7 @@ struct ScheduleAddSheet: View {
                             item.date = start
                             item.isAllDay = allDay
                             item.repeatRule = repeatRule
-                            item.endDate = allDay ? nil : end
+                            item.endDate = allDay ? allDayEndDate : end
                             item.reminderMinutes = reminderMinutes
                             ScheduleReminder.cancel(id: item.id)   // 알림 재예약 — 시간·반복이 바뀌었을 수 있음
                             ScheduleReminder.schedule(id: item.id, title: title, date: start,
@@ -179,7 +208,7 @@ struct ScheduleAddSheet: View {
                         } else {
                             let item = ScheduleItem(title: title, date: start, isAllDay: allDay,
                                                     repeatRule: repeatRule,
-                                                    endDate: allDay ? nil : end,
+                                                    endDate: allDay ? allDayEndDate : end,
                                                     reminderMinutes: reminderMinutes)
                             modelContext.insert(item)
                             ScheduleReminder.schedule(id: item.id, title: item.title, date: start,

@@ -54,6 +54,18 @@ final class ScheduleItem {
 
     var isMultiDay: Bool { spanDays > 1 }
 
+    /// 여러 날 일정에서 그날이 몇 일차인가(1부터). 하루짜리거나 해당 없으면 nil.
+    func dayIndex(on day: Date) -> Int? {
+        guard isMultiDay else { return nil }
+        let cal = Calendar.current
+        let target = cal.startOfDay(for: day)
+        for offset in 0..<spanDays {
+            guard let candidate = cal.date(byAdding: .day, value: -offset, to: target) else { continue }
+            if startsOn(candidate) { return offset + 1 }
+        }
+        return nil
+    }
+
     /// 이 날짜에 표시되는가 — 발생 시작일(`startsOn`) + 기간(`spanDays`) 확장.
     /// 반복 일정도 회차마다 같은 길이를 갖는다(2026-07-25 사용자 결정).
     func occurs(on day: Date) -> Bool {
