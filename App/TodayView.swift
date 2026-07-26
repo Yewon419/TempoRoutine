@@ -87,12 +87,14 @@ struct TodayView: View {
     @State private var addSheet: CardKind?
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var isCollapsed = false
+    @State private var showYesterday = false   // 어제 기록 시트(2026-07-26)
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
 
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
+    private var yesterday: Date { cal.date(byAdding: .day, value: -1, to: today) ?? today }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
     private var todayInfo: (meta: SeasonMeta, dayInCycle: Int, projected: Bool)? { snapshot.phaseInfo(on: today) }
 
@@ -126,7 +128,7 @@ struct TodayView: View {
                                 section(kind: .output) { outputSection }
                             }
                             .frame(maxWidth: .infinity)
-                            CheckInCard(day: today).frame(width: 360)
+                            checkInBlock.frame(width: 360)
                         }
                     } else {
                         if !snapshot.isColdStart {
@@ -134,7 +136,7 @@ struct TodayView: View {
                             section(kind: .input) { inputSection }
                             section(kind: .output) { outputSection }
                         }
-                        CheckInCard(day: today)
+                        checkInBlock
                     }
                 }
                 .padding(20)
@@ -164,6 +166,18 @@ struct TodayView: View {
             compactBar
         }
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet() }
+        // 어제 기록 — 자정 넘겨 하루를 마무리하는 경로(2026-07-26). 오늘 탭엔 NavigationStack이
+        // 없어(컬랩싱 헤더) push 대신 시트로 연다. 돌아오면 오늘 화면 그대로.
+        .sheet(isPresented: $showYesterday) {
+            NavigationStack {
+                DayDetailView(day: yesterday)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("닫기") { showYesterday = false }.foregroundStyle(Ink.text)
+                        }
+                    }
+            }
+        }
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: today)
@@ -283,6 +297,22 @@ struct TodayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
         .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)
+    }
+
+    // ── 체크인 블록 = 오늘 카드 + 어제 진입(§8.2.2) ──
+    private var checkInBlock: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            CheckInCard(day: today)
+            Button {
+                showYesterday = true
+            } label: {
+                Label("어제 기록하기", systemImage: "arrow.uturn.left")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Ink.text.opacity(0.6))
+            }
+            .padding(.leading, 4)
+            .accessibilityHint("어제 날짜의 체크인과 기록을 열어요")
+        }
     }
 
     // ① 일정 (오늘)
