@@ -28,7 +28,8 @@ final class ScheduleItem {
     var id: UUID = UUID()
     var title: String = ""
     var date: Date = Date()                  // 절대 날짜(시작). 연반복은 month/day만 의미
-    var endDate: Date? = nil                 // 시간 지정 시 종료 시각. 하루종일이면 nil (2026-07-22 시트 개편)
+    // 종료 시점. 시간 지정이면 종료 시각, 하루종일이면 종료 날짜(여러 날 일정, 2026-07-25). nil = 하루짜리.
+    var endDate: Date? = nil
     var isAllDay: Bool = true                // false = 시간 지정(프로모드)
     var repeatRule: ScheduleRepeat = ScheduleRepeat.none
     var reminderMinutes: Int = -1            // -1 = 알림 없음 / 0 = 정시(하루종일=당일 9시) / N = N분 전
@@ -46,9 +47,41 @@ final class ScheduleItem {
         self.createdAt = .now
     }
 
-    /// 이 날짜에 표시되는가. 연반복 윤년 규칙: 2/29는 비윤년에 2/28로(§5.6.4).
-    /// 매일·매주·매달 반복은 시작일(date) 이전에는 표시하지 않는다.
+    /// 걸치는 날 수 — 하루짜리는 1 (§8.2.3 여러 날 일정)
+    var spanDays: Int {
+        ScheduleSpan.dayCount(start: date, end: endDate, calendar: Calendar.current)
+    }
+
+    var isMultiDay: Bool { spanDays > 1 }
+
+    /// 이 날짜에 표시되는가 — 발생 시작일(`startsOn`) + 기간(`spanDays`) 확장.
+    /// 반복 일정도 회차마다 같은 길이를 갖는다(2026-07-25 사용자 결정).
     func occurs(on day: Date) -> Bool {
+        let cal = Calendar.current
+        let target = cal.startOfDay(for: day)
+        let span = spanDays
+        if span == 1 { return startsOn(target) }
+        switch repeatRule {
+        case .none:
+            let start = cal.startOfDay(for: date)
+            guard let last = cal.date(byAdding: .day, value: span - 1, to: start) else { return false }
+            return target >= start && target <= last
+        case .daily:
+            return startsOn(target)   // 매일 시작하므로 기간은 의미 없다
+        case .weekly, .monthly, .yearly:
+            // 회차 주기보다 긴 기간은 어차피 연속 — 주기 길이까지만 되짚는다(그리드 렌더 비용 상한)
+            let limit = min(span, repeatRule.periodDayCap)
+            for offset in 0..<limit {
+                guard let candidate = cal.date(byAdding: .day, value: -offset, to: target) else { continue }
+                if startsOn(candidate) { return true }
+            }
+            return false
+        }
+    }
+
+    /// 발생(회차)의 시작일인가. 연반복 윤년 규칙: 2/29는 비윤년에 2/28로(§5.6.4).
+    /// 매일·매주·매달 반복은 시작일(date) 이전에는 표시하지 않는다.
+    func startsOn(_ day: Date) -> Bool {
         let cal = Calendar.current
         let start = cal.startOfDay(for: date)
         let target = cal.startOfDay(for: day)
@@ -83,6 +116,16 @@ final class ScheduleItem {
 }
 
 extension ScheduleRepeat {
+    /// 회차 간격의 상한(일) — 기간이 이보다 길면 발생이 이어지므로 되짚기를 여기서 끊는다.
+    var periodDayCap: Int {
+        switch self {
+        case .none, .daily: 1
+        case .weekly: 7
+        case .monthly: 31
+        case .yearly: 366
+        }
+    }
+
     /// 반복 배지·칩 라벨. .none은 표시할 게 없어 nil.
     var shortLabel: String? {
         switch self {
