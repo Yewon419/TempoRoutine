@@ -29,6 +29,10 @@ struct SeasonCalendarView: View {
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
     private let minCellHeight: CGFloat = 54
+    // 여러 날 띠 — 날짜 숫자(상단 3 + 27) 바로 아래부터, 레인 간격 포함 13pt씩
+    private let bandHeight: CGFloat = 11
+    private let bandTop: CGFloat = 30
+    private var bandSlot: CGFloat { bandHeight + 2 }
     /// 예측 형광펜 회색 — 다크에선 한 단계 밝게 (기준 대응 팔레트)
     private let highlightGray = Color(uiColor: UIColor { trait in
         trait.userInterfaceStyle == .dark
@@ -149,6 +153,7 @@ struct SeasonCalendarView: View {
             guard let d = cal.date(byAdding: .day, value: dayNumber - 1, to: monthStart) else { continue }
             let day = cal.startOfDay(for: d)
             for s in schedules where s.occurs(on: day) {
+                if s.isMultiDay { continue }   // 여러 날 일정은 잉크 글줄 대신 띠로(§8.2.3)
                 marks[day, default: []].append((s.title, false))
             }
         }
@@ -225,18 +230,115 @@ struct SeasonCalendarView: View {
 
     // ── 그리드 ──
     private func grid(marks: [Date: [(title: String, projected: Bool)]]) -> some View {
-        VStack(spacing: 4) {
+        let bands = bandLayout
+        return VStack(spacing: 4) {
             ForEach(0..<rowCount, id: \.self) { row in
                 HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { col in
-                        cell(index: row * 7 + col, marks: marks)
+                        cell(index: row * 7 + col, marks: marks,
+                             bandCount: bands.countByIndex[row * 7 + col] ?? 0)
                             .frame(maxWidth: .infinity)
                     }
                 }
                 .frame(minHeight: minCellHeight, maxHeight: .infinity)   // 풀하이트 균등 분할
+                .overlay(alignment: .topLeading) { bandRow(row: row, bars: bands.bars) }
             }
         }
         .frame(maxHeight: .infinity)
+    }
+
+    // ── 여러 날 일정 = 이어지는 띠 (2026-07-25 사용자 지시 — 하루짜리는 잉크 글줄 그대로) ──
+    // 생리 형광펜은 숫자 뒤를 지나는 별도 레이어라 겹치지 않는다. 레인은 2개까지(셀 2줄 예산).
+    private struct BandBar: Identifiable {
+        let id: String
+        let title: String
+        let segment: BandSegment
+        let lane: Int
+        let isPast: Bool
+    }
+
+    private struct BandLayout {
+        let bars: [BandBar]
+        let countByIndex: [Int: Int]
+    }
+
+    private var bandLayout: BandLayout {
+        let cellCount = rowCount * 7
+        let items = schedules.filter(\.isMultiDay).sorted { ($0.date, $0.title) < ($1.date, $1.title) }
+        var bars: [BandBar] = []
+        var laneCells: [Set<Int>] = [[], []]
+        var countByIndex: [Int: Int] = [:]
+
+        for item in items {
+            var cells = [Bool](repeating: false, count: cellCount)
+            var occupied: Set<Int> = []
+            for i in 0..<cellCount {
+                guard let d = date(at: i), item.occurs(on: d) else { continue }
+                cells[i] = true
+                occupied.insert(i)
+            }
+            guard !occupied.isEmpty,
+                  let lane = laneCells.indices.first(where: { laneCells[$0].isDisjoint(with: occupied) })
+            else { continue }
+            laneCells[lane].formUnion(occupied)
+            for i in occupied { countByIndex[i, default: 0] += 1 }
+
+            for (n, segment) in ScheduleSpan.bandSegments(cells: cells).enumerated() {
+                let adjusted = clampToMonth(segment, item: item)
+                let lastDay = date(at: segment.row * 7 + segment.column + segment.length - 1)
+                bars.append(BandBar(id: "\(item.id)-\(n)", title: item.title, segment: adjusted,
+                                    lane: lane, isPast: (lastDay ?? today) < today))
+            }
+        }
+        return BandLayout(bars: bars, countByIndex: countByIndex)
+    }
+
+    /// 달 밖에서 이어지는 쪽은 둥글게 닫지 않는다 — 다음 달로 넘어가는 게 보이도록
+    private func clampToMonth(_ segment: BandSegment, item: ScheduleItem) -> BandSegment {
+        let firstIndex = segment.row * 7 + segment.column
+        let lastIndex = firstIndex + segment.length - 1
+        var isStart = segment.isStart
+        var isEnd = segment.isEnd
+        if isStart, firstIndex == leadingBlanks,
+           let before = cal.date(byAdding: .day, value: -1, to: monthStart), item.occurs(on: before) {
+            isStart = false
+        }
+        if isEnd, lastIndex == leadingBlanks + daysInMonth - 1,
+           let after = cal.date(byAdding: .day, value: daysInMonth, to: monthStart), item.occurs(on: after) {
+            isEnd = false
+        }
+        return BandSegment(row: segment.row, column: segment.column, length: segment.length,
+                           isStart: isStart, isEnd: isEnd)
+    }
+
+    private func bandRow(row: Int, bars: [BandBar]) -> some View {
+        GeometryReader { proxy in
+            let unit = proxy.size.width / 7
+            ForEach(bars.filter { $0.segment.row == row }) { bar in
+                let ink = bar.isPast ? Ink.oxide : Ink.text
+                UnevenRoundedRectangle(
+                    topLeadingRadius: bar.segment.isStart ? 5 : 0,
+                    bottomLeadingRadius: bar.segment.isStart ? 5 : 0,
+                    bottomTrailingRadius: bar.segment.isEnd ? 5 : 0,
+                    topTrailingRadius: bar.segment.isEnd ? 5 : 0
+                )
+                .fill(ink.opacity(0.13))
+                .frame(width: max(0, unit * CGFloat(bar.segment.length) - 2), height: bandHeight)
+                .overlay(alignment: .leading) {
+                    // 제목은 시작 조각에만 — 잘린 조각은 띠만 이어진다
+                    if bar.segment.isStart {
+                        Text(bar.title)
+                            .font(.system(size: 8.5, weight: .semibold))
+                            .lineLimit(1)
+                            .foregroundStyle(ink.opacity(0.85))
+                            .padding(.horizontal, 4)
+                    }
+                }
+                .offset(x: unit * CGFloat(bar.segment.column) + 1,
+                        y: bandTop + CGFloat(bar.lane) * bandSlot)
+            }
+        }
+        .allowsHitTesting(false)   // 탭·길게 누르기는 셀이 받는다
     }
 
     private func date(at index: Int) -> Date? {
@@ -246,7 +348,8 @@ struct SeasonCalendarView: View {
     }
 
     @ViewBuilder
-    private func cell(index: Int, marks: [Date: [(title: String, projected: Bool)]]) -> some View {
+    private func cell(index: Int, marks: [Date: [(title: String, projected: Bool)]],
+                      bandCount: Int) -> some View {
         if let date = date(at: index) {
             let style = cellStyle(for: date)
             let recorded = recordedDays.contains(date)
@@ -264,9 +367,13 @@ struct SeasonCalendarView: View {
                             Circle().fill(Ink.winter)   // 오늘 = 은필 흑청 채운 원 (먹색은 기각 이력, §8.1)
                         }
                     }
+                if bandCount > 0 {
+                    Color.clear.frame(height: CGFloat(bandCount) * bandSlot)   // 여러 날 띠 자리
+                }
                 // 일정·occurrence = 날짜 밑 작은 잉크 글줄(책력 문법, 프로토 v15)
                 // 잉크 글줄(v16): 먹색 78% / 과거는 산화색 75% / 예상은 옅게
-                ForEach(Array(cellMarks.prefix(2).enumerated()), id: \.offset) { _, mark in
+                // 한 칸의 줄 예산은 2 — 띠가 차지한 만큼 글줄을 줄인다
+                ForEach(Array(cellMarks.prefix(max(0, 2 - bandCount)).enumerated()), id: \.offset) { _, mark in
                     Text(mark.title)
                         .font(.system(size: 8.5, weight: .medium))
                         .lineLimit(1)
