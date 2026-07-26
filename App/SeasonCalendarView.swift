@@ -313,32 +313,44 @@ struct SeasonCalendarView: View {
 
     private func bandRow(row: Int, bars: [BandBar]) -> some View {
         GeometryReader { proxy in
-            let unit = proxy.size.width / 7
+            let unit: CGFloat = proxy.size.width / 7
             ForEach(bars.filter { $0.segment.row == row }) { bar in
-                let ink = bar.isPast ? Ink.oxide : Ink.text
-                UnevenRoundedRectangle(
-                    topLeadingRadius: bar.segment.isStart ? 5 : 0,
-                    bottomLeadingRadius: bar.segment.isStart ? 5 : 0,
-                    bottomTrailingRadius: bar.segment.isEnd ? 5 : 0,
-                    topTrailingRadius: bar.segment.isEnd ? 5 : 0
-                )
-                .fill(ink.opacity(0.13))
-                .frame(width: max(0, unit * CGFloat(bar.segment.length) - 2), height: bandHeight)
-                .overlay(alignment: .leading) {
-                    // 제목은 시작 조각에만 — 잘린 조각은 띠만 이어진다
-                    if bar.segment.isStart {
-                        Text(bar.title)
-                            .font(.system(size: 8.5, weight: .semibold))
-                            .lineLimit(1)
-                            .foregroundStyle(ink.opacity(0.85))
-                            .padding(.horizontal, 4)
-                    }
-                }
-                .offset(x: unit * CGFloat(bar.segment.column) + 1,
-                        y: bandTop + CGFloat(bar.lane) * bandSlot)
+                bandView(bar: bar, unit: unit)
             }
         }
         .allowsHitTesting(false)   // 탭·길게 누르기는 셀이 받는다
+    }
+
+    // 타입 체커 과부하를 피해 조각냄(2026-07-25 CI 실측: 한 식에 몰면 unable to type-check)
+    private func bandView(bar: BandBar, unit: CGFloat) -> some View {
+        let ink: Color = bar.isPast ? Ink.oxide : Ink.text
+        let radius: CGFloat = 5
+        let width: CGFloat = max(0, unit * CGFloat(bar.segment.length) - 2)
+        let x: CGFloat = unit * CGFloat(bar.segment.column) + 1
+        let y: CGFloat = bandTop + CGFloat(bar.lane) * bandSlot
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: bar.segment.isStart ? radius : 0,
+            bottomLeadingRadius: bar.segment.isStart ? radius : 0,
+            bottomTrailingRadius: bar.segment.isEnd ? radius : 0,
+            topTrailingRadius: bar.segment.isEnd ? radius : 0
+        )
+        return shape
+            .fill(ink.opacity(0.13))
+            .frame(width: width, height: bandHeight)
+            .overlay(alignment: .leading) { bandTitle(bar: bar, ink: ink) }
+            .offset(x: x, y: y)
+    }
+
+    /// 제목은 시작 조각에만 — 잘린 조각은 띠만 이어진다
+    @ViewBuilder
+    private func bandTitle(bar: BandBar, ink: Color) -> some View {
+        if bar.segment.isStart {
+            Text(bar.title)
+                .font(.system(size: 8.5, weight: .semibold))
+                .lineLimit(1)
+                .foregroundStyle(ink.opacity(0.85))
+                .padding(.horizontal, 4)
+        }
     }
 
     private func date(at index: Int) -> Date? {
