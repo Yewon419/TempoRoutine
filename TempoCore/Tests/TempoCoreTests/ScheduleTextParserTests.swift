@@ -145,6 +145,18 @@ final class ScheduleTextParserTests: XCTestCase {
         XCTAssertNil(parse("회의").matchedText)
     }
 
+    // T72: 오전·오후 모호 판정 — UI가 두 칩을 띄우는 조건(2026-07-26)
+    func testT72_ambiguousMeridiem() {
+        for text in ["약속 9시", "회의 3시", "12시 점심", "3시반 미팅", "3시 30분 미팅"] {
+            XCTAssertTrue(parse(text).ambiguousMeridiem, text)
+        }
+        // 수식어를 썼거나 24시간 표기면 모호하지 않다
+        for text in ["오전 9시 병원", "저녁 7시 약속", "밤 12시 마감", "15:00 회의", "9:30 스터디",
+                     "정오 산책", "자정 마감", "회의"] {
+            XCTAssertFalse(parse(text).ambiguousMeridiem, text)
+        }
+    }
+
     // T71: 첫 시각만 쓴다(뒤에 또 있어도 무시)
     func testT71_firstOnly() {
         let r = parse("3시 회의 준비 5시 발표")

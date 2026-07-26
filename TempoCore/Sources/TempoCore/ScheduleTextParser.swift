@@ -24,12 +24,16 @@ public struct ParsedScheduleText: Equatable, Sendable {
     public let end: ParsedTime?
     /// 인식한 원문 조각 — UI가 "'3시'를 오후 3:00으로 읽었어요"로 근거를 보여준다.
     public let matchedText: String?
+    /// 오전·오후를 안 쓴 "N시"라 두 읽기가 다 성립하는가 — UI가 두 칩을 띄워 고르게 한다(2026-07-26).
+    public let ambiguousMeridiem: Bool
 
-    public init(title: String, start: ParsedTime?, end: ParsedTime?, matchedText: String?) {
+    public init(title: String, start: ParsedTime?, end: ParsedTime?, matchedText: String?,
+                ambiguousMeridiem: Bool = false) {
         self.title = title
         self.start = start
         self.end = end
         self.matchedText = matchedText
+        self.ambiguousMeridiem = ambiguousMeridiem
     }
 }
 
@@ -77,7 +81,8 @@ public enum ScheduleTextParser {
         return ParsedScheduleText(title: strip(chars, removing: matchRange),
                                   start: first.time,
                                   end: end,
-                                  matchedText: String(chars[matchRange]).trimmingCharacters(in: .whitespaces))
+                                  matchedText: String(chars[matchRange]).trimmingCharacters(in: .whitespaces),
+                                  ambiguousMeridiem: first.isAmbiguous)
     }
 
     // ── 스캔 ──
@@ -94,6 +99,8 @@ public enum ScheduleTextParser {
         let range: Range<Int>
         let hadMeridiem: Bool
         let explicit24: Bool
+        /// 수식어 없는 1~12시 = 오전·오후 둘 다 성립(휴리스틱으로 하나를 고른 상태)
+        let isAmbiguous: Bool
     }
 
     private static let modifierWords: [(word: [Character], modifier: Modifier)] = [
@@ -120,11 +127,11 @@ public enum ScheduleTextParser {
         // 숫자 없이 성립하는 표현
         if let after = consume(chars, from: start, word: "정오") {
             return TimeMatch(time: ParsedTime(hour: 12, minute: 0),
-                             range: start..<after, hadMeridiem: true, explicit24: false)
+                             range: start..<after, hadMeridiem: true, explicit24: false, isAmbiguous: false)
         }
         if let after = consume(chars, from: start, word: "자정") {
             return TimeMatch(time: ParsedTime(hour: 0, minute: 0),
-                             range: start..<after, hadMeridiem: true, explicit24: false)
+                             range: start..<after, hadMeridiem: true, explicit24: false, isAmbiguous: false)
         }
 
         var i = start
@@ -178,7 +185,8 @@ public enum ScheduleTextParser {
         return TimeMatch(time: ParsedTime(hour: hour, minute: minute),
                          range: start..<i,
                          hadMeridiem: modifier != nil,
-                         explicit24: explicit24)
+                         explicit24: explicit24,
+                         isAmbiguous: modifier == nil && !explicit24 && (1...12).contains(hourScan.value))
     }
 
     /// 12시간제 해석 — 수식어가 없으면 1~6시는 오후, 7~12시는 오전으로 읽는다(일상 관례).

@@ -65,11 +65,12 @@ struct DayDetailView: View {
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: day)
-            case .input:    InputAddSheet(currentSeason: snapshot.phaseInfo(on: today)?.meta,
+            case .input:    InputAddSheet(day: day,
+                                          currentSeason: snapshot.phaseInfo(on: today)?.meta,
                                           energyLevel: snapshot.phase(on: today).flatMap {
                                               EnergyProfile(checkIns: checkIns, snapshot: snapshot).level(for: $0)
                                           })
-            case .output:   OutputAddSheet()
+            case .output:   OutputAddSheet(day: day)
             }
         }
         .sheet(item: $editingSchedule) { item in

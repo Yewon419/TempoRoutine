@@ -244,11 +244,24 @@ struct QuickScheduleSheet: View {
     @State private var title = ""
     @State private var pickedTime: Date?           // 칩으로 직접 정한 시각 — 있으면 파싱값보다 우선
     @State private var ignoreParsed = false        // 읽은 시각을 물린 상태(하루종일로 되돌림)
+    @State private var pmOverride: Bool?           // 오전·오후 직접 선택(nil = 관례 해석 그대로, 2026-07-26)
     @State private var showTimePicker = false
 
     private var cal: Calendar { Calendar.current }
     private var parsed: ParsedScheduleText { ScheduleTextParser.parse(title) }
-    private var parsedStart: ParsedTime? { ignoreParsed ? nil : parsed.start }
+
+    /// 제목에서 읽은 시작 시각 — 오전·오후를 직접 고른 경우 그쪽으로 뒤집는다
+    private var parsedStart: ParsedTime? {
+        guard !ignoreParsed, let start = parsed.start else { return nil }
+        guard parsed.ambiguousMeridiem, let pm = pmOverride else { return start }
+        return variant(start, pm: pm)
+    }
+
+    /// 같은 시각의 오전·오후 짝 — 12시는 정오↔자정
+    private func variant(_ time: ParsedTime, pm: Bool) -> ParsedTime {
+        let base = time.hour % 12
+        return ParsedTime(hour: pm ? base + 12 : base, minute: time.minute)
+    }
 
     /// 저장에 쓰는 시각 — 칩 지정이 우선, 없으면 제목에서 읽은 값
     private var startTime: ParsedTime? {
@@ -261,8 +274,14 @@ struct QuickScheduleSheet: View {
 
     /// 종료 시각은 제목에서 범위를 읽었을 때만("3시~5시"). 칩으로 정했으면 1시간.
     private var endTime: ParsedTime? {
-        guard pickedTime == nil, !ignoreParsed else { return nil }
-        return parsed.end
+        guard pickedTime == nil, !ignoreParsed, let end = parsed.end else { return nil }
+        guard parsed.ambiguousMeridiem, let pm = pmOverride, let start = parsed.start,
+              let shown = parsedStart else { return end }
+        // 시작을 뒤집었으면 종료도 같은 폭으로 — "3시~5시"를 오전으로 고르면 05:00
+        let delta = shown.minutesOfDay - start.minutesOfDay
+        _ = pm
+        let moved = ((end.minutesOfDay + delta) % 1440 + 1440) % 1440
+        return ParsedTime(hour: moved / 60, minute: moved % 60)
     }
 
     /// 시각 표현을 실제로 쓸 때만 제목을 정제한다
@@ -293,6 +312,7 @@ struct QuickScheduleSheet: View {
                         .padding(.bottom, 8)
                         .almanacRule(opacity: 0.28)
                     chips
+                    if showsMeridiemChoice { meridiemChips }
                     if showTimePicker { timePicker }
                     if let hint { readingHint(hint) }
                     Spacer(minLength: 0)
@@ -328,6 +348,26 @@ struct QuickScheduleSheet: View {
                 // 제목에서 읽은 시각이 있으면 그걸 이어받고, 없으면 다음 정시
                 if showTimePicker, pickedTime == nil {
                     pickedTime = parsedStart.flatMap(date(at:)) ?? defaultPickerTime
+                }
+            }
+            Spacer()
+        }
+    }
+
+    /// 오전·오후를 안 쓴 "N시"는 두 읽기가 다 성립 — 고르게 한다(2026-07-26 사용자 지시)
+    private var showsMeridiemChoice: Bool {
+        pickedTime == nil && !ignoreParsed && parsed.ambiguousMeridiem && parsed.start != nil
+    }
+
+    private var meridiemChips: some View {
+        HStack(spacing: 6) {
+            if let base = parsed.start {
+                let selectedPM = (parsedStart?.hour ?? 0) >= 12
+                FreqChip(label: clockText(variant(base, pm: false)), selected: !selectedPM) {
+                    pmOverride = false
+                }
+                FreqChip(label: clockText(variant(base, pm: true)), selected: selectedPM) {
+                    pmOverride = true
                 }
             }
             Spacer()
@@ -379,9 +419,14 @@ struct QuickScheduleSheet: View {
     private var hint: String? {
         guard pickedTime == nil, !ignoreParsed,
               let matched = parsed.matchedText, let start = parsed.start else { return nil }
-        var text = "「\(matched)」를 \(clockText(start))"
-        if let end = parsed.end { text += "–\(clockText(end))" }
-        text += "으로 읽었어요"
+        var text: String
+        if parsed.ambiguousMeridiem {
+            text = "「\(matched)」를 시각으로 읽었어요"
+        } else {
+            text = "「\(matched)」를 \(clockText(start))"
+            if let end = parsed.end { text += "–\(clockText(end))" }
+            text += "으로 읽었어요"
+        }
         if !parsed.title.isEmpty { text += " · 제목은 「\(parsed.title)」" }
         return text
     }
@@ -434,6 +479,8 @@ struct QuickScheduleSheet: View {
 
 // ── ② Input 추가 ──
 struct InputAddSheet: View {
+    /// 어느 날에 추가하는가 — 하루 상세에서 지난 날짜에 추가하면 그날부터 시작해야 한다(2026-07-26)
+    var day: Date = .now
     let currentSeason: SeasonMeta?
     /// 기록상 에너지 수준(2026-07-23) — 있으면 제목 예시를 에너지별로, 없으면 계절 매트릭스 폴백
     var energyLevel: EnergyLevel? = nil
@@ -534,7 +581,8 @@ struct InputAddSheet: View {
                         } else {
                             schedule = .once
                         }
-                        modelContext.insert(InputItem(title: title, category: category, schedule: schedule))
+                        modelContext.insert(InputItem(title: title, category: category, schedule: schedule,
+                                                      createdAt: anchorDate(for: day)))
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)
@@ -547,6 +595,9 @@ struct InputAddSheet: View {
 
 // ── ③ Output 추가 ──
 struct OutputAddSheet: View {
+    /// 어느 날에 추가하는가 — InputAddSheet와 같은 근거(2026-07-26)
+    var day: Date = .now
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
@@ -658,7 +709,8 @@ struct OutputAddSheet: View {
                         } else {
                             schedule = .once
                         }
-                        let item = OutputItem(title: title, schedule: schedule, progressKind: kind)
+                        let item = OutputItem(title: title, schedule: schedule, progressKind: kind,
+                                              createdAt: anchorDate(for: day))
                         if kind == .sessions { item.targetSessions = targetSessions }
                         if kind == .subtasks {
                             item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
@@ -673,4 +725,18 @@ struct OutputAddSheet: View {
             }
         }
     }
+}
+
+/// 아이템 시작 기준선 — 오늘이면 지금 시각 그대로, 다른 날이면 그날의 같은 시각.
+/// 날짜만 startOfDay로 뭉개면 같은 날 추가한 아이템들의 정렬(createdAt)이 동률이 돼 순서가 흔들린다.
+func anchorDate(for day: Date) -> Date {
+    let cal = Calendar.current
+    let now = Date()
+    if cal.isDate(day, inSameDayAs: now) { return now }
+    var comps = cal.dateComponents([.year, .month, .day], from: day)
+    let time = cal.dateComponents([.hour, .minute, .second], from: now)
+    comps.hour = time.hour
+    comps.minute = time.minute
+    comps.second = time.second
+    return cal.date(from: comps) ?? day
 }

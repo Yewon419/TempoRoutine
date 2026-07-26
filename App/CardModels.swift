@@ -166,12 +166,15 @@ final class InputItem {
         set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
     }
 
-    init(title: String, category: InputCategory = .other, schedule: InputSchedule = .daily) {
+    /// createdAt = 이 아이템이 시작되는 날(발생 판정의 기준선). 하루 상세에서 추가하면 그날이어야
+    /// 한다 — 기본값 .now로 두면 지난 날짜에 추가해도 오늘부터 뜬다(2026-07-26 실기기 결함).
+    init(title: String, category: InputCategory = .other, schedule: InputSchedule = .daily,
+         createdAt: Date = .now) {
         self.id = UUID()
         self.title = title
         self.category = category
         self.scheduleData = (try? JSONEncoder().encode(schedule)) ?? Data()
-        self.createdAt = .now
+        self.createdAt = createdAt
     }
 
     /// .once·.daily·.weekly·.monthly 판정(달력 기준 — 주기 기준은 CycleSnapshot 필요라 호출부에서 별도 처리).
@@ -237,7 +240,9 @@ final class OutputItem {
         set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
     }
 
-    init(title: String, schedule: OutputSchedule, progressKind: OutputProgressKind = .percent) {
+    /// createdAt = 시작되는 날 — InputItem과 같은 근거(2026-07-26).
+    init(title: String, schedule: OutputSchedule, progressKind: OutputProgressKind = .percent,
+         createdAt: Date = .now) {
         self.id = UUID()
         self.title = title
         self.scheduleData = (try? JSONEncoder().encode(schedule)) ?? Data()
@@ -246,7 +251,7 @@ final class OutputItem {
         self.targetSessions = 0
         self.loggedSessions = 0
         self.percent = 0
-        self.createdAt = .now
+        self.createdAt = createdAt
     }
 
     /// .once·.daily·.weekly·.monthly 판정(달력 기준) — InputItem.occursByCalendar와 동형(§ 반복 통일).
