@@ -1,5 +1,7 @@
-// 템포루틴 — 하루 상세 3카드 (Phase 0 ④, MASTER §8.2.4 / §3.6 — 제품의 심장)
-// 일정=절대날짜·연반복 / Input=일일 체크(ItemCompletion) / Output=진행도(수명 누적, 완료=파생 §5.5.2).
+// 템포루틴 — 하루 상세 (Phase 0 ④, MASTER §8.2.4 / §3.6 — 제품의 심장)
+// 조판 = 오늘 탭과 동일: 표제 → 생리 기록 토글 → 일정·Input·Output 3지면 → 체크인(과거·오늘만).
+// 세그먼트 카드 전환은 2026-07-26 폐기 — 시안(프로토 data-view="day")은 처음부터 스택이었다.
+// 일정=절대날짜·반복·기간 / Input=일일 체크(ItemCompletion) / Output=진행도(수명 누적, 완료=파생 §5.5.2).
 // 상단 생리 기록 토글 = 긋기 접근성 대체(§5.5.4). projected 아이템 = faded + "예상"(§8.1 상태 어휘).
 
 import SwiftUI
@@ -24,7 +26,6 @@ struct DayDetailView: View {
     @Query private var completions: [ItemCompletion]
     @Query private var checkIns: [DailyCheckIn]
 
-    @State private var selectedCard: CardKind = .schedule
     @State private var addSheet: CardKind?
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 생리 기록·아이템 완료)
@@ -40,14 +41,19 @@ struct DayDetailView: View {
             Ink.paper.ignoresSafeArea()
             SeasonLight(phase: snapshot.phase(on: day))
             ScrollView {
+                // 오늘 탭과 같은 조판 — 3구획을 쌓는다(프로토 data-view="day" 문법, 2026-07-26 정정:
+                // 세그먼트 전환은 MASTER §8.2.4 구문장을 따른 것이었고 시안과 어긋나 있었다)
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     periodToggle
-                    Picker("카드", selection: $selectedCard) {
-                        ForEach(CardKind.allCases) { Text($0.rawValue).tag($0) }
+                    scheduleCard
+                    inputCard
+                    outputCard
+                    // 뒤늦은 기록·자정 넘긴 마무리 — 지난 날짜에도 체크인을 쓸 수 있어야 한다.
+                    // 미래는 기록하지 않는다(생리 기록과 같은 원칙 §5.5.4).
+                    if !isFuture {
+                        CheckInCard(day: day)
                     }
-                    .pickerStyle(.segmented)
-                    cardBody
                 }
                 .padding(20)
             }
@@ -120,34 +126,33 @@ struct DayDetailView: View {
         .disabled(isFuture)
     }
 
-    // ── 카드 본문 ──
-    @ViewBuilder
-    private var cardBody: some View {
-        switch selectedCard {
-        case .schedule: scheduleCard
-        case .input:    inputCard
-        case .output:   outputCard
-        }
-    }
-
-    private func cardShell(_ empty: Bool, addLabel: String, emptyMessage: String = "아직 없어요",
+    // ── 카드 껍데기 — 오늘 탭 section(kind:)과 같은 문법(표제 + 우상단 +) ──
+    private func cardShell(_ kind: CardKind, empty: Bool, emptyMessage: String = "아직 없어요",
                             @ViewBuilder rows: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(kind.rawValue)
+                    .font(.almanac(size: 17, weight: .bold))
+                    .foregroundStyle(Ink.text)
+                Spacer()
+                Button {
+                    lightFeedback += 1
+                    addSheet = kind
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Ink.text.opacity(0.6))
+                        .frame(width: 32, height: 32)
+                }
+                .accessibilityLabel("\(kind.rawValue) 추가")
+            }
             if empty {
                 Text(emptyMessage)
                     .font(.footnote)
                     .foregroundStyle(Ink.text.opacity(0.45))
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
             } else {
                 rows()
-            }
-            Button {
-                lightFeedback += 1
-                addSheet = selectedCard
-            } label: {
-                Label(addLabel, systemImage: "plus")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Ink.text)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -159,7 +164,7 @@ struct DayDetailView: View {
     private var scheduleRows: [ScheduleItem] { schedules.filter { $0.occurs(on: day) } }
 
     private var scheduleCard: some View {
-        cardShell(false, addLabel: "일정 추가") {
+        cardShell(.schedule, empty: false) {
             VStack(alignment: .leading, spacing: 10) {
                 if scheduleRows.isEmpty && EventOverlay.shared.events(on: day).isEmpty {
                     Text("아직 없어요")
@@ -253,7 +258,7 @@ struct DayDetailView: View {
     }
 
     private var inputCard: some View {
-        cardShell(inputRows.isEmpty, addLabel: "Input 추가") {
+        cardShell(.input, empty: inputRows.isEmpty) {
             ForEach(inputRows) { row in
                 let checked = isCompleted(row.item.id)
                 Button {
@@ -314,7 +319,7 @@ struct DayDetailView: View {
     }
 
     private var outputCard: some View {
-        cardShell(outputRows.isEmpty, addLabel: "Output 추가", emptyMessage: outputEmptyMessage) {
+        cardShell(.output, empty: outputRows.isEmpty, emptyMessage: outputEmptyMessage) {
             ForEach(outputRows) { row in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {

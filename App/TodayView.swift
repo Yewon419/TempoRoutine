@@ -90,13 +90,6 @@ struct TodayView: View {
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
 
-    // 체크인 드래프트 — energy·mood 둘 다 기록되는 순간 upsert(§5.5: 저장 행은 항상 1...5)
-    @State private var draftEnergy = 0
-    @State private var draftMood = 0
-    @State private var draftSleep = 0
-    @State private var draftNote = ""
-    @State private var draftLoaded = false
-    @FocusState private var noteFocused: Bool   // 키보드 닫기 경로(베타 피드백 2026-07-22)
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -133,7 +126,7 @@ struct TodayView: View {
                                 section(kind: .output) { outputSection }
                             }
                             .frame(maxWidth: .infinity)
-                            checkInCard.frame(width: 360)
+                            CheckInCard(day: today).frame(width: 360)
                         }
                     } else {
                         if !snapshot.isColdStart {
@@ -141,7 +134,7 @@ struct TodayView: View {
                             section(kind: .input) { inputSection }
                             section(kind: .output) { outputSection }
                         }
-                        checkInCard
+                        CheckInCard(day: today)
                     }
                 }
                 .padding(20)
@@ -170,12 +163,6 @@ struct TodayView: View {
             .scrollDismissesKeyboard(.interactively)   // 스크롤로도 키보드 닫힘
             compactBar
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
-            }
-        }
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet() }
         .sheet(item: $addSheet) { kind in
             switch kind {
@@ -187,7 +174,6 @@ struct TodayView: View {
         .sheet(item: $editingSchedule) { item in
             ScheduleAddSheet(defaultDate: today, editing: item)
         }
-        .onAppear(perform: loadDraft)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .coachOverlay(id: .today, steps: CoachSteps.today)   // 기능 튜토리얼(2026-07-23)
@@ -482,94 +468,4 @@ struct TodayView: View {
         }
     }
 
-    // ── 데일리 체크인 (§3.4 — 라벨 조사형, 3탭 = 1·3·5, 스킵 무벌점) ──
-    private var todayCheckIn: DailyCheckIn? { checkIns.first { $0.day == today } }
-
-    private var checkInCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("오늘의 체크인")
-                .font(.almanac(size: 17, weight: .bold))
-                .foregroundStyle(Ink.text)
-            checkInRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
-            checkInRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
-            checkInRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
-            VStack(alignment: .leading, spacing: 6) {
-                Text("오늘 한 줄").font(.caption).foregroundStyle(Ink.text.opacity(0.5))
-                TextField("남기고 싶은 만큼만, 짧게.", text: $draftNote, axis: .vertical)
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.text)
-                    .focused($noteFocused)
-                    .onChange(of: draftNote) { persistDraft() }
-            }
-            if draftEnergy > 0 && draftMood > 0 {
-                Text("오늘 기록이 나의 리듬에 담겼어요.")
-                    .font(.system(.footnote, design: .serif))
-                    .foregroundStyle(Ink.text.opacity(0.6))
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .milkGlass()
-    }
-
-    private func checkInRow(label: String, options: [String], value: Binding<Int>) -> some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(Ink.text.opacity(0.75))
-                .frame(width: 88, alignment: .leading)
-            ForEach(Array(options.enumerated()), id: \.offset) { index, option in
-                let mapped = index * 2 + 1   // 3탭 = 1·3·5
-                let selected = value.wrappedValue == mapped
-                Button {
-                    value.wrappedValue = selected ? 0 : mapped
-                    persistDraft()
-                } label: {
-                    Text(option)
-                        .font(.caption)
-                        .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.08)),
-                                    in: Capsule())
-                }
-                .accessibilityLabel("\(label) \(option)")
-                .accessibilityAddTraits(selected ? [.isSelected] : [])
-            }
-            Spacer(minLength: 0)
-        }
-    }
-
-    private func loadDraft() {
-        guard !draftLoaded else { return }
-        draftLoaded = true
-        if let existing = todayCheckIn {
-            draftEnergy = existing.energy
-            draftMood = existing.mood
-            draftSleep = existing.sleep ?? 0
-            draftNote = existing.note ?? ""
-        }
-    }
-
-    /// 저장 조건 = 필수 2신호(energy·mood) 또는 노트(§5.5 개정 2026-07-22 — 노트 단독 저장 허용,
-    /// 한 줄 일기 유실 방지). 리듬 집계는 energy·mood 둘 다 1...5인 행만 쓴다(§5.6.3).
-    private func persistDraft() {
-        let hasSignals = draftEnergy > 0 && draftMood > 0
-        let hasNote = !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        if let existing = todayCheckIn {
-            if hasSignals || hasNote {
-                existing.energy = draftEnergy
-                existing.mood = draftMood
-                existing.sleep = draftSleep > 0 ? draftSleep : nil
-                existing.note = hasNote ? draftNote : nil
-            } else {
-                modelContext.delete(existing)   // 전부 해제 = 기록 철회(스킵 무벌점)
-            }
-        } else if hasSignals || hasNote {
-            let record = DailyCheckIn(day: today, energy: draftEnergy, mood: draftMood)
-            record.sleep = draftSleep > 0 ? draftSleep : nil
-            record.note = hasNote ? draftNote : nil
-            modelContext.insert(record)
-        }
-    }
 }
