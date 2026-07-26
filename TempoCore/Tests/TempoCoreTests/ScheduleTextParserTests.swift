@@ -25,6 +25,21 @@ final class ScheduleTextParserTests: XCTestCase {
         assertTime("마감 17시", 17, 0, title: "마감")
     }
 
+    // T60b: 실사용 어구 — 명사 + 시각(2026-07-26 사용자 제보 확인용)
+    func testT60b_realPhrases() {
+        assertTime("약속 9시", 9, 0, title: "약속")
+        assertTime("약속9시", 9, 0, title: "약속")
+        assertTime("친구 약속 9시", 9, 0, title: "친구 약속")
+        assertTime("병원 예약 10시", 10, 0, title: "병원 예약")
+        assertTime("스터디 2시", 14, 0, title: "스터디")
+    }
+
+    // T60c: 알려진 한계 — 수식어가 숫자에서 떨어져 있으면 못 쓴다("저녁 … 9시" → 09:00).
+    // 문맥 수식어 적용은 미도입(2026-07-26) — 이 테스트는 현재 동작을 고정해 회귀를 잡는 용도.
+    func testT60c_detachedModifierNotApplied() {
+        assertTime("저녁 약속 9시", 9, 0, title: "저녁 약속")
+    }
+
     // T61: 수식어 — 오전·아침 / 오후·점심·저녁 / 밤 / 새벽
     func testT61_modifiers() {
         assertTime("오전 9시 병원", 9, 0, title: "병원")
