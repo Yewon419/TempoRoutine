@@ -27,6 +27,8 @@ struct SeasonCalendarView: View {
     @State private var dragStart: Date?         // 드래그 중 선택 앵커(누른 셀)
     @State private var dragEnd: Date?           // 드래그 중 현재 셀
     @State private var gridSize: CGSize = .zero // 드래그 좌표 → 셀 역산용
+    @State private var monthForward = true      // 월 전환 방향 — 슬라이드 전환 edge 결정(2026-07-27)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pressFeedback = 0        // 길게 누르기 진입 햅틱(중간 — 탭보다 강하게)
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
 
@@ -140,12 +142,36 @@ struct SeasonCalendarView: View {
                 .coachAnchor(.calendarLog)   // 기능 튜토리얼(2026-07-23)
             }
             weekdayRow
-            grid(marks: marks)
-                .coachAnchor(.calendarGrid)
+            // 월 표면만 슬라이드 — 요일 행·범례·기록 버튼은 고정(시스템 캘린더 문법, HIG Familiarity).
+            // ZStack이 전환 중 구/신 그리드를 겹쳐 잡는다(VStack에 두면 두 달이 세로로 쌓임).
+            ZStack {
+                grid(marks: marks)
+                    .id(monthStart)
+                    .transition(monthTransition)
+            }
+            .clipped()
+            .coachAnchor(.calendarGrid)
             legend
             Spacer(minLength: 0)
         }
         .padding(20)
+        // 가로 스와이프 = 월 전환(2026-07-27). 수평 의도만(dx>60·세로의 1.5배) — 셀 탭·기간 선택과
+        // 분리: 롱프레스는 정지 0.4s에서 인식되고, 그 전에 25pt 움직이면 이 드래그가 이긴다.
+        .gesture(
+            DragGesture(minimumDistance: 25)
+                .onEnded { value in
+                    let dx = value.translation.width
+                    guard abs(dx) > 60, abs(dx) > abs(value.translation.height) * 1.5 else { return }
+                    lightFeedback += 1
+                    shiftMonth(dx < 0 ? 1 : -1)
+                }
+        )
+    }
+
+    /// 방향성 슬라이드 — 다음 달은 오른쪽에서, 이전 달은 왼쪽에서 들어온다
+    private var monthTransition: AnyTransition {
+        .asymmetric(insertion: .move(edge: monthForward ? .trailing : .leading),
+                    removal: .move(edge: monthForward ? .leading : .trailing))
     }
 
     /// 이 달의 잉크 글줄(§5.9-4: resolve가 캘린더에 뜨는지) — 일정 + cycle-anchored occurrence.
@@ -207,9 +233,14 @@ struct SeasonCalendarView: View {
         .foregroundStyle(Ink.text)
     }
 
+    /// 버튼·스와이프 공용 — 같은 동작은 같은 전환(HIG Familiarity). Reduce Motion이면 즉시 전환.
     private func shiftMonth(_ delta: Int) {
-        if let next = cal.date(byAdding: .month, value: delta, to: monthStart) {
+        guard let next = cal.date(byAdding: .month, value: delta, to: monthStart) else { return }
+        monthForward = delta > 0
+        if reduceMotion {
             monthAnchor = next
+        } else {
+            withAnimation(.snappy(duration: 0.32)) { monthAnchor = next }
         }
     }
 
