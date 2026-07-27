@@ -17,8 +17,10 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - App
+      - Shared          # 앱 ↔ 위젯 공용(스냅샷 계약)
     dependencies:
       - package: TempoCore
+      - target: TempoWidgets   # 위젯 익스텐션 임베드(2026-07-27)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.temporoutine.TempoRoutine
@@ -40,5 +42,31 @@ targets:
         CODE_SIGN_ENTITLEMENTS: TempoRoutine.entitlements
         INFOPLIST_KEY_NSHealthShareUsageDescription: 건강 앱에 기록된 생리 기록을 불러와 계절 계산에 반영해요. 기록이 밖으로 나가지 않아요.
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: 이 앱에서 남긴 생리 기록을 건강 앱에도 저장해요. 원할 때 끌 수 있어요.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 4VD7XCCBQN
+
+  # 위젯 익스텐션 (Phase 1: 오늘의 계절 — 2026-07-27, MASTER §8.2.8)
+  TempoWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - Widgets
+      - Shared
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: 템포루틴
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.temporoutine.TempoRoutine.widgets
+        MARKETING_VERSION: 0.1.0           # 앱과 동일해야 업로드 통과(appex 버전 일치 요건)
+        CURRENT_PROJECT_VERSION: 1         # CI가 run number로 덮음(전 타깃 공통)
+        SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        CODE_SIGN_ENTITLEMENTS: Widgets/TempoWidgets.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 4VD7XCCBQN

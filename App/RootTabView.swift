@@ -30,11 +30,17 @@ struct RootTabView: View {
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow()
         }
-        .task { await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays) }
+        .task {
+            await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)
+            WidgetBridge.publish(periodDays: periodDays)   // 위젯 스냅샷(2026-07-27)
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 let current = periodDays
                 Task { await HealthMirror.shared.sync(context: modelContext, periodDays: current) }
+            } else if phase == .background {
+                // 세션 중 편집 반영 — 백그라운드 진입 때 최신 상태로 재발행
+                WidgetBridge.publish(periodDays: periodDays)
             }
         }
     }

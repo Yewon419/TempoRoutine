@@ -86,6 +86,13 @@ jobs:
         run: |
           # 무서명 archive는 entitlements가 비어 export 재서명 IPA에서 HealthKit이 빠짐(실측: 빌드 20).
           # ad-hoc 서명으로 entitlements를 심으면 export가 이를 보존해 배포 서명에 반영한다.
+          # 순서 = 안쪽부터: 중첩 appex를 먼저 서명해야 앱 서명이 그 위를 봉인한다(2026-07-27 위젯 추가).
+          APPEX=build/TempoRoutine.xcarchive/Products/Applications/TempoRoutine.app/PlugIns/TempoWidgets.appex
+          if [ -d "$APPEX" ]; then
+            codesign --force --sign - \
+              --entitlements Widgets/TempoWidgets.entitlements "$APPEX"
+            codesign -d --entitlements - "$APPEX"
+          fi
           codesign --force --sign - \
             --entitlements TempoRoutine.entitlements \
             build/TempoRoutine.xcarchive/Products/Applications/TempoRoutine.app
