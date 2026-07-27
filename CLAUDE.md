@@ -40,3 +40,8 @@
 - SwiftUI 뷰 한 식에 shape+fill+frame+overlay+offset을 다 몰면 "unable to type-check this
   expression in reasonable time"으로 빌드가 깨진다(2026-07-25 실측). 지역 상수에 타입을 명시하고
   하위 뷰 함수로 쪼갤 것 — Windows에선 컴파일이 안 돌아 CI 한 바퀴를 버리게 된다.
+- 익스텐션 추가 시 cloud signing은 새 번들 ID·App Group을 자동 등록하지 못한다(2026-07-27 실측:
+  "Authentication failed" + "No profiles"). 번들 ID·capability는 ASC API로 대행 가능하지만
+  **App Group 생성·번들 연결은 공개 API에 없다**(/v1/appGroups=404) — 개발자 포털 수동(또는
+  브라우저 대행). capability 변경은 기존 프로파일을 무효화하며 다음 export가 재생성한다.
+- 무서명 archive의 entitlement ad-hoc 심기는 **중첩 appex 먼저, 앱 나중** 순서(ci.yml 실장).
