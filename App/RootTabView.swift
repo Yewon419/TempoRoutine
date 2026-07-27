@@ -8,6 +8,7 @@ struct RootTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Query private var periodDays: [PeriodDay]
+    @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]   // 위젯 스냅샷용(Phase 2)
     @AppStorage("onboardingDone") private var onboardingDone = false
 
     var body: some View {
@@ -32,7 +33,7 @@ struct RootTabView: View {
         }
         .task {
             await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)
-            WidgetBridge.publish(periodDays: periodDays)   // 위젯 스냅샷(2026-07-27)
+            WidgetBridge.publish(periodDays: periodDays, schedules: schedules)   // 위젯 스냅샷(2026-07-27)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -40,7 +41,7 @@ struct RootTabView: View {
                 Task { await HealthMirror.shared.sync(context: modelContext, periodDays: current) }
             } else if phase == .background {
                 // 세션 중 편집 반영 — 백그라운드 진입 때 최신 상태로 재발행
-                WidgetBridge.publish(periodDays: periodDays)
+                WidgetBridge.publish(periodDays: periodDays, schedules: schedules)
             }
         }
     }

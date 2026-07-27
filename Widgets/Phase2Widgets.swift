@@ -1,0 +1,235 @@
+// 템포루틴 — 위젯 Phase 2 (2026-07-27, MASTER §8.2.8)
+// 주간 스트립 = 캘린더 문법의 축소판: 계절 = 숫자 잉크색 / 오늘 = 은필 채운 원 /
+// 코랄 = 기록·회색 = 예상 형광펜(§8.2.3과 동일 어휘). 오늘 일정 = 일정 구획의 축소판.
+// 데이터는 WidgetSnapshot뿐 — 로컬 일정만(EventKit 오버레이는 런타임 전용이라 미포함).
+
+import WidgetKit
+import SwiftUI
+
+// ══ 주간 스트립 (systemMedium) ══
+
+struct WeekEntry: TimelineEntry {
+    let date: Date
+    let days: [WidgetDay?]   // 이번 주 7칸 — 스냅샷에 없으면 nil
+}
+
+struct WeekProvider: TimelineProvider {
+    func placeholder(in context: Context) -> WeekEntry {
+        weekEntry(for: .now, snapshot: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (WeekEntry) -> Void) {
+        completion(weekEntry(for: .now, snapshot: WidgetSnapshot.load()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<WeekEntry>) -> Void) {
+        let snapshot = WidgetSnapshot.load()
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: .now)
+        var entries: [WeekEntry] = []
+        for offset in 0..<7 {
+            guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
+            let base = weekEntry(for: day, snapshot: snapshot)
+            entries.append(WeekEntry(date: offset == 0 ? Date() : day, days: base.days))
+        }
+        completion(Timeline(entries: entries, policy: .atEnd))
+    }
+
+    private func weekEntry(for date: Date, snapshot: WidgetSnapshot?) -> WeekEntry {
+        let cal = Calendar.current
+        guard let weekStart = cal.dateInterval(of: .weekOfYear, for: date)?.start else {
+            return WeekEntry(date: date, days: Array(repeating: nil, count: 7))
+        }
+        let days = (0..<7).map { offset -> WidgetDay? in
+            guard let d = cal.date(byAdding: .day, value: offset, to: weekStart) else { return nil }
+            return snapshot?.entry(for: d)
+        }
+        return WeekEntry(date: date, days: days)
+    }
+}
+
+struct WeekStripWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "WeekStrip", provider: WeekProvider()) { entry in
+            WeekStripView(entry: entry)
+                .containerBackground(WInk.paper, for: .widget)
+        }
+        .configurationDisplayName("이번 주")
+        .description("일주일의 계절과 기록을 한 줄로 보여줘요.")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+struct WeekStripView: View {
+    let entry: WeekEntry
+
+    private var cal: Calendar { Calendar.current }
+    private var today: Date { cal.startOfDay(for: entry.date) }
+
+    private var weekdaySymbols: [String] {
+        let symbols = cal.veryShortWeekdaySymbols
+        let shift = cal.firstWeekday - 1
+        return Array(symbols[shift...] + symbols[..<shift])
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(0..<7, id: \.self) { index in
+                column(index: index)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func column(index: Int) -> some View {
+        let day = entry.days[index]
+        let isToday = day.map { cal.isDate($0.day, inSameDayAs: today) } ?? false
+        return VStack(spacing: 7) {
+            Text(weekdaySymbols[index])
+                .font(.system(size: 11))
+                .foregroundStyle(WInk.winter.opacity(0.8))
+            dayNumber(day, isToday: isToday)
+            glyphDot(day)
+        }
+    }
+
+    private func dayNumber(_ day: WidgetDay?, isToday: Bool) -> some View {
+        let number = day.map { String(cal.component(.day, from: $0.day)) } ?? "·"
+        let faded = day?.projected == true
+        let ink = WInk.season(day?.season)
+        return Text(number)
+            .font(.system(size: 16, weight: isToday ? .bold : .semibold))
+            .monospacedDigit()
+            .foregroundStyle(isToday ? WInk.paper : ink.opacity(faded ? 0.55 : 1))
+            .frame(width: 30, height: 30)
+            .background { numberBackground(day, isToday: isToday) }
+    }
+
+    @ViewBuilder
+    private func numberBackground(_ day: WidgetDay?, isToday: Bool) -> some View {
+        if isToday {
+            Circle().fill(WInk.winter)   // 오늘 = 은필 채운 원(캘린더와 동일 — 먹색 기각 이력 §8.1)
+        } else if day?.recorded == true {
+            Capsule().fill(WInk.coral.opacity(0.25))
+        } else if day?.predicted == true {
+            Capsule().fill(WInk.predictGray.opacity(0.25))
+        }
+    }
+
+    @ViewBuilder
+    private func glyphDot(_ day: WidgetDay?) -> some View {
+        if let season = day?.season {
+            GlyphShape(season: season)
+                .stroke(WInk.season(season).opacity(day?.projected == true ? 0.5 : 0.9),
+                        style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
+                .frame(width: 10, height: 10)
+        } else {
+            Color.clear.frame(width: 10, height: 10)
+        }
+    }
+}
+
+// ══ 오늘 일정 (systemMedium) ══
+
+struct ScheduleEntry: TimelineEntry {
+    let date: Date
+    let day: WidgetDay?
+}
+
+struct ScheduleProvider: TimelineProvider {
+    func placeholder(in context: Context) -> ScheduleEntry {
+        ScheduleEntry(date: .now, day: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (ScheduleEntry) -> Void) {
+        completion(ScheduleEntry(date: .now, day: WidgetSnapshot.load()?.entry(for: .now)))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ScheduleEntry>) -> Void) {
+        let snapshot = WidgetSnapshot.load()
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: .now)
+        var entries: [ScheduleEntry] = []
+        for offset in 0..<7 {
+            guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
+            entries.append(ScheduleEntry(date: offset == 0 ? Date() : day,
+                                         day: snapshot?.entry(for: day)))
+        }
+        completion(Timeline(entries: entries, policy: .atEnd))
+    }
+}
+
+struct TodayScheduleWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "TodaySchedule", provider: ScheduleProvider()) { entry in
+            TodayScheduleView(entry: entry)
+                .containerBackground(WInk.paper, for: .widget)
+        }
+        .configurationDisplayName("오늘 일정")
+        .description("오늘의 일정을 계절과 함께 보여줘요.")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+struct TodayScheduleView: View {
+    let entry: ScheduleEntry
+
+    private var lines: [WidgetScheduleLine] { entry.day?.schedules ?? [] }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            header
+            if lines.isEmpty {
+                Spacer(minLength: 0)
+                Text("오늘은 비워둔 날이에요")
+                    .font(.footnote)
+                    .foregroundStyle(WInk.text.opacity(0.5))
+                Spacer(minLength: 0)
+            } else {
+                ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
+                    scheduleRow(line)
+                }
+                if lines.count > 3 {
+                    Text("더 있어요 · 앱에서 확인")
+                        .font(.caption2)
+                        .foregroundStyle(WInk.text.opacity(0.45))
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var header: some View {
+        HStack(spacing: 6) {
+            if let season = entry.day?.season {
+                GlyphShape(season: season)
+                    .stroke(WInk.season(season), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
+                    .frame(width: 12, height: 12)
+            }
+            Text(entry.date.formatted(.dateTime.month().day().weekday(.wide)))
+                .font(.system(size: 14, weight: .bold, design: .serif))
+                .foregroundStyle(WInk.text)
+            Spacer()
+            Text(entry.day?.inline ?? "")
+                .font(.caption2)
+                .foregroundStyle(WInk.season(entry.day?.season).opacity(0.9))
+        }
+    }
+
+    private func scheduleRow(_ line: WidgetScheduleLine) -> some View {
+        HStack(spacing: 8) {
+            Text(line.time)
+                .font(.caption2)
+                .foregroundStyle(WInk.text.opacity(0.5))
+                .frame(width: 52, alignment: .leading)
+            Text(line.title)
+                .font(.footnote)
+                .foregroundStyle(WInk.text)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+    }
+}

@@ -8,20 +8,46 @@ import WidgetKit
 @MainActor
 enum WidgetBridge {
 
-    static func publish(periodDays: [PeriodDay]) {
+    static func publish(periodDays: [PeriodDay], schedules: [ScheduleItem] = []) {
         guard let url = WidgetShared.snapshotURL else { return }   // App Group 미프로비저닝이면 조용히 통과
         let cal = Calendar.current
         let today = cal.startOfDay(for: .now)
         let snapshot = CycleSnapshot(periodDays: periodDays)
+        let recordedDays = Set(periodDays.map(\.day))
         var days: [WidgetDay] = []
-        for offset in -1...34 {
+        // -7부터: 주간 스트립이 이번 주 전체를 요구한다(오늘이 주 마지막이면 6일 전까지)
+        for offset in -7...34 {
             guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
-            days.append(makeDay(day, snapshot: snapshot))
+            var entry = makeDay(day, snapshot: snapshot)
+            entry.recorded = recordedDays.contains(day)
+            // 회색 형광펜 = 예상 생리일(I-2b) — 미래·투영 월경기만, 소급 금지(§5.6.2)
+            entry.predicted = !recordedDays.contains(day) && day >= today && entry.projected
+                && snapshot.phase(on: day) == .menstrual
+            entry.schedules = scheduleLines(on: day, schedules: schedules)
+            days.append(entry)
         }
         let payload = WidgetSnapshot(generatedAt: .now, days: days)
         guard let data = try? JSONEncoder().encode(payload) else { return }
         try? data.write(to: url, options: .atomic)
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// 그날 일정 줄 — 하루 상세와 같은 소스(occurs 판정). 종일 먼저, 최대 4줄(위젯 예산).
+    private static func scheduleLines(on day: Date, schedules: [ScheduleItem]) -> [WidgetScheduleLine]? {
+        let rows = schedules.filter { $0.occurs(on: day) }
+        guard !rows.isEmpty else { return nil }
+        let sorted = rows.sorted { a, b in
+            if a.isAllDay != b.isAllDay { return a.isAllDay }
+            return a.date < b.date
+        }
+        return sorted.prefix(4).map { item in
+            var title = item.title
+            if let index = item.dayIndex(on: day) {
+                title += " · \(index)/\(item.spanDays)일차"
+            }
+            let time = item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened)
+            return WidgetScheduleLine(time: time, title: title)
+        }
     }
 
     private static func makeDay(_ day: Date, snapshot: CycleSnapshot) -> WidgetDay {

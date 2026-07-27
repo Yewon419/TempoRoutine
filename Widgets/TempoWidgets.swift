@@ -11,11 +11,13 @@ import SwiftUI
 struct TempoWidgetsBundle: WidgetBundle {
     var body: some Widget {
         SeasonTodayWidget()
+        WeekStripWidget()      // Phase 2 (2026-07-27)
+        TodayScheduleWidget()  // Phase 2 (2026-07-27)
     }
 }
 
 // ── 잉크 토큰 (App/TodayView.swift Ink와 동값) ──
-private enum WInk {
+enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀)
     private static func dyn(_ light: (Int, Int, Int), _ dark: (Int, Int, Int)) -> Color {
         Color(uiColor: UIColor { trait in
             let c = trait.userInterfaceStyle == .dark ? dark : light
@@ -29,6 +31,8 @@ private enum WInk {
     static let autumn = dyn((0xA8, 0x4B, 0x38), (0xD6, 0x82, 0x6B))
     static let text = dyn((0x2C, 0x2B, 0x27), (0xE8, 0xE6, 0xE1))
     static let paper = dyn((0xF1, 0xEE, 0xE6), (0x1C, 0x1B, 0x19))
+    static let coral = dyn((0xD6, 0x64, 0x4C), (0xE0, 0x7A, 0x63))          // 기록 형광펜
+    static let predictGray = dyn((0x87, 0x8E, 0x94), (0x9B, 0xA2, 0xA8))   // 예상 형광펜
 
     static func season(_ key: String?) -> Color {
         switch key {
@@ -42,7 +46,7 @@ private enum WInk {
 }
 
 // ── 계절 글리프 (App/Almanac.swift SeasonGlyphShape와 동일 path — 키만 String) ──
-private struct GlyphShape: Shape {
+struct GlyphShape: Shape {   // 위젯 타깃 내부 공용
     let season: String
 
     func path(in rect: CGRect) -> Path {

@@ -17,7 +17,14 @@ enum WidgetShared {
     }
 }
 
-/// 하루치 표시 내용 — 위젯은 이 문자열들을 그대로 그린다
+/// 일정 한 줄 — 오늘 일정 위젯용(Phase 2)
+struct WidgetScheduleLine: Codable {
+    let time: String       // "종일" / "저녁 7:00"
+    let title: String      // 여러 날이면 "제주 여행 · 2/3일차"로 앱이 합성
+}
+
+/// 하루치 표시 내용 — 위젯은 이 문자열들을 그대로 그린다.
+/// Phase 2 추가 필드는 전부 optional — 구 스냅샷 JSON도 그대로 디코드된다(추가만, 변경 금지).
 struct WidgetDay: Codable {
     let day: Date          // startOfDay
     let season: String?    // winter/spring/summer/autumn — 글리프·잉크색 키. nil = 계절 없음
@@ -26,6 +33,9 @@ struct WidgetDay: Codable {
     let inline: String     // 잠금화면 inline 한 줄 — "겨울 3일차" / "템포루틴"
     let mood: String?      // 무드라인(소형 위젯 하단)
     let projected: Bool    // 예상 = faded(§8.1 상태 어휘)
+    var recorded: Bool?    // 생리 기록일 = 코랄 형광펜(주간 스트립, Phase 2)
+    var predicted: Bool?   // 예상 생리일 = 회색 형광펜(미래만 — §5.6.2 소급 투영 금지)
+    var schedules: [WidgetScheduleLine]?   // 그날 일정(로컬만 — EventKit 오버레이는 런타임 전용이라 제외)
 }
 
 struct WidgetSnapshot: Codable {
