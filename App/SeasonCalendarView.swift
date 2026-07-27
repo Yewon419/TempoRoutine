@@ -29,6 +29,10 @@ struct SeasonCalendarView: View {
     @State private var gridSize: CGSize = .zero // 드래그 좌표 → 셀 역산용
     @State private var dragX: CGFloat = 0       // 월 캐러셀 손가락 추종 오프셋(2026-07-27 사용자 지시)
     @State private var monthDragEngaged = false // 수평 의도 확정 후에만 추종
+    @State private var monthAnimating = false   // 정착/스냅백 애니메이션 중(옆 달 유지용)
+    // 드래그 프레임마다 body가 재평가된다 — 월 렌더 데이터(마크·띠·스타일·형광펜)는 여기 캐시로만
+    // 읽는다. 드래그 시작 때 3개 달을 한 번 계산하고, 전환이 끝나면 비운다(성능 결함 수정 2026-07-27).
+    @State private var renderCache: [Date: MonthRender] = [:]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pressFeedback = 0        // 길게 누르기 진입 햅틱(중간 — 탭보다 강하게)
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
@@ -174,22 +178,48 @@ struct SeasonCalendarView: View {
         .gesture(monthDragGesture)
     }
 
+    /// 옆 달은 드래그·전환 중에만 실렌더 — 유휴 렌더 비용을 종전(1개 달)으로 유지
+    private var sidesVisible: Bool { monthDragEngaged || monthAnimating || dragX != 0 }
+
     private var monthCarousel: some View {
         GeometryReader { proxy in
             let w = proxy.size.width
             HStack(spacing: 0) {
-                monthGrid(offsetMonths: -1, width: w)
+                sidePanel(-1, width: w)
                 monthGrid(offsetMonths: 0, width: w)
-                monthGrid(offsetMonths: 1, width: w)
+                sidePanel(1, width: w)
             }
             .offset(x: -w + dragX)
         }
         .clipped()
     }
 
+    @ViewBuilder
+    private func sidePanel(_ offsetMonths: Int, width: CGFloat) -> some View {
+        if sidesVisible {
+            monthGrid(offsetMonths: offsetMonths, width: width)
+        } else {
+            Color.clear.frame(width: width)
+        }
+    }
+
     private func monthGrid(offsetMonths: Int, width: CGFloat) -> some View {
         grid(layout: layout(offsetMonths: offsetMonths), interactive: offsetMonths == 0)
             .frame(width: width)
+    }
+
+    private func warmMonthCache() {
+        var cache: [Date: MonthRender] = [:]
+        for offset in -1...1 {
+            let l = layout(offsetMonths: offset)
+            cache[l.start] = computeRender(l)
+        }
+        renderCache = cache
+    }
+
+    private func endMonthTransition() {
+        monthAnimating = false
+        renderCache = [:]   // 전환 종료 — 다음 렌더는 신선 계산(데이터 변경 반영)
     }
 
     private var monthDragGesture: some Gesture {
@@ -199,6 +229,7 @@ struct SeasonCalendarView: View {
                 let t = value.translation
                 if !monthDragEngaged {
                     guard abs(t.width) > abs(t.height) else { return }   // 수평 의도만 개입
+                    warmMonthCache()   // 프레임마다 3개 달 재계산 방지 — 시작 때 한 번
                     monthDragEngaged = true
                 }
                 dragX = t.width
@@ -217,15 +248,22 @@ struct SeasonCalendarView: View {
         let effective = abs(predicted) > abs(translation) ? predicted : translation
         let delta: Int = effective < -width * 0.25 ? 1 : (effective > width * 0.25 ? -1 : 0)
         guard delta != 0, let next = cal.date(byAdding: .month, value: delta, to: monthStart) else {
-            withAnimation(.snappy(duration: 0.25)) { dragX = 0 }
+            monthAnimating = true
+            withAnimation(.snappy(duration: 0.25), completionCriteria: .logicallyComplete) {
+                dragX = 0
+            } completion: {
+                endMonthTransition()
+            }
             return
         }
         lightFeedback += 1
         if reduceMotion {
             monthAnchor = next
             dragX = 0
+            endMonthTransition()
             return
         }
+        monthAnimating = true
         withAnimation(.snappy(duration: 0.28), completionCriteria: .logicallyComplete) {
             dragX = delta > 0 ? -width : width
         } completion: {
@@ -236,6 +274,7 @@ struct SeasonCalendarView: View {
                 monthAnchor = next
                 dragX = 0
             }
+            endMonthTransition()
         }
     }
 
@@ -300,13 +339,15 @@ struct SeasonCalendarView: View {
 
     /// 버튼도 같은 캐러셀 슬라이드(HIG Familiarity). Reduce Motion·폭 미확정이면 즉시 전환.
     private func shiftMonth(_ delta: Int) {
-        guard dragX == 0 else { return }   // 전환 중 중복 입력 무시
+        guard dragX == 0, !monthAnimating else { return }   // 전환 중 중복 입력 무시
         guard let next = cal.date(byAdding: .month, value: delta, to: monthStart) else { return }
         let width = gridSize.width
         if reduceMotion || width <= 0 {
             monthAnchor = next
             return
         }
+        warmMonthCache()
+        monthAnimating = true
         withAnimation(.snappy(duration: 0.32), completionCriteria: .logicallyComplete) {
             dragX = delta > 0 ? -width : width
         } completion: {
@@ -316,6 +357,7 @@ struct SeasonCalendarView: View {
                 monthAnchor = next
                 dragX = 0
             }
+            endMonthTransition()
         }
     }
 
@@ -338,22 +380,50 @@ struct SeasonCalendarView: View {
         .almanacRule(opacity: 0.28)   // 은필 괘선
     }
 
+    // ── 월 렌더 데이터 — 셀이 프레임마다 재계산하던 것 전부(스타일·형광펜·마크·띠) ──
+    private struct MonthRender {
+        let marks: [Date: [(title: String, projected: Bool)]]
+        let bands: BandLayout
+        let style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)]
+        let recorded: Set<Date>
+        let predicted: Set<Date>   // 형광펜 라운딩용 ±1일 여유 포함
+    }
+
+    private func computeRender(_ layout: MonthLayout) -> MonthRender {
+        let recordedAll = recordedDays
+        var recorded = Set<Date>()
+        var predicted = Set<Date>()
+        var style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)] = [:]
+        for offset in -1...layout.daysInMonth {
+            guard let d = cal.date(byAdding: .day, value: offset, to: layout.start) else { continue }
+            let day = cal.startOfDay(for: d)
+            if recordedAll.contains(day) {
+                recorded.insert(day)
+            } else if isPredictedPeriod(day) {
+                predicted.insert(day)
+            }
+            if offset >= 0 && offset < layout.daysInMonth {
+                style[day] = cellStyle(for: day)
+            }
+        }
+        return MonthRender(marks: monthMarks(layout), bands: bandLayout(layout),
+                           style: style, recorded: recorded, predicted: predicted)
+    }
+
     // ── 그리드 (캐러셀 한 패널 — interactive = 중앙 달만 제스처·접근성) ──
     private func grid(layout: MonthLayout, interactive: Bool) -> some View {
-        let marks = monthMarks(layout)
-        let bands = bandLayout(layout)
+        let render = renderCache[layout.start] ?? computeRender(layout)
         return VStack(spacing: 4) {
             ForEach(0..<layout.rowCount, id: \.self) { row in
                 HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { col in
-                        cell(layout: layout, index: row * 7 + col, marks: marks,
-                             bandCount: bands.countByIndex[row * 7 + col] ?? 0,
+                        cell(layout: layout, index: row * 7 + col, render: render,
                              interactive: interactive)
                             .frame(maxWidth: .infinity)
                     }
                 }
                 .frame(minHeight: minCellHeight, maxHeight: .infinity)   // 풀하이트 균등 분할
-                .overlay(alignment: .topLeading) { bandRow(row: row, bars: bands.bars) }
+                .overlay(alignment: .topLeading) { bandRow(row: row, bars: render.bands.bars) }
             }
         }
         .frame(maxHeight: .infinity)
@@ -522,11 +592,11 @@ struct SeasonCalendarView: View {
     }
 
     @ViewBuilder
-    private func cell(layout: MonthLayout, index: Int, marks: [Date: [(title: String, projected: Bool)]],
-                      bandCount: Int, interactive: Bool) -> some View {
+    private func cell(layout: MonthLayout, index: Int, render: MonthRender,
+                      interactive: Bool) -> some View {
         if let date = layout.date(at: index) {
             if interactive {
-                cellBody(date: date, index: index, marks: marks, bandCount: bandCount)
+                cellBody(date: date, index: index, render: render)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         lightFeedback += 1
@@ -543,13 +613,14 @@ struct SeasonCalendarView: View {
                         }
                     }
                     .accessibilityElement()
-                    .accessibilityLabel(accessibilityText(for: date, style: cellStyle(for: date),
-                                                          recorded: recordedDays.contains(date),
-                                                          predicted: !recordedDays.contains(date) && isPredictedPeriod(date)))
+                    .accessibilityLabel(accessibilityText(for: date,
+                                                          style: render.style[date] ?? (Ink.text, nil, false),
+                                                          recorded: render.recorded.contains(date),
+                                                          predicted: render.predicted.contains(date)))
                     .accessibilityAddTraits(.isButton)
                     .accessibilityAction(named: "빠른 일정 추가") { quickAddDay = date }   // 길게 누르기 대체
             } else {
-                cellBody(date: date, index: index, marks: marks, bandCount: bandCount)
+                cellBody(date: date, index: index, render: render)
             }
         } else {
             Color.clear
@@ -557,13 +628,13 @@ struct SeasonCalendarView: View {
     }
 
     @ViewBuilder
-    private func cellBody(date: Date, index: Int, marks: [Date: [(title: String, projected: Bool)]],
-                          bandCount: Int) -> some View {
-        let style = cellStyle(for: date)
-            let recorded = recordedDays.contains(date)
-            let predicted = !recorded && isPredictedPeriod(date)
+    private func cellBody(date: Date, index: Int, render: MonthRender) -> some View {
+        let style = render.style[date] ?? (Ink.text, nil, false)
+            let recorded = render.recorded.contains(date)
+            let predicted = render.predicted.contains(date)
             let isToday = date == today
-            let cellMarks = marks[date] ?? []
+            let bandCount = render.bands.countByIndex[index] ?? 0
+            let cellMarks = render.marks[date] ?? []
             VStack(spacing: 0) {
                 Text("\(cal.component(.day, from: date))")
                     .font(.system(size: 14, weight: isToday ? .bold : .semibold))
@@ -595,7 +666,7 @@ struct SeasonCalendarView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background {
                 if recorded || predicted {
-                    highlightBand(for: date, index: index, recorded: recorded)
+                    highlightBand(for: date, index: index, recorded: recorded, render: render)
                         .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
                 }
             }
@@ -608,9 +679,11 @@ struct SeasonCalendarView: View {
     }
 
     /// 형광펜 밴드 — 연속 구간은 이어지고 양 끝만 둥글게 (행 경계 포함).
-    private func highlightBand(for date: Date, index: Int, recorded: Bool) -> some View {
-        let prev = cal.date(byAdding: .day, value: -1, to: date).map { sameKind($0, recorded: recorded) } ?? false
-        let next = cal.date(byAdding: .day, value: 1, to: date).map { sameKind($0, recorded: recorded) } ?? false
+    private func highlightBand(for date: Date, index: Int, recorded: Bool, render: MonthRender) -> some View {
+        let prev = cal.date(byAdding: .day, value: -1, to: date)
+            .map { sameKind($0, recorded: recorded, render: render) } ?? false
+        let next = cal.date(byAdding: .day, value: 1, to: date)
+            .map { sameKind($0, recorded: recorded, render: render) } ?? false
         let col = index % 7
         let roundLeft = !prev || col == 0
         let roundRight = !next || col == 6
@@ -628,9 +701,8 @@ struct SeasonCalendarView: View {
         .padding(.top, 6)   // 숫자(상단 27pt 원역) 뒤를 지나는 마커 — 프로토 z-계층과 동일
     }
 
-    private func sameKind(_ date: Date, recorded: Bool) -> Bool {
-        recorded ? recordedDays.contains(date)
-                 : (!recordedDays.contains(date) && isPredictedPeriod(date))
+    private func sameKind(_ date: Date, recorded: Bool, render: MonthRender) -> Bool {
+        recorded ? render.recorded.contains(date) : render.predicted.contains(date)
     }
 
     // ── 단계 → 렌더 규칙 ──
