@@ -237,6 +237,8 @@ struct ScheduleAddSheet: View {
 // 시트 크기는 기본(large) 고정 — 작은 detent는 키보드가 입력칸을 덮는 사례가 보고돼 있어 쓰지 않는다.
 struct QuickScheduleSheet: View {
     let day: Date
+    /// 드래그 기간 선택의 끝 날짜(2026-07-27) — 있으면 하루종일 여러 날 모드(시각 파서·시간 칩 미적용)
+    var endDay: Date? = nil
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -284,9 +286,10 @@ struct QuickScheduleSheet: View {
         return ParsedTime(hour: moved / 60, minute: moved % 60)
     }
 
-    /// 시각 표현을 실제로 쓸 때만 제목을 정제한다
+    /// 시각 표현을 실제로 쓸 때만 제목을 정제한다 — 기간 모드는 파서 미적용(원문 그대로)
     private var effectiveTitle: String {
-        parsedStart != nil ? parsed.title : title.trimmingCharacters(in: .whitespaces)
+        if endDay != nil { return title.trimmingCharacters(in: .whitespaces) }
+        return parsedStart != nil ? parsed.title : title.trimmingCharacters(in: .whitespaces)
     }
 
     var body: some View {
@@ -296,12 +299,22 @@ struct QuickScheduleSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // 하루 상세와 같은 책력 표제(§4 조판) — 어느 날짜에 적는지가 먼저 보이게
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text("\(cal.component(.day, from: day))")
-                            .font(.almanac(size: 56, weight: .bold))
-                            .foregroundStyle(Ink.text)
-                        Text(day.formatted(.dateTime.month().weekday(.wide)))
-                            .font(.system(.subheadline, design: .serif))
-                            .foregroundStyle(Ink.text.opacity(0.6))
+                        if let endDay {
+                            // 드래그 기간 — 같은 달 안에서만 선택되므로 일(day)만 잇는다
+                            Text("\(cal.component(.day, from: day))~\(cal.component(.day, from: endDay))")
+                                .font(.almanac(size: 56, weight: .bold))
+                                .foregroundStyle(Ink.text)
+                            Text("\(day.formatted(.dateTime.month())) · \(ScheduleSpan.dayCount(start: day, end: endDay, calendar: cal))일")
+                                .font(.system(.subheadline, design: .serif))
+                                .foregroundStyle(Ink.text.opacity(0.6))
+                        } else {
+                            Text("\(cal.component(.day, from: day))")
+                                .font(.almanac(size: 56, weight: .bold))
+                                .foregroundStyle(Ink.text)
+                            Text(day.formatted(.dateTime.month().weekday(.wide)))
+                                .font(.system(.subheadline, design: .serif))
+                                .foregroundStyle(Ink.text.opacity(0.6))
+                        }
                     }
                     TextField("무엇을 적어둘까요?", text: $title)
                         .font(.title3.weight(.semibold))
@@ -311,10 +324,16 @@ struct QuickScheduleSheet: View {
                         .onSubmit(save)
                         .padding(.bottom, 8)
                         .almanacRule(opacity: 0.28)
-                    chips
-                    if showsMeridiemChoice { meridiemChips }
-                    if showTimePicker { timePicker }
-                    if let hint { readingHint(hint) }
+                    if endDay == nil {
+                        chips
+                        if showsMeridiemChoice { meridiemChips }
+                        if showTimePicker { timePicker }
+                        if let hint { readingHint(hint) }
+                    } else {
+                        Text("하루종일 일정으로 적어둬요. 시간·반복·알림은 저장한 뒤 일정을 탭해서 정할 수 있어요.")
+                            .font(.footnote)
+                            .foregroundStyle(Ink.text.opacity(0.5))
+                    }
                     Spacer(minLength: 0)
                 }
                 .padding(20)
@@ -464,7 +483,11 @@ struct QuickScheduleSheet: View {
     private func save() {
         let name = effectiveTitle
         guard !name.isEmpty else { return }
-        if let start = startTime, let startDate = date(at: start) {
+        if let endDay {
+            // 드래그 기간 — 하루종일 여러 날(§8.2.3). 시각 파서는 단일 날짜 전용이라 미적용.
+            modelContext.insert(ScheduleItem(title: name, date: cal.startOfDay(for: day),
+                                             endDate: cal.startOfDay(for: endDay)))
+        } else if let start = startTime, let startDate = date(at: start) {
             var endDate = startDate.addingTimeInterval(3600)
             if let end = endTime, let d = date(at: end), d > startDate { endDate = d }
             // 반복은 빠른 일정에서 다루지 않는다 — 기본 .none 유지(2026-07-25 사용자 결정)

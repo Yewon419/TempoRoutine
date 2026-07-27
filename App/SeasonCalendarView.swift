@@ -23,6 +23,10 @@ struct SeasonCalendarView: View {
     @State private var pushedDay: Date?
     @State private var selectedDay: Date?       // regular 분할 뷰의 우측 하루 상세 선택(2026-07-23)
     @State private var quickAddDay: Date?       // 길게 누른 날짜 → 빠른 일정 시트(2026-07-25)
+    @State private var quickAddEnd: Date?       // 드래그 기간 선택의 끝 날짜 — nil = 하루(2026-07-27)
+    @State private var dragStart: Date?         // 드래그 중 선택 앵커(누른 셀)
+    @State private var dragEnd: Date?           // 드래그 중 현재 셀
+    @State private var gridSize: CGSize = .zero // 드래그 좌표 → 셀 역산용
     @State private var pressFeedback = 0        // 길게 누르기 진입 햅틱(중간 — 탭보다 강하게)
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
 
@@ -91,10 +95,10 @@ struct SeasonCalendarView: View {
         }
         .sheet(isPresented: Binding(
             get: { quickAddDay != nil },
-            set: { if !$0 { quickAddDay = nil } }
+            set: { if !$0 { quickAddDay = nil; quickAddEnd = nil } }
         )) {
             if let quickAddDay {
-                QuickScheduleSheet(day: quickAddDay)
+                QuickScheduleSheet(day: quickAddDay, endDay: quickAddEnd)
             }
         }
         .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
@@ -245,6 +249,56 @@ struct SeasonCalendarView: View {
             }
         }
         .frame(maxHeight: .infinity)
+        .coordinateSpace(name: "calGrid")   // 드래그 기간 선택의 좌표계(2026-07-27)
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { gridSize = $0 }
+    }
+
+    // ── 길게 누른 채 드래그 = 기간 선택 (2026-07-27 사용자 지시) ──
+    private var selectionRange: ClosedRange<Date>? {
+        guard let s = dragStart, let e = dragEnd else { return nil }
+        return min(s, e)...max(s, e)
+    }
+
+    private func isSelected(_ date: Date) -> Bool {
+        selectionRange?.contains(date) ?? false
+    }
+
+    /// 그리드 좌표 → 날짜. 행 스트라이드 = (높이+간격)/행수 — H = n·h + (n-1)·4에서 유도.
+    /// 달 밖 빈 칸이면 nil(선택은 마지막 유효 셀에 머문다).
+    private func dayAt(_ location: CGPoint) -> Date? {
+        guard gridSize.width > 0, gridSize.height > 0, rowCount > 0 else { return nil }
+        let col = min(6, max(0, Int(location.x / (gridSize.width / 7))))
+        let rowStride = (gridSize.height + 4) / CGFloat(rowCount)
+        let row = min(rowCount - 1, max(0, Int(location.y / rowStride)))
+        return date(at: row * 7 + col)
+    }
+
+    /// 길게 누르기(0.4s) → 그대로 끌면 기간 확장 → 놓으면 빠른 일정(하루=단일, 구간=여러 날).
+    /// 셀→셀 이동마다 작은 햅틱(§4). 시퀀스라 0.4s 전에 떼면 탭(하루 상세)과 충돌하지 않는다.
+    private func pressDrag(from date: Date) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.4)
+            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("calGrid")))
+            .onChanged { value in
+                guard case .second(true, let drag) = value else { return }
+                if dragStart == nil {
+                    pressFeedback += 1
+                    dragStart = date
+                    dragEnd = date
+                }
+                if let drag, let hovered = dayAt(drag.location), hovered != dragEnd {
+                    lightFeedback += 1
+                    dragEnd = hovered
+                }
+            }
+            .onEnded { value in
+                defer {
+                    dragStart = nil
+                    dragEnd = nil
+                }
+                guard case .second(true, _) = value, let s = dragStart, let e = dragEnd else { return }
+                quickAddDay = min(s, e)
+                quickAddEnd = s == e ? nil : max(s, e)
+            }
     }
 
     // ── 여러 날 일정 = 이어지는 띠 (2026-07-25 사용자 지시 — 하루짜리는 잉크 글줄 그대로) ──
@@ -417,10 +471,14 @@ struct SeasonCalendarView: View {
                 // 탭: compact = 하루 상세 push(§8.2.3) / regular = 우측 패널 선택(2026-07-23)
                 if hSize == .regular { selectedDay = date } else { pushedDay = date }
             }
-            .onLongPressGesture(minimumDuration: 0.4) {
-                // 길게 누르기 = 그 날짜에 빠른 일정(2026-07-25 사용자 지시)
-                pressFeedback += 1
-                quickAddDay = date
+            .gesture(pressDrag(from: date))   // 길게 누르기 = 빠른 일정, 끌면 기간(2026-07-27 확장)
+            .overlay {
+                // 드래그 기간 선택 명암 — 어디까지 잡혔는지(2026-07-27 사용자 지시)
+                if isSelected(date) {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Ink.text.opacity(0.10))
+                        .allowsHitTesting(false)
+                }
             }
             .accessibilityElement()
             .accessibilityLabel(accessibilityText(for: date, style: style, recorded: recorded, predicted: predicted))
