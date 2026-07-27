@@ -84,7 +84,7 @@ struct MonthGridView: View {
                 .foregroundStyle(WInk.text)
             Spacer()
             Text(entry.snapshot?.entry(for: today)?.inline ?? "")
-                .font(.caption2)
+                .font(WFont.almanac(11, weight: .bold))
                 .foregroundStyle(WInk.season(entry.snapshot?.entry(for: today)?.season).opacity(0.9))
         }
     }

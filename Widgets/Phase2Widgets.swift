@@ -189,7 +189,7 @@ struct TodayScheduleView: View {
                 .foregroundStyle(WInk.text)
             Spacer()
             Text(entry.day?.inline ?? "")
-                .font(.caption2)
+                .font(WFont.almanac(11, weight: .bold))
                 .foregroundStyle(WInk.season(entry.day?.season).opacity(0.9))
         }
     }
