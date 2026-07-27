@@ -86,6 +86,7 @@ struct TodayView: View {
     @State private var showLogSheet = false
     @State private var addSheet: CardKind?
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
+    @State private var pendingDelete: QuickDeleteTarget?   // 행 길게 누르기 = 빠른 삭제(2026-07-27)
     @State private var isCollapsed = false
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
@@ -174,6 +175,7 @@ struct TodayView: View {
         .sheet(item: $editingSchedule) { item in
             ScheduleAddSheet(defaultDate: today, editing: item)
         }
+        .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .coachOverlay(id: .today, steps: CoachSteps.today)   // 기능 튜토리얼(2026-07-23)
@@ -315,7 +317,10 @@ struct TodayView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint("탭하면 수정하거나 삭제할 수 있어요")
+            .simultaneousGesture(quickDeleteGesture(.schedule(item), into: $pendingDelete,
+                                                    feedback: $confirmFeedback))
+            .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
+            .accessibilityAction(named: "삭제") { pendingDelete = .schedule(item) }
         }
         OverlayEventRows(day: today)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
         CalendarConnectRow()
@@ -374,7 +379,10 @@ struct TodayView: View {
                         Spacer()
                     }
                 }
+                .simultaneousGesture(quickDeleteGesture(.input(item), into: $pendingDelete,
+                                                        feedback: $confirmFeedback))
                 .accessibilityValue(checked ? "완료" : "미완료")
+                .accessibilityAction(named: "삭제") { pendingDelete = .input(item) }
             }
         }
     }
@@ -420,6 +428,10 @@ struct TodayView: View {
                     outputProgress(item)
                 }
                 .padding(.vertical, 4)
+                .contentShape(Rectangle())
+                .simultaneousGesture(quickDeleteGesture(.output(item), into: $pendingDelete,
+                                                        feedback: $confirmFeedback))
+                .accessibilityAction(named: "삭제") { pendingDelete = .output(item) }
             }
         }
         if let meta = todayInfo?.meta, !todayOutputs.isEmpty {
