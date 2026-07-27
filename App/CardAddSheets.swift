@@ -480,10 +480,20 @@ struct QuickScheduleSheet: View {
 // ── ② Input 추가 ──
 struct InputAddSheet: View {
     /// 어느 날에 추가하는가 — 하루 상세에서 지난 날짜에 추가하면 그날부터 시작해야 한다(2026-07-26)
-    var day: Date = .now
+    let day: Date
     let currentSeason: SeasonMeta?
     /// 기록상 에너지 수준(2026-07-23) — 있으면 제목 예시를 에너지별로, 없으면 계절 매트릭스 폴백
-    var energyLevel: EnergyLevel? = nil
+    let energyLevel: EnergyLevel?
+
+    /// 지난 날짜에 추가하는 건 대개 "그날 한 번 했다"는 기록이다 — 매일로 잡히면 오늘까지 따라온다.
+    /// 오늘·미래는 종전대로 매일 기본(체크리스트가 본질). 2026-07-27 사용자 결정.
+    init(day: Date = .now, currentSeason: SeasonMeta?, energyLevel: EnergyLevel? = nil) {
+        self.day = day
+        self.currentSeason = currentSeason
+        self.energyLevel = energyLevel
+        let cal = Calendar.current
+        _repeats = State(initialValue: cal.startOfDay(for: day) >= cal.startOfDay(for: .now))
+    }
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
