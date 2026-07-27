@@ -27,9 +27,41 @@ struct DayDetailView: View {
     @Query private var checkIns: [DailyCheckIn]
 
     @State private var addSheet: CardKind?
+    @State private var pendingDelete: DeleteTarget?   // 행 길게 누르기 = 빠른 삭제(2026-07-27)
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 생리 기록·아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정·월 이동 등, 확정 아님)
+
+    /// 행 길게 누르기로 지울 대상 — 하단 액션 시트가 이걸 물고 뜬다(2026-07-27 사용자 지시)
+    enum DeleteTarget: Identifiable {
+        case schedule(ScheduleItem)
+        case input(InputItem)
+        case output(OutputItem)
+
+        var id: UUID {
+            switch self {
+            case .schedule(let item): item.id
+            case .input(let item): item.id
+            case .output(let item): item.id
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .schedule(let item): item.title
+            case .input(let item): item.title
+            case .output(let item): item.title
+            }
+        }
+
+        var kindLabel: String {
+            switch self {
+            case .schedule: "일정"
+            case .input: "Input"
+            case .output: "Output"
+            }
+        }
+    }
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -75,6 +107,44 @@ struct DayDetailView: View {
         }
         .sheet(item: $editingSchedule) { item in
             ScheduleAddSheet(defaultDate: day, editing: item)
+        }
+        // 빠른 삭제 — 길게 누른 행을 하단에서 확인하고 지운다(§8.2.6 파괴 액션 확인 문법)
+        .confirmationDialog(pendingDelete.map { "\($0.kindLabel) 「\($0.title)」" } ?? "",
+                            isPresented: Binding(get: { pendingDelete != nil },
+                                                 set: { if !$0 { pendingDelete = nil } }),
+                            titleVisibility: .visible) {
+            Button("삭제", role: .destructive) {
+                if let target = pendingDelete { delete(target) }
+                pendingDelete = nil
+            }
+            Button("취소", role: .cancel) { pendingDelete = nil }
+        } message: {
+            Text("이 항목과 기록이 함께 지워져요. 되돌릴 수 없어요.")
+        }
+    }
+
+    /// 길게 누르기 = 삭제 확인 진입(2026-07-27). Button 위에 얹으므로 simultaneousGesture로 건다 —
+    /// 탭(체크·수정)은 그대로 살아 있어야 한다.
+    private func longPressDelete(_ target: DeleteTarget) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.45).onEnded { _ in
+            confirmFeedback += 1
+            pendingDelete = target
+        }
+    }
+
+    private func delete(_ target: DeleteTarget) {
+        switch target {
+        case .schedule(let item):
+            ScheduleReminder.cancel(id: item.id)
+            modelContext.delete(item)
+        case .input(let item):
+            // 완료 기록은 itemID 참조라 관계 정리가 안 된다 — 고아가 남지 않게 같이 지운다
+            for record in completions where record.itemID == item.id {
+                modelContext.delete(record)
+            }
+            modelContext.delete(item)
+        case .output(let item):
+            modelContext.delete(item)   // 서브태스크는 cascade(§5.5)
         }
     }
 
@@ -203,7 +273,9 @@ struct DayDetailView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("탭하면 수정하거나 삭제할 수 있어요")
+                    .simultaneousGesture(longPressDelete(.schedule(item)))
+                    .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
+                    .accessibilityAction(named: "삭제") { pendingDelete = .schedule(item) }
                 }
                 OverlayEventRows(day: day)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
                 CalendarConnectRow()
@@ -280,7 +352,9 @@ struct DayDetailView: View {
                     .font(.subheadline)
                 }
                 .disabled(isFuture)   // 미래 완료 금지(원칙 4)
+                .simultaneousGesture(longPressDelete(.input(row.item)))
                 .accessibilityValue(checked ? "완료" : "미완료")
+                .accessibilityAction(named: "삭제") { pendingDelete = .input(row.item) }
             }
         }
     }
@@ -338,6 +412,9 @@ struct DayDetailView: View {
                     progressControl(row.item)
                 }
                 .padding(.vertical, 4)
+                .contentShape(Rectangle())
+                .simultaneousGesture(longPressDelete(.output(row.item)))
+                .accessibilityAction(named: "삭제") { pendingDelete = .output(row.item) }
             }
         }
     }
