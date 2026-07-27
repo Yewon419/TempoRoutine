@@ -97,16 +97,19 @@ private struct CoachOverlay: View {
                         .contentShape(Rectangle())
                         .onTapGesture { advance(from: shownIndex) }
                         .accessibilityHidden(true)
-                    // 구멍 뚫린 배경(even-odd) + 링
+                    // 구멍 뚫린 배경(even-odd) + 링 — 히트테스트 제외 필수: 채운 Shape가 위에 있으면
+                    // 아래 탭 캐처가 탭을 못 받는다(2026-07-27 리뷰 — 빈 공간 탭 진행이 막히는 결함)
                     Path { p in
                         p.addRect(CGRect(origin: .zero, size: proxy.size))
                         p.addRoundedRect(in: rect, cornerSize: CGSize(width: 12, height: 12))
                     }
                     .fill(Color.black.opacity(0.72), style: FillStyle(eoFill: true))
+                    .allowsHitTesting(false)
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.white.opacity(0.7), lineWidth: 2)
                         .frame(width: rect.width, height: rect.height)
                         .offset(x: rect.minX, y: rect.minY)
+                        .allowsHitTesting(false)
                     card(step: step, shownIndex: shownIndex, isLast: isLast, rect: rect, size: proxy.size)
                 }
                 .onAppear { shownAny = true }

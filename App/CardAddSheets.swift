@@ -278,8 +278,8 @@ struct QuickScheduleSheet: View {
         guard parsed.ambiguousMeridiem, let pm = pmOverride, let start = parsed.start,
               let shown = parsedStart else { return end }
         // 시작을 뒤집었으면 종료도 같은 폭으로 — "3시~5시"를 오전으로 고르면 05:00
+        _ = pm   // 방향은 delta가 이미 반영 — 플래그는 가드 용도만
         let delta = shown.minutesOfDay - start.minutesOfDay
-        _ = pm
         let moved = ((end.minutesOfDay + delta) % 1440 + 1440) % 1440
         return ParsedTime(hour: moved / 60, minute: moved % 60)
     }

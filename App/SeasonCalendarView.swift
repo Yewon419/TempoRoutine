@@ -259,6 +259,8 @@ struct SeasonCalendarView: View {
 
     private struct BandLayout {
         let bars: [BandBar]
+        /// 셀별로 예약할 슬롯 수 = 그 셀을 지나는 띠의 최대 lane+1 — 지나는 "개수"로 예약하면
+        /// lane 1 단독 셀(레인 0이 다른 주에서만 점유)에서 띠가 잉크 글줄을 덮는다(2026-07-27 리뷰)
         let countByIndex: [Int: Int]
     }
 
@@ -281,7 +283,7 @@ struct SeasonCalendarView: View {
                   let lane = laneCells.indices.first(where: { laneCells[$0].isDisjoint(with: occupied) })
             else { continue }
             laneCells[lane].formUnion(occupied)
-            for i in occupied { countByIndex[i, default: 0] += 1 }
+            for i in occupied { countByIndex[i] = max(countByIndex[i] ?? 0, lane + 1) }
 
             for (n, segment) in ScheduleSpan.bandSegments(cells: cells).enumerated() {
                 let adjusted = clampToMonth(segment, item: item)

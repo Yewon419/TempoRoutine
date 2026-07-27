@@ -52,7 +52,8 @@ enum ExportImport {
             },
             inputItems: store.inputs.map {
                 InputItemDTO(id: $0.id, title: $0.title, category: $0.category,
-                             schedule: $0.schedule, createdAt: $0.createdAt)
+                             schedule: $0.schedule, createdAt: $0.createdAt,
+                             backfilled: $0.backfilled ? true : nil)
             },
             outputItems: store.outputs.map { item in
                 OutputItemDTO(id: item.id, title: item.title, schedule: item.schedule,
@@ -107,7 +108,8 @@ enum ExportImport {
 
         let inputIDs = Set(store.inputs.map(\.id))
         for dto in envelope.inputItems where !inputIDs.contains(dto.id) {
-            let item = InputItem(title: dto.title, category: dto.category, schedule: dto.schedule)
+            let item = InputItem(title: dto.title, category: dto.category, schedule: dto.schedule,
+                                 backfilled: dto.backfilled ?? false)
             item.id = dto.id
             item.createdAt = dto.createdAt
             context.insert(item)
@@ -145,7 +147,11 @@ enum ExportImport {
         let checkInDays = Set(store.checkIns.map(\.day))
         for dto in envelope.checkIns {
             guard let day = ExportCodec.day(from: dto.day), !checkInDays.contains(day) else { continue }
-            guard dto.energy >= 1, dto.mood >= 1 else { continue }   // §5.5 계약(필수 1...5) 위반 행 방어
+            // §5.5 개정(2026-07-22): 노트 단독 저장 허용 — 신호 없는 행도 노트가 있으면 유효.
+            // 종전 guard(energy·mood 필수)는 노트 단독 체크인을 복원에서 버렸다(2026-07-27 리뷰 결함).
+            let hasSignals = dto.energy >= 1 && dto.mood >= 1
+            let hasNote = !(dto.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            guard hasSignals || hasNote else { continue }
             let record = DailyCheckIn(day: day, energy: dto.energy, mood: dto.mood)
             record.id = dto.id
             record.sleep = dto.sleep

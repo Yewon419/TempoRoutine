@@ -64,13 +64,18 @@ public struct InputItemDTO: Codable, Equatable, Sendable {
     public var category: InputCategory
     public var schedule: InputSchedule
     public var createdAt: Date
+    /// 소급 기록 여부(2026-07-27, v1 내 optional 추가 — 구 봉투는 nil=false).
+    /// 빠지면 복원 시 소급 .once가 "완료 전까지 이어짐"으로 되살아난다.
+    public var backfilled: Bool?
 
-    public init(id: UUID, title: String, category: InputCategory, schedule: InputSchedule, createdAt: Date) {
+    public init(id: UUID, title: String, category: InputCategory, schedule: InputSchedule,
+                createdAt: Date, backfilled: Bool? = nil) {
         self.id = id
         self.title = title
         self.category = category
         self.schedule = schedule
         self.createdAt = createdAt
+        self.backfilled = backfilled
     }
 }
 
