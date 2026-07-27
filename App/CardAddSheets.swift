@@ -591,8 +591,10 @@ struct InputAddSheet: View {
                         } else {
                             schedule = .once
                         }
+                        let cal = Calendar.current
                         modelContext.insert(InputItem(title: title, category: category, schedule: schedule,
-                                                      createdAt: anchorDate(for: day)))
+                                                      createdAt: anchorDate(for: day),
+                                                      backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now)))
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)

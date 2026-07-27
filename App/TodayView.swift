@@ -331,8 +331,12 @@ struct TodayView: View {
         inputs.filter { item in
             switch item.schedule {
             case .once:
-                // 단발 체크(2026-07-23): 완료 전까지 계속, 완료하면 완료한 그날만 남음
-                item.occursByCalendar(on: today) && (!hasAnyCompletion(item.id) || isChecked(item.id))
+                if item.backfilled {
+                    item.onceShows(on: today)   // 소급 기록은 적어 넣은 그날에만(2026-07-27)
+                } else {
+                    // 단발 체크(2026-07-23): 완료 전까지 계속, 완료하면 완료한 그날만 남음
+                    item.occursByCalendar(on: today) && (!hasAnyCompletion(item.id) || isChecked(item.id))
+                }
             case .daily, .weekly, .monthly:
                 item.occursByCalendar(on: today)
             case .cycleAnchored(let r):

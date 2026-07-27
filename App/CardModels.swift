@@ -160,6 +160,9 @@ final class InputItem {
     // → Data 인코딩 저장 + computed 노출. 빈 Data = .daily 폴백.
     var scheduleData: Data = Data()
     var createdAt: Date = Date()
+    /// 지난 날짜에 소급해 적은 기록인가(2026-07-27) — .once의 "완료 전까지 이어짐"을 끄고
+    /// 적어 넣은 그날에만 둔다. 오늘 적은 단발 할 일은 종전대로 완료할 때까지 따라온다.
+    var backfilled: Bool = false
 
     var schedule: InputSchedule {
         get { (try? JSONDecoder().decode(InputSchedule.self, from: scheduleData)) ?? .daily }
@@ -169,12 +172,19 @@ final class InputItem {
     /// createdAt = 이 아이템이 시작되는 날(발생 판정의 기준선). 하루 상세에서 추가하면 그날이어야
     /// 한다 — 기본값 .now로 두면 지난 날짜에 추가해도 오늘부터 뜬다(2026-07-26 실기기 결함).
     init(title: String, category: InputCategory = .other, schedule: InputSchedule = .daily,
-         createdAt: Date = .now) {
+         createdAt: Date = .now, backfilled: Bool = false) {
         self.id = UUID()
         self.title = title
         self.category = category
         self.scheduleData = (try? JSONEncoder().encode(schedule)) ?? Data()
         self.createdAt = createdAt
+        self.backfilled = backfilled
+    }
+
+    /// .once가 이 날짜에 뜨는가 — 소급 기록은 적어 넣은 그날에만. 완료 판정은 호출부(뷰) 책임.
+    func onceShows(on day: Date) -> Bool {
+        guard backfilled else { return occursByCalendar(on: day) }
+        return Calendar.current.isDate(createdAt, inSameDayAs: day)
     }
 
     /// .once·.daily·.weekly·.monthly 판정(달력 기준 — 주기 기준은 CycleSnapshot 필요라 호출부에서 별도 처리).
