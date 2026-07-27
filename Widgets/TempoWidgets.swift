@@ -2,10 +2,26 @@
 // 데이터 = App Group 스냅샷만(WidgetSnapshot — 주기 로직·SwiftData 없음).
 // 프라이버시 = 계절 은유 그 자체: 홈에 떠도 제3자에겐 계절 위젯으로 보인다. 명시 용어 없음.
 // 잉크 토큰·글리프는 앱 Almanac.swift와 동값 사본 — 위젯 타깃을 앱 소스와 얽지 않는다(의도적 중복).
-// 서체: Gowun Batang 번들 미포함(Phase 1) — 시스템 세리프 폴백(.almanac 폴백 경로와 동일 판단).
+// 서체: Gowun Batang 번들 + 런타임 등록(2026-07-27 — 앱 표제 서체와 통일, 실패 시 세리프 폴백).
 
 import WidgetKit
 import SwiftUI
+import CoreText
+
+// ── 책력 서체 (App/Almanac.swift AlmanacFont와 동형 — 위젯은 별도 프로세스라 자체 등록) ──
+enum WFont {
+    static let available: Bool = {
+        ["GowunBatang-Regular", "GowunBatang-Bold"].allSatisfy { name in
+            guard let url = Bundle.main.url(forResource: name, withExtension: "ttf") else { return false }
+            return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
+    }()
+
+    static func almanac(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        guard available else { return .system(size: size, weight: weight, design: .serif) }
+        return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
+    }
+}
 
 @main
 struct TempoWidgetsBundle: WidgetBundle {
@@ -163,7 +179,7 @@ struct SeasonWidgetView: View {
                         .frame(width: 16, height: 16)
                 }
                 Text(entry.day?.title ?? "템포루틴")
-                    .font(.system(size: 24, weight: .bold, design: .serif))
+                    .font(WFont.almanac(24, weight: .bold))
                     .foregroundStyle(WInk.season(entry.day?.season))
             }
             Text(entry.day?.sub ?? "앱을 한 번 열면 채워져요")
@@ -185,7 +201,7 @@ struct SeasonWidgetView: View {
                 }
             } else if let mood = entry.day?.mood {
                 Text(mood)
-                    .font(.system(size: 12, design: .serif))
+                    .font(WFont.almanac(12))
                     .foregroundStyle(WInk.text.opacity(0.6))
                     .lineLimit(3)
                     .minimumScaleFactor(0.9)
@@ -240,7 +256,7 @@ struct SeasonLockView: View {
                 .opacity(entry.day?.season == nil ? 0.4 : 1)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.day?.inline ?? "템포루틴")
-                    .font(.system(size: 15, weight: .bold, design: .serif))
+                    .font(WFont.almanac(15, weight: .bold))
                     .widgetAccentable()
                 Text(entry.day?.mood ?? entry.day?.sub ?? "앱을 한 번 열면 채워져요")
                     .font(.system(size: 11))

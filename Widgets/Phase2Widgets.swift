@@ -185,7 +185,7 @@ struct TodayScheduleView: View {
                     .frame(width: 12, height: 12)
             }
             Text(entry.date.formatted(.dateTime.month().day().weekday(.wide)))
-                .font(.system(size: 14, weight: .bold, design: .serif))
+                .font(WFont.almanac(14, weight: .bold))
                 .foregroundStyle(WInk.text)
             Spacer()
             Text(entry.day?.inline ?? "")

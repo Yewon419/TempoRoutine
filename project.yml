@@ -53,6 +53,7 @@ targets:
     sources:
       - Widgets
       - Shared
+      - path: App/Fonts   # Gowun Batang 번들(위젯 프로세스도 런타임 등록 필요, 2026-07-27)
     info:
       path: Widgets/Info.plist
       properties:

@@ -80,7 +80,7 @@ struct MonthGridView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text("\(cal.component(.month, from: monthStart))월")
-                .font(.system(size: 22, weight: .bold, design: .serif))
+                .font(WFont.almanac(22, weight: .bold))
                 .foregroundStyle(WInk.text)
             Spacer()
             Text(entry.snapshot?.entry(for: today)?.inline ?? "")
