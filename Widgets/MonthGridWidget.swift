@@ -1,0 +1,156 @@
+// 템포루틴 — 월 캘린더 위젯 (systemLarge, 2026-07-27 사용자 지시 / MASTER §8.2.8)
+// 캘린더 탭의 축소판: 거대 월 표제(세리프) + 요일 행 + 계절 잉크 숫자 + 오늘 은필 원 +
+// 코랄(기록)/회색(예상) 원 배경. 이번 달만 — 스냅샷 범위(-35~+34)가 월 전체를 덮는다.
+
+import WidgetKit
+import SwiftUI
+
+struct MonthEntry: TimelineEntry {
+    let date: Date
+    let snapshot: WidgetSnapshot?
+}
+
+struct MonthProvider: TimelineProvider {
+    func placeholder(in context: Context) -> MonthEntry {
+        MonthEntry(date: .now, snapshot: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (MonthEntry) -> Void) {
+        completion(MonthEntry(date: .now, snapshot: WidgetSnapshot.load()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<MonthEntry>) -> Void) {
+        let snapshot = WidgetSnapshot.load()
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: .now)
+        var entries: [MonthEntry] = []
+        for offset in 0..<7 {
+            guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
+            entries.append(MonthEntry(date: offset == 0 ? Date() : day, snapshot: snapshot))
+        }
+        completion(Timeline(entries: entries, policy: .atEnd))
+    }
+}
+
+struct MonthGridWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "MonthGrid", provider: MonthProvider()) { entry in
+            MonthGridView(entry: entry)
+                .containerBackground(WInk.paper, for: .widget)
+        }
+        .configurationDisplayName("이번 달")
+        .description("한 달의 계절과 기록을 보여줘요.")
+        .supportedFamilies([.systemLarge])
+    }
+}
+
+struct MonthGridView: View {
+    let entry: MonthEntry
+
+    private var cal: Calendar { Calendar.current }
+    private var today: Date { cal.startOfDay(for: entry.date) }
+
+    private var monthStart: Date {
+        cal.date(from: cal.dateComponents([.year, .month], from: entry.date)) ?? entry.date
+    }
+    private var daysInMonth: Int {
+        cal.range(of: .day, in: .month, for: monthStart)?.count ?? 30
+    }
+    private var leadingBlanks: Int {
+        (cal.component(.weekday, from: monthStart) - cal.firstWeekday + 7) % 7
+    }
+    private var rowCount: Int { (leadingBlanks + daysInMonth + 6) / 7 }
+
+    private var weekdaySymbols: [String] {
+        let symbols = cal.veryShortWeekdaySymbols
+        let shift = cal.firstWeekday - 1
+        return Array(symbols[shift...] + symbols[..<shift])
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            header
+            weekdayRow
+            grid
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text("\(cal.component(.month, from: monthStart))월")
+                .font(.system(size: 22, weight: .bold, design: .serif))
+                .foregroundStyle(WInk.text)
+            Spacer()
+            Text(entry.snapshot?.entry(for: today)?.inline ?? "")
+                .font(.caption2)
+                .foregroundStyle(WInk.season(entry.snapshot?.entry(for: today)?.season).opacity(0.9))
+        }
+    }
+
+    private var weekdayRow: some View {
+        HStack(spacing: 0) {
+            ForEach(0..<7, id: \.self) { index in
+                Text(weekdaySymbols[index])
+                    .font(.system(size: 10))
+                    .foregroundStyle(WInk.winter.opacity(0.75))
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private var grid: some View {
+        VStack(spacing: 2) {
+            ForEach(0..<rowCount, id: \.self) { row in
+                HStack(spacing: 0) {
+                    ForEach(0..<7, id: \.self) { col in
+                        cell(index: row * 7 + col)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+            }
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private func date(at index: Int) -> Date? {
+        let dayNumber = index - leadingBlanks + 1
+        guard dayNumber >= 1 && dayNumber <= daysInMonth else { return nil }
+        return cal.date(byAdding: .day, value: dayNumber - 1, to: monthStart)
+            .map { cal.startOfDay(for: $0) }
+    }
+
+    @ViewBuilder
+    private func cell(index: Int) -> some View {
+        if let date = date(at: index) {
+            let day = entry.snapshot?.entry(for: date)
+            let isToday = date == today
+            dayNumber(day, number: cal.component(.day, from: date), isToday: isToday)
+        } else {
+            Color.clear
+        }
+    }
+
+    private func dayNumber(_ day: WidgetDay?, number: Int, isToday: Bool) -> some View {
+        let faded = day?.projected == true
+        let ink = WInk.season(day?.season)
+        return Text("\(number)")
+            .font(.system(size: 12, weight: isToday ? .bold : .semibold))
+            .monospacedDigit()
+            .foregroundStyle(isToday ? WInk.paper : ink.opacity(faded ? 0.55 : 1))
+            .frame(width: 24, height: 24)
+            .background { cellBackground(day, isToday: isToday) }
+    }
+
+    @ViewBuilder
+    private func cellBackground(_ day: WidgetDay?, isToday: Bool) -> some View {
+        if isToday {
+            Circle().fill(WInk.winter)   // 오늘 = 은필 채운 원(§8.1 — 먹색 기각 이력)
+        } else if day?.recorded == true {
+            Circle().fill(WInk.coral.opacity(0.25))
+        } else if day?.predicted == true {
+            Circle().fill(WInk.predictGray.opacity(0.25))
+        }
+    }
+}

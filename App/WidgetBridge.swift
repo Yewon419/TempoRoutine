@@ -8,15 +8,17 @@ import WidgetKit
 @MainActor
 enum WidgetBridge {
 
-    static func publish(periodDays: [PeriodDay], schedules: [ScheduleItem] = []) {
+    static func publish(periodDays: [PeriodDay], schedules: [ScheduleItem] = [],
+                        inputs: [InputItem] = [], outputs: [OutputItem] = [],
+                        completions: [ItemCompletion] = []) {
         guard let url = WidgetShared.snapshotURL else { return }   // App Group 미프로비저닝이면 조용히 통과
         let cal = Calendar.current
         let today = cal.startOfDay(for: .now)
         let snapshot = CycleSnapshot(periodDays: periodDays)
         let recordedDays = Set(periodDays.map(\.day))
         var days: [WidgetDay] = []
-        // -7부터: 주간 스트립이 이번 주 전체를 요구한다(오늘이 주 마지막이면 6일 전까지)
-        for offset in -7...34 {
+        // -35부터: 월 캘린더 위젯이 이번 달 전체를 요구한다(오늘이 월말이면 월초 = -30)
+        for offset in -35...34 {
             guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
             var entry = makeDay(day, snapshot: snapshot)
             entry.recorded = recordedDays.contains(day)
@@ -24,6 +26,8 @@ enum WidgetBridge {
             entry.predicted = !recordedDays.contains(day) && day >= today && entry.projected
                 && snapshot.phase(on: day) == .menstrual
             entry.schedules = scheduleLines(on: day, schedules: schedules)
+            entry.inputs = inputLines(on: day, snapshot: snapshot, inputs: inputs, completions: completions)
+            entry.outputs = outputLines(on: day, snapshot: snapshot, outputs: outputs)
             days.append(entry)
         }
         let payload = WidgetSnapshot(generatedAt: .now, days: days)
@@ -48,6 +52,69 @@ enum WidgetBridge {
             let time = item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened)
             return WidgetScheduleLine(time: time, title: title)
         }
+    }
+
+    /// 그날 Input 줄 — TodayView.todayInputs 판정과 동형(.once 캐리·소급·주기 앵커)
+    private static func inputLines(on day: Date, snapshot: CycleSnapshot,
+                                   inputs: [InputItem], completions: [ItemCompletion]) -> [WidgetCheckLine]? {
+        let cal = Calendar.current
+        func checked(_ id: UUID) -> Bool {
+            completions.contains { $0.itemID == id && cal.isDate($0.occurredOn, inSameDayAs: day) }
+        }
+        func hasAny(_ id: UUID) -> Bool { completions.contains { $0.itemID == id } }
+        let rows = inputs.filter { item in
+            switch item.schedule {
+            case .once:
+                if item.backfilled { return item.onceShows(on: day) }
+                return item.occursByCalendar(on: day) && (!hasAny(item.id) || checked(item.id))
+            case .daily, .weekly, .monthly:
+                return item.occursByCalendar(on: day)
+            case .cycleAnchored(let r):
+                return snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: day) != nil
+                    || checked(item.id)
+            }
+        }
+        guard !rows.isEmpty else { return nil }
+        return rows.prefix(4).map { WidgetCheckLine(title: $0.title, done: checked($0.id)) }
+    }
+
+    /// 그날 Output 줄 — TodayView.todayOutputs 판정과 동형(완료된 미래 occurrence 제외 §5.5.2)
+    private static func outputLines(on day: Date, snapshot: CycleSnapshot,
+                                    outputs: [OutputItem]) -> [WidgetProgressLine]? {
+        let cal = Calendar.current
+        let rows = outputs.filter { item in
+            switch item.schedule {
+            case .once, .daily, .weekly, .monthly:
+                return item.occursByCalendar(on: day)
+            case .cycleAnchored(let r):
+                guard let occ = snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: day) else {
+                    return false
+                }
+                return !(item.isComplete && occ.projected)
+            }
+        }
+        guard !rows.isEmpty else { return nil }
+        return rows.prefix(4).map { item in
+            switch item.progressKind {
+            case .percent:
+                WidgetProgressLine(title: item.title,
+                                   label: item.percent.formatted(.percent.precision(.fractionLength(0))),
+                                   fraction: min(1, max(0, item.percent)))
+            case .sessions:
+                WidgetProgressLine(title: item.title,
+                                   label: "\(item.loggedSessions)/\(max(1, item.targetSessions))",
+                                   fraction: min(1, Double(item.loggedSessions) / Double(max(1, item.targetSessions))))
+            case .subtasks:
+                subtaskLine(item)
+            }
+        }
+    }
+
+    private static func subtaskLine(_ item: OutputItem) -> WidgetProgressLine {
+        let list = item.subtasks ?? []
+        let done = list.filter(\.isDone).count
+        return WidgetProgressLine(title: item.title, label: "\(done)/\(max(1, list.count))",
+                                  fraction: min(1, Double(done) / Double(max(1, list.count))))
     }
 
     private static func makeDay(_ day: Date, snapshot: CycleSnapshot) -> WidgetDay {

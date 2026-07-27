@@ -85,12 +85,11 @@ struct WeekStripView: View {
     private func column(index: Int) -> some View {
         let day = entry.days[index]
         let isToday = day.map { cal.isDate($0.day, inSameDayAs: today) } ?? false
-        return VStack(spacing: 7) {
+        return VStack(spacing: 8) {
             Text(weekdaySymbols[index])
                 .font(.system(size: 11))
                 .foregroundStyle(WInk.winter.opacity(0.8))
             dayNumber(day, isToday: isToday)
-            glyphDot(day)
         }
     }
 
@@ -117,17 +116,6 @@ struct WeekStripView: View {
         }
     }
 
-    @ViewBuilder
-    private func glyphDot(_ day: WidgetDay?) -> some View {
-        if let season = day?.season {
-            GlyphShape(season: season)
-                .stroke(WInk.season(season).opacity(day?.projected == true ? 0.5 : 0.9),
-                        style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
-                .frame(width: 10, height: 10)
-        } else {
-            Color.clear.frame(width: 10, height: 10)
-        }
-    }
 }
 
 // ══ 오늘 일정 (systemMedium) ══
@@ -166,8 +154,8 @@ struct TodayScheduleWidget: Widget {
             TodayScheduleView(entry: entry)
                 .containerBackground(WInk.paper, for: .widget)
         }
-        .configurationDisplayName("오늘 일정")
-        .description("오늘의 일정을 계절과 함께 보여줘요.")
+        .configurationDisplayName("오늘")
+        .description("오늘의 일정·Input·Output을 한눈에 보여줘요.")
         .supportedFamilies([.systemMedium])
     }
 }
@@ -175,28 +163,15 @@ struct TodayScheduleWidget: Widget {
 struct TodayScheduleView: View {
     let entry: ScheduleEntry
 
-    private var lines: [WidgetScheduleLine] { entry.day?.schedules ?? [] }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 7) {
             header
-            if lines.isEmpty {
-                Spacer(minLength: 0)
-                Text("오늘은 비워둔 날이에요")
-                    .font(.footnote)
-                    .foregroundStyle(WInk.text.opacity(0.5))
-                Spacer(minLength: 0)
-            } else {
-                ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
-                    scheduleRow(line)
-                }
-                if lines.count > 3 {
-                    Text("더 있어요 · 앱에서 확인")
-                        .font(.caption2)
-                        .foregroundStyle(WInk.text.opacity(0.45))
-                }
-                Spacer(minLength: 0)
+            HStack(alignment: .top, spacing: 10) {
+                scheduleColumn
+                inputColumn
+                outputColumn
             }
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .accessibilityElement(children: .combine)
@@ -219,17 +194,83 @@ struct TodayScheduleView: View {
         }
     }
 
-    private func scheduleRow(_ line: WidgetScheduleLine) -> some View {
-        HStack(spacing: 8) {
-            Text(line.time)
-                .font(.caption2)
-                .foregroundStyle(WInk.text.opacity(0.5))
-                .frame(width: 52, alignment: .leading)
-            Text(line.title)
-                .font(.footnote)
-                .foregroundStyle(WInk.text)
-                .lineLimit(1)
-            Spacer(minLength: 0)
+    // ── 3열 — 오늘 탭 3구획의 축소판(2026-07-27) ──
+    private func column(_ title: String, empty: Bool,
+                        @ViewBuilder rows: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(WInk.text.opacity(0.45))
+            if empty {
+                Text("없어요")
+                    .font(.system(size: 10))
+                    .foregroundStyle(WInk.text.opacity(0.3))
+            } else {
+                rows()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var scheduleColumn: some View {
+        let lines = entry.day?.schedules ?? []
+        return column("일정", empty: lines.isEmpty) {
+            ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(line.title)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(WInk.text)
+                        .lineLimit(1)
+                    Text(line.time)
+                        .font(.system(size: 9))
+                        .foregroundStyle(WInk.text.opacity(0.5))
+                }
+            }
+        }
+    }
+
+    private var inputColumn: some View {
+        let lines = entry.day?.inputs ?? []
+        return column("Input", empty: lines.isEmpty) {
+            ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
+                HStack(spacing: 4) {
+                    Image(systemName: line.done ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 9))
+                        .foregroundStyle(line.done ? WInk.text : WInk.text.opacity(0.35))
+                    Text(line.title)
+                        .font(.system(size: 11))
+                        .foregroundStyle(WInk.text.opacity(line.done ? 0.5 : 0.9))
+                        .strikethrough(line.done, color: WInk.text.opacity(0.4))
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+
+    private var outputColumn: some View {
+        let lines = entry.day?.outputs ?? []
+        return column("Output", empty: lines.isEmpty) {
+            ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(line.title)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(WInk.text)
+                            .lineLimit(1)
+                        Text(line.label)
+                            .font(.system(size: 9))
+                            .foregroundStyle(WInk.text.opacity(0.5))
+                    }
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(WInk.text.opacity(0.12))
+                            Capsule().fill(WInk.text.opacity(0.75))
+                                .frame(width: max(3, proxy.size.width * line.fraction))
+                        }
+                    }
+                    .frame(height: 3)
+                }
+            }
         }
     }
 }

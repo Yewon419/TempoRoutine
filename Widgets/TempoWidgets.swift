@@ -11,8 +11,10 @@ import SwiftUI
 struct TempoWidgetsBundle: WidgetBundle {
     var body: some Widget {
         SeasonTodayWidget()
+        SeasonLockWidget()     // 잠금화면 직사각형(2026-07-27 개편)
         WeekStripWidget()      // Phase 2 (2026-07-27)
-        TodayScheduleWidget()  // Phase 2 (2026-07-27)
+        TodayScheduleWidget()  // Phase 2 (2026-07-27) → 오늘 카드(일정·Input·Output)
+        MonthGridWidget()      // 월 캘린더(2026-07-27 개편)
     }
 }
 
@@ -167,8 +169,21 @@ struct SeasonWidgetView: View {
             Text(entry.day?.sub ?? "앱을 한 번 열면 채워져요")
                 .font(.footnote)
                 .foregroundStyle(WInk.text.opacity(entry.day?.projected == true ? 0.55 : 0.75))
-            if let mood = entry.day?.mood {
-                Spacer(minLength: 0)
+            Spacer(minLength: 0)
+            // 오늘 일정 2줄(2026-07-27 사용자 지시) — 없으면 무드라인 폴백
+            if let lines = entry.day?.schedules, !lines.isEmpty {
+                ForEach(Array(lines.prefix(2).enumerated()), id: \.offset) { _, line in
+                    HStack(spacing: 5) {
+                        Text(line.time)
+                            .font(.system(size: 10))
+                            .foregroundStyle(WInk.text.opacity(0.5))
+                        Text(line.title)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(WInk.text.opacity(0.85))
+                            .lineLimit(1)
+                    }
+                }
+            } else if let mood = entry.day?.mood {
                 Text(mood)
                     .font(.system(size: 12, design: .serif))
                     .foregroundStyle(WInk.text.opacity(0.6))
@@ -195,5 +210,45 @@ struct SeasonWidgetView: View {
     // 잠금화면 인라인 — "겨울 3일차"
     private var inline: some View {
         Text(entry.day?.inline ?? "템포루틴")
+    }
+}
+
+// ── 잠금화면 직사각형 — 계절 한 줄 (2026-07-27 사용자 지시: "예쁘장한" 잠금 위젯) ──
+// 글리프 + 계절·일차 + 무드라인. 잠금화면은 시스템이 모노크롬 틴트 — widgetAccentable로 강조 위계만.
+
+struct SeasonLockWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "SeasonLock", provider: SeasonProvider()) { entry in
+            SeasonLockView(entry: entry)
+                .containerBackground(.clear, for: .widget)
+        }
+        .configurationDisplayName("계절 한 줄")
+        .description("잠금화면에서 계절과 오늘의 결을 보여줘요.")
+        .supportedFamilies([.accessoryRectangular])
+    }
+}
+
+struct SeasonLockView: View {
+    let entry: SeasonEntry
+
+    var body: some View {
+        HStack(spacing: 8) {
+            GlyphShape(season: entry.day?.season ?? "winter")
+                .stroke(.primary, style: StrokeStyle(lineWidth: 1.7, lineCap: .round))
+                .frame(width: 20, height: 20)
+                .widgetAccentable()
+                .opacity(entry.day?.season == nil ? 0.4 : 1)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(entry.day?.inline ?? "템포루틴")
+                    .font(.system(size: 15, weight: .bold, design: .serif))
+                    .widgetAccentable()
+                Text(entry.day?.mood ?? entry.day?.sub ?? "앱을 한 번 열면 채워져요")
+                    .font(.system(size: 11))
+                    .opacity(0.8)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
     }
 }

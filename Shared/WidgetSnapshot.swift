@@ -23,6 +23,19 @@ struct WidgetScheduleLine: Codable {
     let title: String      // 여러 날이면 "제주 여행 · 2/3일차"로 앱이 합성
 }
 
+/// Input 한 줄 — 오늘 카드 위젯용(2026-07-27 개편)
+struct WidgetCheckLine: Codable {
+    let title: String
+    let done: Bool
+}
+
+/// Output 한 줄 — 진행 라벨은 앱이 합성("60%" / "2/3")
+struct WidgetProgressLine: Codable {
+    let title: String
+    let label: String
+    let fraction: Double   // 0...1
+}
+
 /// 하루치 표시 내용 — 위젯은 이 문자열들을 그대로 그린다.
 /// Phase 2 추가 필드는 전부 optional — 구 스냅샷 JSON도 그대로 디코드된다(추가만, 변경 금지).
 struct WidgetDay: Codable {
@@ -36,6 +49,8 @@ struct WidgetDay: Codable {
     var recorded: Bool?    // 생리 기록일 = 코랄 형광펜(주간 스트립, Phase 2)
     var predicted: Bool?   // 예상 생리일 = 회색 형광펜(미래만 — §5.6.2 소급 투영 금지)
     var schedules: [WidgetScheduleLine]?   // 그날 일정(로컬만 — EventKit 오버레이는 런타임 전용이라 제외)
+    var inputs: [WidgetCheckLine]?         // 그날 Input(오늘 카드, 2026-07-27)
+    var outputs: [WidgetProgressLine]?     // 그날 Output
 }
 
 struct WidgetSnapshot: Codable {
