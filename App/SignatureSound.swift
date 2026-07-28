@@ -39,9 +39,15 @@ final class SignatureSound {
         }
     }
 
-    func stop() {
-        player?.stop()
-        player = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+    /// 건너뛰기용. 뚝 끊으면 파형이 잘리며 딱 소리가 나므로 짧게 줄이고 끈다.
+    /// 끝까지 재생되는 경우엔 호출하지 않는다 — 꼬리를 자를 이유가 없다.
+    func fadeOut(duration: TimeInterval = 0.3) {
+        guard let p = player else { return }
+        p.setVolume(0, fadeDuration: duration)
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            self.player?.stop()
+            self.player = nil
+        }
     }
 }

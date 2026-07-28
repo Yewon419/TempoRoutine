@@ -39,19 +39,31 @@ struct BrandLogo: View {
         .accessibilityLabel("템포루틴")
     }
 
+    // 한 식에 shape+stroke+frame+offset을 몰면 타입체크가 터진다(repo CLAUDE.md) — 쪼개 둔다.
     private var symbol: some View {
         ZStack {
-            Circle()
-                .trim(from: Self.gapHalf, to: 1 - Self.gapHalf)
-                .stroke(color, style: StrokeStyle(lineWidth: stroke, lineCap: .round))
-                .rotationEffect(.degrees(-90))   // trim 시작점을 3시에서 12시로
-                .frame(width: diameter - stroke, height: diameter - stroke)
-            Circle()
-                .fill(color)
-                .frame(width: diameter * Self.dotRatio * 2, height: diameter * Self.dotRatio * 2)
-                .offset(y: -diameter / 2)        // 링 바깥 가장자리에 얹는다
+            ring
+            dot
         }
         .frame(width: diameter, height: diameter)
+    }
+
+    private var ring: some View {
+        let side: CGFloat = diameter - stroke   // 획이 path 양쪽으로 반씩 나가므로 외경이 diameter가 된다
+        return Circle()
+            .trim(from: Self.gapHalf, to: 1 - Self.gapHalf)
+            .stroke(color, style: StrokeStyle(lineWidth: stroke, lineCap: .round))
+            .rotationEffect(.degrees(-90))      // trim 시작점(3시)의 끊김을 12시로
+            .frame(width: side, height: side)
+    }
+
+    private var dot: some View {
+        let size: CGFloat = diameter * Self.dotRatio * 2
+        let lift: CGFloat = -diameter / 2       // 링 바깥 가장자리에 얹는다
+        return Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            .offset(y: lift)
     }
 }
 

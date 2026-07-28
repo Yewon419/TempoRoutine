@@ -95,13 +95,15 @@ struct OnboardingFlow: View {
         }
         .task {
             guard showSplash else { return }
+            try? await Task.sleep(nanoseconds: 30_000_000)    // 상태 변화가 관측되도록 한 틱 양보
             splashLogoIn = true
             try? await Task.sleep(nanoseconds: 250_000_000)   // 로고가 먼저 읽히고 소리가 붙는다
             guard showSplash, !Task.isCancelled else { return }
             SignatureSound.shared.play()
+            // 음원 2.83초. 페이드아웃 0.5초를 겹쳐 소리가 자연히 끝나는 자리에서 화면이 걷힌다.
             try? await Task.sleep(nanoseconds: 2_450_000_000)
             guard !Task.isCancelled else { return }
-            dismissSplash()
+            dismissSplash(silencing: false)
         }
     }
 
@@ -116,15 +118,16 @@ struct OnboardingFlow: View {
         }
         .transition(.opacity)
         .contentShape(Rectangle())
-        .onTapGesture { dismissSplash() }
+        .onTapGesture { dismissSplash(silencing: true) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("템포루틴")
         .accessibilityHint("탭하면 건너뜁니다")
     }
 
-    private func dismissSplash() {
+    /// - Parameter silencing: 사용자가 건너뛴 경우에만 true. 끝까지 재생된 소리는 건드리지 않는다.
+    private func dismissSplash(silencing: Bool) {
         guard showSplash else { return }
-        SignatureSound.shared.stop()
+        if silencing { SignatureSound.shared.fadeOut() }
         withAnimation(reduceMotion ? nil : .easeOut(duration: 0.5)) { showSplash = false }
     }
 
