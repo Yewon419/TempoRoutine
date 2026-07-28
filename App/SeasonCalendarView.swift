@@ -99,8 +99,8 @@ struct SeasonCalendarView: View {
 
     var body: some View {
         ZStack {
-            Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: today), motif: .open)
+            // frost 지면(앱 아이콘 색) — 전면 계절광·텍스처 제거, 계절은 날짜 뒤 글로우로(2026-07-28)
+            Ink.frost.ignoresSafeArea()
             if hSize == .regular {
                 // 아이패드: 캘린더 + 하루 상세 분할(2026-07-23). 우측 계절광은 선택일 단계를 따름.
                 HStack(alignment: .top, spacing: 0) {
@@ -367,16 +367,25 @@ struct SeasonCalendarView: View {
         return Array(symbols[shift...] + symbols[..<shift])
     }
 
-    /// 숫자 잉크색 — 주말·공휴일은 달력 관례에 양보(2026-07-28 사용자 결정: 일·공휴일=빨강,
-    /// 토=파랑, 평일만 계절 잉크). 계절 그라데이션이 주말마다 끊기는 트레이드오프는 결정 시 고지.
+    /// 숫자 잉크색(2026-07-28 2차 개정) — 계절은 글씨에서 배경 글로우로 이동. 숫자는 먹색,
+    /// 주말·공휴일만 관례색(일·공휴일=빨강, 토=파랑) 유지.
     private func numberColor(date: Date, seasonColor: Color, render: MonthRender, isToday: Bool) -> Color {
         if isToday { return Ink.paper }
         if render.holidays[date]?.isPublic == true { return Ink.holiday }
         switch cal.component(.weekday, from: date) {
         case 1: return Ink.holiday
         case 7: return Ink.saturday
-        default: return seasonColor
+        default: return Ink.text
         }
+    }
+
+    /// 계절 = 날짜 뒤 은은한 방사형 빛(2026-07-28 사용자 지시 — 배경 그래디언트 빛의 셀 축소판).
+    /// 예상 구간은 더 옅게(§8.1 projected 어휘 승계).
+    private func seasonGlow(color: Color, projected: Bool) -> some View {
+        RadialGradient(colors: [color.opacity(projected ? 0.14 : 0.26), color.opacity(0)],
+                       center: .center, startRadius: 1, endRadius: 21)
+            .frame(width: 42, height: 42)
+            .allowsHitTesting(false)
     }
 
     private var weekdayRow: some View {
@@ -680,6 +689,8 @@ struct SeasonCalendarView: View {
                     .background {
                         if isToday {
                             Circle().fill(Ink.winter)   // 오늘 = 은필 흑청 채운 원 (먹색은 기각 이력, §8.1)
+                        } else if let meta = style.meta {
+                            seasonGlow(color: meta.color, projected: style.projected)
                         }
                     }
                 if bandCount > 0 {

@@ -41,6 +41,8 @@ enum Ink {
     static let holiday = Color(light: .rgb(0xC2, 0x45, 0x3C), dark: .rgb(0xE0, 0x7A, 0x70))
     /// 토요일 파랑(달력 관례, 2026-07-28 사용자 결정 — 주말·공휴일은 숫자색을 관례에 양보)
     static let saturday = Color(light: .rgb(0x3D, 0x6B, 0xC4), dark: .rgb(0x7F, 0xA4, 0xE8))
+    /// 캘린더 지면 — 앱 아이콘 frost(#F2F3F0, 2026-07-28 사용자 지시: 깨끗한 흰 배경)
+    static let frost = Color(light: .rgb(0xF2, 0xF3, 0xF0), dark: .rgb(0x1A, 0x1B, 0x1B))
     /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
     static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }
