@@ -736,8 +736,10 @@ struct SeasonCalendarView: View {
     // ── 단계 → 렌더 규칙 ──
     private func cellStyle(for date: Date) -> (color: Color, meta: SeasonMeta?, projected: Bool) {
         guard let last = starts.max() else { return (Ink.text, nil, false) }   // S0 = 전부 먹색
-        // 투영 지평 밖 미래 = 먹색 (예측 렌더 중단)
-        if let horizon = cal.date(byAdding: .day, value: horizonCycles * avgLength, to: last), date > horizon {
+        // 투영 지평 밖 미래 = 먹색 (예측 렌더 중단 — h번째 예상 월경 구간 끝까지, off-by-one 정정 2026-07-28)
+        if let horizon = CyclePredictor.projectionHorizon(lastStart: last, averageLength: avgLength,
+                                                          horizonCycles: horizonCycles, calendar: cal),
+           date > horizon {
             return (Ink.text, nil, false)
         }
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: avgLength) else {
@@ -750,7 +752,9 @@ struct SeasonCalendarView: View {
     /// 회색 형광펜 = 예상 생리일 (I-2b). 미래·투영 구간의 월경기만, 오늘 이전 소급 금지.
     private func isPredictedPeriod(_ date: Date) -> Bool {
         guard date >= today, let last = starts.max() else { return false }
-        if let horizon = cal.date(byAdding: .day, value: horizonCycles * avgLength, to: last), date > horizon {
+        if let horizon = CyclePredictor.projectionHorizon(lastStart: last, averageLength: avgLength,
+                                                          horizonCycles: horizonCycles, calendar: cal),
+           date > horizon {
             return false
         }
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: avgLength),

@@ -88,6 +88,16 @@ public enum CyclePredictor {
         return .low
     }
 
+    /// §5.6.2 예측 렌더 지평 — h번째 예상 월경 구간의 "끝"까지 포함.
+    /// 종전엔 마지막 시작 + h×주기에서 잘라 low(h=1)일 때 예상 구간 5일 중 하루만 남았다
+    /// (2026-07-28 off-by-one 정정 — "예정일이 캘린더에 안 뜬다" 실사용 제보).
+    public static func projectionHorizon(lastStart: Date, averageLength n: Int,
+                                         horizonCycles h: Int,
+                                         calendar: Calendar = .current) -> Date? {
+        let menstrualLen = phaseSpans(cycleLength: n).first { $0.phase == .menstrual }?.length ?? 5
+        return calendar.date(byAdding: .day, value: h * n + menstrualLen - 1, to: lastStart)
+    }
+
     /// 예측 다음 생리일(마지막 기록 + 예측길이) 경과인데 새 기록 없음 = overdue.
     public static func isOverdue(on date: Date, periodStarts: [Date], averageLength n: Int) -> Bool {
         guard let last = periodStarts.max() else { return false }
