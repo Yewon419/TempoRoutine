@@ -45,12 +45,12 @@ enum Ink {
     static let saturday = Color(light: .rgb(0x3D, 0x6B, 0xC4), dark: .rgb(0x7F, 0xA4, 0xE8))
     /// 캘린더 지면 — 앱 아이콘 frost(#F2F3F0, 2026-07-28 사용자 지시: 깨끗한 흰 배경)
     static let frost = Color(light: .rgb(0xF2, 0xF3, 0xF0), dark: .rgb(0x1A, 0x1B, 0x1B))
-    // 계절 글로우 팔레트(2026-07-28 2차 — 파스텔 레퍼런스 기반 재조정: 34% 빛으로 깔리는 색은
-    // 원색이 밝고 선명해야 탁하지 않다. 잉크 밝힘판 → 계절 파스텔 원색으로 교체)
-    static let glowWinter = Color(light: .rgb(0x83, 0xAC, 0xDD), dark: .rgb(0x9F, 0xBE, 0xE3))
-    static let glowSpring = Color(light: .rgb(0xF2, 0xC7, 0x44), dark: .rgb(0xEB, 0xD0, 0x68))
-    static let glowSummer = Color(light: .rgb(0x7C, 0xC9, 0x6C), dark: .rgb(0x93, 0xCD, 0x86))
-    static let glowAutumn = Color(light: .rgb(0xEE, 0x9B, 0x55), dark: .rgb(0xEF, 0xAF, 0x7C))
+    // 계절 글로우 팔레트(2026-07-28 3차 — 사용자 제공 스와치 픽셀 실측 채택.
+    // 다크는 기존 관례대로 라이트값 15% 백색 블렌드 명도 보정)
+    static let glowWinter = Color(light: .rgb(0x96, 0xAE, 0xCA), dark: .rgb(0xA6, 0xBA, 0xD2))
+    static let glowSpring = Color(light: .rgb(0xF4, 0xDC, 0xA9), dark: .rgb(0xF6, 0xE1, 0xB6))
+    static let glowSummer = Color(light: .rgb(0xBD, 0xD0, 0x85), dark: .rgb(0xC7, 0xD7, 0x97))
+    static let glowAutumn = Color(light: .rgb(0xD0, 0x8C, 0x86), dark: .rgb(0xD7, 0x9D, 0x98))
     /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
     static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }
