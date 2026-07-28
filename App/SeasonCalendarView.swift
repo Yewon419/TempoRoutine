@@ -153,7 +153,7 @@ struct SeasonCalendarView: View {
                     showLogSheet = true
                 } label: {
                     HStack(spacing: 5) {
-                        Circle().fill(Ink.coral).frame(width: 7, height: 7)
+                        Circle().fill(Ink.record).frame(width: 7, height: 7)
                         Text("생리 기록")
                     }
                     .font(.caption.weight(.semibold))
@@ -392,15 +392,9 @@ struct SeasonCalendarView: View {
         let col = index % 7
         let roundLeft = !prev || col == 0
         let roundRight = !next || col == 6
-        let shape = UnevenRoundedRectangle(
-            topLeadingRadius: roundLeft ? 2 : 0,
-            bottomLeadingRadius: roundLeft ? 2 : 0,
-            bottomTrailingRadius: roundRight ? 2 : 0,
-            topTrailingRadius: roundRight ? 2 : 0
-        )
-        // 밑줄형(2026-07-28 4차 — 숫자 아래 얇은 플랫 띠, 사용자 지시). 숫자 영역(상단 3+27pt)
-        // 바로 밑, 여러 날 일정 띠(bandTop 30)와 안 겹치게 y 25.5~29.5. 얇아진 만큼 불투명도 상향.
-        return shape
+        // 밑줄형 — 직각 사각(2026-07-28 5차: 라운드 제거, 사용자 지시). 숫자 영역(상단 3+27pt)
+        // 바로 밑, 여러 날 일정 띠(bandTop 30)와 안 겹치게 y 25.5~29.5.
+        return Rectangle()
             .fill(meta.glow.opacity(projected ? 0.25 : 0.5))
             .frame(height: 4)
             .padding(.leading, roundLeft ? 3 : 0)
@@ -781,7 +775,7 @@ struct SeasonCalendarView: View {
             bottomTrailingRadius: roundRight ? 9 : 0,
             topTrailingRadius: roundRight ? 9 : 0
         )
-        .fill((recorded ? Ink.coral : highlightGray).opacity(0.22))
+        .fill(Ink.record.opacity(0.22))   // 기록 = 진한 회색(2026-07-28, 예측 회색은 폐기됨)
         .frame(height: 20)
         .padding(.leading, roundLeft ? 4 : 0)
         .padding(.trailing, roundRight ? 4 : 0)
@@ -847,7 +841,7 @@ struct SeasonCalendarView: View {
             legendItem(.ovulation)
             legendItem(.luteal)
             Spacer()
-            legendSwatch(Ink.coral, "기록")
+            legendSwatch(Ink.record, "기록")
         }
         .padding(.top, 6)
     }

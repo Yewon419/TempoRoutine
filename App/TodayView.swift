@@ -29,7 +29,9 @@ enum Ink {
     static let autumn = Color(light: .rgb(0xA8, 0x4B, 0x38), dark: .rgb(0xD6, 0x82, 0x6B))
     static let text   = Color(light: .rgb(0x2C, 0x2B, 0x27), dark: .rgb(0xE8, 0xE6, 0xE1))   // 잉크
     static let paper  = Color(light: .rgb(0xF1, 0xEE, 0xE6), dark: .rgb(0x1C, 0x1B, 0x19))   // 지면(2026-07-21 종이톤 재검토)
-    static let coral  = Color(light: .rgb(0xD6, 0x64, 0x4C), dark: .rgb(0xE0, 0x7A, 0x63))
+    static let coral  = Color(light: .rgb(0xD6, 0x64, 0x4C), dark: .rgb(0xE0, 0x7A, 0x63))   // ⚠ 2026-07-28 기록 표기서 은퇴 — record로 대체
+    /// 생리 기록 표기(2026-07-28 사용자 결정: 붉은색 → 겨울 톤과 통일된 진한 회색)
+    static let record = Color(light: .rgb(0x5B, 0x62, 0x6B), dark: .rgb(0xA9, 0xB0, 0xB8))
     /// 파괴적 액션 전용 (--danger) — 기록 코랄·가을 잉크와 역할 분리
     static let danger = Color(light: .rgb(0xB2, 0x3A, 0x30), dark: .rgb(0xD0, 0x68, 0x5E))
     /// 완료 상태 = 짙은 회색(--ink-dim). 산화 갈색은 캘린더 타임라인 전용(v29 정정)
@@ -264,7 +266,7 @@ struct TodayView: View {
                 .foregroundStyle(Ink.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(14)
-                .background(Ink.coral.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                .background(Ink.record.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
         }
     }
 

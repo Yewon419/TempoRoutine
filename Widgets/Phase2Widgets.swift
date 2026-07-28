@@ -122,7 +122,7 @@ struct WeekStripView: View {
             Circle().fill(WInk.winter)   // 오늘 = 은필 채운 원(캘린더와 동일 — 먹색 기각 이력 §8.1)
         } else if day?.recorded == true && day?.season != "winter" {
             // 겨울 띠와 어긋난 기록만 코랄 — 회색 예상 폐기(앱 캘린더와 동일 규칙, 2026-07-28)
-            Capsule().fill(WInk.coral.opacity(0.25))
+            Capsule().fill(WInk.record.opacity(0.25))
         }
     }
 

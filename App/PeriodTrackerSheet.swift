@@ -182,7 +182,7 @@ struct PeriodTrackerSheet: View {
                         if selected { Circle().fill(Ink.text) }
                     }
                 RoundedRectangle(cornerRadius: 19)
-                    .fill(recorded ? Ink.coral.opacity(0.38) : Ink.text.opacity(0.06))
+                    .fill(recorded ? Ink.record.opacity(0.38) : Ink.text.opacity(0.06))
                     .frame(width: 38, height: 52)
                     .overlay(alignment: .bottom) {
                         Text("\(cal.component(.day, from: day))")
@@ -276,16 +276,16 @@ struct PeriodTrackerSheet: View {
             togglePeriod(on: selectedDay)
         } label: {
             HStack(spacing: 10) {
-                Circle().fill(Ink.coral).frame(width: 8, height: 8)
+                Circle().fill(Ink.record).frame(width: 8, height: 8)
                 Text("생리")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Ink.text)
                 Spacer()
                 Image(systemName: recorded ? "checkmark.circle.fill" : "plus")
-                    .foregroundStyle(recorded ? Ink.coral : Ink.text.opacity(0.5))
+                    .foregroundStyle(recorded ? Ink.record : Ink.text.opacity(0.5))
             }
             .padding(16)
-            .background(Ink.coral.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+            .background(Ink.record.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
             .transaction { $0.animation = nil }
         }
         .disabled(isSelectedFuture)

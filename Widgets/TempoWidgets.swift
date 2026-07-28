@@ -49,7 +49,8 @@ enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀)
     static let autumn = dyn((0xA8, 0x4B, 0x38), (0xD6, 0x82, 0x6B))
     static let text = dyn((0x2C, 0x2B, 0x27), (0xE8, 0xE6, 0xE1))
     static let paper = dyn((0xF1, 0xEE, 0xE6), (0x1C, 0x1B, 0x19))
-    static let coral = dyn((0xD6, 0x64, 0x4C), (0xE0, 0x7A, 0x63))          // 기록 형광펜
+    static let coral = dyn((0xD6, 0x64, 0x4C), (0xE0, 0x7A, 0x63))          // ⚠ 기록 표기서 은퇴(2026-07-28)
+    static let record = dyn((0x5B, 0x62, 0x6B), (0xA9, 0xB0, 0xB8))         // 기록 = 진한 회색(앱 동값)
     static let predictGray = dyn((0x87, 0x8E, 0x94), (0x9B, 0xA2, 0xA8))   // 예상 형광펜
     static let holidayRed = dyn((0xC2, 0x45, 0x3C), (0xE0, 0x7A, 0x70))    // 일요일(앱 Ink.holiday 동값)
     static let saturday = dyn((0x3D, 0x6B, 0xC4), (0x7F, 0xA4, 0xE8))      // 토요일(달력 관례)
@@ -140,14 +141,9 @@ struct SeasonGlowBand: View {
     let height: CGFloat
 
     var body: some View {
-        // 밑줄형 플랫(2026-07-28 4차 — 앱 seasonBand와 동일. 얇아진 만큼 불투명도 상향)
-        UnevenRoundedRectangle(
-            topLeadingRadius: roundLeft ? 2 : 0,
-            bottomLeadingRadius: roundLeft ? 2 : 0,
-            bottomTrailingRadius: roundRight ? 2 : 0,
-            topTrailingRadius: roundRight ? 2 : 0
-        )
-        .fill(WInk.glow(seasonKey).opacity(projected ? 0.25 : 0.5))
+        // 밑줄형 플랫 — 직각 사각(2026-07-28 5차: 라운드 제거, 사용자 지시)
+        Rectangle()
+            .fill(WInk.glow(seasonKey).opacity(projected ? 0.25 : 0.5))
         .frame(height: height)
         .padding(.leading, roundLeft ? 2 : 0)
         .padding(.trailing, roundRight ? 2 : 0)

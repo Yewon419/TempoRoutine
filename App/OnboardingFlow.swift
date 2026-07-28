@@ -538,7 +538,7 @@ struct OnboardingFlow: View {
                 showTracker = true
             } label: {
                 HStack(spacing: 8) {
-                    Circle().fill(Ink.coral).frame(width: 7, height: 7)
+                    Circle().fill(Ink.record).frame(width: 7, height: 7)
                     Text("날짜 고르기")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Ink.text)
@@ -548,7 +548,7 @@ struct OnboardingFlow: View {
                         .foregroundStyle(Ink.text.opacity(0.4))
                 }
                 .padding(12)
-                .background(Ink.coral.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+                .background(Ink.record.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
             }
             Text(periodDays.isEmpty ? "아직 기록이 없어요." : "기록 \(periodDays.count)일이 담겼어요.")
                 .font(.caption)
