@@ -53,6 +53,22 @@ enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀)
     static let predictGray = dyn((0x87, 0x8E, 0x94), (0x9B, 0xA2, 0xA8))   // 예상 형광펜
     static let holidayRed = dyn((0xC2, 0x45, 0x3C), (0xE0, 0x7A, 0x70))    // 일요일(앱 Ink.holiday 동값)
     static let saturday = dyn((0x3D, 0x6B, 0xC4), (0x7F, 0xA4, 0xE8))      // 토요일(달력 관례)
+    static let frost = dyn((0xF2, 0xF3, 0xF0), (0x1A, 0x1B, 0x1B))         // 캘린더 지면(앱 아이콘 색)
+    // 계절 글로우 팔레트 — 앱 Ink.glow* 동값(2026-07-28 새 캘린더 문법)
+    static let glowWinter = dyn((0x7B, 0x8F, 0xB8), (0xA4, 0xB4, 0xC6))
+    static let glowSpring = dyn((0xBF, 0xA9, 0x43), (0xCF, 0xBA, 0x60))
+    static let glowSummer = dyn((0x96, 0xB2, 0x59), (0xAE, 0xC0, 0x82))
+    static let glowAutumn = dyn((0xD1, 0x6E, 0x54), (0xDE, 0x8E, 0x76))
+
+    static func glow(_ key: String?) -> Color {
+        switch key {
+        case "winter": glowWinter
+        case "spring": glowSpring
+        case "summer": glowSummer
+        case "autumn": glowAutumn
+        default: text
+        }
+    }
 
     /// 주말은 숫자색 관례 양보(2026-07-28 사용자 결정) — 공휴일은 스냅샷에 없어 위젯은 요일만
     static func weekdayAccent(_ weekday: Int) -> Color? {
@@ -112,6 +128,32 @@ struct GlyphShape: Shape {   // 위젯 타깃 내부 공용
             path.move(to: p(3, 12)); path.addLine(to: p(9, 6))
         }
         return path
+    }
+}
+
+// ── 계절 빛 띠 조각 (앱 seasonBand 문법 — 구간 양 끝만 둥글게, 세로 사그라드는 그래디언트) ──
+struct SeasonGlowBand: View {
+    let seasonKey: String
+    let projected: Bool
+    let roundLeft: Bool
+    let roundRight: Bool
+    let height: CGFloat
+
+    var body: some View {
+        let color = WInk.glow(seasonKey)
+        let peak = color.opacity(projected ? 0.17 : 0.34)
+        LinearGradient(colors: [color.opacity(0), peak, color.opacity(0)],
+                       startPoint: .top, endPoint: .bottom)
+            .frame(height: height)
+            .clipShape(UnevenRoundedRectangle(
+                topLeadingRadius: roundLeft ? 11 : 0,
+                bottomLeadingRadius: roundLeft ? 11 : 0,
+                bottomTrailingRadius: roundRight ? 11 : 0,
+                topTrailingRadius: roundRight ? 11 : 0
+            ))
+            .padding(.leading, roundLeft ? 2 : 0)
+            .padding(.trailing, roundRight ? 2 : 0)
+            .allowsHitTesting(false)
     }
 }
 

@@ -36,7 +36,7 @@ struct MonthGridWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "MonthGrid", provider: MonthProvider()) { entry in
             MonthGridView(entry: entry)
-                .containerBackground(WInk.paper, for: .widget)
+                .containerBackground(WInk.frost, for: .widget)
         }
         .configurationDisplayName("이번 달")
         .description("한 달의 계절과 기록을 보여줘요.")
@@ -122,21 +122,37 @@ struct MonthGridView: View {
             .map { cal.startOfDay(for: $0) }
     }
 
+    /// 그 칸(달 안)의 계절 키 — 이웃 띠 연결 판정용. 달 밖·스냅샷 없음 = nil(끝 둥글게)
+    private func seasonKey(at index: Int) -> String? {
+        guard let d = date(at: index) else { return nil }
+        return entry.snapshot?.entry(for: d)?.season
+    }
+
     @ViewBuilder
     private func cell(index: Int) -> some View {
         if let date = date(at: index) {
             let day = entry.snapshot?.entry(for: date)
             let isToday = date == today
-            dayNumber(day, number: cal.component(.day, from: date), isToday: isToday,
-                      weekday: cal.component(.weekday, from: date))
+            ZStack {
+                // 계절 = 이어지는 빛 띠(2026-07-28 새 문법 — 앱 캘린더와 동일 조판)
+                if let season = day?.season {
+                    let col = index % 7
+                    SeasonGlowBand(seasonKey: season,
+                                   projected: day?.projected == true,
+                                   roundLeft: col == 0 || seasonKey(at: index - 1) != season,
+                                   roundRight: col == 6 || seasonKey(at: index + 1) != season,
+                                   height: 24)
+                }
+                dayNumber(day, number: cal.component(.day, from: date), isToday: isToday,
+                          weekday: cal.component(.weekday, from: date))
+            }
         } else {
             Color.clear
         }
     }
 
     private func dayNumber(_ day: WidgetDay?, number: Int, isToday: Bool, weekday: Int) -> some View {
-        let faded = day?.projected == true
-        let ink = WInk.weekdayAccent(weekday) ?? WInk.season(day?.season).opacity(faded ? 0.55 : 1)
+        let ink = WInk.weekdayAccent(weekday) ?? WInk.text   // 계절은 띠가 담당 — 숫자는 먹색(새 문법)
         return Text("\(number)")
             .font(.system(size: 12, weight: isToday ? .bold : .semibold))
             .monospacedDigit()
@@ -149,10 +165,9 @@ struct MonthGridView: View {
     private func cellBackground(_ day: WidgetDay?, isToday: Bool) -> some View {
         if isToday {
             Circle().fill(WInk.winter)   // 오늘 = 은필 채운 원(§8.1 — 먹색 기각 이력)
-        } else if day?.recorded == true {
+        } else if day?.recorded == true && day?.season != "winter" {
+            // 겨울 띠와 어긋난 기록만 코랄 — 회색 예상 폐기(앱 캘린더와 동일 규칙, 2026-07-28)
             Circle().fill(WInk.coral.opacity(0.25))
-        } else if day?.predicted == true {
-            Circle().fill(WInk.predictGray.opacity(0.25))
         }
     }
 }

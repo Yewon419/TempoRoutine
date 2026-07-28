@@ -52,7 +52,7 @@ struct WeekStripWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "WeekStrip", provider: WeekProvider()) { entry in
             WeekStripView(entry: entry)
-                .containerBackground(WInk.paper, for: .widget)
+                .containerBackground(WInk.frost, for: .widget)
         }
         .configurationDisplayName("이번 주")
         .description("일주일의 계절과 기록을 한 줄로 보여줘요.")
@@ -90,14 +90,23 @@ struct WeekStripView: View {
             Text(weekdaySymbols[index])
                 .font(.system(size: 11))
                 .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.winter.opacity(0.8))
-            dayNumber(day, isToday: isToday, weekday: weekday)
+            ZStack {
+                // 계절 = 이어지는 빛 띠(2026-07-28 새 문법 — 앱 캘린더와 동일)
+                if let season = day?.season {
+                    SeasonGlowBand(seasonKey: season,
+                                   projected: day?.projected == true,
+                                   roundLeft: index == 0 || entry.days[index - 1]?.season != season,
+                                   roundRight: index == 6 || entry.days[index + 1]?.season != season,
+                                   height: 30)
+                }
+                dayNumber(day, isToday: isToday, weekday: weekday)
+            }
         }
     }
 
     private func dayNumber(_ day: WidgetDay?, isToday: Bool, weekday: Int) -> some View {
         let number = day.map { String(cal.component(.day, from: $0.day)) } ?? "·"
-        let faded = day?.projected == true
-        let ink = WInk.weekdayAccent(weekday) ?? WInk.season(day?.season).opacity(faded ? 0.55 : 1)
+        let ink = WInk.weekdayAccent(weekday) ?? WInk.text   // 계절은 띠가 담당 — 숫자는 먹색(새 문법)
         return Text(number)
             .font(.system(size: 16, weight: isToday ? .bold : .semibold))
             .monospacedDigit()
@@ -110,10 +119,9 @@ struct WeekStripView: View {
     private func numberBackground(_ day: WidgetDay?, isToday: Bool) -> some View {
         if isToday {
             Circle().fill(WInk.winter)   // 오늘 = 은필 채운 원(캘린더와 동일 — 먹색 기각 이력 §8.1)
-        } else if day?.recorded == true {
+        } else if day?.recorded == true && day?.season != "winter" {
+            // 겨울 띠와 어긋난 기록만 코랄 — 회색 예상 폐기(앱 캘린더와 동일 규칙, 2026-07-28)
             Capsule().fill(WInk.coral.opacity(0.25))
-        } else if day?.predicted == true {
-            Capsule().fill(WInk.predictGray.opacity(0.25))
         }
     }
 
