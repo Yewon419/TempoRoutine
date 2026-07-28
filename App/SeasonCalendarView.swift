@@ -311,7 +311,7 @@ struct SeasonCalendarView: View {
 
     /// 이 달의 잉크 글줄(§5.9-4: resolve가 캘린더에 뜨는지) — 일정 + cycle-anchored occurrence.
     /// 매일 Input은 셀에 그리지 않음(전 셀 노이즈). projected는 faded.
-    private func monthMarks(_ layout: MonthLayout) -> [Date: [(title: String, projected: Bool)]] {
+    private func monthMarks(_ layout: MonthLayout) -> [Date: [(title: String, projected: Bool, isSchedule: Bool)]] {
         var marks: [Date: [(title: String, projected: Bool, isSchedule: Bool)]] = [:]
         let snap = CycleSnapshot(periodDays: periodDays)
         for dayNumber in 1...layout.daysInMonth {
