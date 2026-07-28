@@ -34,15 +34,17 @@ struct SeasonCalendarView: View {
     // 읽는다. 드래그 시작 때 3개 달을 한 번 계산하고, 전환이 끝나면 비운다(성능 결함 수정 2026-07-27).
     @State private var renderCache: [Date: MonthRender] = [:]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme   // 상단 계절광 다크 감쇠
     @State private var pressFeedback = 0        // 길게 누르기 진입 햅틱(중간 — 탭보다 강하게)
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
     private let minCellHeight: CGFloat = 54
-    // 여러 날 띠 — 날짜 숫자(상단 3 + 27) 바로 아래부터, 레인 간격 포함 13pt씩
+    // 여러 날 띠 — 계절 밑줄(~29.5)과 3.5pt 간격을 두고(2026-07-28 시안 결정), 레인 간격 포함 13pt씩
     private let bandHeight: CGFloat = 11
-    private let bandTop: CGFloat = 30
+    private let bandTop: CGFloat = 33.5
+    private let bandGap: CGFloat = 3.5   // 숫자 영역(30)과 띠·박스·글줄 사이 간격
     private var bandSlot: CGFloat { bandHeight + 2 }
     /// 예측 형광펜 회색 — 다크에선 한 단계 밝게 (기준 대응 팔레트)
     private let highlightGray = Color(uiColor: UIColor { trait in
@@ -99,8 +101,10 @@ struct SeasonCalendarView: View {
 
     var body: some View {
         ZStack {
-            // frost 지면(앱 아이콘 색) — 전면 계절광·텍스처 제거, 계절은 날짜 뒤 글로우로(2026-07-28)
+            // 캘린더 자체 지면(2026-07-28 시안 결정) — frost 바탕 + 계절광은 상단에만 걸리고
+            // 사그라든다(그리드 영역은 깨끗하게 — 글로우 밑줄 가독 담보)
             Ink.frost.ignoresSafeArea()
+            calendarTopGlow
             if hSize == .regular {
                 // 아이패드: 캘린더 + 하루 상세 분할(2026-07-23). 우측 계절광은 선택일 단계를 따름.
                 HStack(alignment: .top, spacing: 0) {
@@ -137,6 +141,33 @@ struct SeasonCalendarView: View {
                 DayDetailView(day: pushedDay)
             }
         }
+    }
+
+    /// 오늘의 단계 — 상단 글로우 색 결정용(seasonLine과 같은 계산 경로)
+    private var todayPhase: CyclePhase? {
+        guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
+            return nil
+        }
+        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength)
+    }
+
+    /// 상단 계절광(2026-07-28 시안 결정) — SeasonLight 원색 2겹을 상단 앵커로만, 다크는 감쇠
+    private var calendarTopGlow: some View {
+        let l = SeasonLight.lightColors(for: todayPhase)
+        let top = RadialGradient(colors: [l.a, .clear],
+                                 center: UnitPoint(x: 0.18, y: -0.10),
+                                 startRadius: 0, endRadius: 430)
+        let side = RadialGradient(colors: [l.b, .clear],
+                                  center: UnitPoint(x: 0.88, y: -0.06),
+                                  startRadius: 0, endRadius: 320)
+        return ZStack {
+            Rectangle().fill(top)
+            Rectangle().fill(side)
+        }
+        .opacity(colorScheme == .dark ? 0.35 : 1.0)
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     /// 캘린더 열 — compact에선 전체 화면, regular에선 분할 좌측(2026-07-23)
@@ -281,14 +312,14 @@ struct SeasonCalendarView: View {
     /// 이 달의 잉크 글줄(§5.9-4: resolve가 캘린더에 뜨는지) — 일정 + cycle-anchored occurrence.
     /// 매일 Input은 셀에 그리지 않음(전 셀 노이즈). projected는 faded.
     private func monthMarks(_ layout: MonthLayout) -> [Date: [(title: String, projected: Bool)]] {
-        var marks: [Date: [(title: String, projected: Bool)]] = [:]
+        var marks: [Date: [(title: String, projected: Bool, isSchedule: Bool)]] = [:]
         let snap = CycleSnapshot(periodDays: periodDays)
         for dayNumber in 1...layout.daysInMonth {
             guard let d = cal.date(byAdding: .day, value: dayNumber - 1, to: layout.start) else { continue }
             let day = cal.startOfDay(for: d)
             for s in schedules where s.occurs(on: day) {
                 if s.isMultiDay { continue }   // 여러 날 일정은 잉크 글줄 대신 띠로(§8.2.3)
-                marks[day, default: []].append((s.title, false))
+                marks[day, default: []].append((s.title, false, true))   // 일정 = 박스 문법(2026-07-28)
             }
         }
         guard let monthEnd = cal.date(byAdding: .day, value: layout.daysInMonth, to: layout.start) else { return marks }
@@ -296,7 +327,7 @@ struct SeasonCalendarView: View {
             if case .cycleAnchored(let r) = item.schedule {
                 for occ in snap.occurrences(of: r, createdAt: cal.startOfDay(for: item.createdAt))
                 where occ.date >= layout.start && occ.date < monthEnd {
-                    marks[cal.startOfDay(for: occ.date), default: []].append((item.title, occ.projected))
+                    marks[cal.startOfDay(for: occ.date), default: []].append((item.title, occ.projected, false))
                 }
             }
         }
@@ -305,7 +336,7 @@ struct SeasonCalendarView: View {
             for occ in snap.occurrences(of: r, createdAt: cal.startOfDay(for: item.createdAt))
             where occ.date >= layout.start && occ.date < monthEnd {
                 if item.isComplete && occ.projected { continue }   // §5.5.2 완료된 Output 미래 미표시
-                marks[cal.startOfDay(for: occ.date), default: []].append((item.title, occ.projected))
+                marks[cal.startOfDay(for: occ.date), default: []].append((item.title, occ.projected, false))
             }
         }
         return marks
@@ -393,7 +424,7 @@ struct SeasonCalendarView: View {
         let roundLeft = !prev || col == 0
         let roundRight = !next || col == 6
         // 밑줄형 — 직각 사각(2026-07-28 5차: 라운드 제거, 사용자 지시). 숫자 영역(상단 3+27pt)
-        // 바로 밑, 여러 날 일정 띠(bandTop 30)와 안 겹치게 y 25.5~29.5.
+        // 바로 밑 y 25.5~29.5. 일정 띠·박스는 3.5pt 간격을 두고 33.5부터(시안 결정).
         return Rectangle()
             .fill(meta.glow.opacity(projected ? 0.25 : 0.5))
             .frame(height: 4)
@@ -421,7 +452,7 @@ struct SeasonCalendarView: View {
 
     // ── 월 렌더 데이터 — 셀이 프레임마다 재계산하던 것 전부(스타일·형광펜·마크·띠) ──
     private struct MonthRender {
-        let marks: [Date: [(title: String, projected: Bool)]]
+        let marks: [Date: [(title: String, projected: Bool, isSchedule: Bool)]]
         let bands: BandLayout
         let style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)]
         let recorded: Set<Date>
@@ -627,7 +658,7 @@ struct SeasonCalendarView: View {
     // 타입 체커 과부하를 피해 조각냄(2026-07-25 CI 실측: 한 식에 몰면 unable to type-check)
     private func bandView(bar: BandBar, unit: CGFloat) -> some View {
         let ink: Color = bar.isPast ? Ink.oxide : Ink.text
-        let radius: CGFloat = 5
+        let radius: CGFloat = 2   // 직각화(2026-07-28 시안 결정 — 계절 밑줄과 같은 결)
         let width: CGFloat = max(0, unit * CGFloat(bar.segment.length) - 2)
         let x: CGFloat = unit * CGFloat(bar.segment.column) + 1
         let y: CGFloat = bandTop + CGFloat(bar.lane) * bandSlot
@@ -714,6 +745,7 @@ struct SeasonCalendarView: View {
                             Circle().fill(Ink.winter)   // 오늘 = 은필 흑청 채운 원 (먹색은 기각 이력, §8.1)
                         }
                     }
+                Color.clear.frame(height: bandGap)   // 계절 밑줄과 간격(2026-07-28 시안 결정)
                 if bandCount > 0 {
                     Color.clear.frame(height: CGFloat(bandCount) * bandSlot)   // 여러 날 띠 자리
                 }
@@ -724,15 +756,19 @@ struct SeasonCalendarView: View {
                         .lineLimit(1)
                         .foregroundStyle(holiday.isPublic ? Ink.holiday : Ink.text.opacity(0.5))
                 }
-                // 일정·occurrence = 날짜 밑 작은 잉크 글줄(책력 문법, 프로토 v15)
-                // 잉크 글줄(v16): 먹색 78% / 과거는 산화색 75% / 예상은 옅게
-                // 한 칸의 줄 예산은 2 — 띠·공휴일이 차지한 만큼 글줄을 줄인다
+                // 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성) /
+                // occurrence = 종전 잉크 글줄(먹색 78% / 과거 산화색 75% / 예상 옅게, 프로토 v15·16)
+                // 한 칸의 줄 예산은 2 — 띠·공휴일이 차지한 만큼 줄인다
                 ForEach(Array(cellMarks.prefix(markBudget).enumerated()), id: \.offset) { _, mark in
-                    Text(mark.title)
-                        .font(.system(size: 8.5, weight: .medium))
-                        .lineLimit(1)
-                        .foregroundStyle(mark.projected ? Ink.text.opacity(0.45)
-                                         : (date < today ? Ink.oxide.opacity(0.75) : Ink.text.opacity(0.78)))
+                    if mark.isSchedule {
+                        scheduleBox(title: mark.title, past: date < today)
+                    } else {
+                        Text(mark.title)
+                            .font(.system(size: 8.5, weight: .medium))
+                            .lineLimit(1)
+                            .foregroundStyle(mark.projected ? Ink.text.opacity(0.45)
+                                             : (date < today ? Ink.oxide.opacity(0.75) : Ink.text.opacity(0.78)))
+                    }
                 }
                 Spacer(minLength: 0)
             }
@@ -758,6 +794,24 @@ struct SeasonCalendarView: View {
                     RoundedRectangle(cornerRadius: 10).stroke(Ink.text.opacity(0.28), lineWidth: 1)
                 }
             }
+    }
+
+    /// 하루짜리 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성). 높이·R2·서체 = 띠 동일
+    private func scheduleBox(title: String, past: Bool) -> some View {
+        let ink: Color = past ? Ink.oxide : Ink.text
+        return RoundedRectangle(cornerRadius: 2)
+            .fill(ink.opacity(0.13))
+            .frame(height: bandHeight)
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .leading) {
+                Text(title)
+                    .font(.system(size: 8.5, weight: .semibold))
+                    .lineLimit(1)
+                    .foregroundStyle(ink.opacity(0.85))
+                    .padding(.horizontal, 4)
+            }
+            .padding(.horizontal, 1)
+            .padding(.bottom, 1)
     }
 
     /// 형광펜 밴드 — 연속 구간은 이어지고 양 끝만 둥글게 (행 경계 포함).

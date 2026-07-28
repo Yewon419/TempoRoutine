@@ -126,7 +126,10 @@ struct SeasonLight: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
-    private var lights: (a: Color, b: Color, c: Color) {
+    private var lights: (a: Color, b: Color, c: Color) { Self.lightColors(for: phase) }
+
+    /// 계절광 3겹 색 — 캘린더 상단 글로우(2026-07-28 시안 결정)도 같은 원색을 쓴다
+    static func lightColors(for phase: CyclePhase?) -> (a: Color, b: Color, c: Color) {
         switch phase {
         case .follicular:
             (Color(red: 216 / 255, green: 196 / 255, blue: 132 / 255).opacity(0.55),
