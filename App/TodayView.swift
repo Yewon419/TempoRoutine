@@ -37,6 +37,8 @@ enum Ink {
                            dark: Color(red: 232 / 255, green: 230 / 255, blue: 225 / 255).opacity(0.5))
     /// 산화 은필 — 캘린더 과거 일정 글줄 전용
     static let oxide = Color(light: .rgb(0x8B, 0x6F, 0x55), dark: .rgb(0xB2, 0x94, 0x77))
+    /// 공휴일 빨간날 표기 전용(2026-07-28) — 기록 코랄·파괴 danger와 역할 분리
+    static let holiday = Color(light: .rgb(0xC2, 0x45, 0x3C), dark: .rgb(0xE0, 0x7A, 0x70))
     /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
     static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }

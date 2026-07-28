@@ -387,6 +387,7 @@ struct SeasonCalendarView: View {
         let style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)]
         let recorded: Set<Date>
         let predicted: Set<Date>   // 형광펜 라운딩용 ±1일 여유 포함
+        let holidays: [Date: KoreanHoliday]   // 셀 표기용 대표 1건(공휴일 우선, 2026-07-28)
     }
 
     private func computeRender(_ layout: MonthLayout) -> MonthRender {
@@ -394,6 +395,7 @@ struct SeasonCalendarView: View {
         var recorded = Set<Date>()
         var predicted = Set<Date>()
         var style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)] = [:]
+        var holidays: [Date: KoreanHoliday] = [:]
         for offset in -1...layout.daysInMonth {
             guard let d = cal.date(byAdding: .day, value: offset, to: layout.start) else { continue }
             let day = cal.startOfDay(for: d)
@@ -404,10 +406,12 @@ struct SeasonCalendarView: View {
             }
             if offset >= 0 && offset < layout.daysInMonth {
                 style[day] = cellStyle(for: day)
+                holidays[day] = KoreanHolidays.holidays(on: day, calendar: cal).first
             }
         }
         return MonthRender(marks: monthMarks(layout), bands: bandLayout(layout),
-                           style: style, recorded: recorded, predicted: predicted)
+                           style: style, recorded: recorded, predicted: predicted,
+                           holidays: holidays)
     }
 
     // ── 그리드 (캐러셀 한 패널 — interactive = 중앙 달만 제스처·접근성) ──
@@ -634,6 +638,8 @@ struct SeasonCalendarView: View {
             let predicted = render.predicted.contains(date)
             let isToday = date == today
             let bandCount = render.bands.countByIndex[index] ?? 0
+            let holiday = render.holidays[date]
+            let markBudget = max(0, 2 - bandCount - (holiday == nil ? 0 : 1))
             let cellMarks = render.marks[date] ?? []
             VStack(spacing: 0) {
                 Text("\(cal.component(.day, from: date))")
@@ -649,10 +655,17 @@ struct SeasonCalendarView: View {
                 if bandCount > 0 {
                     Color.clear.frame(height: CGFloat(bandCount) * bandSlot)   // 여러 날 띠 자리
                 }
+                // 공휴일·기념일 = 첫 글줄(빨간날 관례, 2026-07-28) — 일정 글줄과 같은 조판
+                if let holiday {
+                    Text(holiday.name)
+                        .font(.system(size: 8.5, weight: .semibold))
+                        .lineLimit(1)
+                        .foregroundStyle(holiday.isPublic ? Ink.holiday : Ink.text.opacity(0.5))
+                }
                 // 일정·occurrence = 날짜 밑 작은 잉크 글줄(책력 문법, 프로토 v15)
                 // 잉크 글줄(v16): 먹색 78% / 과거는 산화색 75% / 예상은 옅게
-                // 한 칸의 줄 예산은 2 — 띠가 차지한 만큼 글줄을 줄인다
-                ForEach(Array(cellMarks.prefix(max(0, 2 - bandCount)).enumerated()), id: \.offset) { _, mark in
+                // 한 칸의 줄 예산은 2 — 띠·공휴일이 차지한 만큼 글줄을 줄인다
+                ForEach(Array(cellMarks.prefix(markBudget).enumerated()), id: \.offset) { _, mark in
                     Text(mark.title)
                         .font(.system(size: 8.5, weight: .medium))
                         .lineLimit(1)

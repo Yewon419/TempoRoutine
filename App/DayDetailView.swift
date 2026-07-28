@@ -91,6 +91,13 @@ struct DayDetailView: View {
                     .font(.system(.subheadline, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.6))
             }
+            // 공휴일·기념일 표기(2026-07-28) — 캘린더 셀과 같은 어휘
+            let holidays = KoreanHolidays.holidays(on: day)
+            if !holidays.isEmpty {
+                Text(holidays.map(\.name).joined(separator: " · "))
+                    .font(.system(.footnote, design: .serif))
+                    .foregroundStyle(holidays.contains(where: \.isPublic) ? Ink.holiday : Ink.text.opacity(0.55))
+            }
             if let info = snapshot.phaseInfo(on: day) {
                 HStack(spacing: 6) {
                     Text("\(info.meta.name) · \(info.meta.phaseName) \(info.dayInCycle)일차")
