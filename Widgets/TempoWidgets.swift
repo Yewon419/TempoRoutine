@@ -140,14 +140,14 @@ struct SeasonGlowBand: View {
     let height: CGFloat
 
     var body: some View {
-        // 플랫 채움(2026-07-28 3차 — 그라데이션 제거, 앱 seasonBand와 동일)
+        // 밑줄형 플랫(2026-07-28 4차 — 앱 seasonBand와 동일. 얇아진 만큼 불투명도 상향)
         UnevenRoundedRectangle(
-            topLeadingRadius: roundLeft ? 11 : 0,
-            bottomLeadingRadius: roundLeft ? 11 : 0,
-            bottomTrailingRadius: roundRight ? 11 : 0,
-            topTrailingRadius: roundRight ? 11 : 0
+            topLeadingRadius: roundLeft ? 2 : 0,
+            bottomLeadingRadius: roundLeft ? 2 : 0,
+            bottomTrailingRadius: roundRight ? 2 : 0,
+            topTrailingRadius: roundRight ? 2 : 0
         )
-        .fill(WInk.glow(seasonKey).opacity(projected ? 0.13 : 0.26))
+        .fill(WInk.glow(seasonKey).opacity(projected ? 0.25 : 0.5))
         .frame(height: height)
         .padding(.leading, roundLeft ? 2 : 0)
         .padding(.trailing, roundRight ? 2 : 0)

@@ -393,19 +393,20 @@ struct SeasonCalendarView: View {
         let roundLeft = !prev || col == 0
         let roundRight = !next || col == 6
         let shape = UnevenRoundedRectangle(
-            topLeadingRadius: roundLeft ? 13 : 0,
-            bottomLeadingRadius: roundLeft ? 13 : 0,
-            bottomTrailingRadius: roundRight ? 13 : 0,
-            topTrailingRadius: roundRight ? 13 : 0
+            topLeadingRadius: roundLeft ? 2 : 0,
+            bottomLeadingRadius: roundLeft ? 2 : 0,
+            bottomTrailingRadius: roundRight ? 2 : 0,
+            topTrailingRadius: roundRight ? 2 : 0
         )
-        // 플랫 채움(2026-07-28 3차 — 그라데이션 제거, 깔끔한 사각 띠. 사용자 지시)
+        // 밑줄형(2026-07-28 4차 — 숫자 아래 얇은 플랫 띠, 사용자 지시). 숫자 영역(상단 3+27pt)
+        // 바로 밑, 여러 날 일정 띠(bandTop 30)와 안 겹치게 y 25.5~29.5. 얇아진 만큼 불투명도 상향.
         return shape
-            .fill(meta.glow.opacity(projected ? 0.13 : 0.26))
-            .frame(height: 32)
+            .fill(meta.glow.opacity(projected ? 0.25 : 0.5))
+            .frame(height: 4)
             .padding(.leading, roundLeft ? 3 : 0)
             .padding(.trailing, roundRight ? 3 : 0)
             .frame(maxHeight: .infinity, alignment: .top)
-            .padding(.top, 1)
+            .padding(.top, 25.5)
             .allowsHitTesting(false)
     }
 

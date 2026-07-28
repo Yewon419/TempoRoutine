@@ -91,13 +91,14 @@ struct WeekStripView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.winter.opacity(0.8))
             ZStack {
-                // 계절 = 이어지는 빛 띠(2026-07-28 새 문법 — 앱 캘린더와 동일)
+                // 계절 = 숫자 아래 얇은 밑줄 띠(2026-07-28 4차 — 앱 캘린더와 동일)
                 if let season = day?.season {
                     SeasonGlowBand(seasonKey: season,
                                    projected: day?.projected == true,
                                    roundLeft: index == 0 || entry.days[index - 1]?.season != season,
                                    roundRight: index == 6 || entry.days[index + 1]?.season != season,
-                                   height: 30)
+                                   height: 4)
+                        .offset(y: 17)   // 숫자 프레임(30pt) 바로 밑
                 }
                 dayNumber(day, isToday: isToday, weekday: weekday)
             }

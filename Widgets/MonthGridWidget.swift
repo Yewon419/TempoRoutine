@@ -134,14 +134,15 @@ struct MonthGridView: View {
             let day = entry.snapshot?.entry(for: date)
             let isToday = date == today
             ZStack {
-                // 계절 = 이어지는 빛 띠(2026-07-28 새 문법 — 앱 캘린더와 동일 조판)
+                // 계절 = 숫자 아래 얇은 밑줄 띠(2026-07-28 4차 — 앱 캘린더와 동일 조판)
                 if let season = day?.season {
                     let col = index % 7
                     SeasonGlowBand(seasonKey: season,
                                    projected: day?.projected == true,
                                    roundLeft: col == 0 || seasonKey(at: index - 1) != season,
                                    roundRight: col == 6 || seasonKey(at: index + 1) != season,
-                                   height: 24)
+                                   height: 4)
+                        .offset(y: 14)   // 숫자 프레임(24pt) 바로 밑
                 }
                 dayNumber(day, number: cal.component(.day, from: date), isToday: isToday,
                           weekday: cal.component(.weekday, from: date))
