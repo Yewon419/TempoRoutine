@@ -398,11 +398,10 @@ struct SeasonCalendarView: View {
             bottomTrailingRadius: roundRight ? 13 : 0,
             topTrailingRadius: roundRight ? 13 : 0
         )
-        let peak = meta.glow.opacity(projected ? 0.17 : 0.34)
-        return LinearGradient(colors: [meta.glow.opacity(0), peak, meta.glow.opacity(0)],
-                              startPoint: .top, endPoint: .bottom)
+        // 플랫 채움(2026-07-28 3차 — 그라데이션 제거, 깔끔한 사각 띠. 사용자 지시)
+        return shape
+            .fill(meta.glow.opacity(projected ? 0.13 : 0.26))
             .frame(height: 32)
-            .clipShape(shape)
             .padding(.leading, roundLeft ? 3 : 0)
             .padding(.trailing, roundRight ? 3 : 0)
             .frame(maxHeight: .infinity, alignment: .top)

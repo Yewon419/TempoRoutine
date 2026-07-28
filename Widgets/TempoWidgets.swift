@@ -140,20 +140,18 @@ struct SeasonGlowBand: View {
     let height: CGFloat
 
     var body: some View {
-        let color = WInk.glow(seasonKey)
-        let peak = color.opacity(projected ? 0.17 : 0.34)
-        LinearGradient(colors: [color.opacity(0), peak, color.opacity(0)],
-                       startPoint: .top, endPoint: .bottom)
-            .frame(height: height)
-            .clipShape(UnevenRoundedRectangle(
-                topLeadingRadius: roundLeft ? 11 : 0,
-                bottomLeadingRadius: roundLeft ? 11 : 0,
-                bottomTrailingRadius: roundRight ? 11 : 0,
-                topTrailingRadius: roundRight ? 11 : 0
-            ))
-            .padding(.leading, roundLeft ? 2 : 0)
-            .padding(.trailing, roundRight ? 2 : 0)
-            .allowsHitTesting(false)
+        // 플랫 채움(2026-07-28 3차 — 그라데이션 제거, 앱 seasonBand와 동일)
+        UnevenRoundedRectangle(
+            topLeadingRadius: roundLeft ? 11 : 0,
+            bottomLeadingRadius: roundLeft ? 11 : 0,
+            bottomTrailingRadius: roundRight ? 11 : 0,
+            topTrailingRadius: roundRight ? 11 : 0
+        )
+        .fill(WInk.glow(seasonKey).opacity(projected ? 0.13 : 0.26))
+        .frame(height: height)
+        .padding(.leading, roundLeft ? 2 : 0)
+        .padding(.trailing, roundRight ? 2 : 0)
+        .allowsHitTesting(false)
     }
 }
 
