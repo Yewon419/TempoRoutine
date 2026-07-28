@@ -431,7 +431,8 @@ struct SeasonCalendarView: View {
         let bands: BandLayout
         let style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)]
         let recorded: Set<Date>
-        let predicted: Set<Date>   // 형광펜 라운딩용 ±1일 여유 포함
+        let predicted: Set<Date>   // a11y용(시각 표시는 겨울 글로우가 대체 — 2026-07-28 사용자 결정)
+        let periodShown: Set<Date> // 코랄 형광펜 표시일 = 기록 && 겨울 띠와 안 겹침(±1일 여유 포함)
         let holidays: [Date: KoreanHoliday]   // 셀 표기용 대표 1건(공휴일 우선, 2026-07-28)
     }
 
@@ -439,6 +440,7 @@ struct SeasonCalendarView: View {
         let recordedAll = recordedDays
         var recorded = Set<Date>()
         var predicted = Set<Date>()
+        var periodShown = Set<Date>()
         var style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)] = [:]
         var holidays: [Date: KoreanHoliday] = [:]
         // 소스 우선순위(2026-07-28 사용자 지시): 애플 기본 캘린더의 공휴일 구독 캘린더(연동 시)
@@ -454,6 +456,11 @@ struct SeasonCalendarView: View {
             let day = cal.startOfDay(for: d)
             if recordedAll.contains(day) {
                 recorded.insert(day)
+                // 겨울 글로우와 겹치는 기록은 표시 생략(중복 — 2026-07-28 사용자 결정).
+                // 모델과 어긋난 기록(월경기 밖·S0)만 코랄로 남아 "실측이 다르다"는 신호가 된다.
+                if cellStyle(for: day).meta?.name != "겨울" {
+                    periodShown.insert(day)
+                }
             } else if isPredictedPeriod(day) {
                 predicted.insert(day)
             }
@@ -471,7 +478,7 @@ struct SeasonCalendarView: View {
         }
         return MonthRender(marks: monthMarks(layout), bands: bandLayout(layout),
                            style: style, recorded: recorded, predicted: predicted,
-                           holidays: holidays)
+                           periodShown: periodShown, holidays: holidays)
     }
 
     // ── 그리드 (캐러셀 한 패널 — interactive = 중앙 달만 제스처·접근성) ──
@@ -745,8 +752,8 @@ struct SeasonCalendarView: View {
                         seasonBand(date: date, index: index, meta: meta,
                                    projected: style.projected, render: render)
                     }
-                    if recorded || predicted {
-                        highlightBand(for: date, index: index, recorded: recorded, render: render)
+                    if render.periodShown.contains(date) {
+                        highlightBand(for: date, index: index, recorded: true, render: render)
                             .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
                     }
                 }
@@ -783,7 +790,8 @@ struct SeasonCalendarView: View {
     }
 
     private func sameKind(_ date: Date, recorded: Bool, render: MonthRender) -> Bool {
-        recorded ? render.recorded.contains(date) : render.predicted.contains(date)
+        // 표시되는 형광펜 기준 — 숨겨진 기록일(겨울 겹침)과는 이어 그리지 않는다
+        render.periodShown.contains(date)
     }
 
     // ── 단계 → 렌더 규칙 ──
@@ -840,7 +848,6 @@ struct SeasonCalendarView: View {
             legendItem(.luteal)
             Spacer()
             legendSwatch(Ink.coral, "기록")
-            legendSwatch(highlightGray, "예상")
         }
         .padding(.top, 6)
     }
