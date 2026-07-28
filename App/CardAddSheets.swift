@@ -245,16 +245,21 @@ struct QuickScheduleSheet: View {
     @FocusState private var titleFocused: Bool
     @State private var title = ""
     @State private var pickedTime: Date?           // 칩으로 직접 정한 시각 — 있으면 파싱값보다 우선
-    @State private var ignoreParsed = false        // 읽은 시각을 물린 상태(하루종일로 되돌림)
+    @State private var rejectedMatch: String?      // 물린 시각 표현("3시" 등) — 같은 표현일 때만 무시
     @State private var pmOverride: Bool?           // 오전·오후 직접 선택(nil = 관례 해석 그대로, 2026-07-26)
     @State private var showTimePicker = false
 
     private var cal: Calendar { Calendar.current }
     private var parsed: ParsedScheduleText { ScheduleTextParser.parse(title) }
 
+    /// 물린 표현과 지금 제목의 표현이 같을 때만 무시 — 다른 시각을 적으면 파서가 되살아난다(2026-07-28)
+    private var parseIgnored: Bool {
+        parsed.matchedText != nil && parsed.matchedText == rejectedMatch
+    }
+
     /// 제목에서 읽은 시작 시각 — 오전·오후를 직접 고른 경우 그쪽으로 뒤집는다
     private var parsedStart: ParsedTime? {
-        guard !ignoreParsed, let start = parsed.start else { return nil }
+        guard !parseIgnored, let start = parsed.start else { return nil }
         guard parsed.ambiguousMeridiem, let pm = pmOverride else { return start }
         return variant(start, pm: pm)
     }
@@ -276,7 +281,7 @@ struct QuickScheduleSheet: View {
 
     /// 종료 시각은 제목에서 범위를 읽었을 때만("3시~5시"). 칩으로 정했으면 1시간.
     private var endTime: ParsedTime? {
-        guard pickedTime == nil, !ignoreParsed, let end = parsed.end else { return nil }
+        guard pickedTime == nil, !parseIgnored, let end = parsed.end else { return nil }
         guard parsed.ambiguousMeridiem, let pm = pmOverride, let start = parsed.start,
               let shown = parsedStart else { return end }
         // 시작을 뒤집었으면 종료도 같은 폭으로 — "3시~5시"를 오전으로 고르면 05:00
@@ -364,9 +369,10 @@ struct QuickScheduleSheet: View {
         HStack(spacing: 8) {
             chipButton(icon: "clock", label: timeLabel, filled: startTime != nil) {
                 showTimePicker.toggle()
-                // 제목에서 읽은 시각이 있으면 그걸 이어받고, 없으면 다음 정시
-                if showTimePicker, pickedTime == nil {
-                    pickedTime = parsedStart.flatMap(date(at:)) ?? defaultPickerTime
+                // 제목에서 읽은 시각이 있으면 휠은 그 값을 비추기만 한다(pickedTime 미확정) —
+                // 오전·오후 칩과 공존, 휠을 돌리는 순간에만 확정(2026-07-28). 없으면 다음 정시 확정.
+                if showTimePicker, pickedTime == nil, parsedStart == nil {
+                    pickedTime = defaultPickerTime
                 }
             }
             Spacer()
@@ -375,7 +381,7 @@ struct QuickScheduleSheet: View {
 
     /// 오전·오후를 안 쓴 "N시"는 두 읽기가 다 성립 — 고르게 한다(2026-07-26 사용자 지시)
     private var showsMeridiemChoice: Bool {
-        pickedTime == nil && !ignoreParsed && parsed.ambiguousMeridiem && parsed.start != nil
+        pickedTime == nil && !parseIgnored && parsed.ambiguousMeridiem && parsed.start != nil
     }
 
     private var meridiemChips: some View {
@@ -419,14 +425,14 @@ struct QuickScheduleSheet: View {
     private var timePicker: some View {
         HStack {
             DatePicker("시각", selection: Binding(
-                get: { pickedTime ?? defaultPickerTime },
-                set: { pickedTime = $0; ignoreParsed = false }
+                get: { pickedTime ?? parsedStart.flatMap(date(at:)) ?? defaultPickerTime },
+                set: { pickedTime = $0; rejectedMatch = nil }
             ), displayedComponents: [.hourAndMinute])
             .labelsHidden()
             Spacer()
             Button("하루종일로") {
                 pickedTime = nil
-                ignoreParsed = true          // 제목에서 읽은 시각도 함께 물린다
+                rejectedMatch = parsed.matchedText   // 제목에서 읽은 시각도 함께 물린다 — 다른 표현을 적으면 복귀
                 showTimePicker = false
             }
             .font(.caption)
@@ -436,7 +442,7 @@ struct QuickScheduleSheet: View {
 
     /// 제목에서 읽은 근거 — 무엇을 어떻게 읽었고 제목이 뭐가 되는지 미리 보여준다
     private var hint: String? {
-        guard pickedTime == nil, !ignoreParsed,
+        guard pickedTime == nil, !parseIgnored,
               let matched = parsed.matchedText, let start = parsed.start else { return nil }
         var text: String
         if parsed.ambiguousMeridiem {
@@ -456,7 +462,7 @@ struct QuickScheduleSheet: View {
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.55))
                 .fixedSize(horizontal: false, vertical: true)
-            Button("아니요") { ignoreParsed = true }
+            Button("아니요") { rejectedMatch = parsed.matchedText }
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(Ink.text.opacity(0.75))
         }
