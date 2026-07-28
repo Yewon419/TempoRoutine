@@ -379,12 +379,34 @@ struct SeasonCalendarView: View {
         }
     }
 
-    /// 계절 = 날짜 뒤 은은한 방사형 빛(2026-07-28 사용자 지시 — 배경 그래디언트 빛의 셀 축소판).
-    /// 예상 구간은 더 옅게(§8.1 projected 어휘 승계).
-    private func seasonGlow(color: Color, projected: Bool) -> some View {
-        RadialGradient(colors: [color.opacity(projected ? 0.14 : 0.26), color.opacity(0)],
-                       center: .center, startRadius: 1, endRadius: 21)
-            .frame(width: 42, height: 42)
+    /// 계절 = 날짜 뒤 이어지는 빛 띠(2026-07-28 2차 — 같은 계절 연속 구간 연결, 사용자 지시).
+    /// 형광펜 밴드와 같은 문법: 구간 양 끝만 둥글게, 행 경계는 각지게. 세로는 위아래로 사그라드는
+    /// 그래디언트(빛의 질감). 예상 구간은 절반 감쇠. 색은 glow 팔레트(채도·명도 상향판).
+    private func seasonBand(date: Date, index: Int, meta: SeasonMeta, projected: Bool,
+                            render: MonthRender) -> some View {
+        let name = meta.name
+        let prev = cal.date(byAdding: .day, value: -1, to: date)
+            .map { render.style[$0]?.meta?.name == name } ?? false
+        let next = cal.date(byAdding: .day, value: 1, to: date)
+            .map { render.style[$0]?.meta?.name == name } ?? false
+        let col = index % 7
+        let roundLeft = !prev || col == 0
+        let roundRight = !next || col == 6
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: roundLeft ? 13 : 0,
+            bottomLeadingRadius: roundLeft ? 13 : 0,
+            bottomTrailingRadius: roundRight ? 13 : 0,
+            topTrailingRadius: roundRight ? 13 : 0
+        )
+        let peak = meta.glow.opacity(projected ? 0.17 : 0.34)
+        return LinearGradient(colors: [meta.glow.opacity(0), peak, meta.glow.opacity(0)],
+                              startPoint: .top, endPoint: .bottom)
+            .frame(height: 32)
+            .clipShape(shape)
+            .padding(.leading, roundLeft ? 3 : 0)
+            .padding(.trailing, roundRight ? 3 : 0)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, 1)
             .allowsHitTesting(false)
     }
 
@@ -689,8 +711,6 @@ struct SeasonCalendarView: View {
                     .background {
                         if isToday {
                             Circle().fill(Ink.winter)   // 오늘 = 은필 흑청 채운 원 (먹색은 기각 이력, §8.1)
-                        } else if let meta = style.meta {
-                            seasonGlow(color: meta.color, projected: style.projected)
                         }
                     }
                 if bandCount > 0 {
@@ -719,9 +739,16 @@ struct SeasonCalendarView: View {
             .padding(.horizontal, 1)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background {
-                if recorded || predicted {
-                    highlightBand(for: date, index: index, recorded: recorded, render: render)
-                        .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
+                ZStack {
+                    // 계절 빛 띠(맨 아래 — 오늘 셀도 이어진다, 은필 원이 위에 얹힘)
+                    if let meta = style.meta {
+                        seasonBand(date: date, index: index, meta: meta,
+                                   projected: style.projected, render: render)
+                    }
+                    if recorded || predicted {
+                        highlightBand(for: date, index: index, recorded: recorded, render: render)
+                            .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
+                    }
                 }
             }
             .overlay {

@@ -43,6 +43,11 @@ enum Ink {
     static let saturday = Color(light: .rgb(0x3D, 0x6B, 0xC4), dark: .rgb(0x7F, 0xA4, 0xE8))
     /// 캘린더 지면 — 앱 아이콘 frost(#F2F3F0, 2026-07-28 사용자 지시: 깨끗한 흰 배경)
     static let frost = Color(light: .rgb(0xF2, 0xF3, 0xF0), dark: .rgb(0x1A, 0x1B, 0x1B))
+    // 계절 글로우 팔레트(2026-07-28) — 텍스트 잉크는 지면 빛으로 쓰기엔 어두워 채도·명도 상향판
+    static let glowWinter = Color(light: .rgb(0x7B, 0x8F, 0xB8), dark: .rgb(0xA4, 0xB4, 0xC6))
+    static let glowSpring = Color(light: .rgb(0xBF, 0xA9, 0x43), dark: .rgb(0xCF, 0xBA, 0x60))
+    static let glowSummer = Color(light: .rgb(0x96, 0xB2, 0x59), dark: .rgb(0xAE, 0xC0, 0x82))
+    static let glowAutumn = Color(light: .rgb(0xD1, 0x6E, 0x54), dark: .rgb(0xDE, 0x8E, 0x76))
     /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
     static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }
@@ -51,6 +56,7 @@ struct SeasonMeta {
     let name: String
     let phaseName: String
     let color: Color
+    let glow: Color        // 캘린더 지면 빛 전용(채도·명도 상향판, 2026-07-28)
     let moodline: String
     let lever: String      // Output 계절 레버 카피 (§3.6 — 허락 톤, 프로토 v70 확정)
 }
@@ -58,19 +64,19 @@ struct SeasonMeta {
 func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     switch phase {
     case .menstrual:
-        SeasonMeta(name: "겨울", phaseName: "월경기", color: Ink.winter,
+        SeasonMeta(name: "겨울", phaseName: "월경기", color: Ink.winter, glow: Ink.glowWinter,
                    moodline: "이번 주는 겨울이에요. 쉬어가도 괜찮아요.",
                    lever: "쉬어가는 주기예요. 이어가도, 미뤄도 좋아요.")
     case .follicular:
-        SeasonMeta(name: "봄", phaseName: "난포기", color: Ink.spring,
+        SeasonMeta(name: "봄", phaseName: "난포기", color: Ink.spring, glow: Ink.glowSpring,
                    moodline: "봄이에요. 가볍게 시작해보기 좋은 때예요.",
                    lever: "시동 거는 주기예요. 가볍게 시작해도 좋아요.")
     case .ovulation:
-        SeasonMeta(name: "여름", phaseName: "배란기", color: Ink.summer,
+        SeasonMeta(name: "여름", phaseName: "배란기", color: Ink.summer, glow: Ink.glowSummer,
                    moodline: "여름이에요. 하고 싶은 만큼 빛나도 좋아요.",
                    lever: "흐름이 오르는 주기예요. 하고 싶은 만큼 몰입해도 좋아요.")
     case .luteal:
-        SeasonMeta(name: "가을", phaseName: "황체기", color: Ink.autumn,
+        SeasonMeta(name: "가을", phaseName: "황체기", color: Ink.autumn, glow: Ink.glowAutumn,
                    moodline: "가을이에요. 하나씩 매듭지어도 좋은 때예요.",
                    lever: "매듭짓는 주기예요. 하나씩 마무리해도 좋아요.")
     }
