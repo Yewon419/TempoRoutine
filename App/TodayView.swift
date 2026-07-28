@@ -39,6 +39,8 @@ enum Ink {
     static let oxide = Color(light: .rgb(0x8B, 0x6F, 0x55), dark: .rgb(0xB2, 0x94, 0x77))
     /// 공휴일 빨간날 표기 전용(2026-07-28) — 기록 코랄·파괴 danger와 역할 분리
     static let holiday = Color(light: .rgb(0xC2, 0x45, 0x3C), dark: .rgb(0xE0, 0x7A, 0x70))
+    /// 토요일 파랑(달력 관례, 2026-07-28 사용자 결정 — 주말·공휴일은 숫자색을 관례에 양보)
+    static let saturday = Color(light: .rgb(0x3D, 0x6B, 0xC4), dark: .rgb(0x7F, 0xA4, 0xE8))
     /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
     static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
 }

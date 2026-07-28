@@ -85,22 +85,23 @@ struct WeekStripView: View {
     private func column(index: Int) -> some View {
         let day = entry.days[index]
         let isToday = day.map { cal.isDate($0.day, inSameDayAs: today) } ?? false
+        let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
         return VStack(spacing: 8) {
             Text(weekdaySymbols[index])
                 .font(.system(size: 11))
-                .foregroundStyle(WInk.winter.opacity(0.8))
-            dayNumber(day, isToday: isToday)
+                .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.winter.opacity(0.8))
+            dayNumber(day, isToday: isToday, weekday: weekday)
         }
     }
 
-    private func dayNumber(_ day: WidgetDay?, isToday: Bool) -> some View {
+    private func dayNumber(_ day: WidgetDay?, isToday: Bool, weekday: Int) -> some View {
         let number = day.map { String(cal.component(.day, from: $0.day)) } ?? "·"
         let faded = day?.projected == true
-        let ink = WInk.season(day?.season)
+        let ink = WInk.weekdayAccent(weekday) ?? WInk.season(day?.season).opacity(faded ? 0.55 : 1)
         return Text(number)
             .font(.system(size: 16, weight: isToday ? .bold : .semibold))
             .monospacedDigit()
-            .foregroundStyle(isToday ? WInk.paper : ink.opacity(faded ? 0.55 : 1))
+            .foregroundStyle(isToday ? WInk.paper : ink)
             .frame(width: 30, height: 30)
             .background { numberBackground(day, isToday: isToday) }
     }

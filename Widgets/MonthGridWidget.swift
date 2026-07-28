@@ -92,9 +92,10 @@ struct MonthGridView: View {
     private var weekdayRow: some View {
         HStack(spacing: 0) {
             ForEach(0..<7, id: \.self) { index in
+                let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
                 Text(weekdaySymbols[index])
                     .font(.system(size: 10))
-                    .foregroundStyle(WInk.winter.opacity(0.75))
+                    .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.winter.opacity(0.75))
                     .frame(maxWidth: .infinity)
             }
         }
@@ -126,19 +127,20 @@ struct MonthGridView: View {
         if let date = date(at: index) {
             let day = entry.snapshot?.entry(for: date)
             let isToday = date == today
-            dayNumber(day, number: cal.component(.day, from: date), isToday: isToday)
+            dayNumber(day, number: cal.component(.day, from: date), isToday: isToday,
+                      weekday: cal.component(.weekday, from: date))
         } else {
             Color.clear
         }
     }
 
-    private func dayNumber(_ day: WidgetDay?, number: Int, isToday: Bool) -> some View {
+    private func dayNumber(_ day: WidgetDay?, number: Int, isToday: Bool, weekday: Int) -> some View {
         let faded = day?.projected == true
-        let ink = WInk.season(day?.season)
+        let ink = WInk.weekdayAccent(weekday) ?? WInk.season(day?.season).opacity(faded ? 0.55 : 1)
         return Text("\(number)")
             .font(.system(size: 12, weight: isToday ? .bold : .semibold))
             .monospacedDigit()
-            .foregroundStyle(isToday ? WInk.paper : ink.opacity(faded ? 0.55 : 1))
+            .foregroundStyle(isToday ? WInk.paper : ink)
             .frame(width: 24, height: 24)
             .background { cellBackground(day, isToday: isToday) }
     }

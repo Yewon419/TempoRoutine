@@ -51,6 +51,17 @@ enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀)
     static let paper = dyn((0xF1, 0xEE, 0xE6), (0x1C, 0x1B, 0x19))
     static let coral = dyn((0xD6, 0x64, 0x4C), (0xE0, 0x7A, 0x63))          // 기록 형광펜
     static let predictGray = dyn((0x87, 0x8E, 0x94), (0x9B, 0xA2, 0xA8))   // 예상 형광펜
+    static let holidayRed = dyn((0xC2, 0x45, 0x3C), (0xE0, 0x7A, 0x70))    // 일요일(앱 Ink.holiday 동값)
+    static let saturday = dyn((0x3D, 0x6B, 0xC4), (0x7F, 0xA4, 0xE8))      // 토요일(달력 관례)
+
+    /// 주말은 숫자색 관례 양보(2026-07-28 사용자 결정) — 공휴일은 스냅샷에 없어 위젯은 요일만
+    static func weekdayAccent(_ weekday: Int) -> Color? {
+        switch weekday {
+        case 1: holidayRed
+        case 7: saturday
+        default: nil
+        }
+    }
 
     static func season(_ key: String?) -> Color {
         switch key {

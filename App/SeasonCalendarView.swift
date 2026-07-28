@@ -367,12 +367,26 @@ struct SeasonCalendarView: View {
         return Array(symbols[shift...] + symbols[..<shift])
     }
 
+    /// 숫자 잉크색 — 주말·공휴일은 달력 관례에 양보(2026-07-28 사용자 결정: 일·공휴일=빨강,
+    /// 토=파랑, 평일만 계절 잉크). 계절 그라데이션이 주말마다 끊기는 트레이드오프는 결정 시 고지.
+    private func numberColor(date: Date, seasonColor: Color, render: MonthRender, isToday: Bool) -> Color {
+        if isToday { return Ink.paper }
+        if render.holidays[date]?.isPublic == true { return Ink.holiday }
+        switch cal.component(.weekday, from: date) {
+        case 1: return Ink.holiday
+        case 7: return Ink.saturday
+        default: return seasonColor
+        }
+    }
+
     private var weekdayRow: some View {
         HStack(spacing: 0) {
-            ForEach(weekdaySymbols, id: \.self) { s in
+            ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { index, s in
+                let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
                 Text(s)
                     .font(.system(size: 11))
-                    .foregroundStyle(Ink.winter)
+                    .foregroundStyle(weekday == 1 ? Ink.holiday
+                                     : weekday == 7 ? Ink.saturday : Ink.winter)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -660,7 +674,8 @@ struct SeasonCalendarView: View {
                 Text("\(cal.component(.day, from: date))")
                     .font(.system(size: 14, weight: isToday ? .bold : .semibold))
                     .monospacedDigit()
-                    .foregroundStyle(isToday ? Ink.paper : style.color)
+                    .foregroundStyle(numberColor(date: date, seasonColor: style.color,
+                                                 render: render, isToday: isToday))
                     .frame(width: 27, height: 27)
                     .background {
                         if isToday {
