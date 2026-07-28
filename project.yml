@@ -58,6 +58,10 @@ targets:
       path: Widgets/Info.plist
       properties:
         CFBundleDisplayName: 템포루틴
+        # 명시 info: 블록은 버전 키를 리터럴(1/1.0)로 박는다 — 빌드 설정 변수로 연결해야
+        # 앱과 버전 일치(ITMS-90473 실측 2026-07-28: appex 1/1.0 vs 앱 195/0.1.0 경고)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
