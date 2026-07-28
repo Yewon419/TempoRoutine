@@ -91,8 +91,8 @@ struct DayDetailView: View {
                     .font(.system(.subheadline, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.6))
             }
-            // 공휴일·기념일 표기(2026-07-28) — 캘린더 셀과 같은 어휘
-            let holidays = KoreanHolidays.holidays(on: day)
+            // 공휴일·기념일 표기(2026-07-28) — 소스는 캘린더 셀과 동일(애플 캘린더 우선, 내장 폴백)
+            let holidays = dayHolidays()
             if !holidays.isEmpty {
                 Text(holidays.map(\.name).joined(separator: " · "))
                     .font(.system(.footnote, design: .serif))
@@ -111,6 +111,18 @@ struct DayDetailView: View {
                     .foregroundStyle(Ink.text.opacity(0.5))
             }
         }
+    }
+
+    /// 애플 공휴일 캘린더(연동 시) 우선, 내장 테이블 폴백 — SeasonCalendarView와 같은 규칙
+    private func dayHolidays() -> [KoreanHoliday] {
+        let start = cal.startOfDay(for: day)
+        if let end = cal.date(byAdding: .day, value: 1, to: start),
+           let names = EventOverlay.shared.holidayNames(from: start, to: end) {
+            return (names[start] ?? []).map {
+                KoreanHoliday(name: $0, isPublic: !KoreanHolidays.isCommemorationName($0))
+            }
+        }
+        return KoreanHolidays.holidays(on: day)
     }
 
     // ── 생리 기록 토글 (§5.5.4 접근성 대체 — 미래 금지) ──

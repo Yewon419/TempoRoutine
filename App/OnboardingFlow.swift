@@ -38,6 +38,10 @@ struct OnboardingFlow: View {
     @State private var introEntered = false     // "시작/다음" 버튼 1000ms 지연 노출 — 스텝1 (재)진입마다 리셋
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 단계 진행·토글, 확정 아님)
 
+    // 브랜드 스플래시 — 온보딩 최초 1회. 로고 + 시그니처 사운드(2026-07-28)
+    @State private var showSplash = true
+    @State private var splashLogoIn = false
+
     // ② 기준일
     @State private var dateSource = 0          // 0=건강 앱 / 1=직접 입력 / 2=기억 안 나요
     @State private var showTracker = false
@@ -79,13 +83,49 @@ struct OnboardingFlow: View {
             Text(syncMessage ?? "")
         }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
-        .task(id: step) {
-            guard step == 1 else { return }
+        .overlay { if showSplash { splash } }
+        // 스플래시가 걷힌 뒤에야 인트로 연출이 시작되도록 스플래시 상태를 id에 넣는다.
+        // 안 그러면 씬A의 원 그리기(2.8s)가 스플래시 뒤에서 다 끝나버린다.
+        .task(id: [step, showSplash ? 1 : 0]) {
+            guard step == 1, !showSplash else { return }
             introEntered = false
             guard !reduceMotion else { introEntered = true; return }
             try? await Task.sleep(nanoseconds: 30_000_000)
             introEntered = true
         }
+        .task {
+            guard showSplash else { return }
+            splashLogoIn = true
+            try? await Task.sleep(nanoseconds: 250_000_000)   // 로고가 먼저 읽히고 소리가 붙는다
+            guard showSplash, !Task.isCancelled else { return }
+            SignatureSound.shared.play()
+            try? await Task.sleep(nanoseconds: 2_450_000_000)
+            guard !Task.isCancelled else { return }
+            dismissSplash()
+        }
+    }
+
+    // ── 브랜드 스플래시 ──
+    // 로고를 띄우고 시그니처 사운드를 한 번 낸다. 탭하면 즉시 건너뛴다.
+    private var splash: some View {
+        ZStack {
+            Ink.paper.ignoresSafeArea()
+            BrandLogo(diameter: 108)
+                .opacity(splashLogoIn ? 1 : 0)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.7), value: splashLogoIn)
+        }
+        .transition(.opacity)
+        .contentShape(Rectangle())
+        .onTapGesture { dismissSplash() }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("템포루틴")
+        .accessibilityHint("탭하면 건너뜁니다")
+    }
+
+    private func dismissSplash() {
+        guard showSplash else { return }
+        SignatureSound.shared.stop()
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.5)) { showSplash = false }
     }
 
     // ── 하단 액션 바 — 전 스텝 공통 위치(2026-07-22 베타 피드백: 버튼 위치 통일·점과 겹침 정정) ──
@@ -185,9 +225,10 @@ struct OnboardingFlow: View {
         .contentShape(Rectangle())
         .onTapGesture { advanceIntro() }
         .transition(.opacity)   // 씬 전환 크로스페이드(시안 500ms — advanceIntro의 withAnimation이 구동)
-        .task(id: introScene) {
+        .task(id: [introScene, showSplash ? 1 : 0]) {
             sceneAppeared = false
             orbitAngle = 0
+            guard !showSplash else { return }       // 스플래시 뒤에서 연출을 소모하지 않는다
             if introScene != 0 { startDrawing() }   // 씬B·C는 기존 방식 유지(Phase 2에서 정합)
             guard !reduceMotion else { sceneAppeared = true; return }
             try? await Task.sleep(nanoseconds: 30_000_000)   // 상태 변화가 관측되도록 한 틱 양보

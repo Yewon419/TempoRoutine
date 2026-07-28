@@ -41,12 +41,52 @@ final class EventOverlay {
         authorized = granted
     }
 
+    /// 애플 기본 캘린더의 공휴일 구독 캘린더(제목 "공휴일"/"holiday") — 표기 소스(2026-07-28)
+    private var holidayCalendars: [EKCalendar] {
+        store.calendars(for: .event).filter { c in
+            let title = c.title.lowercased()
+            return title.contains("공휴일") || title.contains("holiday")
+        }
+    }
+
+    /// 구간의 공휴일 이름(일 단위 키). 미연동·공휴일 캘린더 없음 = nil — 호출측이 내장 테이블 폴백.
+    func holidayNames(from start: Date, to end: Date) -> [Date: [String]]? {
+        guard authorized else { return nil }
+        let calendars = holidayCalendars
+        guard !calendars.isEmpty else { return nil }
+        let cal = Calendar.current
+        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: calendars)
+        var out: [Date: [String]] = [:]
+        for event in store.events(matching: predicate) {
+            guard let title = event.title, let eventStart = event.startDate else { continue }
+            // 며칠짜리 연휴가 한 이벤트로 온 경우 — 걸치는 날 전부에 표기
+            var day = cal.startOfDay(for: eventStart)
+            let last = cal.startOfDay(for: event.endDate ?? eventStart)
+            var hops = 0
+            while day <= last && hops < 31 {
+                if day >= start && day < end && !(out[day]?.contains(title) ?? false) {
+                    out[day, default: []].append(title)
+                }
+                guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
+                day = next
+                hops += 1
+            }
+        }
+        return out
+    }
+
     func events(on day: Date) -> [OverlayEvent] {
         guard authorized else { return [] }
         let cal = Calendar.current
         let start = cal.startOfDay(for: day)
         guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return [] }
-        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
+        // 공휴일 캘린더는 일정 행에서 제외 — 공휴일 표기는 셀 글줄·상세 표제가 담당(중복 방지)
+        let normal = store.calendars(for: .event).filter { c in
+            let title = c.title.lowercased()
+            return !title.contains("공휴일") && !title.contains("holiday")
+        }
+        let predicate = store.predicateForEvents(withStart: start, end: end,
+                                                 calendars: normal.isEmpty ? nil : normal)
         return store.events(matching: predicate)
             .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
             .map {

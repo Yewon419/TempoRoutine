@@ -54,6 +54,12 @@ public enum KoreanHolidays {
         // 2028 추석 당일(10/3)은 개천절과 겹침 — 고정일(개천절)이 우선 표기, 연휴·대체는 위에.
     ]
 
+    /// 외부 소스(애플 캘린더) 이름의 기념일 판별 — 빨간날/회색 표기 분기용(2026-07-28)
+    public static func isCommemorationName(_ name: String) -> Bool {
+        commemorations.contains { name.contains($0.name.replacingOccurrences(of: " ", with: ""))
+            || name.contains($0.name) }
+    }
+
     /// 그날의 공휴일·기념일 전부(없으면 빈 배열). 공휴일이 앞에 온다.
     public static func holidays(on date: Date, calendar: Calendar = .current) -> [KoreanHoliday] {
         let comps = calendar.dateComponents([.year, .month, .day], from: date)

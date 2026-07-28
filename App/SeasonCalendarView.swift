@@ -396,6 +396,14 @@ struct SeasonCalendarView: View {
         var predicted = Set<Date>()
         var style: [Date: (color: Color, meta: SeasonMeta?, projected: Bool)] = [:]
         var holidays: [Date: KoreanHoliday] = [:]
+        // 소스 우선순위(2026-07-28 사용자 지시): 애플 기본 캘린더의 공휴일 구독 캘린더(연동 시)
+        // → 내장 테이블 폴백(미연동·구독 꺼짐). 임시공휴일 등은 애플 캘린더만 안다.
+        let ekHolidays: [Date: [String]]?
+        if let monthEnd = cal.date(byAdding: .day, value: layout.daysInMonth, to: layout.start) {
+            ekHolidays = EventOverlay.shared.holidayNames(from: layout.start, to: monthEnd)
+        } else {
+            ekHolidays = nil
+        }
         for offset in -1...layout.daysInMonth {
             guard let d = cal.date(byAdding: .day, value: offset, to: layout.start) else { continue }
             let day = cal.startOfDay(for: d)
@@ -406,7 +414,14 @@ struct SeasonCalendarView: View {
             }
             if offset >= 0 && offset < layout.daysInMonth {
                 style[day] = cellStyle(for: day)
-                holidays[day] = KoreanHolidays.holidays(on: day, calendar: cal).first
+                if let ekHolidays {
+                    if let name = ekHolidays[day]?.first {
+                        holidays[day] = KoreanHoliday(name: name,
+                                                      isPublic: !KoreanHolidays.isCommemorationName(name))
+                    }
+                } else {
+                    holidays[day] = KoreanHolidays.holidays(on: day, calendar: cal).first
+                }
             }
         }
         return MonthRender(marks: monthMarks(layout), bands: bandLayout(layout),
