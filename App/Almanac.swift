@@ -159,7 +159,7 @@ struct SeasonLight: View {
                     Color(red: 190 / 255, green: 192 / 255, blue: 198 / 255).opacity(0.07),
                     Color(red: 150 / 255, green: 152 / 255, blue: 158 / 255).opacity(0.09))
         }
-        switch phase {
+        return switch phase {
         case .follicular:
             (Color(red: 216 / 255, green: 196 / 255, blue: 132 / 255).opacity(0.55),
              Color(red: 228 / 255, green: 214 / 255, blue: 164 / 255).opacity(0.38),
