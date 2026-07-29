@@ -89,7 +89,7 @@ struct WeekStripView: View {
         return VStack(spacing: 8) {
             Text(weekdaySymbols[index])
                 .font(.system(size: 11))
-                .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.winter.opacity(0.8))
+                .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.accent.opacity(0.8))   // 구조색(기본=winter 동값)
             ZStack {
                 // 계절 = 숫자 아래 얇은 밑줄 띠(2026-07-28 4차 — 앱 캘린더와 동일)
                 if let season = day?.season {
@@ -119,7 +119,7 @@ struct WeekStripView: View {
     @ViewBuilder
     private func numberBackground(_ day: WidgetDay?, isToday: Bool) -> some View {
         if isToday {
-            Circle().fill(WInk.winter)   // 오늘 = 은필 채운 원(캘린더와 동일 — 먹색 기각 이력 §8.1)
+            Circle().fill(WInk.accent)   // 오늘 = 구조색 원(기본=은필 동값 / 모던=흰색, §8.1)
         } else if day?.recorded == true && day?.season != "winter" {
             // 겨울 띠와 어긋난 기록만 코랄 — 회색 예상 폐기(앱 캘린더와 동일 규칙, 2026-07-28)
             Capsule().fill(WInk.record.opacity(0.25))

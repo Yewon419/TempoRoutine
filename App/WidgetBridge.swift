@@ -30,7 +30,8 @@ enum WidgetBridge {
             entry.outputs = outputLines(on: day, snapshot: snapshot, outputs: outputs)
             days.append(entry)
         }
-        let payload = WidgetSnapshot(generatedAt: .now, days: days)
+        let payload = WidgetSnapshot(generatedAt: .now, days: days,
+                                     theme: ThemeStore.current.rawValue)   // 위젯 테마 전달(Phase 5)
         guard let data = try? JSONEncoder().encode(payload) else { return }
         try? data.write(to: url, options: .atomic)
         WidgetCenter.shared.reloadAllTimelines()

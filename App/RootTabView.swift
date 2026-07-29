@@ -36,6 +36,9 @@ struct RootTabView: View {
         .id(appTheme)
         .onChange(of: appTheme) { _, newValue in
             ThemeStore.apply(newValue)   // 설정의 선(先)apply 보완 벨트 — 외부 변경(백업 복원 등) 대비
+            // 위젯도 즉시 테마 추종(Phase 5) — 스냅샷 재발행 + reloadAllTimelines(publish 내장)
+            WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
+                                 inputs: inputs, outputs: outputs, completions: completions)
         }
         // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {

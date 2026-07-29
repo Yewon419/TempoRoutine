@@ -26,9 +26,8 @@ struct RhythmView: View {
             SeasonLight(phase: snapshot.phase(on: today), motif: .open)
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    Text("나의 리듬")
-                        .font(.almanac(size: 44, weight: .bold))
-                        .foregroundStyle(Ink.text)
+                    // 모던 = 아웃라인 표제(시안 §1.3-2 — 나의 리듬은 아웃라인 승격 이력)
+                    almanacDisplay("나의 리듬", size: 44, color: Ink.text)
                         .padding(.top, 12)
                     coldCard
                     if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)

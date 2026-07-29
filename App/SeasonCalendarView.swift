@@ -361,9 +361,8 @@ struct SeasonCalendarView: View {
     // ── 표제 (책력 조판: 거대 월 + 연도, 월 이동) ──
     private var monthHeader: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text("\(cal.component(.month, from: monthStart))월")
-                .font(.almanac(size: 58, weight: .bold))   // v6 거대 표제부 확정 치수
-                .foregroundStyle(Ink.text)
+            // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v6 확정 58px)
+            almanacDisplay("\(cal.component(.month, from: monthStart))월", size: 58, color: Ink.text)
             Text(String(cal.component(.year, from: monthStart)))
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.5))

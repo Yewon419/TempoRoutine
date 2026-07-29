@@ -189,9 +189,9 @@ struct TodayView: View {
     private var largeHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let info = todayInfo {
-                Text(info.meta.name)
-                    .font(.almanac(size: 58, weight: .bold))   // v39~41 확정: 계절 표제 58px
-                    .foregroundStyle(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
+                // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
+                almanacDisplay(info.meta.name, size: 58,
+                               color: info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
                 HStack(spacing: 6) {
                     // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
                     Text("\(info.meta.phaseName) \(info.dayInCycle)일차")

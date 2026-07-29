@@ -43,6 +43,78 @@ extension Font {
     }
 }
 
+// ── 모던 거대 표제 = 아웃라인 타이포 (시안 §1.3-2, Phase 4 스파이크) ──
+// CSS `paint-order: stroke fill` 등가: 결합 글리프 패스에 스트로크(잉크)를 먼저 긋고
+// 채움(지면색)을 위에 얹는다 — 획 내부 경계가 가려져 바깥 외곽선만 남는다
+// (단순 텍스트 스트로크는 획 겹침으로 시안 단계에서 기각된 이력).
+// 실기기 시각 확정 전까지 스파이크 — 실패 시 almanacDisplay의 분기만 걷어내면 솔리드 복귀.
+struct OutlineText: View {
+    let text: String
+    let size: CGFloat
+    var stroke: CGFloat = 1.2   // 바깥으로 보이는 두께(중심 스트로크라 2배로 긋는다)
+
+    private struct Metrics {
+        let path: Path
+        let width: CGFloat
+        let ascent: CGFloat
+        let descent: CGFloat
+    }
+
+    private var metrics: Metrics {
+        let ctFont = CTFontCreateWithName("Pretendard-SemiBold" as CFString, size, nil)
+        let attributed = NSAttributedString(string: text, attributes: [.font: ctFont])
+        let line = CTLineCreateWithAttributedString(attributed)
+        var ascent: CGFloat = 0
+        var descent: CGFloat = 0
+        var leading: CGFloat = 0
+        let width = CGFloat(CTLineGetTypographicBounds(line, &ascent, &descent, &leading))
+        let combined = CGMutablePath()
+        let runs = CTLineGetGlyphRuns(line) as! [CTRun]
+        for run in runs {
+            let attrs = CTRunGetAttributes(run) as! [CFString: Any]
+            let runFont = attrs[kCTFontAttributeName] as! CTFont
+            for i in 0..<CTRunGetGlyphCount(run) {
+                var glyph = CGGlyph()
+                var position = CGPoint()
+                CTRunGetGlyphs(run, CFRange(location: i, length: 1), &glyph)
+                CTRunGetPositions(run, CFRange(location: i, length: 1), &position)
+                guard let glyphPath = CTFontCreatePathForGlyph(runFont, glyph, nil) else { continue }
+                combined.addPath(glyphPath,
+                                 transform: CGAffineTransform(translationX: position.x, y: position.y))
+            }
+        }
+        // CoreText 좌표(베이스라인 원점, y 위로) → SwiftUI(좌상단 원점, y 아래로) + 스트로크 여백
+        var flip = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: stroke, ty: ascent + stroke)
+        let flipped = combined.copy(using: &flip) ?? combined
+        return Metrics(path: Path(flipped), width: width, ascent: ascent, descent: descent)
+    }
+
+    var body: some View {
+        let m = metrics
+        Canvas { context, _ in
+            context.stroke(m.path, with: .color(Ink.text),
+                           style: StrokeStyle(lineWidth: stroke * 2, lineJoin: .round))
+            context.fill(m.path, with: .color(Ink.paper))
+        }
+        .frame(width: m.width + stroke * 2, height: m.ascent + m.descent + stroke * 2)
+        // 이웃 텍스트와 베이스라인 정렬(표제 HStack들이 .firstTextBaseline 정렬)
+        .alignmentGuide(.firstTextBaseline) { _ in m.ascent + stroke }
+        .accessibilityLabel(Text(text))
+    }
+}
+
+/// 거대 표제 공용 진입점 — 모던 = 아웃라인, 그 외(및 폰트 미등록) = 솔리드 almanac
+@ViewBuilder
+func almanacDisplay(_ text: String, size: CGFloat, color: Color) -> some View {
+    if ThemeStore.current == .modern, ThemeFont.available {
+        OutlineText(text: text, size: size)
+    } else {
+        Text(text)
+            .font(.almanac(size: size, weight: .bold))
+            .foregroundStyle(color)
+    }
+}
+
 // ── 재질 위계 (§4 보강 I: 크롬 유리 / 밀크 글래스 2단) ──
 // 콘텐츠 카드 = 밀크 글래스(반투명 지면 + 은필 실선), 배경 계절광이 비쳐 유리감이 성립.
 struct MilkGlass: ViewModifier {

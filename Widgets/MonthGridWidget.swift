@@ -95,7 +95,7 @@ struct MonthGridView: View {
                 let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
                 Text(weekdaySymbols[index])
                     .font(.system(size: 10))
-                    .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.winter.opacity(0.75))
+                    .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.accent.opacity(0.75))   // 구조색(기본=winter 동값)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -165,7 +165,7 @@ struct MonthGridView: View {
     @ViewBuilder
     private func cellBackground(_ day: WidgetDay?, isToday: Bool) -> some View {
         if isToday {
-            Circle().fill(WInk.winter)   // 오늘 = 은필 채운 원(§8.1 — 먹색 기각 이력)
+            Circle().fill(WInk.accent)   // 오늘 = 구조색 원(기본=은필 동값 / 모던=흰색, §8.1)
         } else if day?.recorded == true && day?.season != "winter" {
             // 겨울 띠와 어긋난 기록만 코랄 — 회색 예상 폐기(앱 캘린더와 동일 규칙, 2026-07-28)
             Circle().fill(WInk.record.opacity(0.25))

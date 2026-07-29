@@ -56,6 +56,8 @@ struct WidgetDay: Codable {
 struct WidgetSnapshot: Codable {
     let generatedAt: Date
     let days: [WidgetDay]
+    /// 테마 키(2026-07-29 테마 시스템 Phase 5) — "standard"/"modern". optional 추가만(계약 규칙)
+    var theme: String? = nil
 
     func entry(for date: Date, calendar: Calendar = .current) -> WidgetDay? {
         let target = calendar.startOfDay(for: date)

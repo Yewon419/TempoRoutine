@@ -17,7 +17,21 @@ enum WFont {
         }
     }()
 
+    /// 모던 표제 서체 — 앱 ThemeFont와 동형(Pretendard otf는 App/Fonts 리소스로 위젯 번들에도 포함)
+    static let pretendardAvailable: Bool = {
+        ["Pretendard-Regular", "Pretendard-Medium", "Pretendard-SemiBold"].allSatisfy { name in
+            guard let url = Bundle.main.url(forResource: name, withExtension: "otf") else { return false }
+            return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
+    }()
+
     static func almanac(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        if WThemeStore.isModern {
+            guard pretendardAvailable else {
+                return .system(size: size, weight: weight == .bold ? .semibold : .medium)
+            }
+            return .custom(weight == .bold ? "Pretendard-SemiBold" : "Pretendard-Medium", size: size)
+        }
         guard available else { return .system(size: size, weight: weight, design: .serif) }
         return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
     }
@@ -34,8 +48,14 @@ struct TempoWidgetsBundle: WidgetBundle {
     }
 }
 
-// ── 잉크 토큰 (App/TodayView.swift Ink와 동값) ──
-enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀)
+// ── 잉크 토큰 — 테마 팔레트 위임(앱 Theme.swift와 동형 사본, Phase 5 2026-07-29) ──
+// 테마 키는 스냅샷(theme 필드)으로 전달 — 위젯 프로세스는 렌더 단명이라 첫 접근 1회 읽기,
+// 앱이 테마 변경 시 재발행 + reloadAllTimelines로 갱신된다.
+struct WPalette {
+    let winter, spring, summer, autumn, text, paper, coral, record: Color
+    let predictGray, holidayRed, saturday, frost: Color
+    let glowWinter, glowSpring, glowSummer, glowAutumn, accent: Color
+
     private static func dyn(_ light: (Int, Int, Int), _ dark: (Int, Int, Int)) -> Color {
         Color(uiColor: UIColor { trait in
             let c = trait.userInterfaceStyle == .dark ? dark : light
@@ -43,23 +63,76 @@ enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀)
                            blue: CGFloat(c.2) / 255, alpha: 1)
         })
     }
-    static let winter = dyn((0x55, 0x60, 0x6C), (0x98, 0xA6, 0xB4))
-    static let spring = dyn((0x8F, 0x7C, 0x2E), (0xC2, 0xAC, 0x52))
-    static let summer = dyn((0x6E, 0x7C, 0x46), (0xA3, 0xB3, 0x78))
-    static let autumn = dyn((0xA8, 0x4B, 0x38), (0xD6, 0x82, 0x6B))
-    static let text = dyn((0x2C, 0x2B, 0x27), (0xE8, 0xE6, 0xE1))
-    static let paper = dyn((0xF1, 0xEE, 0xE6), (0x1C, 0x1B, 0x19))
-    static let coral = dyn((0xD6, 0x64, 0x4C), (0xE0, 0x7A, 0x63))          // ⚠ 기록 표기서 은퇴(2026-07-28)
-    static let record = dyn((0x5B, 0x62, 0x6B), (0xA9, 0xB0, 0xB8))         // 기록 = 진한 회색(앱 동값)
-    static let predictGray = dyn((0x87, 0x8E, 0x94), (0x9B, 0xA2, 0xA8))   // 예상 형광펜
-    static let holidayRed = dyn((0xC2, 0x45, 0x3C), (0xE0, 0x7A, 0x70))    // 일요일(앱 Ink.holiday 동값)
-    static let saturday = dyn((0x3D, 0x6B, 0xC4), (0x7F, 0xA4, 0xE8))      // 토요일(달력 관례)
-    static let frost = dyn((0xF2, 0xF3, 0xF0), (0x1A, 0x1B, 0x1B))         // 캘린더 지면(앱 아이콘 색)
-    // 계절 글로우 팔레트 — 앱 Ink.glow* 동값(2026-07-28 3차 사용자 스와치 채택)
-    static let glowWinter = dyn((0x96, 0xAE, 0xCA), (0xA6, 0xBA, 0xD2))
-    static let glowSpring = dyn((0xF4, 0xDC, 0xA9), (0xF6, 0xE1, 0xB6))
-    static let glowSummer = dyn((0xBD, 0xD0, 0x85), (0xC7, 0xD7, 0x97))
-    static let glowAutumn = dyn((0xD0, 0x8C, 0x86), (0xD7, 0x9D, 0x98))
+    private static func flat(_ c: (Int, Int, Int)) -> Color { dyn(c, c) }   // 모던 = 항상 다크 단일
+
+    /// 기본 — 종전 WInk 리터럴 동값(앱 ThemePalette.standard 사본)
+    static let standard = WPalette(
+        winter: dyn((0x55, 0x60, 0x6C), (0x98, 0xA6, 0xB4)),
+        spring: dyn((0x8F, 0x7C, 0x2E), (0xC2, 0xAC, 0x52)),
+        summer: dyn((0x6E, 0x7C, 0x46), (0xA3, 0xB3, 0x78)),
+        autumn: dyn((0xA8, 0x4B, 0x38), (0xD6, 0x82, 0x6B)),
+        text: dyn((0x2C, 0x2B, 0x27), (0xE8, 0xE6, 0xE1)),
+        paper: dyn((0xF1, 0xEE, 0xE6), (0x1C, 0x1B, 0x19)),
+        coral: dyn((0xD6, 0x64, 0x4C), (0xE0, 0x7A, 0x63)),
+        record: dyn((0x5B, 0x62, 0x6B), (0xA9, 0xB0, 0xB8)),
+        predictGray: dyn((0x87, 0x8E, 0x94), (0x9B, 0xA2, 0xA8)),
+        holidayRed: dyn((0xC2, 0x45, 0x3C), (0xE0, 0x7A, 0x70)),
+        saturday: dyn((0x3D, 0x6B, 0xC4), (0x7F, 0xA4, 0xE8)),
+        frost: dyn((0xF2, 0xF3, 0xF0), (0x1A, 0x1B, 0x1B)),
+        glowWinter: dyn((0x96, 0xAE, 0xCA), (0xA6, 0xBA, 0xD2)),
+        glowSpring: dyn((0xF4, 0xDC, 0xA9), (0xF6, 0xE1, 0xB6)),
+        glowSummer: dyn((0xBD, 0xD0, 0x85), (0xC7, 0xD7, 0x97)),
+        glowAutumn: dyn((0xD0, 0x8C, 0x86), (0xD7, 0x9D, 0x98)),
+        accent: dyn((0x55, 0x60, 0x6C), (0x98, 0xA6, 0xB4))
+    )
+
+    /// 모던 — 시안 SSOT §1.2(니어블랙 + 무채 램프 + 다홍 시그널 + 로즈 관례색)
+    static let modern = WPalette(
+        winter: flat((0xE0, 0x70, 0x5C)),
+        spring: flat((0xED, 0xEF, 0xF3)),
+        summer: flat((0xA5, 0xAA, 0xB4)),
+        autumn: flat((0x87, 0x8C, 0x97)),
+        text: flat((0xE9, 0xE7, 0xF0)),
+        paper: flat((0x0A, 0x0A, 0x0C)),
+        coral: flat((0xE0, 0x70, 0x5C)),
+        record: flat((0xA9, 0xAF, 0xC0)),
+        predictGray: flat((0xA9, 0xAF, 0xC0)),
+        holidayRed: flat((0xEC, 0x8A, 0xA0)),
+        saturday: flat((0x7F, 0xA4, 0xE8)),
+        frost: flat((0x06, 0x06, 0x07)),
+        glowWinter: flat((0xE2, 0x5B, 0x45)),
+        glowSpring: flat((0xF5, 0xF6, 0xF8)),
+        glowSummer: flat((0xA9, 0xAE, 0xB8)),
+        glowAutumn: flat((0x7C, 0x81, 0x8C)),
+        accent: flat((0xF2, 0xF3, 0xF6))
+    )
+}
+
+enum WThemeStore {
+    /// 스냅샷 테마 키 1회 읽기 — 위젯 프로세스 수명 = 렌더 1회
+    nonisolated(unsafe) static let isModern: Bool = WidgetSnapshot.load()?.theme == "modern"
+    static var palette: WPalette { isModern ? .modern : .standard }
+}
+
+enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀) — 정적 API 유지, 백킹만 위임
+    static var winter: Color { WThemeStore.palette.winter }
+    static var spring: Color { WThemeStore.palette.spring }
+    static var summer: Color { WThemeStore.palette.summer }
+    static var autumn: Color { WThemeStore.palette.autumn }
+    static var text: Color { WThemeStore.palette.text }
+    static var paper: Color { WThemeStore.palette.paper }
+    static var coral: Color { WThemeStore.palette.coral }          // ⚠ 기록 표기서 은퇴(2026-07-28)
+    static var record: Color { WThemeStore.palette.record }
+    static var predictGray: Color { WThemeStore.palette.predictGray }
+    static var holidayRed: Color { WThemeStore.palette.holidayRed }
+    static var saturday: Color { WThemeStore.palette.saturday }
+    static var frost: Color { WThemeStore.palette.frost }
+    static var glowWinter: Color { WThemeStore.palette.glowWinter }
+    static var glowSpring: Color { WThemeStore.palette.glowSpring }
+    static var glowSummer: Color { WThemeStore.palette.glowSummer }
+    static var glowAutumn: Color { WThemeStore.palette.glowAutumn }
+    /// 구조 악센트(오늘 원·요일 잉크) — 기본 = winter 동값, 모던 = 흰색
+    static var accent: Color { WThemeStore.palette.accent }
 
     static func glow(_ key: String?) -> Color {
         switch key {

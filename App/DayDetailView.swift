@@ -84,9 +84,8 @@ struct DayDetailView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("\(cal.component(.day, from: day))")
-                    .font(.almanac(size: 56, weight: .bold))   // v6 확정: 하루 상세 표제 56px
-                    .foregroundStyle(Ink.text)
+                // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v6 확정 56px)
+                almanacDisplay("\(cal.component(.day, from: day))", size: 56, color: Ink.text)
                 Text(day.formatted(.dateTime.month().weekday(.wide)))
                     .font(.system(.subheadline, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.6))
