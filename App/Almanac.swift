@@ -16,9 +16,26 @@ enum AlmanacFont {
     }()
 }
 
+/// 모던 표제·숫자 서체 — Pretendard(SIL OFL, App/Fonts 번들) 3웨이트 런타임 등록
+enum ThemeFont {
+    static let available: Bool = {
+        ["Pretendard-Regular", "Pretendard-Medium", "Pretendard-SemiBold"].allSatisfy { name in
+            guard let url = Bundle.main.url(forResource: name, withExtension: "otf") else { return false }
+            return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
+    }()
+}
+
 extension Font {
-    /// 거대 표제·책력 조판 전용. 본문은 시스템 서체 유지(프로토: 표제=Gowun Batang, 본문=산세리프)
+    /// 거대 표제·책력 조판 전용. 본문은 시스템 서체 유지(프로토: 표제=Gowun Batang, 본문=산세리프).
+    /// 모던 = Pretendard(표제 600, 시안 §1.3-3 — Gowun 세리프 대체), 등록 실패 시 시스템 폴백
     static func almanac(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        if ThemeStore.current == .modern {
+            guard ThemeFont.available else {
+                return .system(size: size, weight: weight == .bold ? .semibold : .medium)
+            }
+            return .custom(weight == .bold ? "Pretendard-SemiBold" : "Pretendard-Medium", size: size)
+        }
         guard AlmanacFont.available else {
             return .system(size: size, weight: weight, design: .serif)
         }

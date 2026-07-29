@@ -751,7 +751,7 @@ struct SeasonCalendarView: View {
             let cellMarks = render.marks[date] ?? []
             VStack(spacing: 0) {
                 Text("\(cal.component(.day, from: date))")
-                    .font(.system(size: 14, weight: isToday ? .bold : .semibold))
+                    .font(numberFont(isToday: isToday))
                     .monospacedDigit()
                     .foregroundStyle(numberColor(date: date, seasonColor: style.color,
                                                  render: render, isToday: isToday))
@@ -821,6 +821,14 @@ struct SeasonCalendarView: View {
                     RoundedRectangle(cornerRadius: 10).stroke(Ink.text.opacity(0.28), lineWidth: 1)
                 }
             }
+    }
+
+    /// 캘린더 숫자 서체 — 모던 = Pretendard 500(오늘 600, 시안 §1.3-3), 기본 = 시스템 유지
+    private func numberFont(isToday: Bool) -> Font {
+        if ThemeStore.current == .modern, ThemeFont.available {
+            return .custom(isToday ? "Pretendard-SemiBold" : "Pretendard-Medium", size: 14)
+        }
+        return .system(size: 14, weight: isToday ? .bold : .semibold)
     }
 
     /// 하루짜리 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성). 높이·R2·서체 = 띠 동일

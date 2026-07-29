@@ -98,7 +98,8 @@ struct SettingsView: View {
                 } header: {
                     Text("테마")
                 } footer: {
-                    Text("모던 테마는 실험 중이에요. 화면 전체의 색이 바뀌어요.")
+                    // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
+                    Text("모던 테마는 실험 중이에요. 화면 전체의 색이 바뀌어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
                 }
 
                 // 파괴적 액션 — 분리 배치(§8.2.6)
