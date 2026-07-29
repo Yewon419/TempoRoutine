@@ -117,8 +117,11 @@ extension ThemePalette {
 enum ThemeStore {
     static let storageKey = "appTheme"
 
-    private(set) static var current: AppTheme = .standard
-    private(set) static var palette: ThemePalette = .standard
+    // 쓰기는 메인 스레드 한정(앱 init·설정 선apply·루트 onChange — 전부 MainActor 문맥),
+    // 읽기는 뷰 body뿐 — Swift 6 strict의 전역 가변 상태 경고를 명시 해제한다.
+    // @MainActor 격리는 Ink 정적 API까지 전파돼 콜사이트 무수정 원칙과 충돌(기각).
+    nonisolated(unsafe) private(set) static var current: AppTheme = .standard
+    nonisolated(unsafe) private(set) static var palette: ThemePalette = .standard
 
     static func apply(_ rawValue: String?) {
         let theme = rawValue.flatMap(AppTheme.init(rawValue:)) ?? .standard
