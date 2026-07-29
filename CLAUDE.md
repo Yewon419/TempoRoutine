@@ -51,3 +51,8 @@
   화면 밖 콘텐츠(캐러셀 옆 패널)를 아예 렌더하지 않는다.
 - **이 리포 커밋은 명시 경로로만** — `git add -A` 금지(2026-07-28 실측: 병렬 세션의 브랜딩
   작업 파일이 무관한 커밋에 딸려 들어감). 병렬 Claude 세션이 같은 워킹트리를 쓸 수 있다.
+- Swift 6 strict(CI Xcode 26.5) 실측 2건(2026-07-29, 각 CI 한 바퀴 소진): ① 전역 가변
+  `static var`는 그대로 두면 concurrency 에러 — 쓰기 경로가 메인 한정이면
+  `nonisolated(unsafe)` + 근거 주석(ThemeStore 사례. @MainActor 격리는 정적 API 콜사이트
+  전파 비용 따져보고). ② 단일 식(switch·if) 함수에 문장을 추가하면 암묵 반환이 깨진다 —
+  `return switch`로 명시.
