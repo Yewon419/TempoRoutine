@@ -81,9 +81,11 @@ struct RhythmView: View {
                 .font(.subheadline)
                 .foregroundStyle(Ink.text.opacity(0.75))
             GeometryReader { geo in
+                // 모던 = 니어블랙 대비 상향(시안 §1.3-7): 트랙 12%·채움 75%
+                let modern = ThemeStore.current == .modern
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Ink.text.opacity(0.08))
-                    Capsule().fill(Ink.text.opacity(0.55))
+                    Capsule().fill(Ink.text.opacity(modern ? 0.12 : 0.08))
+                    Capsule().fill(Ink.text.opacity(modern ? 0.75 : 0.55))
                         .frame(width: max(6, geo.size.width * info.progress))
                 }
             }

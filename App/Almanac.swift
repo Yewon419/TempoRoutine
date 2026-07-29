@@ -41,7 +41,7 @@ struct MilkGlass: ViewModifier {
                     }
                     .overlay {
                         RoundedRectangle(cornerRadius: radius)
-                            .stroke(Ink.winter.opacity(0.18), lineWidth: 1)   // 은필 테두리
+                            .stroke(Ink.accent.opacity(0.18), lineWidth: 1)   // 구조색 테두리(기본=은필 동값)
                     }
             }
     }
@@ -53,10 +53,10 @@ extension View {
         modifier(MilkGlass(radius: radius))
     }
 
-    /// 책력 괘선 — 항목 구분(§4 조판)
+    /// 책력 괘선 — 항목 구분(§4 조판). 구조색(기본=은필 동값, 모던=흰색)
     func almanacRule(opacity: Double = 0.14) -> some View {
         overlay(alignment: .bottom) {
-            Rectangle().fill(Ink.winter.opacity(opacity)).frame(height: 1)
+            Rectangle().fill(Ink.accent.opacity(opacity)).frame(height: 1)
         }
     }
 }
@@ -116,6 +116,29 @@ struct SeasonGlyph: View {
     }
 }
 
+/// 모던 전용 지면 질감 — 22pt 간격 1pt 도트(시안 §1.3-1, --dot rgba(233,231,240,.05)).
+/// 정적 콘텐츠(상태 의존 없음) — 드래그 프레임 재계산 함정과 무관(repo CLAUDE.md).
+struct DotGrid: View {
+    var body: some View {
+        Canvas { context, size in
+            let spacing: CGFloat = 22
+            let dot = Color(red: 233 / 255, green: 231 / 255, blue: 240 / 255).opacity(0.05)
+            var y: CGFloat = spacing / 2
+            while y < size.height {
+                var x: CGFloat = spacing / 2
+                while x < size.width {
+                    context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1, height: 1)),
+                                 with: .color(dot))
+                    x += spacing
+                }
+                y += spacing
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
 /// 은필 선화 텍스처 노출 방식(§4 보강 I) — 카드류 뒤=전면, 개방 구간=중단부 마스크(v42), 온보딩=전면 감쇠(v63)
 enum MotifStyle: Equatable { case card, open, onboarding }
 
@@ -128,8 +151,14 @@ struct SeasonLight: View {
 
     private var lights: (a: Color, b: Color, c: Color) { Self.lightColors(for: phase) }
 
-    /// 계절광 3겹 색 — 캘린더 상단 글로우(2026-07-28 시안 결정)도 같은 원색을 쓴다
+    /// 계절광 3겹 색 — 캘린더 상단 글로우(2026-07-28 시안 결정)도 같은 원색을 쓴다.
+    /// 모던 = 계절 불문 무채 3단(시안 §1.3-5 — 하루 상세 포함, 유채 계절광으로 덮지 않는다)
     static func lightColors(for phase: CyclePhase?) -> (a: Color, b: Color, c: Color) {
+        if ThemeStore.current == .modern {
+            return (Color.white.opacity(0.12),
+                    Color(red: 190 / 255, green: 192 / 255, blue: 198 / 255).opacity(0.07),
+                    Color(red: 150 / 255, green: 152 / 255, blue: 158 / 255).opacity(0.09))
+        }
         switch phase {
         case .follicular:
             (Color(red: 216 / 255, green: 196 / 255, blue: 132 / 255).opacity(0.55),
@@ -172,9 +201,14 @@ struct SeasonLight: View {
             Rectangle().fill(RadialGradient(colors: [l.c, .clear],
                                             center: UnitPoint(x: 0.5, y: 1.08),
                                             startRadius: 0, endRadius: 420))
-            motifLayer
+            if ThemeStore.current == .modern {
+                DotGrid()   // 모던 질감 = 도트 그리드(시안 §1.3-1, 은필 선화 대체)
+            } else {
+                motifLayer
+            }
         }
-        .opacity(colorScheme == .dark ? 0.35 : 1.0)   // 다크 = 감쇠(먹지 위 은은한 빛)
+        // 모던 = 항상 다크 단일 외관(시안 --light-dim 1) — 시스템 다크 감쇠 미적용
+        .opacity(ThemeStore.current == .modern ? 1.0 : (colorScheme == .dark ? 0.35 : 1.0))
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)

@@ -193,10 +193,11 @@ struct TodayView: View {
                     .font(.almanac(size: 58, weight: .bold))   // v39~41 확정: 계절 표제 58px
                     .foregroundStyle(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
                 HStack(spacing: 6) {
+                    // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
                     Text("\(info.meta.phaseName) \(info.dayInCycle)일차")
-                        .foregroundStyle(info.meta.color.opacity(0.85))
+                        .foregroundStyle(info.meta.color.opacity(ThemeStore.current == .modern ? 1.0 : 0.85))
                     Text(today.formatted(.dateTime.month().day().weekday(.wide)))
-                        .foregroundStyle(Ink.text.opacity(0.55))
+                        .foregroundStyle(Ink.text.opacity(ThemeStore.current == .modern ? 0.68 : 0.55))
                     if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.text.opacity(0.45)) }
                     else if info.projected { Text("예상").foregroundStyle(Ink.text.opacity(0.45)) }
                 }

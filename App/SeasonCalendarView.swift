@@ -104,6 +104,9 @@ struct SeasonCalendarView: View {
             // 캘린더 자체 지면(2026-07-28 시안 결정) — frost 바탕 + 계절광은 상단에만 걸리고
             // 사그라든다(그리드 영역은 깨끗하게 — 글로우 밑줄 가독 담보)
             Ink.frost.ignoresSafeArea()
+            if ThemeStore.current == .modern {
+                DotGrid().ignoresSafeArea()   // 모던 전용 질감(시안 §1.3-1)
+            }
             calendarTopGlow
             if hSize == .regular {
                 // 아이패드: 캘린더 + 하루 상세 분할(2026-07-23). 우측 계절광은 선택일 단계를 따름.
@@ -164,7 +167,8 @@ struct SeasonCalendarView: View {
             Rectangle().fill(top)
             Rectangle().fill(side)
         }
-        .opacity(colorScheme == .dark ? 0.35 : 1.0)
+        // 모던은 항상 다크 단일 외관 — 시스템 다크 감쇠 미적용(시안 --light-dim 1)
+        .opacity(ThemeStore.current == .modern ? 1.0 : (colorScheme == .dark ? 0.35 : 1.0))
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -173,27 +177,14 @@ struct SeasonCalendarView: View {
     /// 캘린더 열 — compact에선 전체 화면, regular에선 분할 좌측(2026-07-23)
     private func calendarColumn() -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            monthHeader
-            HStack(alignment: .firstTextBaseline) {
-                Text(seasonLine)
-                    .font(.system(.subheadline, design: .serif))
-                    .foregroundStyle(Ink.text.opacity(0.65))
-                Spacer()
-                // 기록 편집 진입 — 캘린더 탭 자체는 조회 전용
-                Button {
-                    showLogSheet = true
-                } label: {
-                    HStack(spacing: 5) {
-                        Circle().fill(Ink.record).frame(width: 7, height: 7)
-                        Text("생리 기록")
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Ink.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
-                }
-                .coachAnchor(.calendarLog)   // 기능 튜토리얼(2026-07-23)
+            // 상단 순서(시안 §1.3-6, 모던 전용 분기 — 2026-07-29 사용자 결정):
+            // 모던 = 계절 라인·기록 버튼이 상단 제자리, 거대 표제는 그 아래
+            if ThemeStore.current == .modern {
+                seasonHeaderRow
+                monthHeader
+            } else {
+                monthHeader
+                seasonHeaderRow
             }
             weekdayRow
             // 월 표면이 손가락을 따라 움직인다(2026-07-27 사용자 지시 — 인식 후 전환에서 추종으로).
@@ -207,6 +198,31 @@ struct SeasonCalendarView: View {
         // 가로 드래그 = 월 이동(손가락 추종). 셀 기간 선택과의 분리는 종전과 동일 —
         // 롱프레스는 정지 0.4s 인식이라 먼저 움직이면 이 드래그가 이긴다. 선택 중엔 개입 안 함.
         .gesture(monthDragGesture)
+    }
+
+    /// 계절 라인 + 생리 기록 버튼 — 상단 순서 분기용 추출(2026-07-29, 내용 무변화)
+    private var seasonHeaderRow: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(seasonLine)
+                .font(.system(.subheadline, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.65))
+            Spacer()
+            // 기록 편집 진입 — 캘린더 탭 자체는 조회 전용
+            Button {
+                showLogSheet = true
+            } label: {
+                HStack(spacing: 5) {
+                    Circle().fill(Ink.record).frame(width: 7, height: 7)
+                    Text("생리 기록")
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Ink.text)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+            }
+            .coachAnchor(.calendarLog)   // 기능 튜토리얼(2026-07-23)
+        }
     }
 
     /// 옆 달은 드래그·전환 중에만 실렌더 — 유휴 렌더 비용을 종전(1개 달)으로 유지
@@ -442,7 +458,7 @@ struct SeasonCalendarView: View {
                 Text(s)
                     .font(.system(size: 11))
                     .foregroundStyle(weekday == 1 ? Ink.holiday
-                                     : weekday == 7 ? Ink.saturday : Ink.winter)
+                                     : weekday == 7 ? Ink.saturday : Ink.accent)   // 구조색(기본=winter 동값)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -741,8 +757,18 @@ struct SeasonCalendarView: View {
                                                  render: render, isToday: isToday))
                     .frame(width: 27, height: 27)
                     .background {
-                        if isToday {
-                            Circle().fill(Ink.winter)   // 오늘 = 은필 흑청 채운 원 (먹색은 기각 이력, §8.1)
+                        // 오늘 = accent 채운 원(기본=은필 흑청 동값 / 모던=흰색, §8.1·시안 §1.2).
+                        // 모던 기록일 = 형광펜 대신 회색 원(시안 §1.3-4). 원에는 지면색 링(3pt)
+                        // — 계절 밑줄이 원을 파고들어 보이는 겹침 해소.
+                        ZStack {
+                            if ThemeStore.current == .modern && (isToday || render.periodShown.contains(date)) {
+                                Circle().fill(Ink.frost).frame(width: 33, height: 33)
+                            }
+                            if isToday {
+                                Circle().fill(Ink.accent)
+                            } else if ThemeStore.current == .modern && render.periodShown.contains(date) {
+                                Circle().fill(Ink.record.opacity(0.3))
+                            }
                         }
                     }
                 Color.clear.frame(height: bandGap)   // 계절 밑줄과 간격(2026-07-28 시안 결정)
@@ -782,7 +808,8 @@ struct SeasonCalendarView: View {
                         seasonBand(date: date, index: index, meta: meta,
                                    projected: style.projected, render: render)
                     }
-                    if render.periodShown.contains(date) {
+                    // 모던은 형광펜 밴드 대신 숫자 원이 기록을 담당(시안 §1.3-4)
+                    if ThemeStore.current != .modern, render.periodShown.contains(date) {
                         highlightBand(for: date, index: index, recorded: true, render: render)
                             .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
                     }
