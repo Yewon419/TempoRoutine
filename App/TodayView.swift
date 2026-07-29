@@ -8,51 +8,40 @@ import SwiftData
 import TempoCore
 import UIKit
 
-// ── 디자인 토큰 (ui-mockup DESIGN.md — 계절 잉크·먹색·지면. 정식 미학 패스는 §5.9-8) ──
-// 다크 = 기준 대응 팔레트(2026-07-20 사용자 결정: 정식 다크 테마는 추후, 지금은 가독 대응).
-// 라이트 = 종이 지면 + 먹색 잉크 / 다크 = 먹지 지면 + 종이색 잉크, 계절 잉크는 명도 보정.
-private extension Color {
-    init(light: Color, dark: Color) {
-        self.init(uiColor: UIColor { trait in
-            trait.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
-        })
-    }
-    static func rgb(_ r: Int, _ g: Int, _ b: Int) -> Color {
-        Color(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255)
-    }
-}
-
+// ── 디자인 토큰 — 테마 팔레트 위임(2026-07-29 테마 시스템, Theme.swift) ──
+// 값 정의는 ThemePalette.standard(종전 리터럴 동값)·.modern — 여기는 정적 API만 유지.
+// 콜사이트 무수정 원칙: Ink.x 문법 그대로, 백킹만 ThemeStore.palette로.
 enum Ink {
-    static let winter = Color(light: .rgb(0x55, 0x60, 0x6C), dark: .rgb(0x98, 0xA6, 0xB4))
-    static let spring = Color(light: .rgb(0x8F, 0x7C, 0x2E), dark: .rgb(0xC2, 0xAC, 0x52))
-    static let summer = Color(light: .rgb(0x6E, 0x7C, 0x46), dark: .rgb(0xA3, 0xB3, 0x78))
-    static let autumn = Color(light: .rgb(0xA8, 0x4B, 0x38), dark: .rgb(0xD6, 0x82, 0x6B))
-    static let text   = Color(light: .rgb(0x2C, 0x2B, 0x27), dark: .rgb(0xE8, 0xE6, 0xE1))   // 잉크
-    static let paper  = Color(light: .rgb(0xF1, 0xEE, 0xE6), dark: .rgb(0x1C, 0x1B, 0x19))   // 지면(2026-07-21 종이톤 재검토)
-    static let coral  = Color(light: .rgb(0xD6, 0x64, 0x4C), dark: .rgb(0xE0, 0x7A, 0x63))   // ⚠ 2026-07-28 기록 표기서 은퇴 — record로 대체
-    /// 생리 기록 표기(2026-07-28 사용자 결정: 붉은색 → 겨울 톤과 통일된 진한 회색)
-    static let record = Color(light: .rgb(0x5B, 0x62, 0x6B), dark: .rgb(0xA9, 0xB0, 0xB8))
-    /// 파괴적 액션 전용 (--danger) — 기록 코랄·가을 잉크와 역할 분리
-    static let danger = Color(light: .rgb(0xB2, 0x3A, 0x30), dark: .rgb(0xD0, 0x68, 0x5E))
-    /// 완료 상태 = 짙은 회색(--ink-dim). 산화 갈색은 캘린더 타임라인 전용(v29 정정)
-    static let dim = Color(light: Color(red: 44 / 255, green: 43 / 255, blue: 39 / 255).opacity(0.55),
-                           dark: Color(red: 232 / 255, green: 230 / 255, blue: 225 / 255).opacity(0.5))
-    /// 산화 은필 — 캘린더 과거 일정 글줄 전용
-    static let oxide = Color(light: .rgb(0x8B, 0x6F, 0x55), dark: .rgb(0xB2, 0x94, 0x77))
-    /// 공휴일 빨간날 표기 전용(2026-07-28) — 기록 코랄·파괴 danger와 역할 분리
-    static let holiday = Color(light: .rgb(0xC2, 0x45, 0x3C), dark: .rgb(0xE0, 0x7A, 0x70))
-    /// 토요일 파랑(달력 관례, 2026-07-28 사용자 결정 — 주말·공휴일은 숫자색을 관례에 양보)
-    static let saturday = Color(light: .rgb(0x3D, 0x6B, 0xC4), dark: .rgb(0x7F, 0xA4, 0xE8))
-    /// 캘린더 지면 — 앱 아이콘 frost(#F2F3F0, 2026-07-28 사용자 지시: 깨끗한 흰 배경)
-    static let frost = Color(light: .rgb(0xF2, 0xF3, 0xF0), dark: .rgb(0x1A, 0x1B, 0x1B))
-    // 계절 글로우 팔레트(2026-07-28 3차 — 사용자 제공 스와치 픽셀 실측 채택.
-    // 다크는 기존 관례대로 라이트값 15% 백색 블렌드 명도 보정)
-    static let glowWinter = Color(light: .rgb(0x96, 0xAE, 0xCA), dark: .rgb(0xA6, 0xBA, 0xD2))
-    static let glowSpring = Color(light: .rgb(0xF4, 0xDC, 0xA9), dark: .rgb(0xF6, 0xE1, 0xB6))
-    static let glowSummer = Color(light: .rgb(0xBD, 0xD0, 0x85), dark: .rgb(0xC7, 0xD7, 0x97))
-    static let glowAutumn = Color(light: .rgb(0xD0, 0x8C, 0x86), dark: .rgb(0xD7, 0x9D, 0x98))
-    /// 카드 표면 — 라이트: 밀크 글래스 근사 / 다크: 옅은 상승면
-    static let surface = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.07))
+    static var winter: Color { ThemeStore.palette.winter }
+    static var spring: Color { ThemeStore.palette.spring }
+    static var summer: Color { ThemeStore.palette.summer }
+    static var autumn: Color { ThemeStore.palette.autumn }
+    static var text: Color { ThemeStore.palette.text }       // 잉크
+    static var paper: Color { ThemeStore.palette.paper }     // 지면
+    static var coral: Color { ThemeStore.palette.coral }     // ⚠ 은퇴(2026-07-28) — 사용처 0
+    /// 생리 기록 표기(2026-07-28 — 진한 회색)
+    static var record: Color { ThemeStore.palette.record }
+    /// 파괴적 액션 전용
+    static var danger: Color { ThemeStore.palette.danger }
+    /// 완료 상태 = 짙은 회색(--ink-dim)
+    static var dim: Color { ThemeStore.palette.dim }
+    /// 산화 은필 — 캘린더 과거 일정 전용(모던에선 회색 재해석)
+    static var oxide: Color { ThemeStore.palette.oxide }
+    /// 공휴일 빨간날(모던에선 로즈 — 다홍 = 생리 전용)
+    static var holiday: Color { ThemeStore.palette.holiday }
+    /// 토요일 파랑(달력 관례)
+    static var saturday: Color { ThemeStore.palette.saturday }
+    /// 캘린더 지면
+    static var frost: Color { ThemeStore.palette.frost }
+    // 계절 글로우 팔레트
+    static var glowWinter: Color { ThemeStore.palette.glowWinter }
+    static var glowSpring: Color { ThemeStore.palette.glowSpring }
+    static var glowSummer: Color { ThemeStore.palette.glowSummer }
+    static var glowAutumn: Color { ThemeStore.palette.glowAutumn }
+    /// 카드 표면
+    static var surface: Color { ThemeStore.palette.surface }
+    /// 구조 악센트(오늘 원·괘선·요일·테두리) — 기본 = winter 동값, 모던 = 흰색
+    static var accent: Color { ThemeStore.palette.accent }
 }
 
 struct SeasonMeta {

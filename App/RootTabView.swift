@@ -13,6 +13,7 @@ struct RootTabView: View {
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query private var completions: [ItemCompletion]
     @AppStorage("onboardingDone") private var onboardingDone = false
+    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
 
     var body: some View {
         TabView {
@@ -30,6 +31,12 @@ struct RootTabView: View {
             .tabItem { Label("설정", systemImage: "gearshape") }
         }
         .tint(Ink.text)
+        // 테마 변경 = 전체 트리 리빌드(정적 팔레트 캐시 갱신 반영 — Theme.swift 반응성 설계).
+        // 변경 진입점은 설정뿐이라 스택·스크롤 초기화는 허용 범위(2026-07-29 계획 리스크 ①).
+        .id(appTheme)
+        .onChange(of: appTheme) { _, newValue in
+            ThemeStore.apply(newValue)   // 설정의 선(先)apply 보완 벨트 — 외부 변경(백업 복원 등) 대비
+        }
         // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow()

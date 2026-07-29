@@ -9,6 +9,11 @@ import SwiftData
 
 @main
 struct TempoRoutineApp: App {
+    init() {
+        // 팔레트 캐시는 첫 렌더 전에 확정돼야 한다(Ink가 정적 캐시를 읽는다 — Theme.swift)
+        ThemeStore.apply(UserDefaults.standard.string(forKey: ThemeStore.storageKey))
+    }
+
     var body: some Scene {
         WindowGroup {
             RootTabView()

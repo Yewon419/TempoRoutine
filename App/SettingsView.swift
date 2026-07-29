@@ -25,6 +25,19 @@ struct SettingsView: View {
     @State private var undoSnapshot: ExportEnvelopeV1?
     @State private var undoDismissTask: Task<Void, Never>?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
+    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
+
+    /// 테마 선택 — 리빌드(.id) 전에 팔레트 캐시를 먼저 확정한다(선 apply, Theme.swift 반응성 설계)
+    private var themeBinding: Binding<AppTheme> {
+        Binding(
+            get: { AppTheme(rawValue: appTheme) ?? .standard },
+            set: { theme in
+                lightFeedback += 1
+                ThemeStore.apply(theme.rawValue)
+                appTheme = theme.rawValue
+            }
+        )
+    }
 
     private var store: StoreArrays {
         StoreArrays(periodDays: periodDays, schedules: schedules, inputs: inputs,
@@ -72,6 +85,20 @@ struct SettingsView: View {
                     .foregroundStyle(Ink.text)
                 } footer: {
                     Text("다음에 각 화면을 열면 처음 안내가 다시 나와요.")
+                }
+
+                // 테마(§8.2.6 — 무료 설정 스위치, 테스트 중. IAP 설계 확정 시 재검토 — 2026-07-29)
+                Section {
+                    Picker("테마", selection: themeBinding) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Text(theme.displayName).tag(theme)
+                        }
+                    }
+                    .tint(Ink.text)
+                } header: {
+                    Text("테마")
+                } footer: {
+                    Text("모던 테마는 실험 중이에요. 화면 전체의 색이 바뀌어요.")
                 }
 
                 // 파괴적 액션 — 분리 배치(§8.2.6)
