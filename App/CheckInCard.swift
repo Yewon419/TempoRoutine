@@ -42,7 +42,7 @@ struct CheckInCard: View {
             checkInRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
             VStack(alignment: .leading, spacing: 6) {
                 Text(noteLabel).font(.caption).foregroundStyle(Ink.text.opacity(0.5))
-                TextField("남기고 싶은 만큼만, 짧게.", text: $draftNote, axis: .vertical)
+                TextField("", text: $draftNote, axis: .vertical)   // placeholder 제거(2026-07-31 사용자 지시)
                     .font(.subheadline)
                     .foregroundStyle(Ink.text)
                     .focused($noteFocused)

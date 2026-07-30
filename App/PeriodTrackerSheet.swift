@@ -332,7 +332,7 @@ struct CheckInEditor: View {
             signalRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
             signalRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
             signalRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
-            TextField("남기고 싶은 만큼만, 짧게.", text: $draftNote, axis: .vertical)
+            TextField("", text: $draftNote, axis: .vertical)   // placeholder 제거(2026-07-31 사용자 지시)
                 .font(.footnote)
                 .foregroundStyle(Ink.text)
                 .onChange(of: draftNote) { persist() }
