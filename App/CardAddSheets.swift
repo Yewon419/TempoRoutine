@@ -27,8 +27,9 @@ private struct FreqChip: View {
 }
 
 // 계절 앵커 선택 (프로토 v77 Output 시트 문법: 시작 계절 4칩)
+// case 순서 = 표시 순서(봄→여름→가을→겨울, 2026-07-29 피드백). rawValue 불변 — 저장 호환.
 enum SeasonAnchor: String, CaseIterable, Identifiable {
-    case winter = "겨울", spring = "봄", summer = "여름", autumn = "가을"
+    case spring = "봄", summer = "여름", autumn = "가을", winter = "겨울"
     var id: String { rawValue }
     var phase: CyclePhase {
         switch self {

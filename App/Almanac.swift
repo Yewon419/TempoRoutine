@@ -229,6 +229,13 @@ struct DotGrid: View {
 }
 
 /// 은필 선화 텍스처 노출 방식(§4 보강 I) — 카드류 뒤=전면, 개방 구간=중단부 마스크(v42), 온보딩=전면 감쇠(v63)
+extension CyclePhase {
+    /// 계절 **표시** 순서 = 봄→여름→가을→겨울 (베타 피드백 2026-07-29 사용자 지시,
+    /// "모든 탭에서"). 데이터·엔진 순서(월경기=겨울이 주기 시작)와는 별개 — 나열 UI 전용.
+    /// 온보딩은 예외: 기준일=겨울 시작 서사에 묶여 있어 겨울 선두 유지.
+    static let displayOrder: [CyclePhase] = [.follicular, .ovulation, .luteal, .menstrual]
+}
+
 enum MotifStyle: Equatable { case card, open, onboarding }
 
 /// 계절광 — 시안 .season-light 3겹 radial 이식. 지면(paper) 위에 얹는 상단 빛.
@@ -244,9 +251,11 @@ struct SeasonLight: View {
     /// 모던 = 계절 불문 무채 3단(시안 §1.3-5 — 하루 상세 포함, 유채 계절광으로 덮지 않는다)
     static func lightColors(for phase: CyclePhase?) -> (a: Color, b: Color, c: Color) {
         if ThemeStore.current == .modern {
-            return (Color.white.opacity(0.12),
-                    Color(red: 190 / 255, green: 192 / 255, blue: 198 / 255).opacity(0.07),
-                    Color(red: 150 / 255, green: 152 / 255, blue: 158 / 255).opacity(0.09))
+            // 시안 수치(.12/.07/.09)가 실기기 OLED에선 거의 안 보임(베타 피드백 2026-07-29
+            // "뒤쪽에 은은한 빛 깔린 것처럼") — 50% 상향. 실기기 재확인 항목.
+            return (Color.white.opacity(0.18),
+                    Color(red: 190 / 255, green: 192 / 255, blue: 198 / 255).opacity(0.11),
+                    Color(red: 150 / 255, green: 152 / 255, blue: 158 / 255).opacity(0.13))
         }
         return switch phase {
         case .follicular:

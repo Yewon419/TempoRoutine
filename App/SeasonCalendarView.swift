@@ -924,10 +924,7 @@ struct SeasonCalendarView: View {
     // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
     private var legend: some View {
         HStack(spacing: 14) {
-            legendItem(.menstrual)
-            legendItem(.follicular)
-            legendItem(.ovulation)
-            legendItem(.luteal)
+            ForEach(CyclePhase.displayOrder, id: \.self) { legendItem($0) }   // 봄→여름→가을→겨울(2026-07-29 피드백)
             Spacer()
             legendSwatch(Ink.record, "기록")
         }

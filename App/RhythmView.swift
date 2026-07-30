@@ -12,7 +12,7 @@ struct RhythmView: View {
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query(sort: \DailyCheckIn.day, order: .reverse) private var checkIns: [DailyCheckIn]
 
-    private static let allPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
+    private static let allPhases: [CyclePhase] = CyclePhase.displayOrder   // 봄→여름→가을→겨울(2026-07-29 피드백)
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -150,7 +150,7 @@ struct RhythmView: View {
                     .font(.almanac(size: 28, weight: .bold))
                     .foregroundStyle(Ink.text)
             }
-            ForEach([CyclePhase.menstrual, .follicular, .ovulation, .luteal], id: \.self) { phase in
+            ForEach(CyclePhase.displayOrder, id: \.self) { phase in
                 seasonRow(phase: phase, routines: routines[phase] ?? [])
             }
             Text("템포루틴 · 당신 몸의 템포에 맞게")
