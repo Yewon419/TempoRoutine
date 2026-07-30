@@ -219,15 +219,41 @@ struct PeriodTrackerSheet: View {
     }
 
     // ── 건강 앱 연동 진입 (설정과 동일 동작 — 기록 맥락에서 바로 접근) ──
+    // 캡슐 버튼 → 슬라이딩 토글 전환(2026-07-30 사용자 지시 — 설정 탭 토글과 동일 문법)
     @ViewBuilder
     private var healthLinkRow: some View {
         if mirror.available {
             let on = mirror.linked && mirror.writeAuthorized
-            Button {
+            HStack(spacing: 10) {
+                Image(systemName: "heart")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.6))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("건강 앱과 연동")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Ink.text)
+                    Text(on ? "생리 기록이 건강 앱에도 저장돼요." : "건강 앱의 기록을 함께 보고, 이 앱의 기록도 저장해요.")
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.55))
+                }
+                Spacer()
+                Toggle("건강 앱과 연동", isOn: healthToggleBinding)
+                    .labelsHidden()
+                    .tint(Ink.text)
+            }
+            .padding(16)
+            .milkGlass(radius: 14)
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(on ? "켜짐" : "꺼짐")
+        }
+    }
+
+    private var healthToggleBinding: Binding<Bool> {
+        Binding(
+            get: { mirror.linked && mirror.writeAuthorized },
+            set: { on in
                 lightFeedback += 1
                 if on {
-                    mirror.linked = false
-                } else {
                     let current = periodDays
                     Task {
                         guard await mirror.requestAccess() else {
@@ -238,37 +264,11 @@ struct PeriodTrackerSheet: View {
                         syncMessage = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요. 진단: \(HealthMirror.shared.lastSyncReport)"
                                                     : "가져올 생리 기록이 없었어요. 진단: \(HealthMirror.shared.lastSyncReport). 원본이 0건이면 이 기기 건강 앱에 기록이 없거나 읽기 권한이 꺼진 경우예요. 설정 앱 > 개인정보 보호 및 보안 > 건강 > 템포루틴에서 확인해 주세요."
                     }
+                } else {
+                    mirror.linked = false   // 미러 중지 — 기존 기록은 양쪽 다 유지
                 }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "heart")
-                        .font(.footnote)
-                        .foregroundStyle(Ink.text.opacity(0.6))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("건강 앱과 연동")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Ink.text)
-                        Text(on ? "생리 기록이 건강 앱에도 저장돼요." : "건강 앱의 기록을 함께 보고, 이 앱의 기록도 저장해요.")
-                            .font(.caption)
-                            .foregroundStyle(Ink.text.opacity(0.55))
-                    }
-                    Spacer()
-                    Text(on ? "켜짐" : "연동")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(on ? Ink.paper : Ink.text)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background {
-                            if on { Capsule().fill(Ink.text) }
-                            else { Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1) }
-                        }
-                }
-                .padding(16)
-                .milkGlass(radius: 14)
-                .transaction { $0.animation = nil }
             }
-            .accessibilityValue(on ? "켜짐" : "꺼짐")
-        }
+        )
     }
 
     private func periodRow(recorded: Bool) -> some View {

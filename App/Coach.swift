@@ -40,7 +40,7 @@ enum CoachSteps {
         CoachStep(anchor: .todayInput, title: "Input",
                   body: "식단이나 운동처럼 나를 채우는 일들이에요. 가볍게 체크만 하면 되고, 주기 기준으로 반복시킬 수도 있어요."),
         CoachStep(anchor: .todayOutput, title: "Output",
-                  body: "프로젝트나 공부처럼 내보내는 일들이에요. 진행도로 쌓이고, 계절에 맞춰 시동과 마무리를 비춰드려요."),
+                  body: "프로젝트나 공부처럼 내보내는 일들이에요. 진행도로 쌓이고, 계절에 맞춰 시동과 마무리를 보여드려요."),
     ]
     /// 캘린더 탭 — 생리 기록 입구 + 그리드 읽는 법
     static let calendar: [CoachStep] = [
