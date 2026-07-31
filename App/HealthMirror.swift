@@ -9,6 +9,7 @@ import Foundation
 import HealthKit
 import SwiftData
 import TempoCore
+import UIKit
 
 @MainActor
 @Observable
@@ -92,14 +93,47 @@ final class HealthMirror {
         try? await store.delete(samples)   // .appAuthored만 우리가 지울 수 있음(HK가 강제)
     }
 
-    /// 직전 sync의 필터 내역 — 0건의 "왜"를 사용자에게 보여주기 위한 진단(2026-07-23)
+    /// 앱 설정 페이지 원탭 이동 — HealthKit 읽기 권한은 앱이 재요청 불가라 설정이 유일 경로(§5.7)
+    static func openAppSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
+    /// 직전 sync의 필터 내역 — 0건의 "왜"를 판별하기 위한 진단(2026-07-23).
+    /// 2026-08-01: 알럿에서 내리고 설정 「건강 앱」 푸터로 이동(디버그 톤 — 베타 피드백 4번).
     private(set) var lastSyncReport = ""
+
+    /// 직전 sync의 결과 — 알럿 문구를 상태별로 조립하기 위한 값(2026-08-01)
+    struct SyncOutcome {
+        let imported: Int       // 새로 가져와 로컬에 넣은 일수
+        let sourceCount: Int    // 건강 앱이 이번 read로 넘겨준 샘플 수(앵커 이후)
+        let saveFailed: Bool
+
+        /// 사용자 안내 — 숫자 나열 대신 상태를 말한다
+        var message: String {
+            if saveFailed {
+                return "기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
+            }
+            if imported > 0 {
+                return "건강 앱에서 생리 기록 \(imported)일을 가져왔어요."
+            }
+            if sourceCount > 0 {
+                return "새로 가져올 기록은 없었어요. 건강 앱의 기록은 이미 모두 반영돼 있어요."
+            }
+            return "건강 앱에서 읽어올 생리 기록이 없었어요. 기록이 없거나 읽기 권한이 꺼져 있을 수 있어요."
+        }
+
+        /// 읽기 권한 꺼짐이 유력한 경우에만 설정 이동 버튼을 붙인다(§5.7 — read 거부는 판별 불가)
+        var suggestsPermissionCheck: Bool { !saveFailed && imported == 0 && sourceCount == 0 }
+    }
+
+    private(set) var lastOutcome = SyncOutcome(imported: 0, sourceCount: 0, saveFailed: false)
 
     // ── read 병합 + 삭제 전파 ── 반환값 = 새로 가져온 건수(진단·사용자 피드백용, 2026-07-22)
     @discardableResult
     func sync(context: ModelContext, periodDays: [PeriodDay]) async -> Int {
-        guard linked else { lastSyncReport = "연동 꺼짐"; return 0 }
-        guard available else { lastSyncReport = "건강 앱 사용 불가"; return 0 }
+        guard linked else { lastSyncReport = "연동 꺼짐"; lastOutcome = .init(imported: 0, sourceCount: 0, saveFailed: false); return 0 }
+        guard available else { lastSyncReport = "건강 앱 사용 불가"; lastOutcome = .init(imported: 0, sourceCount: 0, saveFailed: false); return 0 }
         let anchor = loadAnchor()
         let result: (samples: [HKSample], deleted: [HKDeletedObject], anchor: HKQueryAnchor?) =
             await withCheckedContinuation { continuation in
@@ -160,6 +194,8 @@ final class HealthMirror {
             + (skippedTombstone > 0 ? ", 이전에 지운 날 \(skippedTombstone)건" : "")
             + (skippedDeleted > 0 ? ", 삭제된 기록 \(skippedDeleted)건" : "")
             + " / 저장 후 스토어 \(savedCount)일" + range + saveNote
+        lastOutcome = SyncOutcome(imported: imported, sourceCount: result.samples.count,
+                                  saveFailed: !saveNote.isEmpty)
         return imported
     }
 

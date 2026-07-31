@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var showImporter = false
     @State private var showWipeConfirm = false
     @State private var message: String?
+    @State private var messageOffersPermission = false   // 건강 읽기 권한 안내 알럿에만 설정 버튼(2026-08-01)
     @State private var undoSnapshot: ExportEnvelopeV1?
     @State private var undoDismissTask: Task<Void, Never>?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
@@ -73,7 +74,13 @@ struct SettingsView: View {
                 } header: {
                     Text("건강 앱")
                 } footer: {
-                    Text(healthCaption)
+                    // 진단 내역은 알럿에서 내려 여기로(2026-08-01) — 0건의 "왜"는 남기되 안내 문구는 깨끗하게
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(healthCaption)
+                        if mirror.linked && !mirror.lastSyncReport.isEmpty {
+                            Text("마지막 동기화 · \(mirror.lastSyncReport)")
+                        }
+                    }
                 }
 
                 // 기능 튜토리얼 리셋(2026-07-23 — JejuNow 「사용법 다시 보기」 동형)
@@ -142,8 +149,12 @@ struct SettingsView: View {
             // §5.7: 이 앱이 쓴 것만 지움 — 타 앱·건강앱 원본은 건강 앱에서
             Text("이 기기의 생리·컨디션·계획 기록이 모두 지워져요. 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.")
         }
-        .alert("데이터", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
-            Button("확인") { message = nil }
+        .alert("데이터", isPresented: Binding(get: { message != nil },
+                                          set: { if !$0 { message = nil; messageOffersPermission = false } })) {
+            if messageOffersPermission {
+                Button("권한 설정 열기") { message = nil; messageOffersPermission = false; openAppSettings() }
+            }
+            Button("확인") { message = nil; messageOffersPermission = false }
         } message: {
             Text(message ?? "")
         }
@@ -197,12 +208,9 @@ struct SettingsView: View {
 
     private let mirror = HealthMirror.shared
 
-    /// 앱 설정 페이지 원탭 이동 — HealthKit 읽기 권한은 앱이 재요청 불가라 설정이 유일 경로(§5.7)
     private func openAppSettings() {
         lightFeedback += 1
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(url)
-        }
+        HealthMirror.openAppSettings()
     }
 
     private var healthBinding: Binding<Bool> {
@@ -216,9 +224,10 @@ struct SettingsView: View {
                             message = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
                             return
                         }
-                        let imported = await mirror.sync(context: modelContext, periodDays: current.periodDays)
-                        message = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요. 진단: \(HealthMirror.shared.lastSyncReport)"
-                                                : "가져올 생리 기록이 없었어요. 진단: \(HealthMirror.shared.lastSyncReport). 원본이 0건이면 이 기기 건강 앱에 기록이 없거나 읽기 권한이 꺼진 경우예요. 설정 앱 > 개인정보 보호 및 보안 > 건강 > 템포루틴에서 확인해 주세요."
+                        await mirror.sync(context: modelContext, periodDays: current.periodDays)
+                        let outcome = mirror.lastOutcome
+                        messageOffersPermission = outcome.suggestsPermissionCheck
+                        message = outcome.message
                     }
                 } else {
                     mirror.linked = false   // 미러 중지 — 기존 기록은 양쪽 다 유지

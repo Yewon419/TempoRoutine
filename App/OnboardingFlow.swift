@@ -46,6 +46,7 @@ struct OnboardingFlow: View {
     @State private var dateSource = 0          // 0=건강 앱 / 1=직접 입력 / 2=기억 안 나요
     @State private var showTracker = false
     @State private var syncMessage: String?    // 건강 앱 동기화 결과 안내(2026-07-22 — 침묵 실패 진단용)
+    @State private var syncOffersPermission = false   // 읽기 권한 안내일 때만 설정 버튼(2026-08-01)
     private let mirror = HealthMirror.shared
 
     // ③ 추적 항목
@@ -77,8 +78,12 @@ struct OnboardingFlow: View {
         }
         .safeAreaInset(edge: .bottom) { bottomBar.centeredColumn(560) }
         .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
-        .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil }, set: { if !$0 { syncMessage = nil } })) {
-            Button("확인") { syncMessage = nil }
+        .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil },
+                                              set: { if !$0 { syncMessage = nil; syncOffersPermission = false } })) {
+            if syncOffersPermission {
+                Button("권한 설정 열기") { syncMessage = nil; syncOffersPermission = false; HealthMirror.openAppSettings() }
+            }
+            Button("확인") { syncMessage = nil; syncOffersPermission = false }
         } message: {
             Text(syncMessage ?? "")
         }
@@ -491,10 +496,11 @@ struct OnboardingFlow: View {
                                 syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
                                 return
                             }
-                            let imported = await mirror.sync(context: modelContext, periodDays: periodDays)
+                            await mirror.sync(context: modelContext, periodDays: periodDays)
                             // 0건 = read 거부일 수 있음(§5.7 — 판별 불가라 안내로 보완, 2026-07-23)
-                            syncMessage = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요. 진단: \(HealthMirror.shared.lastSyncReport)"
-                                                        : "가져올 생리 기록이 없었어요. 진단: \(HealthMirror.shared.lastSyncReport). 원본이 0건이면 이 기기 건강 앱에 기록이 없거나 읽기 권한이 꺼진 경우예요. 설정 앱 > 개인정보 보호 및 보안 > 건강 > 템포루틴에서 확인해 주세요."
+                            let outcome = mirror.lastOutcome
+                            syncOffersPermission = outcome.suggestsPermissionCheck
+                            syncMessage = outcome.message
                         }
                     } else {
                         mirror.linked = false

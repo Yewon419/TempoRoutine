@@ -24,6 +24,7 @@ struct PeriodTrackerSheet: View {
     @State private var committed = false
     @State private var showDatePicker = false   // 날짜 제목 탭 → 날짜 피커 점프(2026-07-22 베타 피드백)
     @State private var syncMessage: String?     // 건강 앱 동기화 결과 안내(2026-07-22 — 침묵 실패 진단용)
+    @State private var syncOffersPermission = false   // 읽기 권한 안내일 때만 설정 버튼(2026-08-01)
     private let mirror = HealthMirror.shared
 
     private var cal: Calendar { Calendar.current }
@@ -97,8 +98,12 @@ struct PeriodTrackerSheet: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: recordFeedback)
         .sensoryFeedback(.success, trigger: seasonFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
-        .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil }, set: { if !$0 { syncMessage = nil } })) {
-            Button("확인") { syncMessage = nil }
+        .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil },
+                                              set: { if !$0 { syncMessage = nil; syncOffersPermission = false } })) {
+            if syncOffersPermission {
+                Button("권한 설정 열기") { syncMessage = nil; syncOffersPermission = false; HealthMirror.openAppSettings() }
+            }
+            Button("확인") { syncMessage = nil; syncOffersPermission = false }
         } message: {
             Text(syncMessage ?? "")
         }
@@ -260,9 +265,10 @@ struct PeriodTrackerSheet: View {
                             syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
                             return
                         }
-                        let imported = await mirror.sync(context: modelContext, periodDays: current)
-                        syncMessage = imported > 0 ? "건강 앱에서 생리 기록 \(imported)건을 가져왔어요. 진단: \(HealthMirror.shared.lastSyncReport)"
-                                                    : "가져올 생리 기록이 없었어요. 진단: \(HealthMirror.shared.lastSyncReport). 원본이 0건이면 이 기기 건강 앱에 기록이 없거나 읽기 권한이 꺼진 경우예요. 설정 앱 > 개인정보 보호 및 보안 > 건강 > 템포루틴에서 확인해 주세요."
+                        await mirror.sync(context: modelContext, periodDays: current)
+                        let outcome = mirror.lastOutcome
+                        syncOffersPermission = outcome.suggestsPermissionCheck
+                        syncMessage = outcome.message
                     }
                 } else {
                     mirror.linked = false   // 미러 중지 — 기존 기록은 양쪽 다 유지
