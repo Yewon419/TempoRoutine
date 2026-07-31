@@ -100,6 +100,32 @@ struct SeasonCalendarView: View {
     private var monthStart: Date { currentLayout.start }
 
     var body: some View {
+        // 바깥 ZStack = 빠른 일정 바의 그릇. 본문에만 키보드 무시를 걸어야
+        // 캘린더는 제자리에 있고 바만 키보드를 따라 올라온다 — 순서를 뒤집으면 바가 키보드에 가린다.
+        ZStack(alignment: .bottom) {
+            calendarBody
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+            quickAddLayer
+        }
+        .animation(.easeOut(duration: 0.22), value: quickAddDay)
+        .sheet(isPresented: $showLogSheet) {
+            PeriodTrackerSheet()
+        }
+        .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .sensoryFeedback(.impact(weight: .medium), trigger: pressFeedback)
+        .navigationDestination(isPresented: Binding(
+            get: { pushedDay != nil },
+            set: { if !$0 { pushedDay = nil } }
+        )) {
+            if let pushedDay {
+                DayDetailView(day: pushedDay)
+            }
+        }
+    }
+
+    /// 캘린더 본문 — 지면·계절광·(아이패드)분할. body에서 떼어내 타입체크 부담을 줄인다.
+    private var calendarBody: some View {
         ZStack {
             // 캘린더 자체 지면(2026-07-28 시안 결정) — frost 바탕 + 계절광은 상단에만 걸리고
             // 사그라든다(그리드 영역은 깨끗하게 — 글로우 밑줄 가독 담보)
@@ -122,28 +148,28 @@ struct SeasonCalendarView: View {
                 calendarColumn()
             }
         }
-        .sheet(isPresented: $showLogSheet) {
-            PeriodTrackerSheet()
+    }
+
+    /// 빠른 일정 = 시트가 아니라 키보드 위에 붙는 바(2026-08-01 사용자 지시) — 뒤 캘린더가 그대로 보인다.
+    @ViewBuilder
+    private var quickAddLayer: some View {
+        if quickAddDay != nil {
+            // 바깥 탭 = 닫기. 옅은 dim으로 입력 중임을 알리되 뒤 화면은 계속 읽힌다.
+            Color.black.opacity(0.12)
+                .ignoresSafeArea()
+                .onTapGesture { closeQuickAdd() }
+                .transition(.opacity)
         }
-        .sheet(isPresented: Binding(
-            get: { quickAddDay != nil },
-            set: { if !$0 { quickAddDay = nil; quickAddEnd = nil } }
-        )) {
-            if let quickAddDay {
-                QuickScheduleSheet(day: quickAddDay, endDay: quickAddEnd)
-            }
+        if let quickAddDay {
+            QuickScheduleBar(day: quickAddDay, endDay: quickAddEnd, onClose: closeQuickAdd)
+                .transition(.move(edge: .bottom))
         }
-        .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
-        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
-        .sensoryFeedback(.impact(weight: .medium), trigger: pressFeedback)
-        .navigationDestination(isPresented: Binding(
-            get: { pushedDay != nil },
-            set: { if !$0 { pushedDay = nil } }
-        )) {
-            if let pushedDay {
-                DayDetailView(day: pushedDay)
-            }
-        }
+    }
+
+    /// 빠른 일정 바 걷기 — 저장 후·바깥 탭 공용(2026-08-01)
+    private func closeQuickAdd() {
+        quickAddDay = nil
+        quickAddEnd = nil
     }
 
     /// 오늘의 단계 — 상단 글로우 색 결정용(seasonLine과 같은 계산 경로)

@@ -230,248 +230,108 @@ struct ScheduleAddSheet: View {
     }
 }
 
-// ── ①-b 빠른 일정 (2026-07-25 사용자 지시: 캘린더 날짜 길게 누르기 → 제목 한 줄로 저장) ──
+// ── ①-b 빠른 일정 바 (2026-08-01 사용자 지시: 시트 → 키보드 위에 붙는 입력 바) ──
+// 캘린더 날짜 길게 누르기 → 화면 구조는 그대로 두고 하단 바만 올라온다(레퍼런스 = 타 캘린더 앱 빠른 입력).
 // 시각은 제목에서 읽는다(`ScheduleTextParser`, TempoCore) — "회의 3시" → 오후 3:00 + 제목 "회의".
-// 입력 중엔 원문을 고치지 않는다(한글 조합 깨짐 방지): 읽은 결과는 칩·근거 줄로만 보여주고,
-// 실제 적용은 저장 시점. 시각만 칩으로 덮어쓸 수 있다 — **반복 없음·알림 없음은 고정**
-// (2026-07-25 사용자 결정), 둘 다 저장 후 일정 행 탭 → 수정 시트에서 정한다.
-// 시트 크기는 기본(large) 고정 — 작은 detent는 키보드가 입력칸을 덮는 사례가 보고돼 있어 쓰지 않는다.
-struct QuickScheduleSheet: View {
+// 입력 중엔 원문을 고치지 않는다(한글 조합 깨짐 방지): 읽은 결과는 날짜 칩 옆에 **표시만** 하고
+// 실제 적용은 저장 시점. **반복 없음·알림 없음은 고정**(2026-07-25 사용자 결정) — 저장 후 일정 행 탭 → 수정 시트.
+// 2026-08-01 폐기: 시간 칩·오전/오후 칩·휠 피커·「아니요」 근거 줄(바 한 줄에 안 들어감, 사용자 결정).
+// 수식어 없는 시각의 오전·오후는 파서 관례(1~6시=오후, 7~12시=오전)에 맡기고, 어긋나면 제목을
+// "오후 8시"처럼 다시 적거나 저장 후 수정 시트에서 고친다.
+struct QuickScheduleBar: View {
     let day: Date
-    /// 드래그 기간 선택의 끝 날짜(2026-07-27) — 있으면 하루종일 여러 날 모드(시각 파서·시간 칩 미적용)
+    /// 드래그 기간 선택의 끝 날짜(2026-07-27) — 있으면 하루종일 여러 날 모드(시각 파서 미적용)
     var endDay: Date? = nil
+    /// 바를 걷는다 — 시트가 아니라 오버레이라 `dismiss`가 없다(2026-08-01)
+    let onClose: () -> Void
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
     @FocusState private var titleFocused: Bool
     @State private var title = ""
-    @State private var pickedTime: Date?           // 칩으로 직접 정한 시각 — 있으면 파싱값보다 우선
-    @State private var rejectedMatch: String?      // 물린 시각 표현("3시" 등) — 같은 표현일 때만 무시
-    @State private var pmOverride: Bool?           // 오전·오후 직접 선택(nil = 관례 해석 그대로, 2026-07-26)
-    @State private var showTimePicker = false
 
     private var cal: Calendar { Calendar.current }
     private var parsed: ParsedScheduleText { ScheduleTextParser.parse(title) }
 
-    /// 물린 표현과 지금 제목의 표현이 같을 때만 무시 — 다른 시각을 적으면 파서가 되살아난다(2026-07-28)
-    private var parseIgnored: Bool {
-        parsed.matchedText != nil && parsed.matchedText == rejectedMatch
-    }
-
-    /// 제목에서 읽은 시작 시각 — 오전·오후를 직접 고른 경우 그쪽으로 뒤집는다
-    private var parsedStart: ParsedTime? {
-        guard !parseIgnored, let start = parsed.start else { return nil }
-        guard parsed.ambiguousMeridiem, let pm = pmOverride else { return start }
-        return variant(start, pm: pm)
-    }
-
-    /// 같은 시각의 오전·오후 짝 — 12시는 정오↔자정
-    private func variant(_ time: ParsedTime, pm: Bool) -> ParsedTime {
-        let base = time.hour % 12
-        return ParsedTime(hour: pm ? base + 12 : base, minute: time.minute)
-    }
-
-    /// 저장에 쓰는 시각 — 칩 지정이 우선, 없으면 제목에서 읽은 값
+    /// 제목에서 읽은 시작 시각 — 기간 모드는 파서 미적용
     private var startTime: ParsedTime? {
-        if let pickedTime {
-            let c = cal.dateComponents([.hour, .minute], from: pickedTime)
-            return ParsedTime(hour: c.hour ?? 0, minute: c.minute ?? 0)
-        }
-        return parsedStart
+        endDay == nil ? parsed.start : nil
     }
 
-    /// 종료 시각은 제목에서 범위를 읽었을 때만("3시~5시"). 칩으로 정했으면 1시간.
+    /// 종료 시각은 제목에서 범위를 읽었을 때만("3시~5시"). 없으면 저장 시 1시간.
     private var endTime: ParsedTime? {
-        guard pickedTime == nil, !parseIgnored, let end = parsed.end else { return nil }
-        guard parsed.ambiguousMeridiem, let pm = pmOverride, let start = parsed.start,
-              let shown = parsedStart else { return end }
-        // 시작을 뒤집었으면 종료도 같은 폭으로 — "3시~5시"를 오전으로 고르면 05:00
-        _ = pm   // 방향은 delta가 이미 반영 — 플래그는 가드 용도만
-        let delta = shown.minutesOfDay - start.minutesOfDay
-        let moved = ((end.minutesOfDay + delta) % 1440 + 1440) % 1440
-        return ParsedTime(hour: moved / 60, minute: moved % 60)
+        endDay == nil ? parsed.end : nil
     }
 
-    /// 시각 표현을 실제로 쓸 때만 제목을 정제한다 — 기간 모드는 파서 미적용(원문 그대로)
+    /// 시각 표현을 실제로 쓸 때만 제목을 정제한다 — 기간 모드는 원문 그대로
     private var effectiveTitle: String {
         if endDay != nil { return title.trimmingCharacters(in: .whitespaces) }
-        return parsedStart != nil ? parsed.title : title.trimmingCharacters(in: .whitespaces)
+        return startTime != nil ? parsed.title : title.trimmingCharacters(in: .whitespaces)
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Ink.paper.ignoresSafeArea()
-                VStack(alignment: .leading, spacing: 16) {
-                    // 하루 상세와 같은 책력 표제(§4 조판) — 어느 날짜에 적는지가 먼저 보이게
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        if let endDay {
-                            // 드래그 기간 — 같은 달 안에서만 선택되므로 일(day)만 잇는다
-                            Text("\(cal.component(.day, from: day))~\(cal.component(.day, from: endDay))")
-                                .font(.almanac(size: 56, weight: .bold))
-                                .foregroundStyle(Ink.text)
-                            Text("\(day.formatted(.dateTime.month())) · \(ScheduleSpan.dayCount(start: day, end: endDay, calendar: cal))일")
-                                .font(.system(.subheadline, design: .serif))
-                                .foregroundStyle(Ink.text.opacity(0.6))
-                        } else {
-                            Text("\(cal.component(.day, from: day))")
-                                .font(.almanac(size: 56, weight: .bold))
-                                .foregroundStyle(Ink.text)
-                            Text(day.formatted(.dateTime.month().weekday(.wide)))
-                                .font(.system(.subheadline, design: .serif))
-                                .foregroundStyle(Ink.text.opacity(0.6))
-                        }
-                    }
-                    TextField("무엇을 적어둘까요?", text: $title)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(Ink.text)
-                        .focused($titleFocused)
-                        .submitLabel(.done)
-                        .onSubmit(save)
-                        .padding(.bottom, 8)
-                        .almanacRule(opacity: 0.28)
-                    if endDay == nil {
-                        chips
-                        if showsMeridiemChoice { meridiemChips }
-                        if showTimePicker { timePicker }
-                        if let hint { readingHint(hint) }
-                    } else {
-                        Text("하루종일 일정으로 적어둬요. 시간·반복·알림은 저장한 뒤 일정을 탭해서 정할 수 있어요.")
-                            .font(.footnote)
-                            .foregroundStyle(Ink.text.opacity(0.5))
-                    }
-                    Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 10) {
+            TextField("무엇을 적어둘까요?", text: $title)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Ink.text)
+                .focused($titleFocused)
+                .submitLabel(.done)
+                .onSubmit(save)
+            HStack(spacing: 10) {
+                dayChip
+                if let start = startTime {
+                    // 읽은 시각은 표시 전용 — 어긋나면 제목을 고쳐 다시 읽힌다
+                    Text("· \(timeText(start))")
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.55))
                 }
-                .padding(20)
-            }
-            .navigationTitle("빠른 일정")
-            .navigationBarTitleDisplayMode(.inline)
-            .interactiveDismissDisabled(!title.trimmingCharacters(in: .whitespaces).isEmpty)   // 적던 내용 날리지 않기(§8.2.4)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("추가", action: save)
-                        .foregroundStyle(Ink.text)
-                        .disabled(effectiveTitle.isEmpty)
-                }
+                Spacer(minLength: 0)
+                Button("추가", action: save)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(effectiveTitle.isEmpty ? Ink.text.opacity(0.3) : Ink.text)
+                    .disabled(effectiveTitle.isEmpty)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)   // 콘텐츠 폭이 아니라 화면 전폭 바
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+        .padding(.bottom, 12)
+        .background(Ink.paper)
+        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20))
+        .shadow(color: Ink.text.opacity(0.12), radius: 12, y: -2)
         .task {
-            // 시트 전환이 끝난 뒤 포커스 — 즉시 지정은 키보드가 올라오지 않는 사례가 있다
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            // 등장 애니(0.22s)와 겹치면 포커스 요청이 씹히는 사례가 있어 한 박자 뒤에 준다
+            try? await Task.sleep(nanoseconds: 120_000_000)
             titleFocused = true
         }
     }
 
-    // ── 칩 행: 시간 (반복은 여기서 다루지 않는다 — 2026-07-25 사용자 결정: 반복 없음 고정 유지) ──
-    private var chips: some View {
-        HStack(spacing: 8) {
-            chipButton(icon: "clock", label: timeLabel, filled: startTime != nil) {
-                showTimePicker.toggle()
-                // 제목에서 읽은 시각이 있으면 휠은 그 값을 비추기만 한다(pickedTime 미확정) —
-                // 오전·오후 칩과 공존, 휠을 돌리는 순간에만 확정(2026-07-28). 없으면 다음 정시 확정.
-                if showTimePicker, pickedTime == nil, parsedStart == nil {
-                    pickedTime = defaultPickerTime
-                }
-            }
-            Spacer()
+    /// 어느 날짜에 적는지 — 기간이면 "19~21일 · 3일"
+    private var dayChip: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "calendar").font(.caption2)
+            Text(dayLabel).font(.caption.weight(.semibold))
         }
+        .foregroundStyle(Ink.text.opacity(0.7))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(Ink.text.opacity(0.08), in: Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("날짜 \(dayLabel)")
     }
 
-    /// 오전·오후를 안 쓴 "N시"는 두 읽기가 다 성립 — 고르게 한다(2026-07-26 사용자 지시)
-    private var showsMeridiemChoice: Bool {
-        pickedTime == nil && !parseIgnored && parsed.ambiguousMeridiem && parsed.start != nil
-    }
-
-    private var meridiemChips: some View {
-        HStack(spacing: 6) {
-            if let base = parsed.start {
-                let selectedPM = (parsedStart?.hour ?? 0) >= 12
-                FreqChip(label: clockText(variant(base, pm: false)), selected: !selectedPM) {
-                    pmOverride = false
-                }
-                FreqChip(label: clockText(variant(base, pm: true)), selected: selectedPM) {
-                    pmOverride = true
-                }
-            }
-            Spacer()
+    private var dayLabel: String {
+        guard let endDay else {
+            return "\(cal.component(.day, from: day))일 \(day.formatted(.dateTime.weekday(.abbreviated)))"
         }
+        // 드래그 기간 — 같은 달 안에서만 선택되므로 일(day)만 잇는다
+        let count = ScheduleSpan.dayCount(start: day, end: endDay, calendar: cal)
+        return "\(cal.component(.day, from: day))~\(cal.component(.day, from: endDay))일 · \(count)일"
     }
 
-    private var timeLabel: String {
-        guard let start = startTime else { return "하루종일" }
-        let startText = clockText(start)
+    private func timeText(_ time: ParsedTime) -> String {
+        let startText = clockText(time)
         guard let end = endTime else { return startText }
         return "\(startText) – \(clockText(end))"
-    }
-
-    private func chipButton(icon: String, label: String, filled: Bool,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                Image(systemName: icon).font(.caption2)
-                Text(label).font(.caption.weight(.semibold))
-            }
-            .foregroundStyle(filled ? Ink.paper : Ink.text.opacity(0.7))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(filled ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.08)),
-                        in: Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var timePicker: some View {
-        HStack {
-            DatePicker("시각", selection: Binding(
-                get: { pickedTime ?? parsedStart.flatMap(date(at:)) ?? defaultPickerTime },
-                set: { pickedTime = $0; rejectedMatch = nil }
-            ), displayedComponents: [.hourAndMinute])
-            .labelsHidden()
-            Spacer()
-            Button("하루종일로") {
-                pickedTime = nil
-                rejectedMatch = parsed.matchedText   // 제목에서 읽은 시각도 함께 물린다 — 다른 표현을 적으면 복귀
-                showTimePicker = false
-            }
-            .font(.caption)
-            .foregroundStyle(Ink.text.opacity(0.6))
-        }
-    }
-
-    /// 제목에서 읽은 근거 — 무엇을 어떻게 읽었고 제목이 뭐가 되는지 미리 보여준다
-    private var hint: String? {
-        guard pickedTime == nil, !parseIgnored,
-              let matched = parsed.matchedText, let start = parsed.start else { return nil }
-        var text: String
-        if parsed.ambiguousMeridiem {
-            text = "「\(matched)」를 시각으로 읽었어요"
-        } else {
-            text = "「\(matched)」를 \(clockText(start))"
-            if let end = parsed.end { text += "–\(clockText(end))" }
-            text += "으로 읽었어요"
-        }
-        if !parsed.title.isEmpty { text += " · 제목은 「\(parsed.title)」" }
-        return text
-    }
-
-    private func readingHint(_ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(text)
-                .font(.footnote)
-                .foregroundStyle(Ink.text.opacity(0.55))
-                .fixedSize(horizontal: false, vertical: true)
-            Button("아니요") { rejectedMatch = parsed.matchedText }
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(Ink.text.opacity(0.75))
-        }
-    }
-
-    private var defaultPickerTime: Date {
-        let base = cal.startOfDay(for: day)
-        return date(at: ParsedTime(hour: min(23, cal.component(.hour, from: .now) + 1), minute: 0)) ?? base
     }
 
     private func clockText(_ time: ParsedTime) -> String {
@@ -503,7 +363,7 @@ struct QuickScheduleSheet: View {
         } else {
             modelContext.insert(ScheduleItem(title: name, date: cal.startOfDay(for: day)))
         }
-        dismiss()
+        onClose()   // 저장 후 바를 걷는다(2026-08-01 사용자 결정 — 연속 입력 아님)
     }
 }
 
