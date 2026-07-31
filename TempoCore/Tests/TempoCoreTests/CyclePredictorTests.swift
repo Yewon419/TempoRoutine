@@ -11,12 +11,22 @@ final class CyclePredictorTests: XCTestCase {
     func d(_ off: Int) -> Date { cal.date(byAdding: .day, value: off, to: base)! }
     var pred28: CyclePrediction { CyclePrediction(lastPeriodStart: d(0), averageLength: 28, confidence: .high) }
 
-    // T1 averageLength
+    // T1 averageLength (§5.6 개정 2026-07-31: 유효 gap [21,35] 필터 + 최근 5개 + 반올림)
     func testT1AverageLength() {
         XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(28)]), 28, "T1 avg 28")
         XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0)]), 28, "T1 avg <2 → 28")
-        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(60)]), 35, "T1 avg clamp 35")
-        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(10)]), 21, "T1 avg clamp 21")
+        // 이상치 gap 단독 = 유효 gap 0개 → 폴백 28 (구 계약: 클램프 35/21 — 개정으로 교체)
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(60)]), 28, "T1 outlier-only long → 28")
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(10)]), 28, "T1 outlier-only short → 28")
+        // 기록 공백(56일 gap)은 평균에서 배제 — [28, 56, 28] → 유효 [28, 28] → 28
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(28), d(84), d(112)]), 28,
+                       "T1 공백 gap 배제")
+        // 최근성 — 유효 gap 7개 [21×4, 30×3] 중 최근 5개 [21,21,30,30,30] → 26.4 → 26
+        // (전 기간 평균이면 24.86 → 25로 갈라짐 — suffix(5) 적용을 고정하는 조합)
+        XCTAssertEqual(CyclePredictor.averageLength(
+            startDates: [d(0), d(21), d(42), d(63), d(84), d(114), d(144), d(174)]), 26, "T1 최근 5개 평균")
+        // 반올림 — gaps [28, 29] → 28.5 → 29 (구 계약: 정수 절사 28)
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(28), d(57)]), 29, "T1 반올림")
     }
 
     // T2 phaseSpans(28)

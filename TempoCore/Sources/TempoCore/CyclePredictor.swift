@@ -5,13 +5,20 @@ import Foundation
 
 public enum CyclePredictor {
 
-    /// 평균 주기 길이. 기록<2개면 28, [21,35] 클램프.
+    /// 평균 주기 길이 (§5.6 개정 2026-07-31 — HK 4년치 import에서 애플 건강 예측과 괴리 제보).
+    /// ① [21,35] 밖 gap = 주기가 아니라 기록 공백/스포팅으로 보고 평균에서 제외
+    /// ② 유효 gap 중 최근 5개만 사용(최근성 — 애플·업계 관행 근사)
+    /// ③ 반올림 평균. 기록<2개 또는 유효 gap 0개면 28.
     public static func averageLength(startDates: [Date]) -> Int {
         let sorted = startDates.sorted()
         guard sorted.count >= 2 else { return 28 }
-        let gaps = zip(sorted, sorted.dropFirst())
+        let validGaps = zip(sorted, sorted.dropFirst())
             .map { Calendar.current.dateComponents([.day], from: $0, to: $1).day ?? 28 }
-        return max(21, min(35, gaps.reduce(0, +) / gaps.count))
+            .filter { (21...35).contains($0) }
+            .suffix(5)
+        guard !validGaps.isEmpty else { return 28 }
+        let avg = Double(validGaps.reduce(0, +)) / Double(validGaps.count)
+        return max(21, min(35, Int(avg.rounded())))
     }
 
     /// §5.3 LOCKED 경계(황체기 고정·양방향 앵커). 합은 항상 n. M=5/B=14/O=3.
