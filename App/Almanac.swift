@@ -41,6 +41,21 @@ extension Font {
         }
         return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
     }
+
+    /// 본문급 책력 표기 — Dynamic Type을 따라가는 상대 크기(`relativeTo:`).
+    /// 시스템 세리프(New York)는 **한글 글리프가 없어** 한글만 고딕으로 폴백된다 — 영문만 세리프로
+    /// 렌더돼 한 줄 안에서 결이 어긋난다(2026-08-01 베타 피드백: 계절 라벨·한 줄 일기).
+    /// 그래서 한글이 섞이는 세리프 표기는 시스템 대신 번들 서체를 명시한다.
+    static func almanacBody(_ style: Font.TextStyle, size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        if ThemeStore.current == .modern {
+            guard ThemeFont.available else { return .system(style).weight(weight) }
+            return .custom(weight == .bold ? "Pretendard-SemiBold" : "Pretendard-Regular",
+                           size: size, relativeTo: style)
+        }
+        guard AlmanacFont.available else { return .system(style, design: .serif).weight(weight) }
+        return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular",
+                       size: size, relativeTo: style)
+    }
 }
 
 // ── 모던 거대 표제 = 아웃라인 타이포 (시안 §1.3-2, Phase 4 스파이크) ──

@@ -615,8 +615,14 @@ struct SeasonCalendarView: View {
                     dragEnd = nil
                 }
                 guard case .second(true, _) = value, let s = dragStart, let e = dragEnd else { return }
+                guard s != e else {
+                    // 제자리에서 떼면 하루 상세(2026-08-01 반전) — compact = push / regular = 우측 패널 선택
+                    if hSize == .regular { selectedDay = s } else { pushedDay = s }
+                    return
+                }
+                // 끌었으면 기간 빠른 일정 — 기간 선택의 진입점은 여전히 길게 누르기다
                 quickAddDay = min(s, e)
-                quickAddEnd = s == e ? nil : max(s, e)
+                quickAddEnd = max(s, e)
             }
     }
 
@@ -737,10 +743,11 @@ struct SeasonCalendarView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         lightFeedback += 1
-                        // 탭: compact = 하루 상세 push(§8.2.3) / regular = 우측 패널 선택(2026-07-23)
-                        if hSize == .regular { selectedDay = date } else { pushedDay = date }
+                        // 2026-08-01 베타 피드백으로 반전: 탭 = 빠른 일정(가장 잦은 동작을 가장 싼 제스처에)
+                        quickAddDay = date
+                        quickAddEnd = nil
                     }
-                    .gesture(pressDrag(from: date))   // 길게 누르기 = 빠른 일정, 끌면 기간(2026-07-27 확장)
+                    .gesture(pressDrag(from: date))   // 길게 = 하루 상세, 끌면 기간 빠른 일정(2026-08-01)
                     .overlay {
                         // 드래그 기간 선택 명암 — 어디까지 잡혔는지(2026-07-27 사용자 지시)
                         if isSelected(date) {
@@ -755,7 +762,10 @@ struct SeasonCalendarView: View {
                                                           recorded: render.recorded.contains(date),
                                                           predicted: render.predicted.contains(date)))
                     .accessibilityAddTraits(.isButton)
-                    .accessibilityAction(named: "빠른 일정 추가") { quickAddDay = date }   // 길게 누르기 대체
+                    // 길게 누르기 대체 — 탭이 빠른 일정이 됐으므로 대체 액션은 하루 상세(2026-08-01)
+                    .accessibilityAction(named: "하루 상세 보기") {
+                        if hSize == .regular { selectedDay = date } else { pushedDay = date }
+                    }
             } else {
                 cellBody(date: date, index: index, render: render)
             }
@@ -952,7 +962,7 @@ struct SeasonCalendarView: View {
         HStack(spacing: 14) {
             ForEach(CyclePhase.displayOrder, id: \.self) { legendItem($0) }   // 봄→여름→가을→겨울(2026-07-29 피드백)
             Spacer()
-            legendSwatch(Ink.record, "기록")
+            // 「기록」 스와치 폐기(2026-08-01 베타 피드백) — 상단 「생리 기록」 버튼과 중복 안내였다
         }
         .padding(.top, 6)
     }
@@ -964,13 +974,6 @@ struct SeasonCalendarView: View {
             Text(meta.name)
                 .font(.system(size: 12, weight: .semibold, design: .serif))
                 .foregroundStyle(meta.color)
-        }
-    }
-
-    private func legendSwatch(_ color: Color, _ label: String) -> some View {
-        HStack(spacing: 4) {
-            Capsule().fill(color.opacity(0.3)).frame(width: 16, height: 8)
-            Text(label).font(.system(size: 11)).foregroundStyle(Ink.text.opacity(0.6))
         }
     }
 

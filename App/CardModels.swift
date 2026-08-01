@@ -244,6 +244,8 @@ final class OutputItem {
     var loggedSessions: Int = 0
     var percent: Double = 0
     var createdAt: Date = Date()
+    /// 목표일(디데이, 2026-08-01 베타 피드백). optional = CloudKit 규칙 + 기존 저장분 경량 마이그레이션.
+    var targetDate: Date?
 
     var schedule: OutputSchedule {
         get { (try? JSONDecoder().decode(OutputSchedule.self, from: scheduleData)) ?? .daily }

@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var showWipeConfirm = false
     @State private var message: String?
     @State private var messageOffersPermission = false   // 건강 읽기 권한 안내 알럿에만 설정 버튼(2026-08-01)
+    @AppStorage("onboardingDone") private var onboardingDone = false   // 온보딩 다시 보기(2026-08-01)
     @State private var undoSnapshot: ExportEnvelopeV1?
     @State private var undoDismissTask: Task<Void, Never>?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
@@ -90,8 +91,15 @@ struct SettingsView: View {
                         CoachStore.resetAll()
                     }
                     .foregroundStyle(Ink.text)
+                    // 온보딩 다시 보기(2026-08-01 베타 피드백) — 앱 삭제·재설치 없이 첫 안내를 다시 본다.
+                    // 기록은 건드리지 않는다(플래그만 내림) — 온보딩에서 기준일을 다시 적으면 그때 반영.
+                    Button("온보딩 다시 보기") {
+                        lightFeedback += 1
+                        onboardingDone = false
+                    }
+                    .foregroundStyle(Ink.text)
                 } footer: {
-                    Text("다음에 각 화면을 열면 처음 안내가 다시 나와요.")
+                    Text("사용법은 각 화면을 열 때 처음 안내가 다시 나와요. 온보딩은 첫 실행 화면을 처음부터 다시 봐요 — 기록은 지워지지 않아요.")
                 }
 
                 // 테마(§8.2.6 — 무료 설정 스위치, 테스트 중. IAP 설계 확정 시 재검토 — 2026-07-29)

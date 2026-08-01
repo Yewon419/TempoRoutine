@@ -57,6 +57,10 @@ struct ScheduleAddSheet: View {
     @State private var repeatRule: ScheduleRepeat = .none
     @State private var reminderMinutes = -1
     @State private var showDeleteConfirm = false
+    // 제목 시각 파서(2026-08-01) — 사용자가 시각을 직접 고르면 물러난다
+    @State private var timeManuallySet = false
+    @State private var parserAppliedStart: Date?
+    @State private var lastAppliedMatch: String?
 
     private static let repeatChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly, .yearly]
     /// 시간 지정 일정 — 시작 기준 N분 전
@@ -107,6 +111,21 @@ struct ScheduleAddSheet: View {
         return "\(days)일에 걸친 일정이에요"
     }
 
+    /// 제목에서 읽은 시각을 알려주는 한 줄 — 무엇을 근거로 시각이 채워졌는지(2026-08-01)
+    private var parseHint: String? {
+        guard !timeManuallySet, let matched = lastAppliedMatch else { return nil }
+        return "「\(matched)」를 \(start.formatted(date: .omitted, time: .shortened))으로 읽었어요. 시각을 직접 고치면 그대로 둬요."
+    }
+
+    /// 기준 날짜(day 성분) + 시:분 — bySettingHour의 전진 탐색을 피해 컴포넌트로 조립
+    private func date(onSameDayAs base: Date, at time: ParsedTime) -> Date? {
+        let cal = Calendar.current
+        var comps = cal.dateComponents([.year, .month, .day], from: base)
+        comps.hour = time.hour
+        comps.minute = time.minute
+        return cal.date(from: comps)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -114,6 +133,11 @@ struct ScheduleAddSheet: View {
                     TextField("제목", text: $title)
                         .font(.title3.weight(.semibold))
                         .focused($titleFocused)
+                } footer: {
+                    // 빠른 일정과 같은 파서(2026-08-01 베타 피드백 — 추가·수정 시트에도)
+                    if let hint = parseHint {
+                        Text(hint)
+                    }
                 }
                 Section {
                     Toggle("하루종일", isOn: $allDay)
@@ -176,7 +200,23 @@ struct ScheduleAddSheet: View {
                 Button("취소", role: .cancel) {}
             }
             .scrollDismissesKeyboard(.interactively)
+            // 제목에서 시각 읽기(2026-08-01) — 사용자가 휠을 직접 돌린 뒤엔 더 이상 덮어쓰지 않는다.
+            // 제목 원문은 건드리지 않는다(입력 중 한글 조합 깨짐 방지 — 빠른 일정과 같은 원칙).
+            .onChange(of: title) { _, newValue in
+                guard !timeManuallySet else { return }
+                let parsed = ScheduleTextParser.parse(newValue)
+                guard let parsedStart = parsed.start, parsed.matchedText != lastAppliedMatch else { return }
+                guard let applied = date(onSameDayAs: start, at: parsedStart) else { return }
+                allDay = false
+                start = applied
+                end = parsed.end.flatMap { date(onSameDayAs: applied, at: $0) }.map { $0 > applied ? $0 : applied.addingTimeInterval(3600) }
+                    ?? applied.addingTimeInterval(3600)
+                parserAppliedStart = applied
+                lastAppliedMatch = parsed.matchedText
+            }
             .onChange(of: start) {
+                // 파서가 넣은 값과 다르면 사용자가 직접 고른 것 — 그때부턴 파서가 물러난다
+                if start != parserAppliedStart { timeManuallySet = true }
                 if end <= start { end = start.addingTimeInterval(3600) }
                 if Calendar.current.startOfDay(for: endDay) < Calendar.current.startOfDay(for: start) {
                     endDay = start
@@ -377,12 +417,20 @@ struct InputAddSheet: View {
 
     /// 지난 날짜에 추가하는 건 대개 "그날 한 번 했다"는 기록이다 — 매일로 잡히면 오늘까지 따라온다.
     /// 오늘·미래는 종전대로 매일 기본(체크리스트가 본질). 2026-07-27 사용자 결정.
-    init(day: Date = .now, currentSeason: SeasonMeta?, energyLevel: EnergyLevel? = nil) {
+    /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
+    init(day: Date = .now, currentSeason: SeasonMeta?, energyLevel: EnergyLevel? = nil,
+         presetSeason: SeasonAnchor? = nil) {
         self.day = day
         self.currentSeason = currentSeason
         self.energyLevel = energyLevel
         let cal = Calendar.current
-        _repeats = State(initialValue: cal.startOfDay(for: day) >= cal.startOfDay(for: .now))
+        if let presetSeason {
+            _repeats = State(initialValue: false)
+            _cycleBased = State(initialValue: true)
+            _anchor = State(initialValue: presetSeason)
+        } else {
+            _repeats = State(initialValue: cal.startOfDay(for: day) >= cal.startOfDay(for: .now))
+        }
     }
 
     @Environment(\.modelContext) private var modelContext
@@ -498,7 +546,16 @@ struct InputAddSheet: View {
 // ── ③ Output 추가 ──
 struct OutputAddSheet: View {
     /// 어느 날에 추가하는가 — InputAddSheet와 같은 근거(2026-07-26)
-    var day: Date = .now
+    let day: Date
+
+    /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
+    init(day: Date = .now, presetSeason: SeasonAnchor? = nil) {
+        self.day = day
+        if let presetSeason {
+            _cycleBased = State(initialValue: true)
+            _anchor = State(initialValue: presetSeason)
+        }
+    }
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -509,6 +566,9 @@ struct OutputAddSheet: View {
     @State private var anchor: SeasonAnchor = .winter
     @State private var offset = 0
     @State private var everyCycle = true
+    @State private var wholePhase = true          // 계절 전체 ↔ N일차(2026-08-01) — 기본은 전체
+    @State private var hasTargetDate = false      // 디데이(2026-08-01)
+    @State private var targetDate = Date()
     @State private var kind: OutputProgressKind = .percent
     @State private var targetSessions = 3
     @State private var subtaskDraft = ""
@@ -522,8 +582,9 @@ struct OutputAddSheet: View {
             Form {
                 TextField("예: 자격증 공부", text: $title)
                 Section {
-                    // 상호 배타(둘 다 끔 = 반복 없음 — 완료까지 계속 표시. 2026-07-22 베타 피드백)
-                    Toggle("반복", isOn: Binding(
+                    // 표기 개편(2026-08-01 베타 피드백): 「반복」→「기간 반복」(달력 주기),
+                    // 「주기 기준」→「<계절> 반복」(몸의 주기). 상호 배타 — 둘 다 끄면 반복 없음.
+                    Toggle("기간 반복", isOn: Binding(
                         get: { repeats },
                         set: { on in repeats = on; if on { cycleBased = false } }
                     ))
@@ -537,16 +598,28 @@ struct OutputAddSheet: View {
                             }
                         }
                     }
-                    Toggle("주기 기준", isOn: Binding(
+                    Toggle("\(anchor.rawValue) 반복", isOn: Binding(
                         get: { cycleBased },
                         set: { on in cycleBased = on; if on { repeats = false } }
                     ))
                     .tint(Ink.text)
                     if cycleBased {
-                        Picker("시작 계절", selection: $anchor) {
+                        Picker("어느 계절", selection: $anchor) {
                             ForEach(SeasonAnchor.allCases) { Text($0.rawValue).tag($0) }
                         }
-                        Stepper("계절 시작 +\(offset)일", value: $offset, in: 0...13)
+                        // 계절 전체 ↔ N일차(2026-08-01) — 전체는 그 계절 내내, N일차는 하루만
+                        Picker("범위", selection: $wholePhase) {
+                            Text("\(anchor.rawValue) 전체").tag(true)
+                            Text("\(anchor.rawValue) 며칠째").tag(false)
+                        }
+                        .pickerStyle(.segmented)
+                        if wholePhase {
+                            Text("\(anchor.rawValue)인 날엔 매일 보여요. 계절 길이는 주기에 따라 달라져요.")
+                                .font(.footnote)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                        } else {
+                            Stepper("\(anchor.rawValue) \(offset + 1)일차", value: $offset, in: 0...13)
+                        }
                         Toggle("매 주기 반복", isOn: $everyCycle)
                     }
                     if !repeats && !cycleBased {
@@ -555,9 +628,22 @@ struct OutputAddSheet: View {
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
                 }
+                // 디데이(2026-08-01 베타 피드백) — 남은 날짜를 카드에 표시. 알림·마감 강제는 없다.
+                Section {
+                    Toggle("목표일 정하기", isOn: $hasTargetDate.animation())
+                        .tint(Ink.text)
+                    if hasTargetDate {
+                        DatePicker("목표일", selection: $targetDate, displayedComponents: [.date])
+                    }
+                } footer: {
+                    if hasTargetDate {
+                        Text("카드에 남은 날짜가 D-N으로 붙어요.")
+                    }
+                }
                 Section("진행 방식") {
                     Picker("진행 방식", selection: $kind) {
-                        Text("서브태스크").tag(OutputProgressKind.subtasks)
+                        // 라벨만 개명(2026-08-01 베타 피드백) — rawValue "subtasks"는 저장 호환 때문에 불변
+                        Text("체크리스트").tag(OutputProgressKind.subtasks)
                         Text("세션").tag(OutputProgressKind.sessions)
                         Text("퍼센트").tag(OutputProgressKind.percent)
                     }
@@ -568,7 +654,7 @@ struct OutputAddSheet: View {
                     if kind == .subtasks {
                         ForEach(subtasks, id: \.self) { Text($0).font(.footnote) }
                         HStack {
-                            TextField("서브태스크 추가", text: $subtaskDraft)
+                            TextField("체크리스트 항목 추가", text: $subtaskDraft)
                             Button("추가") {
                                 let t = subtaskDraft.trimmingCharacters(in: .whitespaces)
                                 if !t.isEmpty { subtasks.append(t); subtaskDraft = "" }
@@ -600,8 +686,11 @@ struct OutputAddSheet: View {
                     Button("저장") {
                         let schedule: OutputSchedule
                         if cycleBased {
-                            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase), dayOffset: offset,
-                                                                      repeatsEveryCycle: everyCycle, overflowRule: .clamp))
+                            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase),
+                                                                      dayOffset: wholePhase ? 0 : offset,
+                                                                      repeatsEveryCycle: everyCycle,
+                                                                      overflowRule: .clamp,
+                                                                      wholePhase: wholePhase ? true : nil))
                         } else if repeats {
                             switch calendarFreq {
                             case .weekly:  schedule = .weekly
@@ -618,6 +707,7 @@ struct OutputAddSheet: View {
                             item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
                         }
                         if kind == .percent { item.percent = initialPercent }
+                        if hasTargetDate { item.targetDate = Calendar.current.startOfDay(for: targetDate) }
                         modelContext.insert(item)
                         dismiss()
                     }

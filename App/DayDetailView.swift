@@ -16,7 +16,19 @@ enum CardKind: String, CaseIterable, Identifiable {
 }
 
 struct DayDetailView: View {
-    let day: Date
+    /// 진입한 날짜 — 화면 안에서 전날·다음날로 옮기면 offset만 움직인다(2026-08-01 베타 피드백).
+    /// 화면을 새로 push하지 않으므로 뒤로가기 스택이 쌓이지 않는다.
+    private let anchorDay: Date
+    @State private var dayOffset = 0
+
+    init(day: Date) {
+        self.anchorDay = day
+    }
+
+    /// 지금 보고 있는 날짜 — 내부 전 계산의 기준(종전 `day` 저장 프로퍼티 자리)
+    private var day: Date {
+        Calendar.current.date(byAdding: .day, value: dayOffset, to: anchorDay) ?? anchorDay
+    }
 
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
@@ -54,11 +66,24 @@ struct DayDetailView: View {
                     // 미래는 기록하지 않는다(생리 기록과 같은 원칙 §5.5.4).
                     if !isFuture {
                         CheckInCard(day: day)
+                            .id(day)   // 날짜를 옮기면 카드 내부 입력 상태도 그날 것으로 새로 뜬다
                     }
                 }
                 .padding(20)
             }
+            // 슬라이드로도 날짜 이동(2026-08-01) — 세로 스크롤을 막지 않게 동시 인식 + 수평 우세일 때만.
+            // 좌측 엣지에서 시작한 드래그는 시스템 뒤로가기 몫이라 건드리지 않는다.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 30)
+                    .onEnded { value in
+                        guard value.startLocation.x > 40 else { return }
+                        guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+                        if value.translation.width < -50 { move(by: 1) }
+                        else if value.translation.width > 50 { move(by: -1) }
+                    }
+            )
         }
+        .safeAreaInset(edge: .bottom) { dayNavBar }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
@@ -78,6 +103,38 @@ struct DayDetailView: View {
             ScheduleAddSheet(defaultDate: day, editing: item)
         }
         .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
+    }
+
+    /// 전날·다음날 이동 바(2026-08-01 베타 피드백) — 화살표 + 가운데에 지금 보는 날짜
+    private var dayNavBar: some View {
+        HStack {
+            navArrow(systemName: "chevron.left", label: "전날") { move(by: -1) }
+            Spacer()
+            Text(day.formatted(.dateTime.month().day().weekday(.abbreviated)))
+                .font(.almanacBody(.footnote, size: 13))
+                .foregroundStyle(Ink.text.opacity(0.6))
+            Spacer()
+            navArrow(systemName: "chevron.right", label: "다음날") { move(by: 1) }
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+    }
+
+    private func navArrow(systemName: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Ink.text.opacity(0.8))
+                .frame(width: 44, height: 44)   // §8.1 터치 44pt
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel(label)
+    }
+
+    private func move(by days: Int) {
+        lightFeedback += 1   // 월 이동과 같은 계층(§4 — 확정 아님)
+        dayOffset += days
     }
 
     // ── 상단: 날짜 표제 + 계절·단계 칩 ──
@@ -355,6 +412,9 @@ struct DayDetailView: View {
                         Text(row.item.title)
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Ink.text.opacity(row.projected ? 0.55 : 1.0))
+                        if let target = row.item.targetDate {
+                            DDayBadge(target: target, from: day)
+                        }
                         if row.projected {
                             Text("예상").font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
                         }

@@ -189,23 +189,43 @@ struct TodayView: View {
     private var largeHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let info = todayInfo {
-                // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
-                almanacDisplay(info.meta.name, size: 58,
-                               color: info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
+                // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
+                // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
+                    almanacDisplay(info.meta.name, size: 58,
+                                   color: info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
+                    Spacer(minLength: 0)
+                    todayDateStamp
+                }
                 HStack(spacing: 6) {
                     // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
                     Text("\(info.meta.phaseName) \(info.dayInCycle)일차")
                         .foregroundStyle(info.meta.color.opacity(ThemeStore.current == .modern ? 1.0 : 0.85))
-                    Text(today.formatted(.dateTime.month().day().weekday(.wide)))
-                        .foregroundStyle(Ink.text.opacity(ThemeStore.current == .modern ? 0.68 : 0.55))
                     if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.text.opacity(0.45)) }
                     else if info.projected { Text("예상").foregroundStyle(Ink.text.opacity(0.45)) }
                 }
-                .font(.system(.footnote, design: .serif))
+                .font(.almanacBody(.footnote, size: 13))
                 Text(moodlineText ?? info.meta.moodline)
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.85))
                     .padding(.top, 2)
+                // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백) — 캘린더 상단 버튼과 같은 문법·같은 시트
+                Button {
+                    lightFeedback += 1
+                    showLogSheet = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Circle().fill(Ink.record).frame(width: 7, height: 7)
+                        Text("생리 기록")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Ink.text)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+                }
+                .padding(.top, 6)
             } else {
                 Text("계절 기록 전")
                     .font(.almanac(size: 44, weight: .bold))
@@ -213,6 +233,20 @@ struct TodayView: View {
             }
         }
         .padding(.top, 24)
+    }
+
+    /// 오늘 날짜 도장 — 하루 상세(§8.2.3)와 같은 문법, 계절명에 눌리지 않게 44px
+    private var todayDateStamp: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            Text("\(Calendar.current.component(.day, from: today))")
+                .font(.almanac(size: 44, weight: .bold))
+                .foregroundStyle(Ink.text.opacity(0.85))
+            Text(today.formatted(.dateTime.month().weekday(.abbreviated)))
+                .font(.almanacBody(.caption, size: 12))
+                .foregroundStyle(Ink.text.opacity(0.55))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(today.formatted(.dateTime.month().day().weekday(.wide)))
     }
 
     // ── 컬랩싱 헤더: 컴팩트 바 층 ──
@@ -429,6 +463,9 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
                         Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(Ink.text)
+                        if let target = item.targetDate {
+                            DDayBadge(target: target, from: today)
+                        }
                         if item.isComplete {
                             Text("완료").font(.caption2.weight(.semibold)).foregroundStyle(Ink.text.opacity(0.6))
                         }
@@ -489,4 +526,34 @@ struct TodayView: View {
         }
     }
 
+}
+
+// ── Output 목표일 배지(2026-08-01 베타 피드백) — 오늘 탭·하루 상세 공용 ──
+// 기준일은 그 화면이 보고 있는 날짜다(하루 상세에서 과거를 보면 그날 기준 D-N).
+struct DDayBadge: View {
+    let target: Date
+    var from: Date = .now
+
+    private var remaining: Int {
+        let cal = Calendar.current
+        return cal.dateComponents([.day], from: cal.startOfDay(for: from),
+                                  to: cal.startOfDay(for: target)).day ?? 0
+    }
+
+    private var label: String {
+        if remaining == 0 { return "D-DAY" }
+        return remaining > 0 ? "D-\(remaining)" : "D+\(-remaining)"
+    }
+
+    var body: some View {
+        Text(label)
+            .font(.caption2.weight(.semibold))
+            .monospacedDigit()
+            // 지난 목표일은 벌점이 아니라 사실 표기 — 경고색을 쓰지 않는다(§7 가드레일 톤)
+            .foregroundStyle(Ink.text.opacity(remaining < 0 ? 0.45 : 0.7))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(Ink.text.opacity(0.08), in: Capsule())
+            .accessibilityLabel(remaining >= 0 ? "목표일까지 \(remaining)일" : "목표일에서 \(-remaining)일 지남")
+    }
 }

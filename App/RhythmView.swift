@@ -14,6 +14,10 @@ struct RhythmView: View {
 
     private static let allPhases: [CyclePhase] = CyclePhase.displayOrder   // 봄→여름→가을→겨울(2026-07-29 피드백)
 
+    // 나의 사계 → 루틴 추가 연동(2026-08-01 베타 피드백): 계절 칸 + → 종류 선택 → 그 계절 앵커 시트
+    @State private var addingSeason: SeasonAnchor?
+    @State private var addKind: CardKind?
+
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
@@ -38,6 +42,26 @@ struct RhythmView: View {
                 }
                 .padding(20)
                 .centeredColumn(720)   // 아이패드 중앙 조판(2026-07-23)
+            }
+        }
+        .confirmationDialog("무엇을 추가할까요?",
+                            isPresented: Binding(get: { addingSeason != nil && addKind == nil },
+                                                 set: { if !$0 && addKind == nil { addingSeason = nil } }),
+                            titleVisibility: .visible) {
+            Button("Input — 매일 챙길 것") { addKind = .input }
+            Button("Output — 만들어낼 것") { addKind = .output }
+            Button("취소", role: .cancel) { addingSeason = nil }
+        }
+        .sheet(item: $addKind, onDismiss: { addingSeason = nil }) { kind in
+            switch kind {
+            case .input:
+                InputAddSheet(currentSeason: addingSeason.map { seasonMeta(for: $0.phase) },
+                              energyLevel: addingSeason.flatMap { profile.level(for: $0.phase) },
+                              presetSeason: addingSeason)
+            case .output:
+                OutputAddSheet(presetSeason: addingSeason)
+            case .schedule:
+                EmptyView()   // 사계는 루틴(Input·Output)만 다룬다 — 일정은 캘린더 몫
             }
         }
     }
@@ -154,7 +178,7 @@ struct RhythmView: View {
                 seasonRow(phase: phase, routines: routines[phase] ?? [])
             }
             Text("템포루틴 · 당신 몸의 템포에 맞게")
-                .font(.system(.caption, design: .serif))
+                .font(.almanacBody(.caption, size: 12))
                 .foregroundStyle(Ink.text.opacity(0.45))
                 .frame(maxWidth: .infinity)
                 .padding(.top, 6)
@@ -203,17 +227,18 @@ struct RhythmView: View {
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(entry.day.formatted(.dateTime.month().day().weekday(.abbreviated)))
-                    .font(.system(.caption, design: .serif))
+                    .font(.almanacBody(.caption, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.55))
                 if let meta {
                     Text(meta.name)
-                        .font(.system(.caption, design: .serif))
+                        .font(.almanacBody(.caption, size: 12))
                         .foregroundStyle(meta.color.opacity(0.85))
                 }
                 Spacer()
             }
+            // 한 줄 일기 본문 — 한글이 주라 시스템 세리프면 고딕 폴백(2026-08-01 베타 피드백)
             Text(entry.note ?? "")
-                .font(.system(.subheadline, design: .serif))
+                .font(.almanacBody(.subheadline, size: 15))
                 .foregroundStyle(Ink.text)
         }
         .padding(.vertical, 8)
@@ -228,9 +253,21 @@ struct RhythmView: View {
             HStack(spacing: 8) {
                 SeasonGlyph(phase: phase)
                 Text(meta.name)
-                    .font(.system(.subheadline, design: .serif).weight(.bold))
+                    .font(.almanacBody(.subheadline, size: 15, weight: .bold))   // 한글 세리프 폴백 해소(2026-08-01)
                     .foregroundStyle(meta.color)
                 Spacer()
+                // 계절 칸에서 바로 루틴 추가(2026-08-01 베타 피드백) — 그 계절 앵커로 시트가 열린다
+                Button {
+                    addingSeason = SeasonAnchor.allCases.first { $0.phase == phase }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Ink.text.opacity(0.6))
+                        .frame(width: 44, height: 32)   // §8.1 터치 여유
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(meta.name)에 루틴 추가")
             }
             if routines.isEmpty {
                 // 빈 계절 = 밑줄 괘선(빈 낱장도 캡처물 성립 — §3.5.1)

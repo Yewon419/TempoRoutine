@@ -62,7 +62,8 @@ enum ExportImport {
                                   OutputSubtaskDTO(id: $0.id, title: $0.title, isDone: $0.isDone, order: $0.order)
                               },
                               targetSessions: item.targetSessions, loggedSessions: item.loggedSessions,
-                              percent: item.percent, createdAt: item.createdAt)
+                              percent: item.percent, createdAt: item.createdAt,
+                              targetDate: item.targetDate)
             },
             completions: store.completions.map {
                 ItemCompletionDTO(id: $0.id, itemID: $0.itemID,
@@ -124,6 +125,7 @@ enum ExportImport {
             item.targetSessions = dto.targetSessions
             item.loggedSessions = dto.loggedSessions
             item.percent = dto.percent
+            item.targetDate = dto.targetDate
             item.subtasks = dto.subtasks.map { sub in
                 let subtask = OutputSubtask(title: sub.title, order: sub.order)
                 subtask.id = sub.id

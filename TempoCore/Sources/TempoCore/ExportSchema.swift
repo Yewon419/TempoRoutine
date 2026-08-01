@@ -103,10 +103,12 @@ public struct OutputItemDTO: Codable, Equatable, Sendable {
     public var loggedSessions: Int
     public var percent: Double
     public var createdAt: Date
+    /// 목표일(디데이, 2026-08-01 베타 피드백). Optional = 구버전 백업엔 키가 없다(자동 합성이 nil로 흡수).
+    public var targetDate: Date?
 
     public init(id: UUID, title: String, schedule: OutputSchedule, progressKind: OutputProgressKind,
                 subtasks: [OutputSubtaskDTO], targetSessions: Int, loggedSessions: Int,
-                percent: Double, createdAt: Date) {
+                percent: Double, createdAt: Date, targetDate: Date? = nil) {
         self.id = id
         self.title = title
         self.schedule = schedule
@@ -116,6 +118,7 @@ public struct OutputItemDTO: Codable, Equatable, Sendable {
         self.loggedSessions = loggedSessions
         self.percent = percent
         self.createdAt = createdAt
+        self.targetDate = targetDate
     }
 }
 

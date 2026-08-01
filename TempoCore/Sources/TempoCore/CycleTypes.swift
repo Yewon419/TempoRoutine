@@ -39,12 +39,22 @@ public struct CycleRecurrence: Codable, Equatable, Sendable {
     public var dayOffset: Int               // 앵커로부터 +N일 (절대 날짜 저장 X)
     public var repeatsEveryCycle: Bool      // false = 특정 주기 1회
     public var overflowRule: OffsetOverflowRule
+    /// 계절 전체 모드(2026-08-01 베타 피드백: "겨울 전체 혹은 겨울 몇일차").
+    /// true = 앵커 계절의 **모든 날**에 발생 — dayOffset은 무시된다. `.phase` 앵커에서만 의미가 있다.
+    /// Optional인 이유: 기존 저장분(JSON·SwiftData Data)에 이 키가 없다 — 자동 합성 디코딩이
+    /// 키 부재를 nil로 흡수해야 하위 호환이 유지된다. 읽기는 `spansWholePhase`로 통일한다.
+    public var wholePhase: Bool?
 
-    public init(anchor: CycleAnchor, dayOffset: Int, repeatsEveryCycle: Bool, overflowRule: OffsetOverflowRule) {
+    /// 계절 전체인가 — 저장 표현(Optional)과 무관하게 계산 경로가 쓰는 단일 창구
+    public var spansWholePhase: Bool { wholePhase == true }
+
+    public init(anchor: CycleAnchor, dayOffset: Int, repeatsEveryCycle: Bool,
+                overflowRule: OffsetOverflowRule, wholePhase: Bool? = nil) {
         self.anchor = anchor
         self.dayOffset = dayOffset
         self.repeatsEveryCycle = repeatsEveryCycle
         self.overflowRule = overflowRule
+        self.wholePhase = wholePhase
     }
 }
 
