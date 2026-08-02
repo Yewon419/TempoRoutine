@@ -27,6 +27,9 @@ struct WidgetScheduleLine: Codable {
 struct WidgetCheckLine: Codable {
     let title: String
     let done: Bool
+    /// 항목 식별자(2026-08-02 A단계) — B단계 체크 큐가 어떤 항목인지 지목하려면 필수.
+    /// optional = 구 스냅샷 JSON 호환(계약 규칙: 추가만, 변경 금지)
+    var id: UUID?
 }
 
 /// Output 한 줄 — 진행 라벨은 앱이 합성("60%" / "2/3")
@@ -34,6 +37,13 @@ struct WidgetProgressLine: Codable {
     let title: String
     let label: String
     let fraction: Double   // 0...1
+    var id: UUID?
+    /// 진행 방식 — OutputProgressKind rawValue("percent"/"sessions"/"subtasks").
+    /// 위젯은 이걸로 표기만 가른다(주기 로직 없음 원칙 유지). B단계 인터랙션 분기도 여기서.
+    var kind: String?
+    /// 목표일 배지 문구 — "D-3"/"D-DAY"/"D+2". 계산은 앱이 한다(§8.2.8 문구 드리프트 방지).
+    /// 기준일 = 그 엔트리의 날짜(앱 DDayBadge와 동형: 하루 상세에서 과거를 보면 그날 기준)
+    var dday: String?
 }
 
 /// 하루치 표시 내용 — 위젯은 이 문자열들을 그대로 그린다.
@@ -51,6 +61,11 @@ struct WidgetDay: Codable {
     var schedules: [WidgetScheduleLine]?   // 그날 일정(로컬만 — EventKit 오버레이는 런타임 전용이라 제외)
     var inputs: [WidgetCheckLine]?         // 그날 Input(오늘 카드, 2026-07-27)
     var outputs: [WidgetProgressLine]?     // 그날 Output
+    // 총계(2026-08-02 A단계) — 위 배열은 위젯 예산 때문에 잘려 있다. 카운터·잠금화면 요약이
+    // 잘린 배열을 세면 "다 챙겼어요"가 거짓이 된다(5번째가 미완인데 상위 4개만 완료인 날).
+    var inputTotal: Int?
+    var inputDone: Int?
+    var outputTotal: Int?
 }
 
 struct WidgetSnapshot: Codable {

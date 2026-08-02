@@ -45,6 +45,9 @@ struct TempoWidgetsBundle: WidgetBundle {
         WeekStripWidget()      // Phase 2 (2026-07-27)
         TodayScheduleWidget()  // Phase 2 (2026-07-27) → 오늘 카드(일정·Input·Output)
         MonthGridWidget()      // 월 캘린더(2026-07-27 개편)
+        InputTodayWidget()     // A단계 (2026-08-02) — Input 전폭
+        OutputTodayWidget()    // A단계 (2026-08-02) — Output 전폭 + D-day
+        CardLockWidget()       // A단계 (2026-08-02) — 잠금화면 Input 요약 + Output 1건
     }
 }
 

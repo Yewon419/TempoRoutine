@@ -26,8 +26,16 @@ enum WidgetBridge {
             entry.predicted = !recordedDays.contains(day) && day >= today && entry.projected
                 && snapshot.phase(on: day) == .menstrual
             entry.schedules = scheduleLines(on: day, schedules: schedules)
-            entry.inputs = inputLines(on: day, snapshot: snapshot, inputs: inputs, completions: completions)
-            entry.outputs = outputLines(on: day, snapshot: snapshot, outputs: outputs)
+            // 총계는 잘리기 전 개수 — 위젯 카운터·잠금화면 요약이 이걸 쓴다(잘린 배열을 세면 거짓말)
+            if let input = inputLines(on: day, snapshot: snapshot, inputs: inputs, completions: completions) {
+                entry.inputs = input.lines
+                entry.inputTotal = input.total
+                entry.inputDone = input.done
+            }
+            if let output = outputLines(on: day, snapshot: snapshot, outputs: outputs) {
+                entry.outputs = output.lines
+                entry.outputTotal = output.total
+            }
             days.append(entry)
         }
         let payload = WidgetSnapshot(generatedAt: .now, days: days,
@@ -56,8 +64,9 @@ enum WidgetBridge {
     }
 
     /// 그날 Input 줄 — TodayView.todayInputs 판정과 동형(.once 캐리·소급·주기 앵커)
-    private static func inputLines(on day: Date, snapshot: CycleSnapshot,
-                                   inputs: [InputItem], completions: [ItemCompletion]) -> [WidgetCheckLine]? {
+    private static func inputLines(on day: Date, snapshot: CycleSnapshot, inputs: [InputItem],
+                                   completions: [ItemCompletion])
+    -> (lines: [WidgetCheckLine], total: Int, done: Int)? {
         let cal = Calendar.current
         func checked(_ id: UUID) -> Bool {
             completions.contains { $0.itemID == id && cal.isDate($0.occurredOn, inSameDayAs: day) }
@@ -76,12 +85,14 @@ enum WidgetBridge {
             }
         }
         guard !rows.isEmpty else { return nil }
-        return rows.prefix(4).map { WidgetCheckLine(title: $0.title, done: checked($0.id)) }
+        // 6줄까지 — 중형 위젯이 5줄을 그린다(종전 4는 중형에서 모자랐다)
+        let lines = rows.prefix(6).map { WidgetCheckLine(title: $0.title, done: checked($0.id), id: $0.id) }
+        return (lines, rows.count, rows.filter { checked($0.id) }.count)
     }
 
     /// 그날 Output 줄 — TodayView.todayOutputs 판정과 동형(완료된 미래 occurrence 제외 §5.5.2)
-    private static func outputLines(on day: Date, snapshot: CycleSnapshot,
-                                    outputs: [OutputItem]) -> [WidgetProgressLine]? {
+    private static func outputLines(on day: Date, snapshot: CycleSnapshot, outputs: [OutputItem])
+    -> (lines: [WidgetProgressLine], total: Int)? {
         let cal = Calendar.current
         let rows = outputs.filter { item in
             switch item.schedule {
@@ -95,27 +106,43 @@ enum WidgetBridge {
             }
         }
         guard !rows.isEmpty else { return nil }
-        return rows.prefix(4).map { item in
+        // 클로저 반환 타입 명시 — 문장 추가로 암묵 반환이 깨진 자리(CLAUDE.md Swift 6 함정 ②)
+        let lines = rows.prefix(6).map { item -> WidgetProgressLine in
+            let dday = ddayLabel(target: item.targetDate, from: day)
             switch item.progressKind {
             case .percent:
-                WidgetProgressLine(title: item.title,
-                                   label: item.percent.formatted(.percent.precision(.fractionLength(0))),
-                                   fraction: min(1, max(0, item.percent)))
+                return WidgetProgressLine(title: item.title,
+                                          label: item.percent.formatted(.percent.precision(.fractionLength(0))),
+                                          fraction: min(1, max(0, item.percent)),
+                                          id: item.id, kind: item.progressKind.rawValue, dday: dday)
             case .sessions:
-                WidgetProgressLine(title: item.title,
-                                   label: "\(item.loggedSessions)/\(max(1, item.targetSessions))",
-                                   fraction: min(1, Double(item.loggedSessions) / Double(max(1, item.targetSessions))))
+                return WidgetProgressLine(title: item.title,
+                                          label: "\(item.loggedSessions)/\(max(1, item.targetSessions))",
+                                          fraction: min(1, Double(item.loggedSessions) / Double(max(1, item.targetSessions))),
+                                          id: item.id, kind: item.progressKind.rawValue, dday: dday)
             case .subtasks:
-                subtaskLine(item)
+                return subtaskLine(item, dday: dday)
             }
         }
+        return (lines, rows.count)
     }
 
-    private static func subtaskLine(_ item: OutputItem) -> WidgetProgressLine {
+    private static func subtaskLine(_ item: OutputItem, dday: String?) -> WidgetProgressLine {
         let list = item.subtasks ?? []
         let done = list.filter(\.isDone).count
         return WidgetProgressLine(title: item.title, label: "\(done)/\(max(1, list.count))",
-                                  fraction: min(1, Double(done) / Double(max(1, list.count))))
+                                  fraction: min(1, Double(done) / Double(max(1, list.count))),
+                                  id: item.id, kind: item.progressKind.rawValue, dday: dday)
+    }
+
+    /// 목표일 배지 문구 — 앱 DDayBadge(TodayView)와 동형. 기준일은 그 엔트리가 그리는 날.
+    private static func ddayLabel(target: Date?, from day: Date) -> String? {
+        guard let target else { return nil }
+        let cal = Calendar.current
+        let remaining = cal.dateComponents([.day], from: cal.startOfDay(for: day),
+                                           to: cal.startOfDay(for: target)).day ?? 0
+        if remaining == 0 { return "D-DAY" }
+        return remaining > 0 ? "D-\(remaining)" : "D+\(-remaining)"
     }
 
     private static func makeDay(_ day: Date, snapshot: CycleSnapshot) -> WidgetDay {
