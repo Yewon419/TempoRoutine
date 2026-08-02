@@ -210,22 +210,10 @@ struct TodayView: View {
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.85))
                     .padding(.top, 2)
-                // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백) — 캘린더 상단 버튼과 같은 문법·같은 시트
-                Button {
-                    lightFeedback += 1
-                    showLogSheet = true
-                } label: {
-                    HStack(spacing: 5) {
-                        Circle().fill(Ink.record).frame(width: 7, height: 7)
-                        Text("생리 기록")
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Ink.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
-                }
-                .padding(.top, 6)
+                // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백). 2026-08-02 교정: 캡슐 버튼+시트가
+                // 아니라 하루 상세와 같은 인라인 토글이다("이 스위치야") — 그 자리에서 켜고 끈다.
+                periodToggle
+                    .padding(.top, 8)
             } else {
                 Text("계절 기록 전")
                     .font(.almanac(size: 44, weight: .bold))
@@ -262,6 +250,29 @@ struct TodayView: View {
         .background(.ultraThinMaterial)
         .opacity(isCollapsed ? 1 : 0)
         .allowsHitTesting(false)
+    }
+
+    // ── 생리 기록 토글 (DayDetailView.periodToggle과 동형 — 2026-08-02 베타 피드백 교정) ──
+    // 오늘 탭은 기준일이 항상 오늘이라 하루 상세의 미래 금지 가드(§5.5.4)는 걸 필요가 없다.
+    private var periodToggle: some View {
+        Toggle(isOn: Binding(
+            get: { periodDays.contains { $0.day == today } },
+            set: { on in
+                confirmFeedback += 1
+                let all = periodDays
+                if on {
+                    Task { await PeriodStore.add(days: [today], context: modelContext, existing: all) }
+                } else {
+                    let records = all.filter { $0.day == today }
+                    Task { await PeriodStore.remove(records: records, context: modelContext, all: all) }
+                }
+            }
+        )) {
+            Text("생리 기록")
+                .font(.system(.subheadline, design: .serif))
+                .foregroundStyle(Ink.text)
+        }
+        .tint(Ink.text)
     }
 
     // ── S0 / S4 상태 표면 ──
