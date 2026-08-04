@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import TempoCore   // TrackedSignals
 
 struct CheckInCard: View {
     let day: Date
