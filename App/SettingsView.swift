@@ -27,6 +27,8 @@ struct SettingsView: View {
     @State private var surveyCodeInput = ""
     @State private var surveyCodeMessage: String?
     @State private var surveyCodeRedeeming = false
+    @Query private var selfReports: [SelfReportRecord]
+    @State private var showSelfReport = false
     @State private var undoSnapshot: ExportEnvelopeV1?
     @State private var undoDismissTask: Task<Void, Never>?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
@@ -134,6 +136,19 @@ struct SettingsView: View {
                     Text("사전 설문을 하고 받은 코드를 넣으면 선행 테마가 열려요. 코드는 한 번만 쓸 수 있어요.")
                 }
 
+                // 앱 내 자기보고 설문(v1.6 §4) — 언제든 재진입. 웹 응답과 연결하지 않는다.
+                Section {
+                    Button(selfReports.isEmpty ? "리듬 설문 하기" : "리듬 설문 다시 하기") {
+                        lightFeedback += 1
+                        showSelfReport = true
+                    }
+                    .foregroundStyle(Ink.text)
+                } footer: {
+                    Text(selfReports.isEmpty
+                         ? "17개 문항, 2분쯤 걸려요. 답은 이 기기에만 저장돼요."
+                         : "마지막 응답 \(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 쌓여요.")
+                }
+
                 // 테마(§8.2.6 — 무료 설정 스위치, 테스트 중. IAP 설계 확정 시 재검토 — 2026-07-29)
                 Section {
                     Picker("테마", selection: themeBinding) {
@@ -176,6 +191,7 @@ struct SettingsView: View {
         )) { file in
             ActivityShareSheet(url: file.url)
         }
+        .sheet(isPresented: $showSelfReport) { SelfReportFlow() }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)
         }

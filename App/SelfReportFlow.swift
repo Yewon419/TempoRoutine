@@ -1,0 +1,194 @@
+// 템포루틴 — 앱 내 자기보고 설문 화면 (v1.6 §4 / MASTER §3.11)
+//
+// 웹 설문과 다른 점 하나: **결과를 보여주지 않는다.**
+// 앱은 이미 기록에서 유형을 계산하는데(§5.12), 자기보고 유형까지 화면에 띄우면
+// 산출 경로가 다른 두 값이 나란히 보이게 된다. 어느 쪽이 "내 유형"인지 물어보는 순간
+// 답이 없다. 그래서 응답은 저장만 하고 대조는 내부에서만 쓴다.
+//
+// 마무리 카피도 이득을 약속하지 않는다 — 자기보고를 실제로 쓰는 경로가 아직 없어서,
+// "더 정확해져요" 류는 검증 불가능한 주장이 된다(§7 가드레일).
+
+import SwiftUI
+import SwiftData
+import TempoCore
+
+struct SelfReportFlow: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var step = 0
+    @State private var answers: [String: String] = [:]
+    /// 제시 순서만 섞는다. 한 번 섞은 순서를 유지해야 화면을 오갈 때 문항이 튀지 않는다.
+    @State private var symptomOrder: [SurveyQuestion] = SelfReportSurvey.symptomQuestions.shuffled()
+
+    private var totalSteps: Int { 5 }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Ink.paper.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        progressRule
+                        content
+                        actions
+                    }
+                    .padding(20)
+                    .centeredColumn(640)
+                }
+            }
+            .navigationTitle("리듬 설문")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") { dismiss() }.foregroundStyle(Ink.text)
+                }
+            }
+        }
+    }
+
+    private var progressRule: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(Ink.text.opacity(0.15))
+                Rectangle().fill(Ink.text)
+                    .frame(width: proxy.size.width * Double(step) / Double(totalSteps))
+            }
+        }
+        .frame(height: 2)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch step {
+        case 0: intro
+        case 1: questionGroup(title: "잠깐, 기준을 맞출게요.",
+                              note: "이제 그때를 떠올리면서 답해주세요.",
+                              questions: [SelfReportSurvey.calibration])
+        case 2: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.phaseQuestions)
+        case 3: questionGroup(title: SelfReportSurvey.symptomAnchorLine(p2: answers["P2"]),
+                              note: "딱히 없다고 하신 분은, 그나마 힘들었던 때를 떠올려주세요.",
+                              questions: symptomOrder)
+        case 4: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.amplitudeQuestions)
+        default: optionalGroup
+        }
+    }
+
+    private var intro: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("이맘때 이야기를 하려면\n몇 가지 알아야 해요.")
+                .font(.almanac(size: 26, weight: .bold))
+                .foregroundStyle(Ink.text)
+            Text("리듬의 모양은 사람마다 달라요.\n17개 문항이고 2분쯤 걸려요. 언제든 닫아도 괜찮아요.")
+                .font(.system(.body, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.75))
+            Text("답은 이 기기에만 저장돼요.")
+                .font(.footnote)
+                .foregroundStyle(Ink.text.opacity(0.5))
+        }
+    }
+
+    private func questionGroup(title: String?, note: String?, questions: [SurveyQuestion]) -> some View {
+        VStack(alignment: .leading, spacing: 22) {
+            if let title {
+                Text(title)
+                    .font(.almanac(size: 19, weight: .bold))
+                    .foregroundStyle(Ink.text)
+            }
+            if let note {
+                Text(note).font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
+            }
+            ForEach(questions, id: \.id) { question in
+                questionBlock(question)
+            }
+        }
+    }
+
+    private var optionalGroup: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("여기서부터는 앱을 만드는 데 쓰이는 질문이에요.")
+                    .font(.almanac(size: 19, weight: .bold))
+                    .foregroundStyle(Ink.text)
+                Text("건너뛰셔도 괜찮아요.")
+                    .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
+            }
+            ForEach(SelfReportSurvey.optionalQuestions, id: \.id) { question in
+                questionBlock(question)
+            }
+        }
+    }
+
+    private func questionBlock(_ question: SurveyQuestion) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(question.text)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Ink.text)
+            ForEach(question.choices, id: \.value) { choice in
+                choiceRow(question: question, choice: choice)
+            }
+        }
+    }
+
+    private func choiceRow(question: SurveyQuestion, choice: SurveyChoice) -> some View {
+        let selected = answers[question.id] == choice.value
+        return Button {
+            answers[question.id] = selected ? nil : choice.value
+        } label: {
+            HStack {
+                Text(choice.label)
+                    .font(.subheadline)
+                    .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.85))
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.06)),
+                        in: RoundedRectangle(cornerRadius: 10))
+        }
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
+    }
+
+    private var actions: some View {
+        HStack(spacing: 10) {
+            Button(step == totalSteps ? "제출" : "다음") { advance() }
+                .buttonStyle(.borderedProminent)
+                .tint(Ink.text)
+                .disabled(!canAdvance)
+            if step == totalSteps {
+                Button("건너뛰기") { finish() }
+                    .foregroundStyle(Ink.text.opacity(0.6))
+            }
+        }
+        .padding(.top, 6)
+    }
+
+    /// 선택 문항 단계 말고는 그 화면의 문항이 전부 채워져야 넘어간다.
+    private var canAdvance: Bool {
+        switch step {
+        case 0: true
+        case 1: answers[SelfReportSurvey.calibration.id] != nil
+        case 2: SelfReportSurvey.phaseQuestions.allSatisfy { answers[$0.id] != nil }
+        case 3: SelfReportSurvey.symptomQuestions.allSatisfy { answers[$0.id] != nil }
+        case 4: SelfReportSurvey.amplitudeQuestions.allSatisfy { answers[$0.id] != nil }
+        default: true
+        }
+    }
+
+    private func advance() {
+        if step < totalSteps {
+            step += 1
+        } else {
+            finish()
+        }
+    }
+
+    private func finish() {
+        // 화이트리스트 밖 키가 섞이지 않게 한 번 거른다(웹 서버와 같은 규칙)
+        let allowed = SelfReportSurvey.allQuestionIDs
+        let cleaned = answers.filter { allowed.contains($0.key) }
+        modelContext.insert(SelfReportRecord(answers: cleaned))
+        SelfReportStore.hasPrompted = true
+        dismiss()
+    }
+}

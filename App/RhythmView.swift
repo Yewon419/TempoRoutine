@@ -17,6 +17,8 @@ struct RhythmView: View {
     // 나의 사계 → 루틴 추가 연동(2026-08-01 베타 피드백): 계절 칸 + → 종류 선택 → 그 계절 앵커 시트
     @State private var addingSeason: SeasonAnchor?
     @State private var addKind: CardKind?
+    @Query private var selfReports: [SelfReportRecord]
+    @State private var showSelfReport = false
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -35,6 +37,7 @@ struct RhythmView: View {
                     almanacDisplay("나의 리듬", size: 44, color: Ink.text)
                         .padding(.top, 12)
                     rhythmTypeCard
+                    selfReportPrompt
                     coldCard
                     if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
                         meanwhileCard
@@ -54,6 +57,7 @@ struct RhythmView: View {
             Button("Output — 만들어낼 것") { addKind = .output }
             Button("취소", role: .cancel) { addingSeason = nil }
         }
+        .sheet(isPresented: $showSelfReport) { SelfReportFlow() }
         .sheet(item: $addKind, onDismiss: { addingSeason = nil }) { kind in
             switch kind {
             case .input:
@@ -65,6 +69,33 @@ struct RhythmView: View {
             case .schedule:
                 EmptyView()   // 사계는 루틴(Input·Output)만 다룬다 — 일정은 캘린더 몫
             }
+        }
+    }
+
+    // ── 자기보고 설문 제안 (v1.6 §4) ──
+    // 첫 주기를 다 기록한 사람에게 1회만. 그 사람은 이탈 위험이 낮고,
+    // 침묵하는 문구의 이유("아직 당신의 이맘때를 모르겠어요")를 이미 체감했다.
+    @ViewBuilder
+    private var selfReportPrompt: some View {
+        if SelfReportStore.shouldPrompt(snapshot: snapshot, records: selfReports) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("이맘때 이야기를 하려면 몇 가지 알아야 해요.")
+                    .font(.system(.subheadline, design: .serif))
+                    .foregroundStyle(Ink.text)
+                HStack(spacing: 10) {
+                    Button("답해보기") { showSelfReport = true }
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Ink.paper)
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .background(Ink.text, in: Capsule())
+                    Button("나중에") { SelfReportStore.hasPrompted = true }
+                        .font(.footnote)
+                        .foregroundStyle(Ink.text.opacity(0.55))
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .milkGlass()
         }
     }
 

@@ -21,6 +21,6 @@ struct TempoRoutineApp: App {
         }
         .modelContainer(for: [PeriodDay.self, ScheduleItem.self, InputItem.self,
                               OutputItem.self, OutputSubtask.self, ItemCompletion.self,
-                              DailyCheckIn.self])
+                              DailyCheckIn.self, SelfReportRecord.self])
     }
 }
