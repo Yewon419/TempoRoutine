@@ -58,6 +58,10 @@ struct CheckInCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
         .onAppear(perform: loadDraft)
+        // 날짜가 바뀌면 그날 것으로 다시 읽는다(2026-08-03 베타 피드백 "어제 저장한 게 오늘까지 표시").
+        // onAppear 한 번만 로드하면, 앱을 백그라운드에 둔 채 자정을 넘겼을 때 day는 오늘로 바뀌는데
+        // 초안은 어제 값이 남아 칩·확인 문구가 어제 상태로 보이고, 손대는 순간 오늘로 복사된다.
+        .onChange(of: normalizedDay) { _, _ in reloadDraft() }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -92,6 +96,17 @@ struct CheckInCard: View {
             }
             Spacer(minLength: 0)
         }
+    }
+
+    /// 신호를 먼저 비우고 노트를 마지막에 비운다 — 노트의 onChange가 persistDraft를 부르는데,
+    /// 그 시점에 신호가 남아 있으면 새 날짜에 어제 값이 저장된다.
+    private func reloadDraft() {
+        draftEnergy = 0
+        draftMood = 0
+        draftSleep = 0
+        draftNote = ""
+        draftLoaded = false
+        loadDraft()
     }
 
     private func loadDraft() {

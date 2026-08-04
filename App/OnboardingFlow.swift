@@ -117,7 +117,9 @@ struct OnboardingFlow: View {
     private var splash: some View {
         ZStack {
             Ink.paper.ignoresSafeArea()
-            BrandLogo(diameter: 108)
+            // 108 → 72(2026-08-03 베타 피드백 "글씨 너무 커"): 워드마크 크기는 외경에 비례하고
+            // (0.8965배) 108이면 4글자 폭이 화면 폭을 거의 채운다. 비율 SSOT(build_final.py)는 불변.
+            BrandLogo(diameter: 72)
                 .opacity(splashLogoIn ? 1 : 0)
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.7), value: splashLogoIn)
         }
