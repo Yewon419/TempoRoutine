@@ -33,6 +33,9 @@ struct SettingsView: View {
     @State private var undoDismissTask: Task<Void, Never>?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
+    /// 사분면 커버 리마인더(§5.12 ⑤) — 기본 꺼짐. 켜는 순간에만 시스템 권한을 묻는다.
+    @AppStorage(CoverageReminder.storageKey) private var coverageReminderOn = false
+    @State private var notificationDenied = false
 
     /// 테마 선택 — 리빌드(.id) 전에 팔레트 캐시를 먼저 확정한다(선 apply, Theme.swift 반응성 설계)
     private var themeBinding: Binding<AppTheme> {
@@ -42,6 +45,32 @@ struct SettingsView: View {
                 lightFeedback += 1
                 ThemeStore.apply(theme.rawValue)
                 appTheme = theme.rawValue
+            }
+        )
+    }
+
+    /// 켜는 순간 = 시스템 권한 시트(§3.6.1 더블 컨센트). 거부되면 토글을 되돌리고
+    /// 설정 이동 버튼만 붙인다 — 켜진 척하는 스위치가 제일 나쁘다.
+    private var coverageBinding: Binding<Bool> {
+        Binding(
+            get: { coverageReminderOn },
+            set: { on in
+                lightFeedback += 1
+                guard on else {
+                    coverageReminderOn = false
+                    notificationDenied = false
+                    CoverageReminder.cancelAll()
+                    return
+                }
+                let current = periodDays   // @Query 배열은 Task 밖에서 잡는다(healthBinding과 같은 이유)
+                Task {
+                    let granted = await CoverageReminder.requestPermission()
+                    coverageReminderOn = granted
+                    notificationDenied = !granted
+                    if granted {
+                        CoverageReminder.reschedule(periodDays: current, context: modelContext)
+                    }
+                }
             }
         )
     }
@@ -87,6 +116,23 @@ struct SettingsView: View {
                             Text("마지막 동기화 · \(mirror.lastSyncReport)")
                         }
                     }
+                }
+
+                // 사분면 커버 리마인더(§5.12 ⑤) — 매일 조르는 체크인 알림이 아니다.
+                // 기록이 하나도 없는 시기에만, 그 시기 한 번.
+                Section {
+                    Toggle("기록이 빈 시기 알려주기", isOn: coverageBinding)
+                        .tint(Ink.text)
+                    if notificationDenied {
+                        Button("알림 설정 열기") { openAppSettings() }
+                            .foregroundStyle(Ink.text)
+                    }
+                } header: {
+                    Text("알림")
+                } footer: {
+                    Text(notificationDenied
+                         ? "알림이 꺼져 있어요. 설정에서 알림을 켜면 다시 고를 수 있어요."
+                         : "한 주기를 네 구간으로 나눠, 기록이 하나도 없는 구간에만 저녁에 한 번 알려요. 기록이 있으면 알리지 않아요.")
                 }
 
                 // 기능 튜토리얼 리셋(2026-07-23 — JejuNow 「사용법 다시 보기」 동형)

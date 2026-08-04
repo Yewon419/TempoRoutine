@@ -52,6 +52,7 @@ struct RootTabView: View {
             await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)   // 위젯 스냅샷
+            CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -61,7 +62,13 @@ struct RootTabView: View {
                 // 세션 중 편집 반영 — 백그라운드 진입 때 최신 상태로 재발행
                 WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                      inputs: inputs, outputs: outputs, completions: completions)
+                // 이 세션의 체크인까지 반영해 다시 건다(§5.12 ⑤ 재스케줄 계약)
+                CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
             }
+        }
+        // 앵커가 움직이면 사분면 경계도 통째로 움직인다 — 생리 기록 변화는 즉시 재스케줄.
+        .onChange(of: periodDays.map(\.day)) { _, _ in
+            CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
         }
     }
 }
