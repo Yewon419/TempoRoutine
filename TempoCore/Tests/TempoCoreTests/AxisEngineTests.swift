@@ -163,13 +163,24 @@ final class AxisEstimatorTests: XCTestCase {
         XCTAssertEqual(AxisEstimator.classify(try XCTUnwrap(state)), .andante)
     }
 
-    /// 루바토 경계 — Φ가 [0.5, 0.85)면 아직 정하지 않는다.
+    /// 루바토 경계 — Φ((A−A₀)/σ)가 [0.5, 0.85)면 아직 정하지 않는다.
+    /// 기준 진폭보다 살짝 위인데 분산이 커서 확신이 안 서는 상태.
     func testRubatoBand() {
-        let borderline = AxisState(amplitude: 0.35, variance: 0.5, modality: 0, observedCycles: 3)
+        let borderline = AxisState(amplitude: AxisEstimator.baselineAmplitude + 0.1,
+                                   variance: 0.5, modality: 0, observedCycles: 3)
         let phi = AxisEstimator.confidence(borderline)
         XCTAssertGreaterThanOrEqual(phi, AxisEstimator.rubatoLowerBound)
         XCTAssertLessThan(phi, AxisEstimator.rubatoUpperBound)
         XCTAssertEqual(AxisEstimator.classify(borderline), .rubato)
+    }
+
+    /// ★ 안단테가 도달 가능해야 한다 — 기준을 빼지 않으면 Φ≥0.5가 항상 참이라
+    /// 이 유형이 영영 나오지 않는다(2026-08-04 실측 결함).
+    func testAndanteIsReachable() {
+        let flat = AxisState(amplitude: 0, variance: AxisEstimator.minStateVariance,
+                             modality: 0, observedCycles: 6)
+        XCTAssertLessThan(AxisEstimator.confidence(flat), AxisEstimator.rubatoLowerBound)
+        XCTAssertEqual(AxisEstimator.classify(flat), .andante)
     }
 
     /// M축 부호 — 정서가 신체보다 힘들면 양수(마음이 먼저 신호를 보내는 편).

@@ -17,9 +17,16 @@ public enum AxisEstimator {
     /// 프로세스 노이즈. 유형은 "서서히 드리프트"라 작게 잡는다(§3.11 은유 층위).
     public static let processVariance = 0.02
 
-    /// 루바토 구간 — Φ(μ/σ) ∈ [0.5, 0.85). 아직 어느 쪽이라 말할 확신이 없는 구간.
+    /// 루바토 구간 — Φ((A − A₀)/σ) ∈ [0.5, 0.85). 아직 어느 쪽이라 말할 확신이 없는 구간.
     public static let rubatoLowerBound = 0.5
     public static let rubatoUpperBound = 0.85
+
+    /// 판정 기준 진폭 A₀ — "변동이 있다"고 부를 최소치.
+    /// ⚠ 핸드오프 스펙은 Φ(μ/σ)라고만 썼는데, 진폭은 √이라 음수가 될 수 없어
+    /// 그대로 구현하면 Φ ≥ 0.5가 항상 참이 되고 **안단테가 영원히 나오지 않는다**(2026-08-04 실측).
+    /// 기준을 빼야 "기준보다 유의하게 큰가"라는 검정이 성립한다.
+    /// 값 근거: 진폭 0.5 = peak-to-peak 1.0 = 5점 척도에서 한 칸. 파일럿 후 조정 대상.
+    public static let baselineAmplitude = 0.5
 
     /// 주기 하나를 관측해 상태를 갱신한다. 첫 관측이면 prior 없이 시작한다.
     public static func update(state: AxisState?, cycle signals: [DailySignal]) -> AxisState? {
@@ -62,11 +69,12 @@ public enum AxisEstimator {
         cycles.reduce(nil) { update(state: $0, cycle: $1) }
     }
 
-    /// Φ(μ/σ) — 진폭이 0보다 유의하게 큰지에 대한 확신도.
+    /// Φ((A − A₀)/σ) — 진폭이 기준보다 유의하게 큰지에 대한 확신도.
     public static func confidence(_ state: AxisState) -> Double {
         let sigma = state.variance.squareRoot()
-        guard sigma > 0 else { return state.amplitude > 0 ? 1 : 0 }
-        return normalCDF(state.amplitude / sigma)
+        let margin = state.amplitude - baselineAmplitude
+        guard sigma > 0 else { return margin > 0 ? 1 : 0 }
+        return normalCDF(margin / sigma)
     }
 
     /// 유형 배정 — 루바토를 먼저 거른다(§3.11).
