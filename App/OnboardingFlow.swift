@@ -57,6 +57,11 @@ struct OnboardingFlow: View {
     @State private var trackPain = true
     @State private var trackAppetite = true
     @State private var trackNote = true
+    // 사전 설문 코드 입력(v1.6 §9 3-8) — 접이식, 실패해도 온보딩을 막지 않는다
+    @State private var showCodeField = false
+    @State private var codeInput = ""
+    @State private var codeMessage: String?
+    @State private var redeeming = false
 
     var body: some View {
         ZStack {
@@ -286,13 +291,21 @@ struct OnboardingFlow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("몰아치지 않아도 괜찮아요.")
                     .staggerIn(sceneAppeared, delay: 0.30, duration: 0.48, reduceMotion: reduceMotion)
-                Text("주기를 네 계절로 보고,")
+                // "생리 주기 기반"을 첫 화면에 명시한다(v1.6 §9 3-6 — App Store 2.3 메타데이터 방어)
+                Text("생리 주기를 네 계절로 보고,")
                     .staggerIn(sceneAppeared, delay: 0.56, duration: 0.48, reduceMotion: reduceMotion)
                 Text("계절에 맞게 계획하는 플래너예요.")
                     .staggerIn(sceneAppeared, delay: 0.82, duration: 0.48, reduceMotion: reduceMotion)
             }
             .font(.system(.body, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.75))
+            // 비의료 고지(5.1.1(ix) 방어). 여기서는 부정 정의를 써도 된다 —
+            // 사용자가 캘린더형 주기 앱을 대조군으로 이미 갖고 있다(v1.6 §9 3-6).
+            Text("예측하지 않아요. 기록하고 보여줍니다.\n의학적 진단이나 조언은 하지 않아요.")
+                .font(.caption)
+                .foregroundStyle(Ink.text.opacity(0.45))
+                .lineSpacing(2)
+                .staggerIn(sceneAppeared, delay: 1.08, duration: 0.48, reduceMotion: reduceMotion)
             Spacer()
             cycleWheel
                 .frame(maxWidth: .infinity)
@@ -661,6 +674,66 @@ struct OnboardingFlow: View {
             Text("아무와도 공유하지 않아요. 언제든 내보내고 지울 수 있어요.")
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))
+            precursorCodeRow
+        }
+    }
+
+    // ── 사전 설문 참여 코드 (v1.6 §9 3-8) ──
+    // 접이식이라 코드가 없는 사람의 온보딩 길이는 그대로다. 실패해도 다음 단계를 막지 않는다.
+    @ViewBuilder
+    private var precursorCodeRow: some View {
+        if SurveyCode.isPrecursorUnlocked {
+            Label("선행 테마가 열려 있어요.", systemImage: "checkmark.seal")
+                .font(.footnote)
+                .foregroundStyle(Ink.text.opacity(0.6))
+        } else {
+            VStack(alignment: .leading, spacing: 10) {
+                Button {
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                        showCodeField.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("사전 설문 코드가 있어요")
+                        Image(systemName: showCodeField ? "chevron.up" : "chevron.down")
+                            .font(.caption2)
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.6))
+                }
+                if showCodeField {
+                    HStack(spacing: 8) {
+                        TextField("TEMPO-XXXXXXXX", text: $codeInput)
+                            .textInputAutocapitalization(.characters)
+                            .autocorrectionDisabled()
+                            .font(.subheadline.monospaced())
+                            .foregroundStyle(Ink.text)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                            .background(Ink.text.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
+                        Button("확인") { redeemCode() }
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Ink.text)
+                            .disabled(redeeming || codeInput.isEmpty)
+                    }
+                    if let message = codeMessage {
+                        Text(message)
+                            .font(.caption)
+                            .foregroundStyle(Ink.text.opacity(0.6))
+                    }
+                }
+            }
+        }
+    }
+
+    private func redeemCode() {
+        redeeming = true
+        codeMessage = nil
+        Task {
+            let outcome = await SurveyCode.redeem(codeInput)
+            redeeming = false
+            codeMessage = outcome.message
+            if outcome == .unlocked { codeInput = "" }
         }
     }
 
