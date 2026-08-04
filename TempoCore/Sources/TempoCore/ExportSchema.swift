@@ -11,12 +11,19 @@ public struct TrackedSignals: Codable, Equatable, Sendable {
     public var pain: Bool
     public var appetite: Bool
     public var note: Bool
+    /// 예민함(2026-08-04, 핸드오프 v1.5 §3-1) — 정서 계열의 두 번째 문항.
+    /// ⚠ optional이 아니면 구 UserDefaults JSON이 통째로 디코딩 실패한다(키가 없어서).
+    /// 읽기는 `tracksIrritability` 한 창구로 — 구 저장분은 기본 켬으로 본다.
+    public var irritability: Bool?
 
-    public init(sleep: Bool, pain: Bool, appetite: Bool, note: Bool) {
+    public var tracksIrritability: Bool { irritability ?? true }
+
+    public init(sleep: Bool, pain: Bool, appetite: Bool, note: Bool, irritability: Bool = true) {
         self.sleep = sleep
         self.pain = pain
         self.appetite = appetite
         self.note = note
+        self.irritability = irritability
     }
 }
 
@@ -146,9 +153,13 @@ public struct DailyCheckInDTO: Codable, Equatable, Sendable {
     public var appetite: Int?
     public var note: String?
     public var createdAt: Date
+    /// 2026-08-04 추가 — 둘 다 optional/기본값이라 구 내보내기 파일도 그대로 재임포트된다
+    public var irritability: Int?
+    public var isBackfilled: Bool?
 
     public init(id: UUID, day: String, energy: Int, mood: Int, sleep: Int?, pain: Int?,
-                appetite: Int?, note: String?, createdAt: Date) {
+                appetite: Int?, note: String?, createdAt: Date,
+                irritability: Int? = nil, isBackfilled: Bool? = nil) {
         self.id = id
         self.day = day
         self.energy = energy
@@ -158,6 +169,8 @@ public struct DailyCheckInDTO: Codable, Equatable, Sendable {
         self.appetite = appetite
         self.note = note
         self.createdAt = createdAt
+        self.irritability = irritability
+        self.isBackfilled = isBackfilled
     }
 }
 

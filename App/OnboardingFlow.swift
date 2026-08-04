@@ -51,8 +51,11 @@ struct OnboardingFlow: View {
 
     // ③ 추적 항목
     @State private var trackSleep = true
-    @State private var trackPain = false
-    @State private var trackAppetite = false
+    // 예민함·몸은 M축(정서 대 신체)의 두 계열이라 기본 켬 — 안 받으면 그날 데이터가 영영 없다.
+    // 부담되면 여기서 끌 수 있고, 저장 필수 신호는 여전히 에너지·기분 둘뿐이다(v1.5 §3-1).
+    @State private var trackIrritability = true
+    @State private var trackPain = true
+    @State private var trackAppetite = true
     @State private var trackNote = true
 
     var body: some View {
@@ -165,7 +168,8 @@ struct OnboardingFlow: View {
         case 2: step = 3
         case 3:
             AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: trackPain,
-                                                        appetite: trackAppetite, note: trackNote)
+                                                        appetite: trackAppetite, note: trackNote,
+                                                        irritability: trackIrritability)
             step = 4
         default: onboardingDone = true
         }
@@ -578,8 +582,9 @@ struct OnboardingFlow: View {
             VStack(spacing: 0) {
                 baseRow("에너지")
                 baseRow("기분")
+                toggleRow("예민함", $trackIrritability)
+                toggleRow("몸", $trackPain)
                 toggleRow("수면", $trackSleep)
-                toggleRow("통증", $trackPain)
                 toggleRow("식욕", $trackAppetite)
                 toggleRow("오늘 한 줄", $trackNote)
             }
@@ -593,6 +598,7 @@ struct OnboardingFlow: View {
             trackPain = current.pain
             trackAppetite = current.appetite
             trackNote = current.note
+            trackIrritability = current.tracksIrritability
         }
     }
 

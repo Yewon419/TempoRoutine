@@ -9,12 +9,13 @@ import TempoCore
 enum AppSettings {
     private static let trackedSignalsKey = "trackedSignals"
 
-    /// 온보딩(⑧) 전 기본값: 체크인 카드 노출 구성과 일치(수면·한 줄)
+    /// 온보딩 전 기본값 — 전부 켬(2026-08-04 개정). 예민함·몸은 M축의 두 계열이고,
+    /// 안 받은 날의 데이터는 나중에 소급해 만들 수 없다(v1.5 §3-1). 부담되면 설정에서 끈다.
     static var trackedSignals: TrackedSignals {
         get {
             guard let data = UserDefaults.standard.data(forKey: trackedSignalsKey),
                   let decoded = try? JSONDecoder().decode(TrackedSignals.self, from: data) else {
-                return TrackedSignals(sleep: true, pain: false, appetite: false, note: true)
+                return TrackedSignals(sleep: true, pain: true, appetite: true, note: true)
             }
             return decoded
         }
@@ -72,7 +73,9 @@ enum ExportImport {
             checkIns: store.checkIns.map {
                 DailyCheckInDTO(id: $0.id, day: ExportCodec.dayString($0.day), energy: $0.energy,
                                 mood: $0.mood, sleep: $0.sleep, pain: $0.pain, appetite: $0.appetite,
-                                note: $0.note, createdAt: $0.createdAt)
+                                note: $0.note, createdAt: $0.createdAt,
+                                irritability: $0.irritability,
+                                isBackfilled: $0.isBackfilled ? true : nil)
             },
             trackedSignals: AppSettings.trackedSignals
         )
@@ -154,11 +157,13 @@ enum ExportImport {
             let hasSignals = dto.energy >= 1 && dto.mood >= 1
             let hasNote = !(dto.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             guard hasSignals || hasNote else { continue }
-            let record = DailyCheckIn(day: day, energy: dto.energy, mood: dto.mood)
+            let record = DailyCheckIn(day: day, energy: dto.energy, mood: dto.mood,
+                                      isBackfilled: dto.isBackfilled ?? false)
             record.id = dto.id
             record.sleep = dto.sleep
             record.pain = dto.pain
             record.appetite = dto.appetite
+            record.irritability = dto.irritability
             record.note = dto.note
             record.createdAt = dto.createdAt
             context.insert(record)
