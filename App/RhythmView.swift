@@ -19,6 +19,8 @@ struct RhythmView: View {
     @State private var addKind: CardKind?
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
+    // 신호 스위처(§8.2.5 v68) — 사계 칩 선택 시 패널 자리에 낱장 스왑
+    @State private var signalTab: RhythmSignalTab = .energy
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -26,6 +28,29 @@ struct RhythmView: View {
     private var profile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
     private var axis: AxisProfile { AxisProfile(checkIns: checkIns, snapshot: snapshot) }
     private var unlockedPhases: [CyclePhase] { Self.allPhases.filter { profile.level(for: $0) != nil } }
+
+    // ── 신호 패널 입력 (§5.6.3 — DailyCheckIn → SignalSample, 계산은 RhythmEngine) ──
+    private var signalSamples: [SignalSample] {
+        checkIns.map { SignalSample(day: $0.day, energy: $0.energy, mood: $0.mood, sleep: $0.sleep) }
+    }
+    private var signalSummaries: [PhaseSignalSummary] {
+        RhythmEngine.summaries(samples: signalSamples, periodStarts: snapshot.starts,
+                               averageLength: snapshot.averageLength)
+    }
+    /// 스위처에 올릴 신호 칩. 수면은 추적을 껐고 표본도 없으면 숨긴다 —
+    /// 사용자가 끈 항목에 "기록이 쌓이면"이라고 말하면 거짓 안내가 된다.
+    private var signalTabs: [RhythmSignalTab] {
+        RhythmSignalTab.allCases.filter { tab in
+            guard tab == .sleep else { return true }
+            return AppSettings.trackedSignals.sleep
+                || signalSummaries.contains { $0.signal == .sleep }
+        }
+    }
+    /// 스위처 노출 = 비교 서술 가능한 신호가 하나라도 있을 때(§5.6.3 임계).
+    /// 그 전엔 콜드 문법 유지 — 콜드 카드 + 사계 낱장 상시(v77).
+    private var showSwitcher: Bool {
+        SignalKind.allCases.contains { RhythmEngine.narratable(signalSummaries, signal: $0) }
+    }
 
     var body: some View {
         ZStack {
@@ -42,7 +67,14 @@ struct RhythmView: View {
                     if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
                         meanwhileCard
                     }
-                    seasonsSheet
+                    if showSwitcher {
+                        // 완료 상태(v68): 스위처 + 패널, 사계는 4번째 칩으로 낱장 스왑
+                        signalSwitcher
+                        signalPanelArea
+                    } else {
+                        // 콜드(v77): 스위처 부재 — 사계 낱장 상시 노출(§3.5.1 체크인 비의존)
+                        seasonsSheet
+                    }
                     diarySheet
                 }
                 .padding(20)
@@ -97,6 +129,51 @@ struct RhythmView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .milkGlass()
         }
+    }
+
+    // ── 신호 스위처 (v68 — 칩 [에너지|기분|수면|나의 사계]) ──
+    /// 선택 탭이 숨겨진 칩(수면 추적 끔)이면 에너지로 폴백 — 아무 칩도 선택 안 된 상태 방지.
+    private var activeTab: RhythmSignalTab {
+        signalTabs.contains(signalTab) ? signalTab : .energy
+    }
+
+    /// SwiftUI 타입체크 폭발 방지(CLAUDE.md) — 패널 분기를 body 식에서 뗀다.
+    @ViewBuilder
+    private var signalPanelArea: some View {
+        if let signal = activeTab.signal {
+            SignalPanel(signal: signal,
+                        summaries: signalSummaries,
+                        topPhases: RhythmEngine.perCycleTopPhases(signal: signal,
+                                                                  samples: signalSamples,
+                                                                  periodStarts: snapshot.starts),
+                        completedCycles: max(0, snapshot.starts.count - 1),
+                        currentPhase: snapshot.phase(on: today))
+        } else {
+            seasonsSheet
+        }
+    }
+
+    private var signalSwitcher: some View {
+        HStack(spacing: 8) {
+            ForEach(signalTabs) { tab in
+                let selected = activeTab == tab
+                Button {
+                    signalTab = tab
+                } label: {
+                    Text(tab.label)
+                        .font(.caption)
+                        .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(selected ? AnyShapeStyle(Ink.text)
+                                             : AnyShapeStyle(Ink.text.opacity(0.08)), in: Capsule())
+                }
+                .accessibilityAddTraits(selected ? [.isSelected] : [])
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("신호 선택")
     }
 
     // ── 유형 카드 (§3.11 — A축=이름, M축=한 줄 서술) ──
