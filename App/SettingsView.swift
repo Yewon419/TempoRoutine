@@ -36,6 +36,9 @@ struct SettingsView: View {
     /// 사분면 커버 리마인더(§5.12 ⑤) — 기본 꺼짐. 켜는 순간에만 시스템 권한을 묻는다.
     @AppStorage(CoverageReminder.storageKey) private var coverageReminderOn = false
     @State private var notificationDenied = false
+    /// 아침 일정 브리핑·생리 예측 알림(2026-08-05 사용자 결정) — 기본 켬.
+    @AppStorage(DailyNotices.briefingKey) private var morningBriefingOn = true
+    @AppStorage(DailyNotices.periodKey) private var periodForecastOn = true
 
     /// 테마 선택 — 리빌드(.id) 전에 팔레트 캐시를 먼저 확정한다(선 apply, Theme.swift 반응성 설계)
     private var themeBinding: Binding<AppTheme> {
@@ -45,6 +48,33 @@ struct SettingsView: View {
                 lightFeedback += 1
                 ThemeStore.apply(theme.rawValue)
                 appTheme = theme.rawValue
+            }
+        )
+    }
+
+    /// 브리핑·예측 토글 — 켜는 순간 권한 확인(미결정이면 시트), 거부면 되돌린다.
+    /// 재스케줄은 DailyNotices가 앱 활성·백그라운드마다 돌아 토글 반영이 늦지 않지만,
+    /// 켠 직후 바로 반영되도록 여기서도 한 번 건다.
+    private func noticeBinding(_ storage: Binding<Bool>) -> Binding<Bool> {
+        Binding(
+            get: { storage.wrappedValue },
+            set: { on in
+                lightFeedback += 1
+                guard on else {
+                    storage.wrappedValue = false
+                    DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
+                    return
+                }
+                let currentPeriods = periodDays
+                let currentSchedules = schedules
+                Task {
+                    let granted = await CoverageReminder.requestPermission()
+                    storage.wrappedValue = granted
+                    notificationDenied = !granted
+                    if granted {
+                        DailyNotices.reschedule(periodDays: currentPeriods, schedules: currentSchedules)
+                    }
+                }
             }
         )
     }
@@ -118,9 +148,13 @@ struct SettingsView: View {
                     }
                 }
 
-                // 사분면 커버 리마인더(§5.12 ⑤) — 매일 조르는 체크인 알림이 아니다.
-                // 기록이 하나도 없는 시기에만, 그 시기 한 번.
+                // 알림(§5.11 계열) — 브리핑·예측 = 기본 켬(2026-08-05 사용자 결정),
+                // 커버 리마인더 = 기본 꺼짐(§5.12 ⑤). 켜는 순간에만 시스템 권한을 묻는다.
                 Section {
+                    Toggle("아침 일정 브리핑", isOn: noticeBinding($morningBriefingOn))
+                        .tint(Ink.text)
+                    Toggle("생리 예측 알림", isOn: noticeBinding($periodForecastOn))
+                        .tint(Ink.text)
                     Toggle("기록이 빈 시기 알려주기", isOn: coverageBinding)
                         .tint(Ink.text)
                     if notificationDenied {
@@ -132,7 +166,7 @@ struct SettingsView: View {
                 } footer: {
                     Text(notificationDenied
                          ? "알림이 꺼져 있어요. 설정에서 알림을 켜면 다시 고를 수 있어요."
-                         : "한 주기를 네 구간으로 나눠, 기록이 하나도 없는 구간에만 저녁에 한 번 알려요. 기록이 있으면 알리지 않아요.")
+                         : "브리핑은 일정이 있는 날 아침 8시에 한 번, 예측 알림은 예상 시작 전날과 당일에 한 번씩 와요. 빈 시기 알림은 한 주기를 네 구간으로 나눠 기록이 하나도 없는 구간에만 저녁에 한 번 알려요.")
                 }
 
                 // 기능 튜토리얼 리셋(2026-07-23 — JejuNow 「사용법 다시 보기」 동형)

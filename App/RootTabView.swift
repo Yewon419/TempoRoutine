@@ -53,22 +53,26 @@ struct RootTabView: View {
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)   // 위젯 스냅샷
             CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
+            DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 let current = periodDays
                 Task { await HealthMirror.shared.sync(context: modelContext, periodDays: current) }
+                DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
             } else if phase == .background {
                 // 세션 중 편집 반영 — 백그라운드 진입 때 최신 상태로 재발행
                 WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                      inputs: inputs, outputs: outputs, completions: completions)
-                // 이 세션의 체크인까지 반영해 다시 건다(§5.12 ⑤ 재스케줄 계약)
+                // 이 세션의 체크인·일정까지 반영해 다시 건다(§5.12 ⑤ / §5.11 재스케줄 계약)
                 CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
+                DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
             }
         }
-        // 앵커가 움직이면 사분면 경계도 통째로 움직인다 — 생리 기록 변화는 즉시 재스케줄.
+        // 앵커가 움직이면 사분면 경계도, 예측일도 통째로 움직인다 — 생리 기록 변화는 즉시 재스케줄.
         .onChange(of: periodDays.map(\.day)) { _, _ in
             CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
+            DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
         }
     }
 }
