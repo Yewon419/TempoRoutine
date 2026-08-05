@@ -76,10 +76,11 @@ struct SelfReportFlow: View {
 
     private var intro: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // 줄바꿈 = 의미 단위로(2026-08-05 베타 피드백 "줄바꿈 신경써줘")
             Text("이맘때 이야기를 하려면\n몇 가지 알아야 해요.")
                 .font(.almanac(size: 26, weight: .bold))
                 .foregroundStyle(Ink.text)
-            Text("리듬의 모양은 사람마다 달라요.\n17개 문항이고 2분쯤 걸려요. 언제든 닫아도 괜찮아요.")
+            Text("리듬의 모양은 사람마다 달라요.\n17개 문항이고 2분쯤 걸려요.\n언제든 닫아도 괜찮아요.")
                 .font(.system(.body, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.75))
             Text("답은 이 기기에만 저장돼요.")
@@ -149,16 +150,24 @@ struct SelfReportFlow: View {
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
+    // 2026-08-05 베타 피드백: 다음 = 우하단 글씨만(검정 캡슐 제거), 이전 = 모든 문항 단계에.
     private var actions: some View {
-        HStack(spacing: 10) {
-            Button(step == totalSteps ? "제출" : "다음") { advance() }
-                .buttonStyle(.borderedProminent)
-                .tint(Ink.text)
-                .disabled(!canAdvance)
+        HStack(spacing: 18) {
+            if step > 0 {
+                Button("이전") { step -= 1 }
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Ink.text.opacity(0.55))
+            }
+            Spacer(minLength: 0)
             if step == totalSteps {
                 Button("건너뛰기") { finish() }
-                    .foregroundStyle(Ink.text.opacity(0.6))
+                    .font(.body)
+                    .foregroundStyle(Ink.text.opacity(0.55))
             }
+            Button(step == totalSteps ? "제출" : "다음") { advance() }
+                .font(.body.weight(.semibold))
+                .foregroundStyle(canAdvance ? Ink.text : Ink.text.opacity(0.3))
+                .disabled(!canAdvance)
         }
         .padding(.top, 6)
     }

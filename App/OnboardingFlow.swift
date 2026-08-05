@@ -60,6 +60,10 @@ struct OnboardingFlow: View {
     @State private var codeMessage: String?
     @State private var redeeming = false
 
+    // ⑤ 리듬 설문(2026-08-05 사용자 결정) — 온보딩 마지막 단계에서 제안, 강요하지 않는다
+    @State private var showSurvey = false
+    @Query private var selfReports: [SelfReportRecord]
+
     var body: some View {
         ZStack {
             Ink.paper.ignoresSafeArea()
@@ -71,7 +75,8 @@ struct OnboardingFlow: View {
                     case 1: intro
                     case 2: baselineStep
                     case 3: signalsStep
-                    default: storageStep
+                    case 4: storageStep
+                    default: surveyStep
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -83,6 +88,10 @@ struct OnboardingFlow: View {
         }
         .safeAreaInset(edge: .bottom) { bottomBar.centeredColumn(560) }
         .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
+        // 설문을 제출하고 닫혔으면 온보딩도 끝낸다 — "오늘 화면으로"를 한 번 더 누르게 하지 않는다.
+        .sheet(isPresented: $showSurvey, onDismiss: {
+            if !selfReports.isEmpty { onboardingDone = true }
+        }) { SelfReportFlow() }
         .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil },
                                               set: { if !$0 { syncMessage = nil; syncOffersPermission = false } })) {
             if syncOffersPermission {
@@ -159,7 +168,7 @@ struct OnboardingFlow: View {
     private var primaryLabel: String {
         switch step {
         case 1: introScene == 0 ? "시작" : "다음"
-        case 2, 3: "다음"
+        case 2, 3, 4: "다음"
         default: "오늘 화면으로"
         }
     }
@@ -175,6 +184,7 @@ struct OnboardingFlow: View {
                                                         appetite: trackAppetite, note: trackNote,
                                                         irritability: false)
             step = 4
+        case 4: step = 5   // ⑤ 리듬 설문(2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다)
         default: onboardingDone = true
         }
     }
@@ -205,7 +215,7 @@ struct OnboardingFlow: View {
     // ── 진행 점 (인트로 숨김) — 지난·현재 스텝 채움 + 현재 스텝만 알약형(시안 .ob-dot 이식) ──
     private var dots: some View {
         HStack(spacing: 8) {
-            ForEach(1...4, id: \.self) { i in
+            ForEach(1...5, id: \.self) { i in
                 Capsule()
                     .fill(i <= step ? Ink.text : Ink.text.opacity(0.22))
                     .frame(width: i == step ? 16 : 6, height: 6)
@@ -298,9 +308,8 @@ struct OnboardingFlow: View {
             }
             .font(.system(.body, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.75))
-            // 비의료 고지(5.1.1(ix) 방어). 여기서는 부정 정의를 써도 된다 —
-            // 사용자가 캘린더형 주기 앱을 대조군으로 이미 갖고 있다(v1.6 §9 3-6).
-            Text("예측하지 않아요. 기록하고 보여줍니다.\n의학적 진단이나 조언은 하지 않아요.")
+            // 비의료 고지(5.1.1(ix) 방어) — 문구 = 2026-08-05 사용자 지정(베타 피드백, 부정 정의 → 긍정 정의)
+            Text("템포루틴은 당신이 기록해 놓은 과거를 기반으로\n당신만의 템포를 보여주는 앱입니다.\n의학적 진단이나 조언은 포함되어 있지 않습니다.")
                 .font(.caption)
                 .foregroundStyle(Ink.text.opacity(0.45))
                 .lineSpacing(2)
@@ -670,6 +679,49 @@ struct OnboardingFlow: View {
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))
             precursorCodeRow
+        }
+    }
+
+    // ══ ⑤ 리듬 설문 (2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다) ══
+    // 강요하지 않는다: 하단 primary는 "오늘 화면으로"(건너뛰기 겸)이고 설문은 별도 버튼.
+    // 여기서 답하면 나의 리듬 탭의 설문 프롬프트는 다시 뜨지 않는다(레코드 존재로 판정).
+    private var surveyStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(eyebrow: "마지막으로", title: "당신의 리듬,\n조금만 알려주세요.")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("리듬의 모양은 사람마다 달라요.")
+                Text("17개 문항이고 2분쯤 걸려요.")
+                Text("답은 이 기기에만 저장돼요.")
+            }
+            .font(.system(.footnote, design: .serif))
+            .foregroundStyle(Ink.text.opacity(0.55))
+            if selfReports.isEmpty {
+                Button {
+                    lightFeedback += 1
+                    showSurvey = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "list.bullet.rectangle")
+                            .font(.subheadline)
+                        Text("설문 답해보기")
+                            .font(.subheadline.weight(.semibold))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Ink.text.opacity(0.4))
+                    }
+                    .foregroundStyle(Ink.text)
+                    .padding(12)
+                    .background(Ink.text.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+                }
+                Text("나중에 설정에서도 할 수 있어요.")
+                    .font(.caption)
+                    .foregroundStyle(Ink.text.opacity(0.45))
+            } else {
+                Label("답이 담겼어요. 고마워요.", systemImage: "checkmark.seal")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.6))
+            }
         }
     }
 
