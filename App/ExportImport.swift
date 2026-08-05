@@ -9,13 +9,14 @@ import TempoCore
 enum AppSettings {
     private static let trackedSignalsKey = "trackedSignals"
 
-    /// 온보딩 전 기본값 — 전부 켬(2026-08-04 개정). 예민함·몸은 M축의 두 계열이고,
-    /// 안 받은 날의 데이터는 나중에 소급해 만들 수 없다(v1.5 §3-1). 부담되면 설정에서 끈다.
+    /// 온보딩 전 기본값. 예민함·몸은 2026-08-05 사용자 결정으로 입력 행 제거(기분·에너지와
+    /// 겹침) — 기본값도 꺼짐. 스키마 필드는 구 백업 디코딩 호환을 위해 유지된다.
     static var trackedSignals: TrackedSignals {
         get {
             guard let data = UserDefaults.standard.data(forKey: trackedSignalsKey),
                   let decoded = try? JSONDecoder().decode(TrackedSignals.self, from: data) else {
-                return TrackedSignals(sleep: true, pain: true, appetite: true, note: true)
+                return TrackedSignals(sleep: true, pain: false, appetite: true, note: true,
+                                      irritability: false)
             }
             return decoded
         }

@@ -49,12 +49,9 @@ struct OnboardingFlow: View {
     @State private var syncOffersPermission = false   // 읽기 권한 안내일 때만 설정 버튼(2026-08-01)
     private let mirror = HealthMirror.shared
 
-    // ③ 추적 항목
+    // ③ 추적 항목 — 예민함·몸은 2026-08-05 사용자 결정으로 제거(기분·에너지와 겹침).
+    // M축 수집이 함께 중단됐다(§3.11 개정). 과거 저장분은 리듬 집계에 계속 유효.
     @State private var trackSleep = true
-    // 예민함·몸은 M축(정서 대 신체)의 두 계열이라 기본 켬 — 안 받으면 그날 데이터가 영영 없다.
-    // 부담되면 여기서 끌 수 있고, 저장 필수 신호는 여전히 에너지·기분 둘뿐이다(v1.5 §3-1).
-    @State private var trackIrritability = true
-    @State private var trackPain = true
     @State private var trackAppetite = true
     @State private var trackNote = true
     // 사전 설문 코드 입력(v1.6 §9 3-8) — 접이식, 실패해도 온보딩을 막지 않는다
@@ -172,9 +169,11 @@ struct OnboardingFlow: View {
         case 1: advanceIntro()
         case 2: step = 3
         case 3:
-            AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: trackPain,
+            // pain·irritability = false 고정(2026-08-05 병합) — 입력 행이 없는데 켜두면
+            // 설정 복원·백업 경로에서 유령 행이 부활한다. 스키마 필드는 저장 호환 위해 유지.
+            AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: false,
                                                         appetite: trackAppetite, note: trackNote,
-                                                        irritability: trackIrritability)
+                                                        irritability: false)
             step = 4
         default: onboardingDone = true
         }
@@ -595,8 +594,6 @@ struct OnboardingFlow: View {
             VStack(spacing: 0) {
                 baseRow("에너지")
                 baseRow("기분")
-                toggleRow("예민함", $trackIrritability)
-                toggleRow("몸", $trackPain)
                 toggleRow("수면", $trackSleep)
                 toggleRow("식욕", $trackAppetite)
                 toggleRow("오늘 한 줄", $trackNote)
@@ -608,10 +605,8 @@ struct OnboardingFlow: View {
         .onAppear {
             let current = AppSettings.trackedSignals
             trackSleep = current.sleep
-            trackPain = current.pain
             trackAppetite = current.appetite
             trackNote = current.note
-            trackIrritability = current.tracksIrritability
         }
     }
 

@@ -65,17 +65,11 @@ struct AxisProfile {
         }
     }
 
-    /// M축 = 라벨이 아니라 한 줄 서술(§3.11). D1 판정에서 붕괴하면 이 줄만 감춘다.
-    var modalityLine: String? {
-        guard let state, type != nil else { return nil }
-        if state.modality >= Self.modalityThreshold {
-            return "마음 쪽 신호가 먼저 오는 편이에요."
-        }
-        if state.modality <= -Self.modalityThreshold {
-            return "몸 쪽 신호가 먼저 오는 편이에요."
-        }
-        return "마음과 몸이 비슷하게 움직여요."
-    }
+    /// ~~M축 한 줄 서술~~ — **폐기(2026-08-05 사용자 결정)**: 체크인 병합으로 몸(pain) 입력
+    /// 행이 사라져 신체 계열이 더는 쌓이지 않는다. 분모 없는 M축을 계속 말하면
+    /// "마음과 몸이 비슷하게 움직여요"가 데이터 없이 항상 뜨는 거짓 서술이 된다.
+    /// 엔진의 modality 계산은 남겨둔다(과거 기록 보유자 + 재도입 대비) — UI만 침묵.
+    var modalityLine: String? { nil }
 
     /// 로그가 없으면 말하지 않는다(§3.11) — 이 값이 false면 화면에 카드를 올리지 않는다.
     var hasEnoughData: Bool { state != nil }

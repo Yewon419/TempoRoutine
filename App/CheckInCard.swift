@@ -18,11 +18,10 @@ struct CheckInCard: View {
     @State private var draftEnergy = 0
     @State private var draftMood = 0
     @State private var draftSleep = 0
-    @State private var draftIrritability = 0
-    @State private var draftPain = 0
     @State private var draftAppetite = 0
     @State private var draftNote = ""
     @State private var draftLoaded = false
+    @State private var infoText: String?   // 항목 설명 알럿(2026-08-05 베타 피드백)
 
     /// 어떤 행을 보여줄지는 온보딩·설정에서 고른 추적 항목이 정한다(§3.10).
     /// ⚠ 종전에는 이 배선이 없어 통증·식욕을 켜도 카드에 나오지 않았다(2026-08-04 발견).
@@ -45,24 +44,25 @@ struct CheckInCard: View {
             Text(title)
                 .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(Ink.text)
-            // 정서 계열(기분·예민함) → 신체 계열(몸) 순. M축은 이 둘의 차로 정의된다(v1.5 §2-3).
-            checkInRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
-            checkInRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
-            if signals.tracksIrritability {
-                checkInRow(label: "예민함은", options: ["잔잔함", "보통", "날카로움"], value: $draftIrritability)
-            }
-            if signals.pain {
-                checkInRow(label: "몸은", options: ["불편해요", "보통", "괜찮아요"], value: $draftPain)
-            }
+            // 예민함·몸 행 = 2026-08-05 사용자 결정으로 제거(기분·에너지와 겹침, 6줄 부담).
+            // 저장 필드는 남아 있고 과거 기록은 리듬 집계에 계속 유효하다 — 새 입력 경로만 없다.
+            checkInRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy,
+                       info: "하루를 지내는 힘이 얼마나 있었는지예요. 좋고 나쁨이 아니라 오르내림을 봐요. 칩을 길게 누르면 중간값이 돼요.")
+            checkInRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood,
+                       info: "마음의 날씨예요. 맑음도 흐림도 그대로 적으면 돼요. 칩을 길게 누르면 중간값이 돼요.")
             if signals.sleep {
-                checkInRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
+                checkInRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep,
+                           info: "지난밤 잠의 결이에요. 뒤척였는지, 푹 잤는지. 칩을 길게 누르면 중간값이 돼요.")
             }
             if signals.appetite {
-                checkInRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite)
+                checkInRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite,
+                           info: "오늘 입맛이 어땠는지예요. 칩을 길게 누르면 중간값이 돼요.")
             }
             VStack(alignment: .leading, spacing: 6) {
                 Text(noteLabel).font(.caption).foregroundStyle(Ink.text.opacity(0.5))
-                TextField("", text: $draftNote, axis: .vertical)   // placeholder 제거(2026-07-31 사용자 지시)
+                // 안내문구 = prompt(2026-08-05 베타 피드백 "하루를 간단히 남겨봐요" — 07-31 placeholder 제거의 교체)
+                TextField("", text: $draftNote, prompt: Text("하루를 간단히 남겨봐요")
+                    .foregroundStyle(Ink.text.opacity(0.35)), axis: .vertical)
                     .font(.subheadline)
                     .foregroundStyle(Ink.text)
                     .focused($noteFocused)
@@ -88,14 +88,35 @@ struct CheckInCard: View {
                 Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
             }
         }
+        .alert("이 항목은", isPresented: Binding(get: { infoText != nil },
+                                             set: { if !$0 { infoText = nil } })) {
+            Button("확인") { infoText = nil }
+        } message: {
+            Text(infoText ?? "")
+        }
     }
 
-    private func checkInRow(label: String, options: [String], value: Binding<Int>) -> some View {
+    private func checkInRow(label: String, options: [String], value: Binding<Int>,
+                            info: String) -> some View {
         HStack(spacing: 8) {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(Ink.text.opacity(0.75))
-                .frame(width: 88, alignment: .leading)
+            HStack(spacing: 4) {
+                // 항목 설명(2026-08-05 베타 피드백 — 이름 왼쪽 회색 물음표, 탭 = 설명)
+                Button {
+                    infoText = info
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.35))
+                        .frame(width: 20, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(label) 설명")
+                Text(label)
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.text.opacity(0.75))
+            }
+            .frame(width: 108, alignment: .leading)
             ForEach(Array(options.enumerated()), id: \.offset) { index, option in
                 let mapped = index * 2 + 1   // 3탭 = 1·3·5
                 let current = value.wrappedValue
@@ -147,8 +168,6 @@ struct CheckInCard: View {
         draftEnergy = 0
         draftMood = 0
         draftSleep = 0
-        draftIrritability = 0
-        draftPain = 0
         draftAppetite = 0
         draftNote = ""
         draftLoaded = false
@@ -162,8 +181,6 @@ struct CheckInCard: View {
             draftEnergy = existing.energy
             draftMood = existing.mood
             draftSleep = existing.sleep ?? 0
-            draftIrritability = existing.irritability ?? 0
-            draftPain = existing.pain ?? 0
             draftAppetite = existing.appetite ?? 0
             draftNote = existing.note ?? ""
         }
@@ -179,8 +196,8 @@ struct CheckInCard: View {
                 existing.energy = draftEnergy
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
-                existing.irritability = draftIrritability > 0 ? draftIrritability : nil
-                existing.pain = draftPain > 0 ? draftPain : nil
+                // irritability·pain은 건드리지 않는다 — 입력 행이 사라졌을 뿐(2026-08-05 병합),
+                // 과거에 기록된 값을 0 초안으로 덮어쓰면 리듬 집계 표본이 파괴된다.
                 existing.appetite = draftAppetite > 0 ? draftAppetite : nil
                 existing.note = hasNote ? draftNote : nil
             } else {
@@ -192,8 +209,6 @@ struct CheckInCard: View {
             let created = DailyCheckIn(day: normalizedDay, energy: draftEnergy, mood: draftMood,
                                        isBackfilled: !isToday)
             created.sleep = draftSleep > 0 ? draftSleep : nil
-            created.irritability = draftIrritability > 0 ? draftIrritability : nil
-            created.pain = draftPain > 0 ? draftPain : nil
             created.appetite = draftAppetite > 0 ? draftAppetite : nil
             created.note = hasNote ? draftNote : nil
             modelContext.insert(created)
