@@ -92,6 +92,27 @@ public enum RhythmEngine {
         summaries.filter { $0.signal == signal && $0.sampleCount >= minSamples }.count >= 2
     }
 
+    /// 그 신호의 유효 표본이 든 완료 주기 수 — 서술의 "지난 N주기"에 쓴다.
+    /// ⚠ 전체 주기 수(starts−1)를 쓰면 안 된다: HK로 수년치 생리 기록만 이어받은 사용자는
+    /// 체크인 없는 주기가 수십 개라 "지난 23주기, 기록 9회" 같은 어긋난 서술이 된다(2026-08-05 실기기).
+    public static func cyclesWithData(signal: SignalKind, samples: [SignalSample],
+                                      periodStarts: [Date],
+                                      calendar: Calendar = .current) -> Int {
+        let starts = periodStarts.sorted()
+        guard starts.count >= 2 else { return 0 }
+        var count = 0
+        for (index, start) in starts.enumerated() where index < starts.count - 1 {
+            let end = starts[index + 1]
+            let hasData = samples.contains { sample in
+                (1...5).contains(sample.energy) && (1...5).contains(sample.mood)
+                    && sample.value(of: signal).map { (1...5).contains($0) } == true
+                    && sample.day >= start && sample.day < end
+            }
+            if hasData { count += 1 }
+        }
+        return count
+    }
+
     /// 완료 주기(연속 시작일 쌍, 실측 길이)별로 그 신호가 가장 높았던 단계.
     /// "3주기 연속, 봄이 가장 높게 기록됐어요"(§8.2.5 ⑤ 일관성 서술)의 입력 — 오래된 주기부터.
     /// 주기 안에서 표본 있는 단계가 2개 미만이면 그 주기는 건너뛴다(비교가 성립하지 않는다).

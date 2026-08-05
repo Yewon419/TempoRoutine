@@ -195,24 +195,29 @@ struct SignalPanel: View {
         .accessibilityLabel(narration)
     }
 
+    // 막대 → 원형 링 게이지(2026-08-05 베타 피드백 "원 모양으로 차게" — 배경 원·계절 원 문법과 통일).
+    // 종전 캡슐 막대는 열 폭이 넓어 원형 덩어리로 오독됐다(실기기 스크린샷).
     private func chartColumn(phase: CyclePhase) -> some View {
         let meta = seasonMeta(for: phase)
         let value = summary(for: phase).map { scaled($0.mean) }
         let isNow = phase == currentPhase
-        return VStack(spacing: 6) {
-            Text(value.map(String.init) ?? "—")
-                .font(.caption2)
-                .monospacedDigit()
-                .foregroundStyle(Ink.text.opacity(value == nil ? 0.35 : 0.6))
-            ZStack(alignment: .bottom) {
-                // 표본 없는 단계 = 미표시(§5.6.3) — 트랙만 옅게 남긴다
-                Capsule().fill(Ink.text.opacity(0.06))
+        return VStack(spacing: 8) {
+            ZStack {
+                // 표본 없는 단계 = 트랙만 옅게(§5.6.3 미표시 원칙)
+                Circle().stroke(Ink.text.opacity(0.08), lineWidth: 5)
                 if let value {
-                    Capsule().fill(meta.color.opacity(0.75))
-                        .frame(height: max(4, 72 * Double(value) / 100))
+                    Circle()
+                        .trim(from: 0, to: max(0.02, Double(value) / 100))   // 0이어도 씨앗만큼은 보이게
+                        .stroke(meta.color.opacity(0.8),
+                                style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))   // 12시부터 차오른다
                 }
+                Text(value.map(String.init) ?? "—")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(Ink.text.opacity(value == nil ? 0.35 : 0.7))
             }
-            .frame(height: 72)
+            .frame(width: 54, height: 54)
             HStack(spacing: 3) {
                 SeasonGlyph(phase: phase)
                 Text(meta.name)

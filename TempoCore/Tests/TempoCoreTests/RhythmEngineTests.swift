@@ -98,4 +98,19 @@ final class RhythmEngineTests: XCTestCase {
         XCTAssertTrue(RhythmEngine.perCycleTopPhases(signal: .energy, samples: samples,
                                                      periodStarts: [base]).isEmpty)
     }
+
+    /// "지난 N주기"의 N = 표본이 든 주기 수 — 전체 주기 수가 아니다.
+    /// HK 이어받기 사용자는 체크인 없는 주기가 수십 개라 전체를 세면 서술이 어긋난다.
+    func testCyclesWithDataCountsOnlySampledCycles() {
+        // 완료 주기 2개(0~28, 28~56) 중 두 번째에만 기록
+        let samples = [SignalSample(day: day(base, 30), energy: 3, mood: 3, sleep: 4)]
+        XCTAssertEqual(RhythmEngine.cyclesWithData(signal: .energy, samples: samples,
+                                                   periodStarts: starts), 1)
+        XCTAssertEqual(RhythmEngine.cyclesWithData(signal: .sleep, samples: samples,
+                                                   periodStarts: starts), 1)
+        // mood 없는 행(노트 단독 규약 위반)은 세지 않는다
+        let invalid = [SignalSample(day: day(base, 30), energy: 3, mood: 0, sleep: nil)]
+        XCTAssertEqual(RhythmEngine.cyclesWithData(signal: .energy, samples: invalid,
+                                                   periodStarts: starts), 0)
+    }
 }

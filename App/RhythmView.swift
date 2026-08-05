@@ -146,7 +146,11 @@ struct RhythmView: View {
                         topPhases: RhythmEngine.perCycleTopPhases(signal: signal,
                                                                   samples: signalSamples,
                                                                   periodStarts: snapshot.starts),
-                        completedCycles: max(0, snapshot.starts.count - 1),
+                        // "지난 N주기" = 표본이 든 주기만(2026-08-05 실기기 — HK 이어받기 사용자는
+                        // 전체 주기 수가 23 같은 값이 되어 서술이 어긋난다)
+                        completedCycles: RhythmEngine.cyclesWithData(signal: signal,
+                                                                     samples: signalSamples,
+                                                                     periodStarts: snapshot.starts),
                         currentPhase: snapshot.phase(on: today))
         } else {
             seasonsSheet
