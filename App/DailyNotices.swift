@@ -60,7 +60,8 @@ enum DailyNotices {
 
         if periodOn {
             let starts = PeriodMath.episodeStarts(days: periodDays.map(\.day))
-            let length = CyclePredictor.averageLength(startDates: starts)
+            // CycleParams 경유(개정 M 정정) — prior 미반영이면 알림 예측일이 오늘 화면과 어긋난다
+            let length = CycleParams.averageLength(starts: starts)
             // 예측이 흔들리면 걸지 않는다(§5.11 원칙 4 — confidence=low의 알림은 신뢰를 깎는다)
             if CyclePredictor.confidence(periodStarts: starts) != .low,
                let last = starts.max(), length > 0,

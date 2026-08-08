@@ -40,4 +40,13 @@ public enum PeriodMath {
     public static func episodeStarts(days: [Date], minGap: Int = minPeriodGapDays) -> [Date] {
         episodes(days: days, minGap: minGap).compactMap(\.first)
     }
+
+    /// 에피소드 실측 길이(일) = 마지막 기록일 − 시작일 + 1 (개정 M — §5.3 층 2 `M`의 실측 소스).
+    /// 에피소드 안 불연속 day는 기간에 포함된다(중간에 기록을 건너뛴 날도 생리 기간).
+    public static func episodeLengths(days: [Date], minGap: Int = minPeriodGapDays) -> [Int] {
+        episodes(days: days, minGap: minGap).compactMap { episode in
+            guard let first = episode.first, let last = episode.last else { return nil }
+            return (Calendar.current.dateComponents([.day], from: first, to: last).day ?? 0) + 1
+        }
+    }
 }

@@ -66,6 +66,21 @@ final class CyclePredictorTests: XCTestCase {
         XCTAssertEqual(s21[1], PhaseSpan(phase: .follicular, startDay: 6, length: 2), "T4 spans21 follicular 6·2")
     }
 
+    // T2b 층 2 M 파라미터(개정 M) — M=7·N=28: 겨울 1~7, 봄이 남은 날을 흡수해 6~14 → 7~14
+    func testT2b_menstrualLengthParameter() {
+        let spans = CyclePredictor.phaseSpans(cycleLength: 28, menstrualLength: 7)
+        XCTAssertEqual(spans[0], PhaseSpan(phase: .menstrual, startDay: 1, length: 7), "T2b 겨울 7일")
+        XCTAssertEqual(spans[1], PhaseSpan(phase: .follicular, startDay: 8, length: 7), "T2b 봄 축소")
+        XCTAssertEqual(spans[2], PhaseSpan(phase: .ovulation, startDay: 15, length: 3), "T2b 여름 불변")
+        XCTAssertEqual(spans[3], PhaseSpan(phase: .luteal, startDay: 18, length: 11), "T2b 가을 불변")
+        XCTAssertEqual(spans.map(\.length).reduce(0, +), 28, "T2b 합 = N")
+        // 단계 판정도 같은 경계를 쓴다
+        XCTAssertEqual(CyclePredictor.phaseForDay(6, cycleLength: 28, menstrualLength: 7), .menstrual)
+        XCTAssertEqual(CyclePredictor.phaseForDay(6, cycleLength: 28), .follicular, "T2b 디폴트 5 불변")
+        // 범위 밖 입력은 클램프(온보딩 입력 범위 [1,10])
+        XCTAssertEqual(CyclePredictor.phaseSpans(cycleLength: 28, menstrualLength: 99)[0].length, 10)
+    }
+
     // T5 phaseForDay(28)
     func testT5PhaseForDay() {
         XCTAssertEqual(CyclePredictor.phaseForDay(1,  cycleLength: 28), .menstrual, "T5 day1 menstrual")

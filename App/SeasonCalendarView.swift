@@ -57,7 +57,9 @@ struct SeasonCalendarView: View {
     private var today: Date { cal.startOfDay(for: .now) }
     private var recordedDays: Set<Date> { Set(periodDays.map(\.day)) }
     private var starts: [Date] { PeriodMath.episodeStarts(days: periodDays.map(\.day)) }
-    private var avgLength: Int { CyclePredictor.averageLength(startDates: starts) }
+    // CycleParams 경유(개정 M) — 직접 CyclePredictor를 부르면 prior·M 반영이 스냅샷과 갈라진다
+    private var avgLength: Int { CycleParams.averageLength(starts: starts) }
+    private var menstrualLength: Int { CycleParams.menstrualLength(days: periodDays.map(\.day)) }
 
     /// §5.6.2 투영 지평 — low=1 / medium=2 / high=3 주기까지만 예측 렌더.
     private var horizonCycles: Int {
@@ -177,7 +179,7 @@ struct SeasonCalendarView: View {
         guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
             return nil
         }
-        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength)
+        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength, menstrualLength: menstrualLength)
     }
 
     /// 상단 계절광(2026-07-28 시안 결정) — SeasonLight 원색 2겹을 상단 앵커로만, 다크는 감쇠
@@ -917,14 +919,16 @@ struct SeasonCalendarView: View {
         guard let last = starts.max() else { return (Ink.text, nil, false) }   // S0 = 전부 먹색
         // 투영 지평 밖 미래 = 먹색 (예측 렌더 중단 — h번째 예상 월경 구간 끝까지, off-by-one 정정 2026-07-28)
         if let horizon = CyclePredictor.projectionHorizon(lastStart: last, averageLength: avgLength,
-                                                          horizonCycles: horizonCycles, calendar: cal),
+                                                          horizonCycles: horizonCycles,
+                                                          menstrualLength: menstrualLength, calendar: cal),
            date > horizon {
             return (Ink.text, nil, false)
         }
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: avgLength) else {
             return (Ink.text, nil, false)
         }
-        let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: avgLength))
+        let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: avgLength,
+                                                              menstrualLength: menstrualLength))
         return (meta.color.opacity(r.projected ? 0.55 : 1.0), meta, r.projected)   // 미래/역투영 = faded
     }
 
@@ -932,13 +936,15 @@ struct SeasonCalendarView: View {
     private func isPredictedPeriod(_ date: Date) -> Bool {
         guard date >= today, let last = starts.max() else { return false }
         if let horizon = CyclePredictor.projectionHorizon(lastStart: last, averageLength: avgLength,
-                                                          horizonCycles: horizonCycles, calendar: cal),
+                                                          horizonCycles: horizonCycles,
+                                                          menstrualLength: menstrualLength, calendar: cal),
            date > horizon {
             return false
         }
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: avgLength),
               r.projected else { return false }
-        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength) == .menstrual
+        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength,
+                                          menstrualLength: menstrualLength) == .menstrual
     }
 
     // ── 계절 라인 (S0/S1/S2/S4 — §5.6.2) ──
@@ -951,7 +957,8 @@ struct SeasonCalendarView: View {
         guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
             return "첫 생리일을 기록하면 계절이 채워져요"
         }
-        let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: avgLength))
+        let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: avgLength,
+                                                              menstrualLength: menstrualLength))
         let hedge = starts.count == 1 ? "아마 " : ""
         let projected = r.projected ? " · 예상" : ""
         return "\(hedge)\(meta.name) \(r.day)일차\(projected)"

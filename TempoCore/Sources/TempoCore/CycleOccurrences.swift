@@ -54,7 +54,8 @@ public enum CycleOccurrences {
     /// one-shot(§5.5.3) → createdAt이 속한 주기에 바인딩, resolve 날짜가 createdAt 이전이면 다음 주기로 1회 이월.
     ///   one-shot의 .skip은 clamp로 해석(§5.5.3 — skip+overflow는 영원히 미발생이라 무의미).
     public static func occurrences(of r: CycleRecurrence, createdAt: Date, periodStarts: [Date],
-                                   averageLength n: Int, horizonCycles: Int) -> [Occurrence] {
+                                   averageLength n: Int, horizonCycles: Int,
+                                   menstrualLength: Int = 5) -> [Occurrence] {
         let windows = cycleWindows(periodStarts: periodStarts, averageLength: n, horizonCycles: horizonCycles)
         guard !windows.isEmpty else { return [] }
 
@@ -62,7 +63,8 @@ public enum CycleOccurrences {
             var rec = r
             rec.overflowRule = rule
             let p = CyclePrediction(lastPeriodStart: w.start, averageLength: w.length, confidence: .low)
-            return CyclePredictor.resolveDate(recurrence: rec, cycleStart: w.start, prediction: p)
+            return CyclePredictor.resolveDate(recurrence: rec, cycleStart: w.start, prediction: p,
+                                              menstrualLength: menstrualLength)
         }
 
         // 계절 전체(2026-08-01): 한 주기에서 그 계절의 모든 날이 발생일이다 — dayOffset·overflowRule은 무의미.
@@ -70,7 +72,8 @@ public enum CycleOccurrences {
         if r.spansWholePhase, case .phase(let phase) = r.anchor {
             let cal = Calendar.current
             func phaseDays(in w: CycleWindow) -> [Occurrence] {
-                guard let span = CyclePredictor.phaseSpans(cycleLength: w.length).first(where: { $0.phase == phase }),
+                guard let span = CyclePredictor.phaseSpans(cycleLength: w.length, menstrualLength: menstrualLength)
+                    .first(where: { $0.phase == phase }),
                       span.length > 0 else { return [] }
                 return (0..<span.length).compactMap { i in
                     // startDay는 1-indexed — 창 시작일이 1일차다

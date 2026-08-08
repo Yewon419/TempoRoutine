@@ -85,6 +85,17 @@ final class WindowStatsTests: XCTestCase {
         XCTAssertEqual(WindowStatsEngine.phaseMedian(c, signal: .mood, phase: .follicular), 3)
     }
 
+    /// 개정 M — M 파라미터가 계절 윈도우 경계를 움직인다. M=7이면 6·7일차가 겨울로 들어온다.
+    func testPhaseMedianRespectsMenstrualLength() {
+        let c = cycle(mood: { d in d <= 7 ? 2 : 4 })
+        XCTAssertEqual(WindowStatsEngine.phaseMedian(c, signal: .mood, phase: .menstrual,
+                                                     menstrualLength: 7), 2)
+        XCTAssertEqual(WindowStatsEngine.phaseMedian(c, signal: .mood, phase: .follicular,
+                                                     menstrualLength: 7), 4)
+        // 디폴트 5면 6·7일차의 2가 봄에 섞인다 — [2,2,4,4,4,4,4,4,4] 중앙값 4
+        XCTAssertEqual(WindowStatsEngine.phaseMedian(c, signal: .mood, phase: .follicular), 4)
+    }
+
     // ── P 저컨디션 윈도우
 
     /// dip 4일 → P=5. 저컨디션 비율 0.75 규칙은 경계를 최대 +1일 과대 추정한다

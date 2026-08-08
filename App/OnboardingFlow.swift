@@ -232,7 +232,9 @@ struct OnboardingFlow: View {
         case 1: advanceIntro()
         case 2:
             switch baselinePage {
-            case 1: pushBaseline(2)
+            case 1:
+                AppSettings.periodLengthPrior = periodLength   // §5.3 층 2 M 초기값(개정 M)
+                pushBaseline(2)
             case 2:
                 if episodeCount == 1 { pushBaseline(3) }   // 실측 gap 없음 → 주기 질문
                 else { step = 3 }                          // ≥2 = 실측 gap 있음 → 안 묻는다

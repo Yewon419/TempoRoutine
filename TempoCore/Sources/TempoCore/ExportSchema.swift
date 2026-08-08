@@ -233,6 +233,7 @@ public struct RhythmSummaryDTO: Codable, Equatable, Sendable {
     public var engineVersion: String        // "window-stats-1" — 구 푸리에 산출물과 구분
     public var computedAt: Date
     public var constants: Constants
+    public var menstrualLength: Int         // §5.3 층 2 M — 계절 경계 재현에 필요(개정 M)
     public var usableCycles: Int
     public var profile: [Cell]
     public var perCycleRanges: [Double]     // A₀ 재보정 분석의 원료(§5.12 미결)
@@ -240,12 +241,13 @@ public struct RhythmSummaryDTO: Codable, Equatable, Sendable {
     public var h1SummerMoodLift: Bool?      // nil = 불확정
     public var rhythmType: String?          // nil = 데이터 부족
 
-    public init(engineVersion: String, computedAt: Date, constants: Constants, usableCycles: Int,
-                profile: [Cell], perCycleRanges: [Double], preMenstrualWindow: Int?,
+    public init(engineVersion: String, computedAt: Date, constants: Constants, menstrualLength: Int,
+                usableCycles: Int, profile: [Cell], perCycleRanges: [Double], preMenstrualWindow: Int?,
                 h1SummerMoodLift: Bool?, rhythmType: String?) {
         self.engineVersion = engineVersion
         self.computedAt = computedAt
         self.constants = constants
+        self.menstrualLength = menstrualLength
         self.usableCycles = usableCycles
         self.profile = profile
         self.perCycleRanges = perCycleRanges
@@ -255,21 +257,27 @@ public struct RhythmSummaryDTO: Codable, Equatable, Sendable {
     }
 
     /// 엔진 산출 일괄 — 같은 모듈이라 내부 판정 함수(usable·perCycleRange)와 정확히 같은 기준을 쓴다.
-    public static func build(cycles: [WindowCycle], computedAt: Date) -> RhythmSummaryDTO {
+    public static func build(cycles: [WindowCycle], menstrualLength: Int = 5,
+                             computedAt: Date) -> RhythmSummaryDTO {
         let usable = WindowStatsEngine.usable(cycles)
         return RhythmSummaryDTO(
             engineVersion: "window-stats-1",
             computedAt: computedAt,
             constants: .current,
+            menstrualLength: menstrualLength,
             usableCycles: usable.count,
-            profile: WindowStatsEngine.profile(cycles: cycles).map {
+            profile: WindowStatsEngine.profile(cycles: cycles, menstrualLength: menstrualLength).map {
                 Cell(phase: $0.phase.rawValue, signal: $0.signal.rawValue,
                      median: $0.median, cyclesWithData: $0.cyclesWithData)
             },
-            perCycleRanges: usable.compactMap { WindowStatsEngine.perCycleRange($0) },
+            perCycleRanges: usable.compactMap {
+                WindowStatsEngine.perCycleRange($0, menstrualLength: menstrualLength)
+            },
             preMenstrualWindow: WindowStatsEngine.preMenstrualWindow(cycles: cycles),
-            h1SummerMoodLift: WindowStatsEngine.h1SummerMoodLift(cycles: cycles),
-            rhythmType: WindowStatsEngine.classify(cycles: cycles)?.rawValue
+            h1SummerMoodLift: WindowStatsEngine.h1SummerMoodLift(cycles: cycles,
+                                                                 menstrualLength: menstrualLength),
+            rhythmType: WindowStatsEngine.classify(cycles: cycles,
+                                                   menstrualLength: menstrualLength)?.rawValue
         )
     }
 }

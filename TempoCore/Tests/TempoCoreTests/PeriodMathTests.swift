@@ -4,6 +4,25 @@
 import XCTest
 @testable import TempoCore
 
+final class EpisodeLengthTests: XCTestCase {
+    private func d(_ offset: Int) -> Date {
+        Calendar.current.startOfDay(for: Date(timeIntervalSince1970: 1_780_000_000))
+            .addingTimeInterval(Double(offset) * 86_400)
+    }
+
+    /// 개정 M — §5.3 층 2 M의 실측 소스. 길이 = 마지막 기록일 − 시작일 + 1.
+    func testEpisodeLengths() {
+        // 5일 연속 + 28일 뒤 4일 연속 → [5, 4]
+        let days = (0..<5).map(d) + (28..<32).map(d)
+        XCTAssertEqual(PeriodMath.episodeLengths(days: days), [5, 4])
+        // 에피소드 안 불연속(중간 기록 누락)도 기간에 포함 — 0·1·4일차 기록 → 길이 5
+        XCTAssertEqual(PeriodMath.episodeLengths(days: [d(0), d(1), d(4)]), [5])
+        // 시작일만 기록 → 길이 1 (CycleParams가 아티팩트로 걸러낸다)
+        XCTAssertEqual(PeriodMath.episodeLengths(days: [d(0), d(28)]), [1, 1])
+        XCTAssertEqual(PeriodMath.episodeLengths(days: []), [])
+    }
+}
+
 final class PeriodMathTests: XCTestCase {
 
     private let cal = Calendar.current

@@ -23,9 +23,11 @@ public enum CyclePredictor {
         return max(21, min(35, Int(avg.rounded())))
     }
 
-    /// §5.3 LOCKED 경계(황체기 고정·양방향 앵커). 합은 항상 n. M=5/B=14/O=3.
-    public static func phaseSpans(cycleLength n: Int) -> [PhaseSpan] {
-        let m = 5, b = 14, o = 3
+    /// §5.3 LOCKED v2 경계(황체기 고정·양방향 앵커). 합은 항상 n. B=14/O=3 고정,
+    /// M = 층 2 사용자값(개정 M — 온보딩 보고값 → 실측 중앙값. 제공자는 앱 CycleParams, 디폴트 5).
+    public static func phaseSpans(cycleLength n: Int, menstrualLength: Int = 5) -> [PhaseSpan] {
+        let m = min(max(menstrualLength, 1), 10)   // 온보딩 입력 범위와 동일한 안전 클램프
+        let b = 14, o = 3
         var menLen = m
         var folLen = (n - b) - m       // N−B−M (탄력)
         var ovuLen = o
@@ -50,7 +52,8 @@ public enum CyclePredictor {
     }
 
     /// 주기 기준 반복을 특정 주기(cycleStart=1일차)에서 절대 날짜로 resolve. ← 제품의 심장.
-    public static func resolveDate(recurrence r: CycleRecurrence, cycleStart: Date, prediction p: CyclePrediction) -> Date? {
+    public static func resolveDate(recurrence r: CycleRecurrence, cycleStart: Date, prediction p: CyclePrediction,
+                                   menstrualLength: Int = 5) -> Date? {
         let n = p.averageLength
         // 1. 앵커 span(시작일 1-indexed, 길이)
         let span: (start: Int, length: Int)
@@ -58,7 +61,8 @@ public enum CyclePredictor {
         case .cycleStart:
             span = (1, n)
         case .phase(let ph):
-            guard let s = phaseSpans(cycleLength: n).first(where: { $0.phase == ph }) else { return nil }
+            guard let s = phaseSpans(cycleLength: n, menstrualLength: menstrualLength)
+                .first(where: { $0.phase == ph }) else { return nil }
             span = (s.startDay, s.length)
         }
         // 2. dayOffset + overflow
@@ -80,9 +84,10 @@ public enum CyclePredictor {
     }
 
     /// 날짜의 단계 + projected 플래그. 기록 0개면 nil(S0).
-    public static func phase(on date: Date, periodStarts: [Date], averageLength n: Int) -> (phase: CyclePhase, projected: Bool)? {
+    public static func phase(on date: Date, periodStarts: [Date], averageLength n: Int,
+                             menstrualLength: Int = 5) -> (phase: CyclePhase, projected: Bool)? {
         guard let r = cycleDay(of: date, periodStarts: periodStarts, averageLength: n) else { return nil }
-        return (phaseForDay(r.day, cycleLength: n), r.projected)
+        return (phaseForDay(r.day, cycleLength: n, menstrualLength: menstrualLength), r.projected)
     }
 
     /// 기록 규칙성으로 신뢰도. <2 low / spread>7일 low / 4+개 & spread≤3일 high / 그 외 medium.
@@ -102,8 +107,10 @@ public enum CyclePredictor {
     /// (2026-07-28 off-by-one 정정 — "예정일이 캘린더에 안 뜬다" 실사용 제보).
     public static func projectionHorizon(lastStart: Date, averageLength n: Int,
                                          horizonCycles h: Int,
+                                         menstrualLength: Int = 5,
                                          calendar: Calendar = .current) -> Date? {
-        let menstrualLen = phaseSpans(cycleLength: n).first { $0.phase == .menstrual }?.length ?? 5
+        let menstrualLen = phaseSpans(cycleLength: n, menstrualLength: menstrualLength)
+            .first { $0.phase == .menstrual }?.length ?? 5
         return calendar.date(byAdding: .day, value: h * n + menstrualLen - 1, to: lastStart)
     }
 
@@ -131,9 +138,10 @@ public enum CyclePredictor {
     }
 
     /// day-in-cycle → 단계.
-    public static func phaseForDay(_ day: Int, cycleLength n: Int) -> CyclePhase {
+    public static func phaseForDay(_ day: Int, cycleLength n: Int, menstrualLength: Int = 5) -> CyclePhase {
         let d = min(max(day, 1), n)
-        for s in phaseSpans(cycleLength: n) where d >= s.startDay && d < s.startDay + s.length {
+        for s in phaseSpans(cycleLength: n, menstrualLength: menstrualLength)
+        where d >= s.startDay && d < s.startDay + s.length {
             return s.phase
         }
         return .luteal

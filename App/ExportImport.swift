@@ -35,6 +35,17 @@ enum AppSettings {
         }
         set { UserDefaults.standard.set(newValue ?? 0, forKey: cyclePriorKey) }
     }
+
+    /// 온보딩 ②-2 지속일 보고값(개정 M) — §5.3 층 2 `M`의 초기값. 실측 에피소드 길이가
+    /// 충분히 쌓이면 CycleParams가 자동으로 실측 중앙값으로 대체한다.
+    private static let periodPriorKey = "periodLengthPrior"
+    static var periodLengthPrior: Int? {
+        get {
+            let raw = UserDefaults.standard.integer(forKey: periodPriorKey)
+            return raw == 0 ? nil : raw
+        }
+        set { UserDefaults.standard.set(newValue ?? 0, forKey: periodPriorKey) }
+    }
 }
 
 struct StoreArrays {
@@ -93,7 +104,9 @@ enum ExportImport {
                                 isBackfilled: $0.isBackfilled ? true : nil)
             },
             trackedSignals: AppSettings.trackedSignals,
-            rhythmSummary: RhythmSummaryDTO.build(cycles: axis.cycles, computedAt: .now)
+            rhythmSummary: RhythmSummaryDTO.build(cycles: axis.cycles,
+                                                  menstrualLength: axis.menstrualLength,
+                                                  computedAt: .now)
         )
     }
 

@@ -7,9 +7,11 @@ import TempoCore
 
 struct AxisProfile {
     let cycles: [WindowCycle]
+    let menstrualLength: Int   // §5.3 층 2 M — 계절 윈도우 경계에 필요(개정 M)
 
     init(checkIns: [DailyCheckIn], snapshot: CycleSnapshot) {
         self.cycles = Self.groupIntoCycles(checkIns, snapshot: snapshot)
+        self.menstrualLength = snapshot.menstrualLength
     }
 
     /// 완료된 주기만 묶는다 — 실측 앵커라 r(다음 시작까지 남은 일수)도 실측이고 projected가 없다.
@@ -42,7 +44,7 @@ struct AxisProfile {
         return cycles
     }
 
-    var type: RhythmType? { WindowStatsEngine.classify(cycles: cycles) }
+    var type: RhythmType? { WindowStatsEngine.classify(cycles: cycles, menstrualLength: menstrualLength) }
 
     /// A축 = 유형 이름. 표시는 §3.11 — 이름은 A축만 쓴다.
     var typeName: String? { type?.displayName }
@@ -72,5 +74,7 @@ struct AxisProfile {
     var preMenstrualWindow: Int? { WindowStatsEngine.preMenstrualWindow(cycles: cycles) }
 
     /// §2.3 H1 — 배란 주변 기분 상승. true일 때만 여름 상승 서사 발화 허용.
-    var h1SummerMoodLift: Bool? { WindowStatsEngine.h1SummerMoodLift(cycles: cycles) }
+    var h1SummerMoodLift: Bool? {
+        WindowStatsEngine.h1SummerMoodLift(cycles: cycles, menstrualLength: menstrualLength)
+    }
 }

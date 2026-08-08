@@ -35,7 +35,8 @@ struct RhythmView: View {
     }
     private var signalSummaries: [PhaseSignalSummary] {
         RhythmEngine.summaries(samples: signalSamples, periodStarts: snapshot.starts,
-                               averageLength: snapshot.averageLength)
+                               averageLength: snapshot.averageLength,
+                               menstrualLength: snapshot.menstrualLength)
     }
     /// 스위처에 올릴 신호 칩. 수면은 추적을 껐고 표본도 없으면 숨긴다 —
     /// 사용자가 끈 항목에 "기록이 쌓이면"이라고 말하면 거짓 안내가 된다.
@@ -145,7 +146,8 @@ struct RhythmView: View {
                         summaries: signalSummaries,
                         topPhases: RhythmEngine.perCycleTopPhases(signal: signal,
                                                                   samples: signalSamples,
-                                                                  periodStarts: snapshot.starts),
+                                                                  periodStarts: snapshot.starts,
+                                                                  menstrualLength: snapshot.menstrualLength),
                         // "지난 N주기" = 표본이 든 주기만(2026-08-05 실기기 — HK 이어받기 사용자는
                         // 전체 주기 수가 23 같은 값이 되어 서술이 어긋난다)
                         completedCycles: RhythmEngine.cyclesWithData(signal: signal,

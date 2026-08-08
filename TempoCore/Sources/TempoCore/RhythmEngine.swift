@@ -61,7 +61,7 @@ public enum RhythmEngine {
     /// (단계 × 신호) 버킷 평균. energy·mood 둘 다 1...5인 행만 입력 — 필터를 호출측에 맡기면
     /// 노트 단독 행(0·0)이 새어 들어와 평균을 끌어내린다(§5.5 개정 2026-07-22).
     public static func summaries(samples: [SignalSample], periodStarts: [Date],
-                                 averageLength: Int) -> [PhaseSignalSummary] {
+                                 averageLength: Int, menstrualLength: Int = 5) -> [PhaseSignalSummary] {
         guard averageLength > 0 else { return [] }
         var buckets: [CyclePhase: [SignalKind: (sum: Int, count: Int)]] = [:]
 
@@ -70,7 +70,8 @@ public enum RhythmEngine {
             guard let r = CyclePredictor.cycleDay(of: sample.day, periodStarts: periodStarts,
                                                   averageLength: averageLength),
                   !r.projected else { continue }
-            let phase = CyclePredictor.phaseForDay(r.day, cycleLength: averageLength)
+            let phase = CyclePredictor.phaseForDay(r.day, cycleLength: averageLength,
+                                                   menstrualLength: menstrualLength)
             for signal in SignalKind.allCases {
                 guard let value = sample.value(of: signal), (1...5).contains(value) else { continue }
                 let cur = buckets[phase]?[signal] ?? (0, 0)
@@ -118,6 +119,7 @@ public enum RhythmEngine {
     /// 주기 안에서 표본 있는 단계가 2개 미만이면 그 주기는 건너뛴다(비교가 성립하지 않는다).
     public static func perCycleTopPhases(signal: SignalKind, samples: [SignalSample],
                                          periodStarts: [Date],
+                                         menstrualLength: Int = 5,
                                          calendar: Calendar = .current) -> [CyclePhase] {
         let starts = periodStarts.sorted()
         guard starts.count >= 2 else { return [] }
@@ -136,7 +138,8 @@ public enum RhythmEngine {
                       let offset = calendar.dateComponents([.day], from: start, to: sample.day).day
                 else { continue }
                 // 과거 주기의 단계는 실측 길이로 도출(§5.6.4 ① — 과거는 실주기)
-                let phase = CyclePredictor.phaseForDay(offset + 1, cycleLength: length)
+                let phase = CyclePredictor.phaseForDay(offset + 1, cycleLength: length,
+                                                       menstrualLength: menstrualLength)
                 let cur = acc[phase] ?? (0, 0)
                 acc[phase] = (cur.sum + value, cur.count + 1)
             }

@@ -121,9 +121,10 @@ public enum WindowStatsEngine {
 
     /// 계절 윈도우 중앙값 — 경계는 §5.3 실측 길이 기준(phaseSpans와 같은 단일 출처).
     public static func phaseMedian(_ cycle: WindowCycle, signal: WindowSignal,
-                                   phase: CyclePhase) -> Double? {
+                                   phase: CyclePhase, menstrualLength: Int = 5) -> Double? {
         windowMedian(cycle, signal: signal) {
-            CyclePredictor.phaseForDay($0.daysFromStart, cycleLength: cycle.length) == phase
+            CyclePredictor.phaseForDay($0.daysFromStart, cycleLength: cycle.length,
+                                       menstrualLength: menstrualLength) == phase
         }
     }
 
@@ -174,11 +175,12 @@ public enum WindowStatsEngine {
     // ── H1 배란 주변 기분 상승 (§2.3 가설 레지스트리 — 신호 = mood)
 
     /// true = 상승 합의(여름 서사 발화 허용) / false = 상승 없음 합의 / nil = 불확정·표본 미달(침묵).
-    public static func h1SummerMoodLift(cycles allCycles: [WindowCycle]) -> Bool? {
+    public static func h1SummerMoodLift(cycles allCycles: [WindowCycle], menstrualLength: Int = 5) -> Bool? {
         var up = 0, judged = 0
         for cycle in usable(allCycles) {
             guard let base = baseline(cycle, signal: .mood),
-                  let summer = phaseMedian(cycle, signal: .mood, phase: .ovulation) else { continue }
+                  let summer = phaseMedian(cycle, signal: .mood, phase: .ovulation,
+                                           menstrualLength: menstrualLength) else { continue }
             judged += 1
             if summer >= base + margin { up += 1 }
         }
@@ -192,8 +194,11 @@ public enum WindowStatsEngine {
     // ── A축 유형 (신호 = mood — 구 엔진 정서 계열 연속성)
 
     /// 주기 하나의 진폭 = 계절 윈도우 중앙값들의 range. 표본 있는 계절이 2개 미만이면 nil.
-    static func perCycleRange(_ cycle: WindowCycle, signal: WindowSignal = .mood) -> Double? {
-        let medians = CyclePhase.allCases.compactMap { phaseMedian(cycle, signal: signal, phase: $0) }
+    static func perCycleRange(_ cycle: WindowCycle, signal: WindowSignal = .mood,
+                              menstrualLength: Int = 5) -> Double? {
+        let medians = CyclePhase.allCases.compactMap {
+            phaseMedian(cycle, signal: signal, phase: $0, menstrualLength: menstrualLength)
+        }
         guard medians.count >= 2, let hi = medians.max(), let lo = medians.min() else { return nil }
         return hi - lo
     }
@@ -201,8 +206,8 @@ public enum WindowStatsEngine {
     /// 유형 배정 — nil = 데이터 부족(카드 미노출), 루바토 = 표본은 충분한데 주기 간 불일치.
     /// 구 엔진 교훈 승계: 기준(baselineRange)과 비교해야 안단테가 존재한다(2026-08-04 실측).
     /// ⚠ 사전 설문의 루바토와 산출 경로가 다르다(§3.11). 같은 필드에 담지 말 것.
-    public static func classify(cycles allCycles: [WindowCycle]) -> RhythmType? {
-        let ranges = usable(allCycles).compactMap { perCycleRange($0) }
+    public static func classify(cycles allCycles: [WindowCycle], menstrualLength: Int = 5) -> RhythmType? {
+        let ranges = usable(allCycles).compactMap { perCycleRange($0, menstrualLength: menstrualLength) }
         guard ranges.count >= minCycles else { return nil }
         let threshold = agreementThreshold(ranges.count)
         let high = ranges.filter { $0 >= baselineRange }.count
@@ -214,12 +219,14 @@ public enum WindowStatsEngine {
     // ── 서술·내보내기 프로파일
 
     /// (계절 × 신호) 요약 — 표본 없는 칸은 조용히 빠진다.
-    public static func profile(cycles allCycles: [WindowCycle]) -> [WindowSummary] {
+    public static func profile(cycles allCycles: [WindowCycle], menstrualLength: Int = 5) -> [WindowSummary] {
         let cycles = usable(allCycles)
         var result: [WindowSummary] = []
         for signal in WindowSignal.allCases {
             for phase in CyclePhase.allCases {
-                let medians = cycles.compactMap { phaseMedian($0, signal: signal, phase: phase) }
+                let medians = cycles.compactMap {
+                    phaseMedian($0, signal: signal, phase: phase, menstrualLength: menstrualLength)
+                }
                 guard let mid = median(medians) else { continue }
                 result.append(WindowSummary(phase: phase, signal: signal,
                                             median: mid, cyclesWithData: medians.count))

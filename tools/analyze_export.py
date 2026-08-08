@@ -132,9 +132,10 @@ def average_length(starts: list[date]) -> int:
     return max(21, min(35, swift_round(sum(valid) / len(valid))))
 
 
-def phase_spans(n: int) -> list[tuple[str, int, int]]:
-    """(단계명, 시작일차, 길이) — §5.3 M=5/B=14/O=3, 짧은 주기 클램프."""
-    m, b, o = 5, 14, 3
+def phase_spans(n: int, menstrual_length: int = 5) -> list[tuple[str, int, int]]:
+    """(단계명, 시작일차, 길이) — §5.3 v2: M=층 2 사용자값(클램프 [1,10])·B=14·O=3 고정."""
+    m = min(max(menstrual_length, 1), 10)
+    b, o = 14, 3
     men, fol, ovu, lut = m, (n - b) - m, o, b - o
     while fol < 1:
         if lut > 1:
@@ -154,12 +155,37 @@ def phase_spans(n: int) -> list[tuple[str, int, int]]:
     return spans
 
 
-def phase_for_day(day: int, n: int) -> str:
+def phase_for_day(day: int, n: int, menstrual_length: int = 5) -> str:
     d = min(max(day, 1), n)
-    for name, start, length in phase_spans(n):
+    for name, start, length in phase_spans(n, menstrual_length):
         if start <= d < start + length:
             return name
-    return phase_spans(n)[-1][0]
+    return phase_spans(n, menstrual_length)[-1][0]
+
+
+def episode_lengths(days: list[date], min_gap: int = MIN_PERIOD_GAP_DAYS) -> list[int]:
+    """PeriodMath.episodeLengths 재현 — 마지막 기록일 − 시작일 + 1."""
+    lengths: list[int] = []
+    current_start: date | None = None
+    current_last: date | None = None
+    for day in sorted(set(days)):
+        if current_start is None or (day - current_start).days >= min_gap:
+            if current_start is not None and current_last is not None:
+                lengths.append((current_last - current_start).days + 1)
+            current_start = day
+        current_last = day
+    if current_start is not None and current_last is not None:
+        lengths.append((current_last - current_start).days + 1)
+    return lengths
+
+
+def measured_menstrual_length(days: list[date]) -> int | None:
+    """CycleParams.menstrualLength의 실측부 재현 — 1일 에피소드는 아티팩트로 제외, 2개 이상일 때 중앙값.
+    온보딩 보고값(prior)은 내보내기에 없어 재현 불가 — DTO의 menstrualLength가 그 답을 실어온다."""
+    measured = [n for n in episode_lengths(days) if 2 <= n <= 10]
+    if len(measured) < 2:
+        return None
+    return min(10, max(2, swift_round(float(statistics.median(measured)))))
 
 
 # ── SignalConversion 재현 (사분면 커버리지 전용 — CoverageReminder와 동일 변환) ──
@@ -201,8 +227,10 @@ def baseline(cycle: WindowCycle, signal: str) -> float | None:
     return window_median(cycle, signal)
 
 
-def phase_median(cycle: WindowCycle, signal: str, phase: str) -> float | None:
-    days = [s for s in cycle.samples if phase_for_day(s.d, cycle.length) == phase]
+def phase_median(cycle: WindowCycle, signal: str, phase: str,
+                 menstrual_length: int = 5) -> float | None:
+    days = [s for s in cycle.samples
+            if phase_for_day(s.d, cycle.length, menstrual_length) == phase]
     return window_median(cycle, signal, days)
 
 
@@ -245,11 +273,11 @@ def pre_menstrual_window(cycles: list[WindowCycle]) -> int | None:
     return min(PRE_WINDOW_RANGE[-1], max(PRE_WINDOW_RANGE[0], swift_round(float(mid))))
 
 
-def h1_summer_mood_lift(cycles: list[WindowCycle]) -> bool | None:
+def h1_summer_mood_lift(cycles: list[WindowCycle], menstrual_length: int = 5) -> bool | None:
     up = judged = 0
     for cycle in usable(cycles):
         base = baseline(cycle, "mood")
-        summer = phase_median(cycle, "mood", "여름")
+        summer = phase_median(cycle, "mood", "여름", menstrual_length)
         if base is None or summer is None:
             continue
         judged += 1
@@ -265,9 +293,10 @@ def h1_summer_mood_lift(cycles: list[WindowCycle]) -> bool | None:
     return None
 
 
-def per_cycle_range(cycle: WindowCycle, signal: str = "mood") -> float | None:
+def per_cycle_range(cycle: WindowCycle, signal: str = "mood",
+                    menstrual_length: int = 5) -> float | None:
     medians = [m for phase in PHASES
-               if (m := phase_median(cycle, signal, phase)) is not None]
+               if (m := phase_median(cycle, signal, phase, menstrual_length)) is not None]
     if len(medians) < 2:
         return None
     return max(medians) - min(medians)
@@ -309,8 +338,15 @@ def format_median(value: float | None) -> str:
     return "-" if value is None else f"{value:.1f}"
 
 
+def summary_menstrual_length(summary: dict[str, object] | None) -> int | None:
+    if summary is None:
+        return None
+    value = summary.get("menstrualLength")
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
 def compare_summary(lines: list[str], summary: dict[str, object],
-                    cycles: list[WindowCycle]) -> None:
+                    cycles: list[WindowCycle], m: int) -> None:
     """rhythmSummary 블록(개정 M-6c) vs 파이썬 재현 대조 — 불일치 = 엔진/도구 어느 쪽의 결함."""
     out = lines.append
     out("### rhythmSummary 대조 (파일 동봉 블록 vs 본 도구 재현)")
@@ -321,9 +357,10 @@ def compare_summary(lines: list[str], summary: dict[str, object],
     checks: list[tuple[str, object, object]] = [
         ("usableCycles", summary.get("usableCycles"), len(usable(cycles))),
         ("preMenstrualWindow", summary.get("preMenstrualWindow"), pre_menstrual_window(cycles)),
-        ("h1SummerMoodLift", summary.get("h1SummerMoodLift"), h1_summer_mood_lift(cycles)),
+        ("h1SummerMoodLift", summary.get("h1SummerMoodLift"), h1_summer_mood_lift(cycles, m)),
         ("rhythmType", summary.get("rhythmType"),
-         classify_ranges([r for c in usable(cycles) if (r := per_cycle_range(c)) is not None])),
+         classify_ranges([r for c in usable(cycles)
+                          if (r := per_cycle_range(c, menstrual_length=m)) is not None])),
     ]
     mismatches = 0
     for name, theirs, ours in checks:
@@ -332,7 +369,8 @@ def compare_summary(lines: list[str], summary: dict[str, object],
         mark = "일치" if ok else f"⚠ 불일치 (파일 {theirs!r} vs 재현 {ours!r})"
         out(f"- {name}: {mark}")
     ranges_theirs = summary.get("perCycleRanges")
-    ranges_ours = [r for c in usable(cycles) if (r := per_cycle_range(c)) is not None]
+    ranges_ours = [r for c in usable(cycles)
+                   if (r := per_cycle_range(c, menstrual_length=m)) is not None]
     if isinstance(ranges_theirs, list):
         floats = [float(x) for x in ranges_theirs if isinstance(x, (int, float))]
         ok = len(floats) == len(ranges_theirs) and len(floats) == len(ranges_ours) and all(
@@ -384,16 +422,20 @@ def build_report(period_days: list[date], check_ins: list[CheckIn],
     # 3. 윈도우 프로파일 (완료 주기별)
     cycles = group_cycles(starts, check_ins)
     pool = usable(cycles)
+    # M(§5.3 층 2): DTO 동봉값 우선(온보딩 prior까지 반영된 실사용값) → 실측 중앙값 → 5.
+    measured_m = measured_menstrual_length(period_days)
+    m = summary_menstrual_length(summary) or measured_m or 5
     out("## 3. 윈도우 프로파일 (완료 주기별 — 비백필 표본)")
+    out(f"- M(월경 길이) = {m} (DTO {summary_menstrual_length(summary)} / 실측 중앙값 {measured_m})")
     for cycle in cycles:
         n_samples = sum(1 for s in cycle.samples
                         if signal_value(s, "energy") is not None
                         or signal_value(s, "mood") is not None)
         in_pool = "  (판정 포함)" if cycle in pool else ""
-        rng = per_cycle_range(cycle)
+        rng = per_cycle_range(cycle, menstrual_length=m)
         pre = per_cycle_pre_window(cycle)
         med = " ".join(
-            f"{phase} {format_median(phase_median(cycle, 'mood', phase))}"
+            f"{phase} {format_median(phase_median(cycle, 'mood', phase, m))}"
             for phase in PHASES
         )
         out(f"- {cycle.start} ({cycle.length}일, 표본 {n_samples}): mood [{med}]"
@@ -405,11 +447,11 @@ def build_report(period_days: list[date], check_ins: list[CheckIn],
 
     # 4. 엔진 판정 재현
     out("## 4. 엔진 판정 재현 (윈도우 통계 — 최근 5주기·표본≥4)")
-    ranges = [r for c in pool if (r := per_cycle_range(c)) is not None]
+    ranges = [r for c in pool if (r := per_cycle_range(c, menstrual_length=m)) is not None]
     verdict = classify_ranges(ranges)
     out(f"- 유효 주기 {len(pool)}개 · range 표본 {len(ranges)}개")
     out(f"- P(저컨디션 윈도우) = {pre_menstrual_window(cycles)}"
-        f" · H1(여름 기분 상승) = {h1_summer_mood_lift(cycles)}"
+        f" · H1(여름 기분 상승) = {h1_summer_mood_lift(cycles, m)}"
         f" · 유형 = {TYPE_NAMES.get(verdict or '', '판정 불가(데이터 부족)')}")
     if ranges:
         sweep = ", ".join(
@@ -419,7 +461,7 @@ def build_report(period_days: list[date], check_ins: list[CheckIn],
         out(f"- baselineRange 민감도: {sweep}")
     if summary is not None:
         out("")
-        compare_summary(lines, summary, cycles)
+        compare_summary(lines, summary, cycles, m)
     else:
         out("- (rhythmSummary 블록 없음 — 구 버전 내보내기 파일. 재현값만 표시)")
     out("")

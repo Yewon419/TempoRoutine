@@ -94,6 +94,7 @@ final class ExportSchemaTests: XCTestCase {
 
         // build 자체의 정합 — 엔진 판정과 같은 값이 실린다
         XCTAssertEqual(summary.engineVersion, "window-stats-1")
+        XCTAssertEqual(summary.menstrualLength, 5, "T45 M 디폴트 동봉(개정 M)")
         XCTAssertEqual(summary.usableCycles, 3)
         XCTAssertEqual(summary.rhythmType, "vivace")           // 겨울 2 vs 나머지 4 → range 2
         XCTAssertEqual(summary.preMenstrualWindow, 5)          // dip 4일 → 0.75 규칙 상 5(WindowStatsTests 참조)
