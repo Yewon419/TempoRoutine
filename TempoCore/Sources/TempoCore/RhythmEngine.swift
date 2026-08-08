@@ -1,7 +1,7 @@
 // 템포루틴 — "나의 리듬" 집계 엔진 (MASTER §5.6.3 계약의 P1 실장)
 //
 // (단계 × 신호) 버킷 평균 + 주기별 argmax(일관성 서술의 입력). 카피는 앱 몫이고
-// 여기는 계산만 한다(AxisEstimator/AxisProfile과 같은 분업).
+// 여기는 계산만 한다(WindowStatsEngine/AxisProfile과 같은 분업).
 //
 // 계약(§5.6.3): energy·mood 둘 다 1...5인 행만 입력 · projected=true·nil 단계는 집계 제외
 // (추정 위에 추정을 쌓지 않는다) · 옵션 신호는 non-nil만 · MIN_SAMPLES는 튜닝 가능 상수.

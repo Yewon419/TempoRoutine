@@ -1,56 +1,48 @@
-// 템포루틴 — 축 엔진의 앱측 접합부 (MASTER §3.11 / §5.12)
-// CycleSnapshot이 주기 스냅샷의 접합부이듯, 여기는 체크인 → 축 추정의 접합부다.
-// 계산 자체는 TempoCore(AxisEstimator)에 있고 이 파일은 데이터를 모아 넘기기만 한다.
+// 템포루틴 — 리듬 엔진의 앱측 접합부 (MASTER §3.11 / §5.12 개정 M)
+// CycleSnapshot이 주기 스냅샷의 접합부이듯, 여기는 체크인 → 윈도우 통계의 접합부다.
+// 계산 자체는 TempoCore(WindowStatsEngine)에 있고 이 파일은 데이터를 모아 넘기기만 한다.
 
 import Foundation
 import TempoCore
 
 struct AxisProfile {
-    let state: AxisState?
-
-    /// M축 서술이 갈리는 임계 — 계열 값 범위가 1...5라 차이의 반 칸(0.5)을 기준으로 둔다.
-    /// ⚠ 설문의 M 임계(M_raw ∈ [-3,3]에서 1)와 척도가 달라 값이 다르다. 같은 상수로 묶지 말 것.
-    static let modalityThreshold = 0.5
-
-    /// 한 주기에 최소 이만큼은 기록돼야 적합에 넣는다(§5.12 — 미지수 3개라 4개 필요).
-    static let minSamplesPerCycle = HarmonicFit.minimumSamples
+    let cycles: [WindowCycle]
 
     init(checkIns: [DailyCheckIn], snapshot: CycleSnapshot) {
-        self.state = AxisEstimator.estimate(cycles: Self.groupIntoCycles(checkIns, snapshot: snapshot))
+        self.cycles = Self.groupIntoCycles(checkIns, snapshot: snapshot)
     }
 
-    /// 완료된 주기만 묶는다. 진행 중인 주기는 표본이 앞부분에 몰려 있어 진폭이 왜곡된다.
+    /// 완료된 주기만 묶는다 — 실측 앵커라 r(다음 시작까지 남은 일수)도 실측이고 projected가 없다.
+    /// §5.12 ②: 비백필만 — 소급 입력은 회상 기반이라 제외한다(구 엔진의 가중 0.5에서 제외로 강화).
     private static func groupIntoCycles(_ checkIns: [DailyCheckIn],
-                                        snapshot: CycleSnapshot) -> [[DailySignal]] {
+                                        snapshot: CycleSnapshot) -> [WindowCycle] {
         let starts = snapshot.starts.sorted()
         guard starts.count >= 2 else { return [] }
         let cal = Calendar.current
 
-        var cycles: [[DailySignal]] = []
+        var cycles: [WindowCycle] = []
         for (index, start) in starts.enumerated() where index < starts.count - 1 {
             let end = starts[index + 1]
-            let length = cal.dateComponents([.day], from: start, to: end).day ?? snapshot.averageLength
-            guard length > 0 else { continue }
+            guard let length = cal.dateComponents([.day], from: start, to: end).day,
+                  length > 0 else { continue }
 
-            let signals: [DailySignal] = checkIns.compactMap { entry in
+            let samples: [WindowDaySample] = checkIns.compactMap { entry in
+                guard !entry.isBackfilled else { return nil }
                 let day = cal.startOfDay(for: entry.day)
-                guard day >= start, day < end else { return nil }
-                let offset = (cal.dateComponents([.day], from: start, to: day).day ?? 0) + 1
-                let emotional = SignalConversion.emotional(mood: entry.mood,
-                                                           irritability: entry.irritability)
-                let bodily = SignalConversion.bodily(pain: entry.pain)
-                guard emotional != nil || bodily != nil else { return nil }
-                return DailySignal(cycleDay: offset, cycleLength: length,
-                                   emotional: emotional, bodily: bodily,
-                                   isBackfilled: entry.isBackfilled)
+                guard day >= start, day < end,
+                      let offset = cal.dateComponents([.day], from: start, to: day).day
+                else { return nil }
+                // 0 = 미기록은 엔진의 value(of:)가 거른다 — 여기서 이중 필터를 두면 기준이 갈라진다.
+                return WindowDaySample(daysFromStart: offset + 1,
+                                       daysUntilNext: length - offset,
+                                       energy: entry.energy, mood: entry.mood)
             }
-            guard signals.count >= minSamplesPerCycle else { continue }
-            cycles.append(signals)
+            cycles.append(WindowCycle(length: length, samples: samples))
         }
         return cycles
     }
 
-    var type: RhythmType? { state.map { AxisEstimator.classify($0) } }
+    var type: RhythmType? { WindowStatsEngine.classify(cycles: cycles) }
 
     /// A축 = 유형 이름. 표시는 §3.11 — 이름은 A축만 쓴다.
     var typeName: String? { type?.displayName }
@@ -68,9 +60,17 @@ struct AxisProfile {
     /// ~~M축 한 줄 서술~~ — **폐기(2026-08-05 사용자 결정)**: 체크인 병합으로 몸(pain) 입력
     /// 행이 사라져 신체 계열이 더는 쌓이지 않는다. 분모 없는 M축을 계속 말하면
     /// "마음과 몸이 비슷하게 움직여요"가 데이터 없이 항상 뜨는 거짓 서술이 된다.
-    /// 엔진의 modality 계산은 남겨둔다(과거 기록 보유자 + 재도입 대비) — UI만 침묵.
+    /// 개정 M에서 엔진의 modality 계산 자체도 폐기됐다 — UI 자리는 재도입 대비로 남긴다.
     var modalityLine: String? { nil }
 
     /// 로그가 없으면 말하지 않는다(§3.11) — 이 값이 false면 화면에 카드를 올리지 않는다.
-    var hasEnoughData: Bool { state != nil }
+    /// ⚠ 개정 M: 발화 게이트가 1주기 → 유효 3주기(§5.3 학습 계약)로 강화됐다.
+    var hasEnoughData: Bool { type != nil }
+
+    /// §5.3 층 2 `P` — 학습된 저컨디션 윈도우. nil이면 소비처가 디폴트 5를 쓴다.
+    /// ⚠ 홀드아웃 채택 게이트(§5.3)는 소비처를 붙이는 시점에 함께 구현한다.
+    var preMenstrualWindow: Int? { WindowStatsEngine.preMenstrualWindow(cycles: cycles) }
+
+    /// §2.3 H1 — 배란 주변 기분 상승. true일 때만 여름 상승 서사 발화 허용.
+    var h1SummerMoodLift: Bool? { WindowStatsEngine.h1SummerMoodLift(cycles: cycles) }
 }

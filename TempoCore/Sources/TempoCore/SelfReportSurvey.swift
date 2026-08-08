@@ -151,7 +151,7 @@ public enum SelfReportSurvey {
     }
 }
 
-/// 자기보고 결과 — ⚠ 앱 축 엔진(AxisState)과 **다른 양이다.**
+/// 자기보고 결과 — ⚠ 앱 리듬 엔진(WindowStatsEngine)의 유형과 **다른 양이다.**
 /// 루바토라는 이름을 공유하지만 산출 경로가 다르므로 같은 필드에 담지 말 것(MASTER §3.11).
 public struct SelfReportResult: Equatable, Sendable {
     public let type: RhythmType

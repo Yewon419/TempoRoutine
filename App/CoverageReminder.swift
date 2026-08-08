@@ -95,8 +95,9 @@ enum CoverageReminder {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
     }
 
-    /// 진행 중인 주기의 체크인 → DailySignal. 커버 판정은 "적합에 들어가는 행"과 같은 기준이어야 한다
-    /// (AxisProfile과 같은 변환을 거친다 — 여기서만 다른 기준을 쓰면 알림과 엔진이 어긋난다).
+    /// 진행 중인 주기의 체크인 → DailySignal. 개정 M 이후 엔진(WindowStatsEngine)은 energy·mood를
+    /// 직접 쓰지만, 저장 필수 신호가 에너지+기분 둘뿐이라(§3.4) "기분이 잡히는 날" = "엔진에 들어가는
+    /// 날"로 커버 판정이 실질 일치한다. 과거 irritability·pain 기록 보유자도 이 변환이 흡수한다.
     private static func signals(checkIns: [DailyCheckIn], start: Date, length: Int) -> [DailySignal] {
         let cal = Calendar.current
         return checkIns.compactMap { entry in

@@ -89,12 +89,12 @@ final class QuadrantCoverageTests: XCTestCase {
         }
     }
 
-    /// 위상 쏠림 = 적합이 못 믿을 입력. 그걸 빈 사분면으로 짚어내는 게 이 파일의 목적이다.
-    /// (표본 수만 보면 4개를 넘어 HarmonicFit의 최소 표본 관문은 통과한다 — 개수로는 못 거른다.)
+    /// 한쪽 쏠림 = 반대쪽 윈도우가 비어 엔진이 침묵하는 입력. 그걸 빈 사분면으로 짚어내는 게 목적이다.
+    /// (표본 수만 보면 주기당 최소 기록 관문은 통과한다 — 개수로는 못 거른다.)
     func testDetectsPhaseClustering() {
         let length = 28
         let clustered = (1...7).map { signal(day: $0, length: length) }
-        XCTAssertGreaterThanOrEqual(clustered.count, HarmonicFit.minimumSamples)
+        XCTAssertGreaterThanOrEqual(clustered.count, WindowStatsEngine.minSamplesPerCycle)
         XCTAssertEqual(QuadrantCoverage.emptyQuadrants(clustered), [1, 2, 3])
     }
 }

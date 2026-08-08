@@ -1,12 +1,15 @@
-// 템포루틴 — 축 엔진 값 타입 (MASTER §5.12 / §3.11)
+// 템포루틴 — 리듬 신호 값 타입 (MASTER §5.12 / §3.11)
 //
-// ⚠ 이 파일의 첫 번째 규칙: **계열 값은 전부 "높을수록 힘듦"으로 통일한다.**
-// 체크인 UI는 방향이 섞여 있다 —
+// 개정 M(2026-08-08): 푸리에+칼만 축 엔진 폐기로 HarmonicResult·AxisState는 제거됐다.
+// 남은 것들의 소비처 — DailySignal·SignalConversion = 사분면 커버 리마인더(§5.12 ⑤,
+// 과거 irritability·pain 기록 보유자의 커버 판정에 여전히 유효) / RhythmType = 유형
+// 표시(§3.11)와 새 윈도우 통계 엔진(WindowStats.swift)의 산출 타입.
+//
+// ⚠ SignalConversion의 규칙: **계열 값은 전부 "높을수록 힘듦"으로 통일한다.**
 //   mood         1 흐림 …… 5 맑음      (높을수록 좋음 → 뒤집는다)
 //   irritability 1 잔잔함 … 5 날카로움  (높을수록 나쁨 → 그대로)
 //   pain         1 불편해요 … 5 괜찮아요 (높을수록 좋음 → 뒤집는다)
-// 뒤집기를 빠뜨리면 M축 부호가 통째로 반대가 되고, 증상은 "계산은 되는데 해석이 반대"라
-// 테스트 없이는 안 드러난다. 환산은 반드시 이 파일의 함수를 거친다.
+// 뒤집기를 빠뜨리면 해석이 통째로 반대가 되는데 "계산은 되므로" 테스트 없이는 안 드러난다.
 
 import Foundation
 
@@ -68,21 +71,6 @@ public enum SignalConversion {
     }
 }
 
-/// 한 주기의 적합 결과
-public struct HarmonicResult: Equatable, Sendable {
-    public let mean: Double        // 절편 c
-    public let amplitude: Double   // 편향 보정 후 진폭 (≥ 0)
-    public let phase: Double       // ψ, radian (-π...π]
-    public let sampleCount: Int
-
-    public init(mean: Double, amplitude: Double, phase: Double, sampleCount: Int) {
-        self.mean = mean
-        self.amplitude = amplitude
-        self.phase = phase
-        self.sampleCount = sampleCount
-    }
-}
-
 public enum RhythmType: String, Equatable, Sendable {
     case vivace     // 변동이 큰 편
     case andante    // 잔잔한 편
@@ -94,20 +82,5 @@ public enum RhythmType: String, Equatable, Sendable {
         case .andante: "안단테"
         case .rubato: "루바토"
         }
-    }
-}
-
-/// 축 추정 상태 — 주기가 끝날 때마다 갱신된다(칼만 1D).
-public struct AxisState: Equatable, Sendable {
-    public let amplitude: Double        // 평활된 A축 추정치 μ
-    public let variance: Double         // σ² (하한이 걸려 있어 0이 되지 않는다)
-    public let modality: Double         // M축 = 정서 − 신체 (주기 평균)
-    public let observedCycles: Int
-
-    public init(amplitude: Double, variance: Double, modality: Double, observedCycles: Int) {
-        self.amplitude = amplitude
-        self.variance = variance
-        self.modality = modality
-        self.observedCycles = observedCycles
     }
 }
