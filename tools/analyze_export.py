@@ -1,16 +1,18 @@
-"""템포루틴 내보내기 JSON 분석 — 엔진 파라미터 검증 리포트.
+"""템포루틴 내보내기 JSON 분석 — 엔진 파라미터 검증 리포트 (v2 — 윈도우 통계, 개정 M).
 
 동의 기반 수동 기증 루프(2026-08-05)의 분석 도구. 설정 「JSON으로 내보내기」 파일을 받아
 §5.12가 "파일럿 후 확인"으로 미룬 것들을 실데이터로 검증한다:
 
   1. 주기 요약 — 에피소드·gap 분포·유효/무효 gap·averageLength(v1.1)
   2. 예측 백테스트 — 각 시점까지의 기록으로 다음 시작일을 예측해 실제와 비교
-  3. 조화 적합 분포 — 주기별 진폭·편향 보정 클리핑률 (§5.12 ② "전원 저진폭형" 실패 모드 감지)
-  4. 축 추정 — 칼만 궤적·유형 판정 + A₀ 민감도 (0.3~0.7에서 유형이 어떻게 갈리는지)
+  3. 윈도우 프로파일 — 완료 주기별 계절 윈도우 중앙값·range·프리 윈도우 후보
+  4. 엔진 판정 재현 — P·H1·유형 + baselineRange(A₀) 민감도
+     + 파일에 rhythmSummary 블록이 있으면(개정 M-6c) 재현값과 대조해 엔진 구현을 검증
   5. 사분면 커버리지 — 주기별 기록 밀도 (§5.12 ⑤ 리마인더의 근거 데이터)
 
 Swift 엔진(TempoCore)과 같은 산식의 재구현이다 — 상수·순서를 바꾸면 검증이 아니라
-다른 엔진이 된다. 변경 시 원본(CyclePredictor·HarmonicFit·AxisEstimator)과 대조할 것.
+다른 엔진이 된다. 변경 시 원본(CyclePredictor·WindowStats)과 대조할 것.
+구 푸리에+칼만 재현부는 개정 M(2026-08-08)으로 폐기 — git 히스토리(`490eb20`)에 있다.
 
 사용:
   python tools/analyze_export.py <내보내기.json> [--out 리포트.txt]
@@ -22,6 +24,7 @@ import argparse
 import io
 import json
 import math
+import statistics
 import sys
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -32,16 +35,19 @@ MIN_PERIOD_GAP_DAYS = 14          # PeriodMath.minPeriodGapDays
 VALID_GAP_RANGE = range(21, 36)   # CyclePredictor.averageLength v1.1 ①
 RECENT_GAP_WINDOW = 5             # v1.1 ②
 DEFAULT_CYCLE_LENGTH = 28
-MIN_FIT_SAMPLES = 4               # HarmonicFit.minimumSamples
-BACKFILLED_WEIGHT = 0.5           # HarmonicFit.backfilledWeight
-MIN_OBS_VARIANCE = 1.0 / 12.0     # AxisEstimator.minObservationVariance
-MIN_STATE_VARIANCE = 1.0 / 24.0   # AxisEstimator.minStateVariance
-PROCESS_VARIANCE = 0.02           # AxisEstimator.processVariance
-BASELINE_AMPLITUDE = 0.5          # AxisEstimator.baselineAmplitude (A₀)
-RUBATO_LOWER = 0.5
-RUBATO_UPPER = 0.85
 SCALE_MAX = 5                     # AxisScale.max
 QUADRANTS = 4                     # QuadrantCoverage.count
+# WindowStatsEngine (개정 M)
+RECENT_CYCLES = 5
+MIN_CYCLES = 3
+MIN_SAMPLES_PER_CYCLE = 4
+MARGIN = 0.5
+PRE_WINDOW_RANGE = range(2, 8)    # [2,7]
+MIN_SUFFIX_SAMPLES = 2
+LOW_DAY_FRACTION = 0.75
+BASELINE_RANGE = 1.0
+PHASES = ("겨울", "봄", "여름", "가을")
+TYPE_NAMES = {"vivace": "비바체", "andante": "안단테", "rubato": "루바토"}
 
 
 @dataclass(frozen=True)
@@ -56,22 +62,19 @@ class CheckIn:
 
 
 @dataclass(frozen=True)
-class HarmonicResult:
-    mean: float
-    raw_amplitude: float
-    amplitude: float
-    sample_count: int
-
-    @property
-    def clipped(self) -> bool:
-        return self.raw_amplitude > 0 and self.amplitude == 0
+class WindowDay:
+    """양방향 앵커 좌표(§5.12 ①) — d = 시작 후 일차, r = 다음 시작까지 남은 일수."""
+    d: int
+    r: int
+    energy: int
+    mood: int
 
 
 @dataclass(frozen=True)
-class AxisState:
-    amplitude: float
-    variance: float
-    observed_cycles: int
+class WindowCycle:
+    start: date
+    length: int
+    samples: tuple[WindowDay, ...]
 
 
 # ── 파싱 ──
@@ -80,7 +83,7 @@ def parse_day(value: str) -> date:
     return datetime.strptime(value, "%Y-%m-%d").date()
 
 
-def load_export(path: Path) -> tuple[list[date], list[CheckIn]]:
+def load_export(path: Path) -> tuple[list[date], list[CheckIn], dict[str, object] | None]:
     with path.open(encoding="utf-8") as f:
         raw = json.load(f)
     period_days = sorted({parse_day(entry["day"]) for entry in raw.get("periodDays", [])})
@@ -96,7 +99,8 @@ def load_export(path: Path) -> tuple[list[date], list[CheckIn]]:
             is_backfilled=bool(entry.get("isBackfilled", False)),
         ))
     check_ins.sort(key=lambda c: c.day)
-    return period_days, check_ins
+    summary = raw.get("rhythmSummary")
+    return period_days, check_ins, summary if isinstance(summary, dict) else None
 
 
 # ── PeriodMath / CyclePredictor 재현 ──
@@ -158,7 +162,7 @@ def phase_for_day(day: int, n: int) -> str:
     return phase_spans(n)[-1][0]
 
 
-# ── SignalConversion 재현 ──
+# ── SignalConversion 재현 (사분면 커버리지 전용 — CoverageReminder와 동일 변환) ──
 
 def recorded(value: int | None) -> float | None:
     if value is None or not 1 <= value <= SCALE_MAX:
@@ -179,118 +183,171 @@ def emotional(mood: int | None, irritability: int | None) -> float | None:
     return flipped_mood if flipped_mood is not None else i
 
 
-# ── HarmonicFit 재현 ──
+# ── WindowStatsEngine 재현 (§5.12 개정 M) ──
 
-def solve3x3(matrix: list[list[float]], rhs: list[float]) -> list[float] | None:
-    m = [row[:] for row in matrix]
-    v = rhs[:]
-    for col in range(3):
-        pivot = max(range(col, 3), key=lambda r: abs(m[r][col]))
-        if abs(m[pivot][col]) <= 1e-10:
-            return None
-        if pivot != col:
-            m[pivot], m[col] = m[col], m[pivot]
-            v[pivot], v[col] = v[col], v[pivot]
-        for row in range(col + 1, 3):
-            factor = m[row][col] / m[col][col]
-            if factor == 0:
-                continue
-            for k in range(col, 3):
-                m[row][k] -= factor * m[col][k]
-            v[row] -= factor * v[col]
-    out = [0.0, 0.0, 0.0]
-    for row in (2, 1, 0):
-        acc = v[row]
-        for k in range(row + 1, 3):
-            acc -= m[row][k] * out[k]
-        out[row] = acc / m[row][row]
-    return out if all(math.isfinite(x) for x in out) else None
+def signal_value(sample: WindowDay, signal: str) -> float | None:
+    raw = sample.energy if signal == "energy" else sample.mood
+    return float(raw) if 1 <= raw <= SCALE_MAX else None
 
 
-def harmonic_fit(samples: list[tuple[float, float, float]]) -> HarmonicResult | None:
-    """samples = (theta, value, weight). TempoCore HarmonicFit.fit와 동일 산식."""
-    if len(samples) < MIN_FIT_SAMPLES:
+def window_median(cycle: WindowCycle, signal: str,
+                  days: list[WindowDay] | None = None) -> float | None:
+    pool = cycle.samples if days is None else days
+    values = [v for s in pool if (v := signal_value(s, signal)) is not None]
+    return statistics.median(values) if values else None
+
+
+def baseline(cycle: WindowCycle, signal: str) -> float | None:
+    return window_median(cycle, signal)
+
+
+def phase_median(cycle: WindowCycle, signal: str, phase: str) -> float | None:
+    days = [s for s in cycle.samples if phase_for_day(s.d, cycle.length) == phase]
+    return window_median(cycle, signal, days)
+
+
+def usable(cycles: list[WindowCycle]) -> list[WindowCycle]:
+    recent = cycles[-RECENT_CYCLES:]
+    return [c for c in recent
+            if sum(1 for s in c.samples
+                   if signal_value(s, "energy") is not None
+                   or signal_value(s, "mood") is not None) >= MIN_SAMPLES_PER_CYCLE]
+
+
+def agreement_threshold(n: int) -> int:
+    return max(MIN_CYCLES, n - 1)
+
+
+def per_cycle_pre_window(cycle: WindowCycle) -> int | None:
+    base = baseline(cycle, "energy")
+    if base is None:
         return None
-    sw = sc = ss = scc = sss = scs = sy = syc = sys_ = 0.0
-    for theta, y, w in samples:
-        c, s = math.cos(theta), math.sin(theta)
-        sw += w
-        sc += w * c
-        ss += w * s
-        scc += w * c * c
-        sss += w * s * s
-        scs += w * c * s
-        sy += w * y
-        syc += w * y * c
-        sys_ += w * y * s
-    if sw <= 0:
+    best: int | None = None
+    for p in PRE_WINDOW_RANGE:
+        days = [v for s in cycle.samples if s.r <= p
+                if (v := signal_value(s, "energy")) is not None]
+        if len(days) < MIN_SUFFIX_SAMPLES:
+            continue
+        lows = sum(1 for v in days if v <= base - MARGIN)
+        if lows / len(days) >= LOW_DAY_FRACTION:
+            best = p
+    return best
+
+
+def pre_menstrual_window(cycles: list[WindowCycle]) -> int | None:
+    pool = usable(cycles)
+    if len(pool) < MIN_CYCLES:
         return None
-    solution = solve3x3([[sw, sc, ss], [sc, scc, scs], [ss, scs, sss]], [sy, syc, sys_])
-    if solution is None:
+    candidates = [p for c in pool if (p := per_cycle_pre_window(c)) is not None]
+    if len(candidates) < agreement_threshold(len(pool)):
         return None
-    c0, a, b = solution
-    residual = sum(
-        w * (y - (c0 + a * math.cos(theta) + b * math.sin(theta))) ** 2
-        for theta, y, w in samples
-    )
-    dof = sw - 3
-    noise = residual / dof if dof > 0 else 0.0
-    raw_power = a * a + b * b
-    corrected = max(0.0, raw_power - 2 * noise / sw)
-    return HarmonicResult(
-        mean=c0,
-        raw_amplitude=math.sqrt(raw_power),
-        amplitude=math.sqrt(corrected),
-        sample_count=len(samples),
-    )
+    mid = statistics.median(candidates)
+    return min(PRE_WINDOW_RANGE[-1], max(PRE_WINDOW_RANGE[0], swift_round(float(mid))))
 
 
-# ── AxisEstimator 재현 ──
+def h1_summer_mood_lift(cycles: list[WindowCycle]) -> bool | None:
+    up = judged = 0
+    for cycle in usable(cycles):
+        base = baseline(cycle, "mood")
+        summer = phase_median(cycle, "mood", "여름")
+        if base is None or summer is None:
+            continue
+        judged += 1
+        if summer >= base + MARGIN:
+            up += 1
+    if judged < MIN_CYCLES:
+        return None
+    threshold = agreement_threshold(judged)
+    if up >= threshold:
+        return True
+    if judged - up >= threshold:
+        return False
+    return None
 
-def kalman_update(state: AxisState | None, fit: HarmonicResult) -> AxisState:
-    observation = fit.amplitude
-    obs_var = max(MIN_OBS_VARIANCE, 1.0 / max(1, fit.sample_count))
-    if state is None:
-        return AxisState(observation, max(MIN_STATE_VARIANCE, obs_var), 1)
-    predicted = max(MIN_STATE_VARIANCE, state.variance + PROCESS_VARIANCE)
-    gain = predicted / (predicted + obs_var)
-    amplitude = state.amplitude + gain * (observation - state.amplitude)
-    variance = max(MIN_STATE_VARIANCE, (1 - gain) * predicted)
-    return AxisState(amplitude, variance, state.observed_cycles + 1)
+
+def per_cycle_range(cycle: WindowCycle, signal: str = "mood") -> float | None:
+    medians = [m for phase in PHASES
+               if (m := phase_median(cycle, signal, phase)) is not None]
+    if len(medians) < 2:
+        return None
+    return max(medians) - min(medians)
 
 
-def normal_cdf(x: float) -> float:
-    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+def classify_ranges(ranges: list[float], baseline_range: float = BASELINE_RANGE) -> str | None:
+    if len(ranges) < MIN_CYCLES:
+        return None
+    threshold = agreement_threshold(len(ranges))
+    high = sum(1 for r in ranges if r >= baseline_range)
+    if high >= threshold:
+        return "vivace"
+    if len(ranges) - high >= threshold:
+        return "andante"
+    return "rubato"
 
 
-def classify(state: AxisState, baseline: float) -> str:
-    sigma = math.sqrt(state.variance)
-    margin = state.amplitude - baseline
-    phi = (1.0 if margin > 0 else 0.0) if sigma <= 0 else normal_cdf(margin / sigma)
-    if phi < RUBATO_LOWER:
-        return "안단테"
-    if phi < RUBATO_UPPER:
-        return "루바토"
-    return "비바체"
+def group_cycles(starts: list[date], check_ins: list[CheckIn]) -> list[WindowCycle]:
+    """완료 주기만 — AxisProfile.groupIntoCycles와 동일 기준(비백필 제외, r도 실측)."""
+    cycles: list[WindowCycle] = []
+    for idx in range(len(starts) - 1):
+        start, end = starts[idx], starts[idx + 1]
+        length = (end - start).days
+        if length <= 0:
+            continue
+        samples = tuple(
+            WindowDay(d=(c.day - start).days + 1, r=length - (c.day - start).days,
+                      energy=c.energy, mood=c.mood)
+            for c in check_ins
+            if not c.is_backfilled and 0 <= (c.day - start).days < length
+        )
+        cycles.append(WindowCycle(start=start, length=length, samples=samples))
+    return cycles
 
 
 # ── 리포트 ──
 
-def cycle_signals(check_ins: list[CheckIn], start: date, length: int) -> list[tuple[int, CheckIn]]:
-    """완료 주기 안의 (1-indexed 일차, 체크인). energy·mood 필수 규약(§5.6.3)."""
-    result: list[tuple[int, CheckIn]] = []
-    for entry in check_ins:
-        offset = (entry.day - start).days
-        if 0 <= offset < length and 1 <= entry.energy <= 5 and 1 <= entry.mood <= 5:
-            result.append((offset + 1, entry))
-    return result
+def format_median(value: float | None) -> str:
+    return "-" if value is None else f"{value:.1f}"
 
 
-def build_report(period_days: list[date], check_ins: list[CheckIn]) -> str:
+def compare_summary(lines: list[str], summary: dict[str, object],
+                    cycles: list[WindowCycle]) -> None:
+    """rhythmSummary 블록(개정 M-6c) vs 파이썬 재현 대조 — 불일치 = 엔진/도구 어느 쪽의 결함."""
+    out = lines.append
+    out("### rhythmSummary 대조 (파일 동봉 블록 vs 본 도구 재현)")
+    engine = summary.get("engineVersion")
+    if engine != "window-stats-1":
+        out(f"- ⚠ engineVersion {engine!r} — 본 도구(window-stats-1)와 세대 불일치, 대조 생략")
+        return
+    checks: list[tuple[str, object, object]] = [
+        ("usableCycles", summary.get("usableCycles"), len(usable(cycles))),
+        ("preMenstrualWindow", summary.get("preMenstrualWindow"), pre_menstrual_window(cycles)),
+        ("h1SummerMoodLift", summary.get("h1SummerMoodLift"), h1_summer_mood_lift(cycles)),
+        ("rhythmType", summary.get("rhythmType"),
+         classify_ranges([r for c in usable(cycles) if (r := per_cycle_range(c)) is not None])),
+    ]
+    mismatches = 0
+    for name, theirs, ours in checks:
+        ok = theirs == ours
+        mismatches += 0 if ok else 1
+        mark = "일치" if ok else f"⚠ 불일치 (파일 {theirs!r} vs 재현 {ours!r})"
+        out(f"- {name}: {mark}")
+    ranges_theirs = summary.get("perCycleRanges")
+    ranges_ours = [r for c in usable(cycles) if (r := per_cycle_range(c)) is not None]
+    if isinstance(ranges_theirs, list):
+        floats = [float(x) for x in ranges_theirs if isinstance(x, (int, float))]
+        ok = len(floats) == len(ranges_theirs) and len(floats) == len(ranges_ours) and all(
+            abs(a - b) < 1e-9 for a, b in zip(floats, ranges_ours))
+        mismatches += 0 if ok else 1
+        out(f"- perCycleRanges: {'일치' if ok else f'⚠ 불일치 (파일 {floats} vs 재현 {ranges_ours})'}")
+    out(f"- 종합: {'전 항목 일치 — 엔진 구현 검증 통과' if mismatches == 0 else f'{mismatches}건 불일치 — 원인 파야 함'}")
+
+
+def build_report(period_days: list[date], check_ins: list[CheckIn],
+                 summary: dict[str, object] | None) -> str:
     lines: list[str] = []
     out = lines.append
     starts = episode_starts(period_days)
-    out("# 템포루틴 내보내기 분석")
+    out("# 템포루틴 내보내기 분석 (v2 — 윈도우 통계)")
     out("")
 
     # 1. 주기 요약
@@ -324,63 +381,67 @@ def build_report(period_days: list[date], check_ins: list[CheckIn]) -> str:
         out("- 유효 주기 표본 없음")
     out("")
 
-    # 3~5. 완료 주기 순회
-    out("## 3. 조화 적합 분포 (정서 계열)")
-    fits: list[HarmonicResult] = []
+    # 3. 윈도우 프로파일 (완료 주기별)
+    cycles = group_cycles(starts, check_ins)
+    pool = usable(cycles)
+    out("## 3. 윈도우 프로파일 (완료 주기별 — 비백필 표본)")
+    for cycle in cycles:
+        n_samples = sum(1 for s in cycle.samples
+                        if signal_value(s, "energy") is not None
+                        or signal_value(s, "mood") is not None)
+        in_pool = "  (판정 포함)" if cycle in pool else ""
+        rng = per_cycle_range(cycle)
+        pre = per_cycle_pre_window(cycle)
+        med = " ".join(
+            f"{phase} {format_median(phase_median(cycle, 'mood', phase))}"
+            for phase in PHASES
+        )
+        out(f"- {cycle.start} ({cycle.length}일, 표본 {n_samples}): mood [{med}]"
+            f" · range {format_median(rng)} · 프리 윈도우 후보 {pre if pre is not None else '-'}"
+            f"{in_pool}")
+    if not cycles:
+        out("- 완료 주기 없음")
+    out("")
+
+    # 4. 엔진 판정 재현
+    out("## 4. 엔진 판정 재현 (윈도우 통계 — 최근 5주기·표본≥4)")
+    ranges = [r for c in pool if (r := per_cycle_range(c)) is not None]
+    verdict = classify_ranges(ranges)
+    out(f"- 유효 주기 {len(pool)}개 · range 표본 {len(ranges)}개")
+    out(f"- P(저컨디션 윈도우) = {pre_menstrual_window(cycles)}"
+        f" · H1(여름 기분 상승) = {h1_summer_mood_lift(cycles)}"
+        f" · 유형 = {TYPE_NAMES.get(verdict or '', '판정 불가(데이터 부족)')}")
+    if ranges:
+        sweep = ", ".join(
+            f"A₀={a:.2f}→{TYPE_NAMES.get(classify_ranges(ranges, a) or '', '-')}"
+            for a in (0.5, 0.75, 1.0, 1.25, 1.5)
+        )
+        out(f"- baselineRange 민감도: {sweep}")
+    if summary is not None:
+        out("")
+        compare_summary(lines, summary, cycles)
+    else:
+        out("- (rhythmSummary 블록 없음 — 구 버전 내보내기 파일. 재현값만 표시)")
+    out("")
+
+    # 5. 사분면 커버리지
+    out("## 5. 사분면 커버리지 (완료 주기별 — CoverageReminder 변환 기준)")
     coverage_rows: list[str] = []
-    for idx in range(len(starts) - 1):
-        start, end = starts[idx], starts[idx + 1]
-        length = (end - start).days
-        if length <= 0:
-            continue
-        rows = cycle_signals(check_ins, start, length)
+    for cycle in cycles:
         quad_counts = [0] * QUADRANTS
-        samples: list[tuple[float, float, float]] = []
-        for day_in_cycle, entry in rows:
-            value = emotional(entry.mood, entry.irritability)
-            if value is None:
+        rows = 0
+        for entry in check_ins:
+            offset = (entry.day - cycle.start).days
+            if not 0 <= offset < cycle.length:
                 continue
-            theta = 2 * math.pi * (day_in_cycle - 1) / length
-            weight = BACKFILLED_WEIGHT if entry.is_backfilled else 1.0
-            samples.append((theta, value, weight))
-            quad = min(QUADRANTS - 1, (day_in_cycle - 1) * QUADRANTS // length)
+            if emotional(entry.mood, entry.irritability) is None:
+                continue
+            rows += 1
+            quad = min(QUADRANTS - 1, offset * QUADRANTS // cycle.length)
             quad_counts[quad] += 1
         if rows:
-            coverage_rows.append(f"- {start} ({length}일): 사분면 {quad_counts}"
+            coverage_rows.append(f"- {cycle.start} ({cycle.length}일): 사분면 {quad_counts}"
                                  f"{'  ⚠ 빈 사분면' if 0 in quad_counts else ''}")
-        fit = harmonic_fit(samples)
-        if fit is None:
-            if samples:
-                out(f"- {start}: 표본 {len(samples)}개 — 적합 불가(최소 {MIN_FIT_SAMPLES} 또는 특이 행렬)")
-            continue
-        clip = "  ⚠ 클리핑(보정 후 0)" if fit.clipped else ""
-        out(f"- {start}: raw {fit.raw_amplitude:.3f} → 보정 {fit.amplitude:.3f}"
-            f" (표본 {fit.sample_count}){clip}")
-        fits.append(fit)
-    if fits:
-        clipped = sum(1 for f in fits if f.clipped)
-        out(f"- 적합 주기 {len(fits)}개 · 클리핑 {clipped}개"
-            f" ({clipped / len(fits) * 100:.0f}% — §5.12 ②: 과반이면 전원 저진폭형 경보)")
-    else:
-        out("- 적합 가능한 주기 없음 (주기당 유효 표본 4개 미만)")
-    out("")
-
-    out("## 4. 축 추정 (칼만 궤적 + A₀ 민감도)")
-    state: AxisState | None = None
-    for fit in fits:
-        state = kalman_update(state, fit)
-        out(f"- 주기 {state.observed_cycles}: μ {state.amplitude:.3f} · σ² {state.variance:.4f}")
-    if state is not None:
-        out(f"- 현행 판정(A₀={BASELINE_AMPLITUDE}): {classify(state, BASELINE_AMPLITUDE)}")
-        sensitivity = ", ".join(
-            f"A₀={a:.1f}→{classify(state, a)}" for a in (0.3, 0.4, 0.5, 0.6, 0.7)
-        )
-        out(f"- A₀ 민감도: {sensitivity}")
-    else:
-        out("- 축 추정 불가 (적합 주기 0)")
-    out("")
-
-    out("## 5. 사분면 커버리지 (완료 주기별)")
     if coverage_rows:
         lines.extend(coverage_rows)
     else:
@@ -391,7 +452,8 @@ def build_report(period_days: list[date], check_ins: list[CheckIn]) -> str:
     valid_rows = sum(1 for c in check_ins if 1 <= c.energy <= 5 and 1 <= c.mood <= 5)
     backfilled = sum(1 for c in check_ins if c.is_backfilled)
     out("## 6. 체크인 원자료")
-    out(f"- 총 {total}건 · 집계 유효(energy·mood) {valid_rows}건 · 소급 {backfilled}건")
+    out(f"- 총 {total}건 · 집계 유효(energy·mood) {valid_rows}건 · 소급 {backfilled}건"
+        f" (소급은 엔진 판정에서 제외 — §5.12 ②)")
     return "\n".join(lines)
 
 
@@ -406,8 +468,8 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=None, help="리포트 저장 경로(생략 시 stdout)")
     args = parser.parse_args()
 
-    period_days, check_ins = load_export(args.export_path)
-    report = build_report(period_days, check_ins)
+    period_days, check_ins, summary = load_export(args.export_path)
+    report = build_report(period_days, check_ins, summary)
     if args.out is not None:
         args.out.write_text(report, encoding="utf-8")
         print(f"OK: -> {args.out}")
