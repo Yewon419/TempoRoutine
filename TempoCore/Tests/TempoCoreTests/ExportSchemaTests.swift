@@ -73,4 +73,31 @@ final class ExportSchemaTests: XCTestCase {
         let s = ExportCodec.instantString(now)
         XCTAssertEqual(ExportCodec.instant(from: s), now)
     }
+
+    // T45: rhythmSummary 왕복 + 구 파일 호환 (개정 M-6c — v1 내 optional 추가)
+    func testT45_rhythmSummaryRoundTrip() throws {
+        // 구 파일(필드 없음) → nil로 흡수, 실패하지 않는다
+        let old = try ExportCodec.encode(sampleEnvelope())
+        XCTAssertNil(try ExportCodec.decode(old).rhythmSummary)
+
+        // build → 봉투 왕복 보존
+        let swing = WindowCycle(length: 28, samples: (1...28).map { d in
+            WindowDaySample(daysFromStart: d, daysUntilNext: 28 - d + 1,
+                            energy: d > 24 ? 2 : 4, mood: d <= 5 ? 2 : 4)
+        })
+        let summary = RhythmSummaryDTO.build(cycles: [swing, swing, swing],
+                                             computedAt: Date(timeIntervalSince1970: 1_800_000_000))
+        var envelope = sampleEnvelope()
+        envelope.rhythmSummary = summary
+        let decoded = try ExportCodec.decode(try ExportCodec.encode(envelope))
+        XCTAssertEqual(decoded.rhythmSummary, summary)
+
+        // build 자체의 정합 — 엔진 판정과 같은 값이 실린다
+        XCTAssertEqual(summary.engineVersion, "window-stats-1")
+        XCTAssertEqual(summary.usableCycles, 3)
+        XCTAssertEqual(summary.rhythmType, "vivace")           // 겨울 2 vs 나머지 4 → range 2
+        XCTAssertEqual(summary.preMenstrualWindow, 5)          // dip 4일 → 0.75 규칙 상 5(WindowStatsTests 참조)
+        XCTAssertEqual(summary.perCycleRanges, [2, 2, 2])
+        XCTAssertEqual(summary.constants, .current)
+    }
 }

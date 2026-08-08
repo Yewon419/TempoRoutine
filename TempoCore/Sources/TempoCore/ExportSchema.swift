@@ -174,6 +174,106 @@ public struct DailyCheckInDTO: Codable, Equatable, Sendable {
     }
 }
 
+// ── 리듬 엔진 산출물 (개정 M-6c 2026-08-08 — 스펙 SSOT = 개정M_내보내기_스키마_초안.md) ──
+// 목적: ① 베타 자발 공유 파일만으로 엔진 판정 재현·분석(도구가 엔진 재구현 불필요)
+// ② 향후 옵트인 "연구 참여"의 전송 페이로드 미리보기 = 정확히 이 블록.
+// 재임포트 시 무시(read-only) — 산출물은 원시 데이터에서 재계산이 진실. 봉투 안 원시 데이터에서
+// 전부 유도 가능한 값이라 새 민감도 계층을 만들지 않는다.
+public struct RhythmSummaryDTO: Codable, Equatable, Sendable {
+
+    /// 계산에 쓰인 상수 동봉 — 상수 개정(앱 업데이트) 전후 파일이 섞여도 비교가 성립(재현성, 루프 2).
+    public struct Constants: Codable, Equatable, Sendable {
+        public var recentCycles: Int
+        public var minCycles: Int
+        public var minSamplesPerCycle: Int
+        public var margin: Double
+        public var lowDayFraction: Double
+        public var baselineRange: Double
+        public var preWindowLo: Int
+        public var preWindowHi: Int
+
+        public static var current: Constants {
+            Constants(recentCycles: WindowStatsEngine.recentCycles,
+                      minCycles: WindowStatsEngine.minCycles,
+                      minSamplesPerCycle: WindowStatsEngine.minSamplesPerCycle,
+                      margin: WindowStatsEngine.margin,
+                      lowDayFraction: WindowStatsEngine.lowDayFraction,
+                      baselineRange: WindowStatsEngine.baselineRange,
+                      preWindowLo: WindowStatsEngine.preWindowRange.lowerBound,
+                      preWindowHi: WindowStatsEngine.preWindowRange.upperBound)
+        }
+
+        public init(recentCycles: Int, minCycles: Int, minSamplesPerCycle: Int, margin: Double,
+                    lowDayFraction: Double, baselineRange: Double, preWindowLo: Int, preWindowHi: Int) {
+            self.recentCycles = recentCycles
+            self.minCycles = minCycles
+            self.minSamplesPerCycle = minSamplesPerCycle
+            self.margin = margin
+            self.lowDayFraction = lowDayFraction
+            self.baselineRange = baselineRange
+            self.preWindowLo = preWindowLo
+            self.preWindowHi = preWindowHi
+        }
+    }
+
+    public struct Cell: Codable, Equatable, Sendable {
+        public var phase: String        // CyclePhase rawValue
+        public var signal: String       // WindowSignal rawValue
+        public var median: Double
+        public var cyclesWithData: Int
+
+        public init(phase: String, signal: String, median: Double, cyclesWithData: Int) {
+            self.phase = phase
+            self.signal = signal
+            self.median = median
+            self.cyclesWithData = cyclesWithData
+        }
+    }
+
+    public var engineVersion: String        // "window-stats-1" — 구 푸리에 산출물과 구분
+    public var computedAt: Date
+    public var constants: Constants
+    public var usableCycles: Int
+    public var profile: [Cell]
+    public var perCycleRanges: [Double]     // A₀ 재보정 분석의 원료(§5.12 미결)
+    public var preMenstrualWindow: Int?     // nil = 합의 없음(디폴트 사용 중)
+    public var h1SummerMoodLift: Bool?      // nil = 불확정
+    public var rhythmType: String?          // nil = 데이터 부족
+
+    public init(engineVersion: String, computedAt: Date, constants: Constants, usableCycles: Int,
+                profile: [Cell], perCycleRanges: [Double], preMenstrualWindow: Int?,
+                h1SummerMoodLift: Bool?, rhythmType: String?) {
+        self.engineVersion = engineVersion
+        self.computedAt = computedAt
+        self.constants = constants
+        self.usableCycles = usableCycles
+        self.profile = profile
+        self.perCycleRanges = perCycleRanges
+        self.preMenstrualWindow = preMenstrualWindow
+        self.h1SummerMoodLift = h1SummerMoodLift
+        self.rhythmType = rhythmType
+    }
+
+    /// 엔진 산출 일괄 — 같은 모듈이라 내부 판정 함수(usable·perCycleRange)와 정확히 같은 기준을 쓴다.
+    public static func build(cycles: [WindowCycle], computedAt: Date) -> RhythmSummaryDTO {
+        let usable = WindowStatsEngine.usable(cycles)
+        return RhythmSummaryDTO(
+            engineVersion: "window-stats-1",
+            computedAt: computedAt,
+            constants: .current,
+            usableCycles: usable.count,
+            profile: WindowStatsEngine.profile(cycles: cycles).map {
+                Cell(phase: $0.phase.rawValue, signal: $0.signal.rawValue,
+                     median: $0.median, cyclesWithData: $0.cyclesWithData)
+            },
+            perCycleRanges: usable.compactMap { WindowStatsEngine.perCycleRange($0) },
+            preMenstrualWindow: WindowStatsEngine.preMenstrualWindow(cycles: cycles),
+            h1SummerMoodLift: WindowStatsEngine.h1SummerMoodLift(cycles: cycles),
+            rhythmType: WindowStatsEngine.classify(cycles: cycles)?.rawValue
+        )
+    }
+}
+
 // ── 봉투 ──
 public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
     public var schemaVersion: Int
@@ -185,11 +285,14 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
     public var completions: [ItemCompletionDTO]
     public var checkIns: [DailyCheckInDTO]
     public var trackedSignals: TrackedSignals
+    /// 개정 M-6c(2026-08-08) — v1 내 optional 추가라 구 파일 decode 무영향(backfilled 패턴).
+    /// 재임포트는 이 필드를 읽지 않는다(read-only 산출물).
+    public var rhythmSummary: RhythmSummaryDTO?
 
     public init(exportedAt: Date, periodDays: [PeriodDayDTO], scheduleItems: [ScheduleItemDTO],
                 inputItems: [InputItemDTO], outputItems: [OutputItemDTO],
                 completions: [ItemCompletionDTO], checkIns: [DailyCheckInDTO],
-                trackedSignals: TrackedSignals) {
+                trackedSignals: TrackedSignals, rhythmSummary: RhythmSummaryDTO? = nil) {
         self.schemaVersion = ExportCodec.schemaVersion
         self.exportedAt = exportedAt
         self.periodDays = periodDays
@@ -199,6 +302,7 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
         self.completions = completions
         self.checkIns = checkIns
         self.trackedSignals = trackedSignals
+        self.rhythmSummary = rhythmSummary
     }
 }
 

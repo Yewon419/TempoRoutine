@@ -50,7 +50,10 @@ enum ExportImport {
 
     // ── 내보내기: @Model → 봉투 ──
     static func buildEnvelope(from store: StoreArrays) -> ExportEnvelopeV1 {
-        ExportEnvelopeV1(
+        // 리듬 엔진 산출물 동봉(개정 M-6c) — 그루핑 기준을 엔진 소비처(AxisProfile)와 공유
+        let axis = AxisProfile(checkIns: store.checkIns,
+                               snapshot: CycleSnapshot(periodDays: store.periodDays))
+        return ExportEnvelopeV1(
             exportedAt: .now,
             periodDays: store.periodDays.map {
                 PeriodDayDTO(day: ExportCodec.dayString($0.day), origin: $0.origin.rawValue,
@@ -89,7 +92,8 @@ enum ExportImport {
                                 irritability: $0.irritability,
                                 isBackfilled: $0.isBackfilled ? true : nil)
             },
-            trackedSignals: AppSettings.trackedSignals
+            trackedSignals: AppSettings.trackedSignals,
+            rhythmSummary: RhythmSummaryDTO.build(cycles: axis.cycles, computedAt: .now)
         )
     }
 
