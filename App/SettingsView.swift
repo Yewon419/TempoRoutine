@@ -8,6 +8,7 @@ import SwiftData
 import TempoCore
 import UIKit
 import UniformTypeIdentifiers
+import UserNotifications   // 임시 테스트 알림(2026-08-08) — 기능 제거 시 함께 걷을 것
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -39,6 +40,8 @@ struct SettingsView: View {
     /// 아침 일정 브리핑·생리 예측 알림(2026-08-05 사용자 결정) — 기본 켬.
     @AppStorage(DailyNotices.briefingKey) private var morningBriefingOn = true
     @AppStorage(DailyNotices.periodKey) private var periodForecastOn = true
+    /// 임시 테스트 알림 안내 문구(2026-08-08 — 기능 제거 시 함께 걷을 것)
+    @State private var testNoticeHint: String?
 
     /// 테마 선택 — 리빌드(.id) 전에 팔레트 캐시를 먼저 확정한다(선 apply, Theme.swift 반응성 설계)
     private var themeBinding: Binding<AppTheme> {
@@ -157,6 +160,30 @@ struct SettingsView: View {
                         .tint(Ink.text)
                     Toggle("기록이 빈 시기 알려주기", isOn: coverageBinding)
                         .tint(Ink.text)
+                    // ⚠ 임시 테스트 기능(2026-08-08 사용자 지시 — 검증 끝나면 이 버튼·상태·import 제거)
+                    Button("테스트 알림 보내기") {
+                        lightFeedback += 1
+                        Task {
+                            let granted = await CoverageReminder.requestPermission()
+                            notificationDenied = !granted
+                            guard granted else { testNoticeHint = nil; return }
+                            let content = UNMutableNotificationContent()
+                            content.title = "테스트 알림이에요"
+                            content.body = "이 문구가 보이면 알림이 정상 동작하는 거예요."
+                            content.sound = .default
+                            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+                            try? await UNUserNotificationCenter.current().add(
+                                UNNotificationRequest(identifier: "test-notice",
+                                                      content: content, trigger: trigger))
+                            testNoticeHint = "5초 뒤에 와요. 앱을 홈으로 내려두세요 — 앱이 떠 있으면 배너가 안 보여요."
+                        }
+                    }
+                    .foregroundStyle(Ink.text)
+                    if let hint = testNoticeHint {
+                        Text(hint)
+                            .font(.footnote)
+                            .foregroundStyle(Ink.text.opacity(0.55))
+                    }
                     if notificationDenied {
                         Button("알림 설정 열기") { openAppSettings() }
                             .foregroundStyle(Ink.text)
