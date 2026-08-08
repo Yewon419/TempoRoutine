@@ -29,6 +29,19 @@ final class CyclePredictorTests: XCTestCase {
         XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(28), d(57)]), 29, "T1 반올림")
     }
 
+    // T1b prior (개정 M 2026-08-08 — 온보딩 ②-4 보고값. 실측 gap 없을 때만, 실측이 생기면 무시)
+    func testT1bPriorLength() {
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [], priorLength: 30), 30, "T1b 기록 0 → prior")
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0)], priorLength: 30), 30, "T1b 기록 1 → prior")
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(60)], priorLength: 30), 30,
+                       "T1b 유효 gap 0 → prior")
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [d(0), d(26)], priorLength: 30), 26,
+                       "T1b 실측 gap 있으면 prior 무시")
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [], priorLength: 40), 35, "T1b prior 클램프 상한")
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: [], priorLength: 10), 21, "T1b prior 클램프 하한")
+        XCTAssertEqual(CyclePredictor.averageLength(startDates: []), 28, "T1b prior 없음 → 28 불변")
+    }
+
     // T2 phaseSpans(28)
     func testT2PhaseSpans28() {
         XCTAssertEqual(CyclePredictor.phaseSpans(cycleLength: 28), [

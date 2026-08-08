@@ -8,15 +8,17 @@ public enum CyclePredictor {
     /// 평균 주기 길이 (§5.6 개정 2026-07-31 — HK 4년치 import에서 애플 건강 예측과 괴리 제보).
     /// ① [21,35] 밖 gap = 주기가 아니라 기록 공백/스포팅으로 보고 평균에서 제외
     /// ② 유효 gap 중 최근 5개만 사용(최근성 — 애플·업계 관행 근사)
-    /// ③ 반올림 평균. 기록<2개 또는 유효 gap 0개면 28.
-    public static func averageLength(startDates: [Date]) -> Int {
+    /// ③ 반올림 평균. 기록<2개 또는 유효 gap 0개면 prior(온보딩 ②-4 보고값, 개정 M) → 없으면 28.
+    /// prior는 실측 gap이 생기는 순간 자동으로 무시된다 — 보고값보다 실측이 항상 우선.
+    public static func averageLength(startDates: [Date], priorLength: Int? = nil) -> Int {
+        let fallback = priorLength.map { max(21, min(35, $0)) } ?? 28
         let sorted = startDates.sorted()
-        guard sorted.count >= 2 else { return 28 }
+        guard sorted.count >= 2 else { return fallback }
         let validGaps = zip(sorted, sorted.dropFirst())
             .map { Calendar.current.dateComponents([.day], from: $0, to: $1).day ?? 28 }
             .filter { (21...35).contains($0) }
             .suffix(5)
-        guard !validGaps.isEmpty else { return 28 }
+        guard !validGaps.isEmpty else { return fallback }
         let avg = Double(validGaps.reduce(0, +)) / Double(validGaps.count)
         return max(21, min(35, Int(avg.rounded())))
     }

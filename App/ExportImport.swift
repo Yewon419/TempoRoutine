@@ -24,6 +24,17 @@ enum AppSettings {
             UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: trackedSignalsKey)
         }
     }
+
+    /// 온보딩 ②-4 주기 길이 보고값(개정 M) — 실측 gap이 없을 때만 예측 prior로 쓰인다(§5.6 T1b).
+    /// nil = 답 안 함(디폴트 28). 저장은 0 = 없음 규약(UserDefaults integer 기본값).
+    private static let cyclePriorKey = "cycleLengthPrior"
+    static var cycleLengthPrior: Int? {
+        get {
+            let raw = UserDefaults.standard.integer(forKey: cyclePriorKey)
+            return raw == 0 ? nil : raw
+        }
+        set { UserDefaults.standard.set(newValue ?? 0, forKey: cyclePriorKey) }
+    }
 }
 
 struct StoreArrays {

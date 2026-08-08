@@ -1,7 +1,9 @@
-// 템포루틴 — 온보딩 4단계 (Phase 0 ⑧, MASTER §3.10 / §8.2.1 — 카피는 프로토 v77 확정본 전사)
+// 템포루틴 — 온보딩 (Phase 0 ⑧, MASTER §3.10 / §8.2.1 — ②는 개정 M 2026-08-08 프로토 onboarding-m 확정)
 // ① 인트로 탭 진행 3장면(원 드로잉→사이클 싱킹 곡선→네 계절, 자동 타이머 없음·Reduce Motion=완성 상태)
-// ② 기준일 3분기(건강 앱 연동 스위치=시스템 권한 / 직접 입력=트래커 재사용[사용자 결정] / 기억 안 나요)
-// ③ 추적 항목(에너지·기분 기본 + 옵션 4종 → TrackedSignals) ④ 저장 위치 조건부 카피+체크 카드.
+// ② 기준일 순차 플로우(개정 M — 3분기 칩 폐기): 연동 스위치 카드 → 분기 = 권한 아님 **병합 결과
+//    에피소드 수**(§5.7 read 거부 판별 불가) → 지속일 스피너 → 월 캘린더 자동 채움(지난달 가능,
+//    스킵 secondary) → 에피소드 1개일 때만 주기 스피너(→ N prior, T1b).
+// ③ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals) ④ 저장 위치 조건부 카피+체크 카드.
 // 진행 점은 인트로 숨김·2단계부터. 실권한은 실제 연동 순간만(§3.6.1).
 
 import SwiftUI
@@ -42,12 +44,18 @@ struct OnboardingFlow: View {
     @State private var showSplash = true
     @State private var splashLogoIn = false
 
-    // ② 기준일
-    @State private var dateSource = 0          // 0=건강 앱 / 1=직접 입력 / 2=기억 안 나요
-    @State private var showTracker = false
+    // ② 기준일 — 순차 플로우(개정 M): 0=연동 / 1=지속일 / 2=캘린더 / 3=주기
+    @State private var baselinePage = 0
+    @State private var baselineStack: [Int] = []      // 내부 back 스택(연동→③처럼 건너뛴 경로 복원)
+    @State private var periodLength = 5               // ②-2 지속일 답 → 캘린더 자동 채움 일수
+    @State private var cycleLengthAnswer = 28         // ②-4 주기 답 → N prior(T1b)
+    @State private var pendingLinkAdvance = false     // 연동 알럿 닫힌 뒤 분기 진행 플래그
     @State private var syncMessage: String?    // 건강 앱 동기화 결과 안내(2026-07-22 — 침묵 실패 진단용)
     @State private var syncOffersPermission = false   // 읽기 권한 안내일 때만 설정 버튼(2026-08-01)
     private let mirror = HealthMirror.shared
+
+    /// 분기의 유일한 기준 = 병합 결과 에피소드 수(§5.7 — 권한 거부는 판별 불가)
+    private var episodeCount: Int { PeriodMath.episodeStarts(days: periodDays.map(\.day)).count }
 
     // ③ 추적 항목 — 예민함·몸은 2026-08-05 사용자 결정으로 제거(기분·에너지와 겹침).
     // M축 수집이 함께 중단됐다(§3.11 개정). 과거 저장분은 리듬 집계에 계속 유효.
@@ -87,17 +95,16 @@ struct OnboardingFlow: View {
             .centeredColumn(560)   // 아이패드 중앙 조판(2026-07-23)
         }
         .safeAreaInset(edge: .bottom) { bottomBar.centeredColumn(560) }
-        .sheet(isPresented: $showTracker) { PeriodTrackerSheet() }
         // 설문을 제출하고 닫혔으면 온보딩도 끝낸다 — "오늘 화면으로"를 한 번 더 누르게 하지 않는다.
         .sheet(isPresented: $showSurvey, onDismiss: {
             if !selfReports.isEmpty { onboardingDone = true }
         }) { SelfReportFlow() }
         .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil },
-                                              set: { if !$0 { syncMessage = nil; syncOffersPermission = false } })) {
+                                              set: { if !$0 { syncMessage = nil; syncOffersPermission = false; consumeLinkAdvance() } })) {
             if syncOffersPermission {
                 Button("권한 설정 열기") { syncMessage = nil; syncOffersPermission = false; HealthMirror.openAppSettings() }
             }
-            Button("확인") { syncMessage = nil; syncOffersPermission = false }
+            Button("확인") { syncMessage = nil; syncOffersPermission = false; consumeLinkAdvance() }
         } message: {
             Text(syncMessage ?? "")
         }
@@ -155,14 +162,61 @@ struct OnboardingFlow: View {
     // ── 하단 액션 바 — 전 스텝 공통 위치(2026-07-22 베타 피드백: 버튼 위치 통일·점과 겹침 정정) ──
     private var bottomBar: some View {
         VStack(spacing: 10) {
-            primaryButton(primaryLabel, action: primaryAction)
-                .staggerIn(step == 1 ? introEntered : true, delay: step == 1 ? 1.0 : 0, reduceMotion: reduceMotion)
-                .allowsHitTesting(step != 1 || introEntered || reduceMotion)
+            // ② 연동 페이지의 주 행동은 콘텐츠의 스위치 카드 — 하단은 secondary만(프로토 확정 위계)
+            if step == 2 && baselinePage == 0 {
+                ghostButton("직접 기록할게요") { pushBaseline(1) }
+            } else {
+                primaryButton(primaryLabel, action: primaryAction)
+                    .staggerIn(step == 1 ? introEntered : true, delay: step == 1 ? 1.0 : 0, reduceMotion: reduceMotion)
+                    .allowsHitTesting((step != 1 || introEntered || reduceMotion) && primaryEnabled)
+                    .opacity(primaryEnabled ? 1 : 0.35)
+            }
+            if step == 2 && baselinePage == 2 {
+                ghostButton("나중에 기록할게요") { step = 3 }   // 구 "기억 안 나요" 승계 — S0 처리
+            }
+            if step == 2 && baselinePage == 3 {
+                ghostButton("잘 모르겠어요") { AppSettings.cycleLengthPrior = nil; step = 3 }
+            }
             if step >= 2 { dots }
         }
         .padding(.horizontal, 24)
         .padding(.top, 14)
         .padding(.bottom, 10)
+    }
+
+    /// ② 캘린더 페이지의 「다음」은 에피소드 1개 이상일 때만 — 스킵은 secondary가 담당
+    private var primaryEnabled: Bool {
+        if step == 2 && baselinePage == 2 { return episodeCount >= 1 }
+        return true
+    }
+
+    private func ghostButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button {
+            lightFeedback += 1
+            action()
+        } label: {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(Ink.text.opacity(0.55))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+        }
+    }
+
+    private func pushBaseline(_ page: Int) {
+        lightFeedback += 1
+        baselineStack.append(baselinePage)
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { baselinePage = page }
+    }
+
+    /// 연동 알럿이 닫힌 뒤 1회 — 분기 = 병합 결과 에피소드 수(프로토 확정)
+    private func consumeLinkAdvance() {
+        guard pendingLinkAdvance, step == 2 else { return }
+        pendingLinkAdvance = false
+        let n = episodeCount
+        if n >= 2 { step = 3 }              // 실측 gap 확보 → ②-2~④ 전부 스킵
+        else if n == 1 { pushBaseline(3) }  // 주기 질문만
+        else { pushBaseline(1) }            // 거부·빈 건강앱 → 직접 기록
     }
 
     private var primaryLabel: String {
@@ -176,7 +230,17 @@ struct OnboardingFlow: View {
     private func primaryAction() {
         switch step {
         case 1: advanceIntro()
-        case 2: step = 3
+        case 2:
+            switch baselinePage {
+            case 1: pushBaseline(2)
+            case 2:
+                if episodeCount == 1 { pushBaseline(3) }   // 실측 gap 없음 → 주기 질문
+                else { step = 3 }                          // ≥2 = 실측 gap 있음 → 안 묻는다
+            case 3:
+                AppSettings.cycleLengthPrior = cycleLengthAnswer
+                step = 3
+            default: break
+            }
         case 3:
             // pain·irritability = false 고정(2026-08-05 병합) — 입력 행이 없는데 켜두면
             // 설정 복원·백업 경로에서 유령 행이 부활한다. 스키마 필드는 저장 호환 위해 유지.
@@ -197,6 +261,8 @@ struct OnboardingFlow: View {
                     lightFeedback += 1
                     if step == 1 {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { introScene -= 1 }
+                    } else if step == 2, let prev = baselineStack.popLast() {
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { baselinePage = prev }
                     } else {
                         step -= 1
                         if step == 1 { introScene = 2 }
@@ -483,30 +549,58 @@ struct OnboardingFlow: View {
         .almanacRule(opacity: 0.18)
     }
 
-    // ══ ② 기준일 ══
+    // ══ ② 기준일 — 순차 플로우(개정 M 2026-08-08, 프로토 onboarding-m 확정) ══
     private var baselineStep: some View {
+        Group {
+            switch baselinePage {
+            case 0: linkPage
+            case 1: durationPage
+            case 2: calendarPage
+            default: cyclePage
+            }
+        }
+        .transition(.opacity)
+    }
+
+    // ②-1 연동 — 주 행동 = 스위치 카드(§8.2.1 스위치 켜기 = 시스템 시트). 분기는 consumeLinkAdvance.
+    private var linkPage: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "기준일", title: "마지막 생리는\n언제 시작했나요?")
+            stepHeader(eyebrow: "기준일", title: "쓰던 기록이 있다면,\n그대로 이어져요.")
             VStack(alignment: .leading, spacing: 2) {
-                Text("계절을 맞추는 기준이에요.")
-                Text("나중에 캘린더에서 바꿀 수 있어요.")
+                Text("건강 앱에 남은 생리 기록으로")
+                Text("계절을 바로 시작할 수 있어요.")
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
-            VStack(alignment: .leading, spacing: 14) {
-                Picker("기준일 출처", selection: $dateSource) {
-                    Text("건강 앱과 연동").tag(0)
-                    Text("직접 입력").tag(1)
-                    Text("기억 안 나요").tag(2)
+            VStack(alignment: .leading, spacing: 10) {
+                Toggle(isOn: linkBinding) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("건강 앱과 연동")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Ink.text)
+                        Text("쓰던 앱이 건강 앱에 기록을 남겼다면, 그대로 이어져요.")
+                            .font(.caption)
+                            .foregroundStyle(Ink.text.opacity(0.5))
+                    }
                 }
-                .pickerStyle(.segmented)
-                switch dateSource {
-                case 0: healthSource
-                case 1: manualSource
-                default:
-                    Text("첫 기록부터 시작해도 충분해요.")
-                        .font(.footnote)
-                        .foregroundStyle(Ink.text.opacity(0.6))
+                .tint(Ink.text)
+                .disabled(!mirror.available)
+                .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
+                if !mirror.available {
+                    Text("이 기기에선 건강 앱을 사용할 수 없어요.")
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.55))
+                }
+                if mirror.available && mirror.linked {
+                    // 읽기 권한은 애플이 재요청 못 하게 막음 — 안 불러와지면 설정 원탭 이동(2026-07-24)
+                    Button("가져와지지 않나요? 건강 권한 설정 열기") {
+                        lightFeedback += 1
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Ink.text)
                 }
             }
             .padding(16)
@@ -514,80 +608,81 @@ struct OnboardingFlow: View {
         }
     }
 
-    private var healthSource: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Toggle("건강 앱에서 불러오기 (읽기·쓰기)", isOn: Binding(
-                get: { mirror.linked },
-                set: { on in
-                    if on {
-                        Task {
-                            guard await mirror.requestAccess() else {
-                                syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
-                                return
-                            }
-                            await mirror.sync(context: modelContext, periodDays: periodDays)
-                            // 0건 = read 거부일 수 있음(§5.7 — 판별 불가라 안내로 보완, 2026-07-23)
-                            let outcome = mirror.lastOutcome
-                            syncOffersPermission = outcome.suggestsPermissionCheck
-                            syncMessage = outcome.message
+    private var linkBinding: Binding<Bool> {
+        Binding(
+            get: { mirror.linked },
+            set: { on in
+                if on {
+                    Task {
+                        guard await mirror.requestAccess() else {
+                            // 거부 = 스위치 되돌아감 + 알럿 닫으면 직접 기록으로(프로토 확정 — 0에피소드 분기)
+                            pendingLinkAdvance = true
+                            syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요. 직접 기록으로 이어갈게요."
+                            return
                         }
-                    } else {
-                        mirror.linked = false
+                        await mirror.sync(context: modelContext, periodDays: periodDays)
+                        // 0건 = read 거부일 수 있음(§5.7 — 판별 불가라 안내로 보완, 2026-07-23)
+                        let outcome = mirror.lastOutcome
+                        syncOffersPermission = outcome.suggestsPermissionCheck
+                        pendingLinkAdvance = true
+                        syncMessage = outcome.message
                     }
-                }
-            ))
-            .font(.subheadline)
-            .tint(Ink.text)
-            .disabled(!mirror.available)
-            .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
-            Group {
-                if !mirror.available {
-                    Text("이 기기에선 건강 앱을 사용할 수 없어요.")
                 } else {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("스위치를 켜면 건강 앱 권한을 요청해요.")
-                        Text("다른 앱에 기록해둔 생리 시작일이 있다면 합쳐서 보여드려요.")
-                    }
+                    mirror.linked = false
                 }
             }
-            .font(.caption)
+        )
+    }
+
+    // ②-2 지속일 스피너 — 가운데 고정·무게중심 위(프로토: padding-bottom 72)
+    private var durationPage: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(eyebrow: "기준일", title: "생리는 보통\n며칠간 하나요?")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("다음 화면에서 날짜를 고르면")
+                Text("이 일수만큼 채워 드려요.")
+            }
+            .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
-            if mirror.available && mirror.linked {
-                // 읽기 권한은 애플이 재요청 못 하게 막음 — 안 불러와지면 설정 원탭 이동(2026-07-24)
-                Button("가져와지지 않나요? 건강 권한 설정 열기") {
-                    lightFeedback += 1
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
-                }
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Ink.text)
-            }
+            Spacer(minLength: 0)
+            DrumPicker(value: $periodLength, range: 1...10, unit: "일")
+                .onChange(of: periodLength) { _, _ in lightFeedback += 1 }
+            Spacer(minLength: 72)
         }
     }
 
-    private var manualSource: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Button {
-                lightFeedback += 1
-                showTracker = true
-            } label: {
-                HStack(spacing: 8) {
-                    Circle().fill(Ink.record).frame(width: 7, height: 7)
-                    Text("날짜 고르기")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Ink.text)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(Ink.text.opacity(0.4))
-                }
-                .padding(12)
-                .background(Ink.record.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+    // ②-3 월 캘린더 — 시작일 탭 = 자동 채움·개별 토글·지난달 이동(전용 뷰, 미결 3 사용자 확정)
+    private var calendarPage: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(eyebrow: "기준일", title: "마지막 생리는\n언제 시작했나요?")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("시작한 날을 누르면 \(periodLength)일만큼 채워져요.")
+                Text("칸을 다시 누르면 지워지고, 지난달로 넘겨 이전 생리도 남길 수 있어요.")
             }
-            Text(periodDays.isEmpty ? "아직 기록이 없어요." : "기록 \(periodDays.count)일이 담겼어요.")
-                .font(.caption)
-                .foregroundStyle(Ink.text.opacity(0.55))
+            .font(.system(.footnote, design: .serif))
+            .foregroundStyle(Ink.text.opacity(0.55))
+            OnboardingCalendar(periodDays: periodDays, fillLength: periodLength) {
+                lightFeedback += 1
+            }
+            .padding(12)
+            .milkGlass()
+        }
+    }
+
+    // ②-4 주기 스피너 — 에피소드 정확히 1개일 때만 도달(§3.10 개정 M). 답 → N prior(T1b).
+    private var cyclePage: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(eyebrow: "기준일", title: "주기가 보통\n며칠쯤인가요?")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("지난 생리에서 다음 생리까지의 간격이에요.")
+                Text("첫 예측의 출발점으로만 쓰이고, 기록이 쌓이면 자동으로 대체돼요.")
+            }
+            .font(.system(.footnote, design: .serif))
+            .foregroundStyle(Ink.text.opacity(0.55))
+            Spacer(minLength: 0)
+            DrumPicker(value: $cycleLengthAnswer, range: 21...35, unit: "일")
+                .onChange(of: cycleLengthAnswer) { _, _ in lightFeedback += 1 }
+            Spacer(minLength: 72)
         }
     }
 

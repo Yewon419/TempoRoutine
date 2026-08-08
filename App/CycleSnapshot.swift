@@ -16,7 +16,9 @@ struct CycleSnapshot {
     /// PeriodDay 모델 없이 day만으로 스냅샷 계산 — 아직 커밋 전인 드래프트 미리보기용(§4 계절 전환 판정 등)
     init(days: [Date]) {
         self.starts = PeriodMath.episodeStarts(days: days)
-        self.averageLength = CyclePredictor.averageLength(startDates: starts)
+        // prior = 온보딩 ②-4 보고값(개정 M) — 실측 gap이 생기면 엔진이 자동 무시(T1b)
+        self.averageLength = CyclePredictor.averageLength(startDates: starts,
+                                                          priorLength: AppSettings.cycleLengthPrior)
         self.horizonCycles = switch CyclePredictor.confidence(periodStarts: starts) {
         case .low: 1
         case .medium: 2
