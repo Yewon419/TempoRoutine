@@ -4,7 +4,7 @@
 //    에피소드 수**(§5.7 read 거부 판별 불가) → 지속일 스피너 → 월 캘린더 자동 채움(지난달 가능,
 //    스킵 secondary) → 에피소드 1개일 때만 주기 스피너(→ N prior, T1b).
 // ③ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals, 항목 ⓘ 설명) ④ 저장 위치 조건부 카피+체크 카드
-// ⑤ 사전 설문 코드(2026-08-08 별도 장) ⑥ 리듬 설문 제안.
+// ⑤ 리듬 설문 제안. (사전 설문 코드 장은 2026-08-09 사용자 결정으로 폐기 — 사전 설문 자체를 접음)
 // 진행 점은 인트로 숨김·2단계부터. 실권한은 실제 연동 순간만(§3.6.1).
 
 import SwiftUI
@@ -63,11 +63,6 @@ struct OnboardingFlow: View {
     @State private var trackSleep = true
     @State private var trackAppetite = true
     @State private var trackNote = true
-    // 사전 설문 코드 입력(v1.6 §9 3-8) — ⑤ 별도 장(2026-08-08), 실패해도 온보딩을 막지 않는다
-    @State private var codeInput = ""
-    @State private var codeMessage: String?
-    @State private var redeeming = false
-
     // ⑤ 리듬 설문(2026-08-05 사용자 결정) — 온보딩 마지막 단계에서 제안, 강요하지 않는다
     @State private var showSurvey = false
     @Query private var selfReports: [SelfReportRecord]
@@ -84,7 +79,6 @@ struct OnboardingFlow: View {
                     case 2: baselineStep
                     case 3: signalsStep
                     case 4: storageStep
-                    case 5: codeStep
                     default: surveyStep
                     }
                 }
@@ -223,7 +217,7 @@ struct OnboardingFlow: View {
     private var primaryLabel: String {
         switch step {
         case 1: introScene == 0 ? "시작" : "다음"
-        case 2, 3, 4, 5: "다음"
+        case 2, 3, 4: "다음"
         default: "오늘 화면으로"
         }
     }
@@ -251,8 +245,7 @@ struct OnboardingFlow: View {
                                                         appetite: trackAppetite, note: trackNote,
                                                         irritability: false)
             step = 4
-        case 4: step = 5   // ⑤ 사전 설문 코드(2026-08-08 베타 피드백 — ④ 접이식에서 분리)
-        case 5: step = 6   // ⑥ 리듬 설문(2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다)
+        case 4: step = 5   // ⑤ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
         default: onboardingDone = true
         }
     }
@@ -285,7 +278,7 @@ struct OnboardingFlow: View {
     // ── 진행 점 (인트로 숨김) — 지난·현재 스텝 채움 + 현재 스텝만 알약형(시안 .ob-dot 이식) ──
     private var dots: some View {
         HStack(spacing: 8) {
-            ForEach(1...6, id: \.self) { i in
+            ForEach(1...5, id: \.self) { i in
                 Capsule()
                     .fill(i <= step ? Ink.text : Ink.text.opacity(0.22))
                     .frame(width: i == step ? 16 : 6, height: 6)
@@ -796,7 +789,7 @@ struct OnboardingFlow: View {
         }
     }
 
-    // ══ ⑥ 리듬 설문 (2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다) ══
+    // ══ ⑤ 리듬 설문 (2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다) ══
     // 강요하지 않는다: 하단 primary는 "오늘 화면으로"(건너뛰기 겸)이고 설문은 별도 버튼.
     // 여기서 답하면 나의 리듬 탭의 설문 프롬프트는 다시 뜨지 않는다(레코드 존재로 판정).
     private var surveyStep: some View {
@@ -836,60 +829,6 @@ struct OnboardingFlow: View {
                     .font(.footnote)
                     .foregroundStyle(Ink.text.opacity(0.6))
             }
-        }
-    }
-
-    // ══ ⑤ 사전 설문 참여 코드 (v1.6 §9 3-8 — 2026-08-08 베타 피드백로 ④ 접이식에서 별도 장 분리) ══
-    // 코드가 없어도 primary 「다음」으로 그대로 지나간다. 실패해도 다음 단계를 막지 않는다.
-    private var codeStep: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "사전 설문", title: "참여 코드가\n있나요?")
-            VStack(alignment: .leading, spacing: 2) {
-                Text("사전 설문에서 받은 코드를 넣으면 선행 테마가 열려요.")
-                Text("코드가 없다면 그대로 다음으로 가면 돼요.")
-            }
-            .font(.system(.footnote, design: .serif))
-            .foregroundStyle(Ink.text.opacity(0.55))
-            if SurveyCode.isPrecursorUnlocked {
-                Label("선행 테마가 열려 있어요.", systemImage: "checkmark.seal")
-                    .font(.footnote)
-                    .foregroundStyle(Ink.text.opacity(0.6))
-            } else {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 8) {
-                        TextField("TEMPO-XXXXXXXX", text: $codeInput)
-                            .textInputAutocapitalization(.characters)
-                            .autocorrectionDisabled()
-                            .font(.subheadline.monospaced())
-                            .foregroundStyle(Ink.text)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 9)
-                            .background(Ink.text.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
-                        Button("확인") { redeemCode() }
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Ink.text)
-                            .disabled(redeeming || codeInput.isEmpty)
-                    }
-                    if let message = codeMessage {
-                        Text(message)
-                            .font(.caption)
-                            .foregroundStyle(Ink.text.opacity(0.6))
-                    }
-                }
-                .padding(16)
-                .milkGlass()
-            }
-        }
-    }
-
-    private func redeemCode() {
-        redeeming = true
-        codeMessage = nil
-        Task {
-            let outcome = await SurveyCode.redeem(codeInput)
-            redeeming = false
-            codeMessage = outcome.message
-            if outcome == .unlocked { codeInput = "" }
         }
     }
 

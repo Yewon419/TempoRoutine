@@ -32,7 +32,8 @@ struct RhythmView: View {
     private var today: Date { cal.startOfDay(for: .now) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
     private var profile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
-    private var axis: AxisProfile { AxisProfile(checkIns: checkIns, snapshot: snapshot) }
+    // 유형 카드(비바체·안단테·루바토)는 2026-08-09 사용자 결정으로 UI에서 내림 —
+    // 엔진(WindowStats)·내보내기(rhythmSummary)·자기돌봄 소비처(AxisProfile)는 유지.
     private var unlockedPhases: [CyclePhase] { Self.allPhases.filter { profile.level(for: $0) != nil } }
 
     // ── 신호 패널 입력 (§5.6.3 — DailyCheckIn → SignalSample, 계산은 RhythmEngine) ──
@@ -68,7 +69,6 @@ struct RhythmView: View {
                     // 모던 = 아웃라인 표제(시안 §1.3-2 — 나의 리듬은 아웃라인 승격 이력)
                     almanacDisplay("나의 리듬", size: 44, color: Ink.text)
                         .padding(.top, 12)
-                    rhythmTypeCard
                     selfReportPrompt
                     coldCard
                     if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
@@ -197,34 +197,6 @@ struct RhythmView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("신호 선택")
-    }
-
-    // ── 유형 카드 (§3.11 — A축=이름, M축=한 줄 서술) ──
-    // 로그가 없으면 아예 올리지 않는다. 카드가 없는 상태가 콜드 스타트의 정상 모습이고,
-    // 그 침묵이 §3.11의 "할 말이 없으면 하지 않는다"를 화면에서 구현한다.
-    @ViewBuilder
-    private var rhythmTypeCard: some View {
-        if axis.hasEnoughData, let name = axis.typeName {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(name)
-                    .font(.almanac(size: 32, weight: .bold))
-                    .foregroundStyle(Ink.text)
-                if let line = axis.amplitudeLine {
-                    Text(line)
-                        .font(.system(.subheadline, design: .serif))
-                        .foregroundStyle(Ink.text.opacity(0.8))
-                }
-                if let line = axis.modalityLine {
-                    Text(line)
-                        .font(.footnote)
-                        .foregroundStyle(Ink.text.opacity(0.6))
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .milkGlass()
-            .accessibilityElement(children: .combine)
-        }
     }
 
     // ── 콜드스타트 카드 (§8.2.5 개정 2026-07-23 — "약 41일" 폐기) ──

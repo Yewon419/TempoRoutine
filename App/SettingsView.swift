@@ -25,9 +25,6 @@ struct SettingsView: View {
     @State private var message: String?
     @State private var messageOffersPermission = false   // 건강 읽기 권한 안내 알럿에만 설정 버튼(2026-08-01)
     @AppStorage("onboardingDone") private var onboardingDone = false   // 온보딩 다시 보기(2026-08-01)
-    @State private var surveyCodeInput = ""
-    @State private var surveyCodeMessage: String?
-    @State private var surveyCodeRedeeming = false
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
     @State private var undoSnapshot: ExportEnvelopeV1?
@@ -214,36 +211,8 @@ struct SettingsView: View {
                     Text("사용법은 각 화면을 열 때 처음 안내가 다시 나와요. 온보딩은 첫 실행 화면을 처음부터 다시 봐요 — 기록은 지워지지 않아요.")
                 }
 
-                // 사전 설문 참여 코드(v1.6 §9 3-8) — 온보딩을 이미 지난 사용자의 재진입 경로.
-                // 온보딩에만 두면 기존 설치자는 코드를 영영 못 쓴다.
-                Section {
-                    if SurveyCode.isPrecursorUnlocked {
-                        Label("선행 테마가 열려 있어요", systemImage: "checkmark.seal")
-                            .foregroundStyle(Ink.text)
-                    } else {
-                        HStack(spacing: 8) {
-                            TextField("TEMPO-XXXXXXXX", text: $surveyCodeInput)
-                                .textInputAutocapitalization(.characters)
-                                .autocorrectionDisabled()
-                                .font(.subheadline.monospaced())
-                            Button("확인") {
-                                lightFeedback += 1
-                                redeemSurveyCode()
-                            }
-                            .foregroundStyle(Ink.text)
-                            .disabled(surveyCodeRedeeming || surveyCodeInput.isEmpty)
-                        }
-                        if let message = surveyCodeMessage {
-                            Text(message).font(.footnote).foregroundStyle(Ink.text.opacity(0.6))
-                        }
-                    }
-                } header: {
-                    Text("사전 설문 코드")
-                } footer: {
-                    Text("사전 설문을 하고 받은 코드를 넣으면 선행 테마가 열려요. 코드는 한 번만 쓸 수 있어요.")
-                }
-
                 // 앱 내 자기보고 설문(v1.6 §4) — 언제든 재진입. 웹 응답과 연결하지 않는다.
+                // (사전 설문 코드 섹션은 2026-08-09 사용자 결정으로 폐기 — 사전 설문 자체를 접음)
                 Section {
                     Button(selfReports.isEmpty ? "리듬 설문 하기" : "리듬 설문 다시 하기") {
                         lightFeedback += 1
@@ -374,17 +343,6 @@ struct SettingsView: View {
     private func openAppSettings() {
         lightFeedback += 1
         HealthMirror.openAppSettings()
-    }
-
-    private func redeemSurveyCode() {
-        surveyCodeRedeeming = true
-        surveyCodeMessage = nil
-        Task {
-            let outcome = await SurveyCode.redeem(surveyCodeInput)
-            surveyCodeRedeeming = false
-            surveyCodeMessage = outcome.message
-            if outcome == .unlocked { surveyCodeInput = "" }
-        }
     }
 
     private var healthBinding: Binding<Bool> {
