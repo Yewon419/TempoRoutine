@@ -450,10 +450,12 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
                 .padding(.bottom, 6)
-            seasonRow(.menstrual, "월경기 · 쉬어가는 때")
-            seasonRow(.follicular, "난포기 · 가볍게 시작하는 때")
-            seasonRow(.ovulation, "배란기 · 빛나도 좋은 때")
-            seasonRow(.luteal, "황체기 · 매듭짓는 때")
+            // 개정 M-1c(2026-08-08 사용자 확정): 단계명 대신 관찰 가능한 위치 앵커 + 생활 서술.
+            // 겨울=봄이 몸(에너지), 여름이 마음(기분) — §2.3 신호 분리. 겨울·가을=허락, 봄·여름=충동.
+            seasonRow(.menstrual, "생리 기간, 아무것도 안 해도 괜찮은 때")
+            seasonRow(.follicular, "생리 직후, 미뤄둔 일이 만만해지는 때")
+            seasonRow(.ovulation, "배란 무렵, 의욕이 충만해지는 때")
+            seasonRow(.luteal, "생리 전, 나부터 챙겨도 되는 때")
             Spacer()
             VStack(alignment: .leading, spacing: 2) {
                 Text("일반적인 경향이에요.")
