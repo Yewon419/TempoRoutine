@@ -954,7 +954,7 @@ struct SeasonCalendarView: View {
         let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: avgLength))
         let hedge = starts.count == 1 ? "아마 " : ""
         let projected = r.projected ? " · 예상" : ""
-        return "\(hedge)\(meta.name) · \(meta.phaseName) \(r.day)일차\(projected)"
+        return "\(hedge)\(meta.name) \(r.day)일차\(projected)"
     }
 
     // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
@@ -981,7 +981,8 @@ struct SeasonCalendarView: View {
                                    recorded: Bool, predicted: Bool) -> String {
         var parts = [date.formatted(.dateTime.month().day())]
         if let meta = style.meta {
-            parts.append(meta.phaseName)
+            // 개정 M-1c: 단계명 제거 — VoiceOver는 소리로 읽혀 프라이버시 표면이기도 하다.
+            // "예상"은 유지: faded 시각 hedge가 전달되지 않는 채널이라 텍스트가 유일한 hedge(§5.6.2).
             parts.append(style.projected ? "\(meta.name) 예상" : meta.name)
         }
         if recorded { parts.append("생리 기록") }

@@ -272,7 +272,7 @@ struct RhythmView: View {
             Text("그동안은")
                 .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(Ink.text)
-            Text("많은 사람이 월경기엔 에너지가 낮아진다고 느껴요. 당신의 리듬은 곧 여기에 쌓입니다.")
+            Text("많은 사람이 겨울엔 에너지가 낮아진다고 느껴요. 당신의 리듬은 곧 여기에 쌓입니다.")
                 .font(.subheadline)
                 .foregroundStyle(Ink.text.opacity(0.75))
         }

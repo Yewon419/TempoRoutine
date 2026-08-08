@@ -46,7 +46,7 @@ enum Ink {
 
 struct SeasonMeta {
     let name: String
-    let phaseName: String
+    let phaseName: String   // 개정 M-1c: 렌더 사용처 0 — 의학 단계명은 사용자 표면 금지. 새 UI에 쓰지 말 것
     let color: Color
     let glow: Color        // 캘린더 지면 빛 전용(채도·명도 상향판, 2026-07-28)
     let moodline: String
@@ -200,7 +200,8 @@ struct TodayView: View {
                 }
                 HStack(spacing: 6) {
                     // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
-                    Text("\(info.meta.phaseName) \(info.dayInCycle)일차")
+                    // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다
+                    Text("\(info.dayInCycle)일차")
                         .foregroundStyle(info.meta.color.opacity(ThemeStore.current == .modern ? 1.0 : 0.85))
                     if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.text.opacity(0.45)) }
                     else if info.projected { Text("예상").foregroundStyle(Ink.text.opacity(0.45)) }

@@ -155,7 +155,7 @@ enum WidgetBridge {
             }
             let hedge = info.projected ? " · 예상" : ""
             return WidgetDay(day: day, season: key, title: info.meta.name,
-                             sub: "\(info.meta.phaseName) \(info.dayInCycle)일차\(hedge)",
+                             sub: "\(info.meta.name) \(info.dayInCycle)일차\(hedge)",
                              inline: "\(info.meta.name) \(info.dayInCycle)일차",
                              mood: info.meta.moodline, projected: info.projected)
         }
