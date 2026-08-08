@@ -94,6 +94,8 @@ struct TodayView: View {
     @State private var isCollapsed = false
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
+    // 알림 권한 안내 카드(2026-08-08) — 기본 켬 알림의 능동 권한 획득 경로, 1회
+    @State private var showNoticeCard = false
 
 
     private var cal: Calendar { Calendar.current }
@@ -122,6 +124,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     largeHeader
                     stateSurfaces
+                    if showNoticeCard { noticePermissionCard }
                     if hSize == .regular && !snapshot.isColdStart {
                         // 아이패드: 3구획 좌열 + 체크인 우측 레일(2026-07-23)
                         HStack(alignment: .top, spacing: 16) {
@@ -183,6 +186,50 @@ struct TodayView: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .coachOverlay(id: .today, steps: CoachSteps.today)   // 기능 튜토리얼(2026-07-23)
+        .task(id: schedules.count + periodDays.count) {
+            // 예약할 내용이 처음 생기는 시점을 잡는다 — 일정·생리 기록이 바뀔 때마다 재판정
+            showNoticeCard = await DailyNotices.shouldOfferPermission(periodDays: periodDays,
+                                                                      schedules: schedules)
+        }
+    }
+
+    // ── 알림 권한 안내 카드 (2026-08-08 — DailyNotices 헤더 주석의 "영원히 침묵" 결함 해소) ──
+    // 카드 탭이 §5.11의 "사용자 행동 순간". 어느 쪽을 골라도 다시 묻지 않는다(재촉 금지 §7).
+    private var noticePermissionCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("일정 있는 날 아침 브리핑과\n겨울 예보를 알림으로 챙겨드릴 수 있어요.")
+                .font(.system(.subheadline, design: .serif))
+                .foregroundStyle(Ink.text)
+            HStack(spacing: 10) {
+                Button("알림 받기") {
+                    lightFeedback += 1
+                    let currentPeriods = periodDays
+                    let currentSchedules = schedules
+                    Task {
+                        _ = await DailyNotices.requestPermission(periodDays: currentPeriods,
+                                                                 schedules: currentSchedules)
+                        showNoticeCard = false
+                    }
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Ink.paper)
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(Ink.text, in: Capsule())
+                Button("괜찮아요") {
+                    lightFeedback += 1
+                    DailyNotices.hasPromptedPermission = true
+                    showNoticeCard = false
+                }
+                .font(.footnote)
+                .foregroundStyle(Ink.text.opacity(0.55))
+            }
+            Text("설정의 알림에서 언제든 바꿀 수 있어요.")
+                .font(.caption)
+                .foregroundStyle(Ink.text.opacity(0.45))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .milkGlass()
     }
 
     // ── 컬랩싱 헤더: 큰 층 ──

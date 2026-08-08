@@ -21,7 +21,10 @@ enum ScheduleReminder {
             if settings.authorizationStatus == .notDetermined {
                 let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
                 guard granted else { return }
-            } else if settings.authorizationStatus != .authorized {
+            } else if !(settings.authorizationStatus == .authorized
+                        || settings.authorizationStatus == .provisional
+                        || settings.authorizationStatus == .ephemeral) {
+                // provisional·ephemeral도 예약 가능 — DailyNotices와 판정 통일(2026-08-08)
                 return
             }
 
