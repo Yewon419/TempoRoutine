@@ -160,7 +160,7 @@ public enum WindowStatsEngine {
     }
 
     /// 학습된 `P` — 주기별 후보의 중앙값(합의 임계 충족 시). 없으면 nil → 앱은 §5.3 디폴트 5.
-    /// ⚠ §5.3 채택 게이트(홀드아웃 적중률 개선 시에만 채택)는 소비처가 붙는 시점에 앱 층에서.
+    /// 소비처는 adoptedPreWindow(홀드아웃 채택 게이트 통과분)를 쓴다 — 이 함수는 원시 학습값.
     public static func preMenstrualWindow(cycles allCycles: [WindowCycle]) -> Int? {
         let cycles = usable(allCycles)
         guard cycles.count >= minCycles else { return nil }
@@ -170,6 +170,37 @@ public enum WindowStatsEngine {
         let clamped = min(preWindowRange.upperBound,
                           max(preWindowRange.lowerBound, Int(mid.rounded())))
         return clamped
+    }
+
+    /// §5.3 층 2 `P` 디폴트 — 학습값이 게이트를 못 넘으면 이 값.
+    public static let defaultPreWindow = 5
+
+    /// 홀드아웃 적중률 — 그 주기에서 "suffix p일 윈도우" 예측과 "실제 저컨디션 날(energy ≤ 2)"의 F1.
+    /// 기록된 날만 대상. 저컨디션 날이 0이고 윈도우 기록도 0이면 완전 일치(1), 판정 불능이면 nil.
+    static func holdoutScore(_ cycle: WindowCycle, p: Int) -> Double? {
+        let recorded = cycle.samples.compactMap { s in
+            value(of: s, signal: .energy).map { (inWindow: s.daysUntilNext <= p, low: $0 <= 2) }
+        }
+        guard !recorded.isEmpty else { return nil }
+        let tp = Double(recorded.filter { $0.inWindow && $0.low }.count)
+        let fp = Double(recorded.filter { $0.inWindow && !$0.low }.count)
+        let fn = Double(recorded.filter { !$0.inWindow && $0.low }.count)
+        if tp + fp + fn == 0 { return 1 }   // 저컨디션도 윈도우 기록도 없음 = 예측이 틀린 게 없다
+        return 2 * tp / (2 * tp + fp + fn)
+    }
+
+    /// §5.3 채택 게이트 — 마지막 완료 주기를 홀드아웃으로 두고, 나머지로 학습한 P가
+    /// 디폴트 5보다 홀드아웃 F1이 **나을 때만** 채택. 아니면 nil(소비처는 defaultPreWindow).
+    /// "감이 아니라 측정으로"(2026-08-08 회의) — 알고리즘 고도화의 성공 정의를 코드로 강제.
+    public static func adoptedPreWindow(cycles: [WindowCycle]) -> Int? {
+        guard cycles.count >= minCycles + 1, let holdout = cycles.last else { return nil }
+        let training = Array(cycles.dropLast())
+        guard let learned = preMenstrualWindow(cycles: training),
+              learned != defaultPreWindow else { return nil }
+        guard let learnedScore = holdoutScore(holdout, p: learned),
+              let defaultScore = holdoutScore(holdout, p: defaultPreWindow),
+              learnedScore > defaultScore else { return nil }
+        return learned
     }
 
     // ── H1 배란 주변 기분 상승 (§2.3 가설 레지스트리 — 신호 = mood)

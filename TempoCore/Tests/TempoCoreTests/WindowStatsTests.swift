@@ -122,6 +122,36 @@ final class WindowStatsTests: XCTestCase {
         XCTAssertNil(WindowStatsEngine.preMenstrualWindow(cycles: [moodOnly, moodOnly, moodOnly]))
     }
 
+    // ── 홀드아웃 채택 게이트 (§5.3 ③ — 개정 M)
+
+    /// F1 산식 — dip 4일 주기에서 p=4는 완전 일치(1.0), p=5는 정상일 하나가 섞여 감점.
+    func testHoldoutScore() throws {
+        let c = dipCycle(dipDays: 4)
+        XCTAssertEqual(WindowStatsEngine.holdoutScore(c, p: 4), 1.0)
+        let p5 = try XCTUnwrap(WindowStatsEngine.holdoutScore(c, p: 5))
+        XCTAssertLessThan(p5, 1.0)
+        // 기록 없는 주기는 판정 불능
+        XCTAssertNil(WindowStatsEngine.holdoutScore(cycle(), p: 5))
+    }
+
+    /// dip 6일 → 학습 P=7(0.75 규칙), 홀드아웃에서도 7이 디폴트 5보다 나음 → 채택.
+    func testAdoptedPreWindowWhenBetter() {
+        let cycles = Array(repeating: dipCycle(dipDays: 6), count: 4)   // 학습 3 + 홀드아웃 1
+        XCTAssertEqual(WindowStatsEngine.adoptedPreWindow(cycles: cycles), 7)
+    }
+
+    /// 홀드아웃 주기의 실제 패턴(dip 4일)에선 디폴트 5가 학습값 7보다 나음 → 기각(nil).
+    func testAdoptedPreWindowRejectedWhenDefaultBetter() {
+        let cycles = Array(repeating: dipCycle(dipDays: 6), count: 3) + [dipCycle(dipDays: 4)]
+        XCTAssertNil(WindowStatsEngine.adoptedPreWindow(cycles: cycles))
+    }
+
+    /// 홀드아웃까지 4주기가 안 되면 게이트 자체가 침묵.
+    func testAdoptedPreWindowNeedsFourCycles() {
+        let cycles = Array(repeating: dipCycle(dipDays: 6), count: 3)
+        XCTAssertNil(WindowStatsEngine.adoptedPreWindow(cycles: cycles))
+    }
+
     // ── H1 배란 주변 기분 상승
 
     func testH1ConfirmedWhenSummerLifts() {

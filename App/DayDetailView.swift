@@ -161,12 +161,27 @@ struct DayDetailView: View {
                 }
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(info.meta.color.opacity(info.projected ? 0.7 : 1.0))
+                if let line = selfCareLine {
+                    Text(line)
+                        .font(.system(.footnote, design: .serif))
+                        .foregroundStyle(Ink.text.opacity(0.6))
+                }
             } else {
                 Text("계절 기록 전")
                     .font(.system(.footnote, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.5))
             }
         }
+    }
+
+    /// 가을 후반 자기돌봄 안내 — §5.3 `P` 소비처(개정 M). 카피 = §2.2 E+P 동반 하강 확정 문구.
+    /// 침묵 조건(원칙 4): confidence low·S0·투영 지평 밖. P = 홀드아웃 채택 게이트 통과분(없으면 5).
+    private var selfCareLine: String? {
+        guard snapshot.horizonCycles > 1 else { return nil }   // low = 1 (§5.6.2)
+        guard let r = snapshot.daysUntilNextStart(on: day) else { return nil }
+        let axis = AxisProfile(checkIns: checkIns, snapshot: snapshot)
+        guard r <= axis.adoptedPreWindow else { return nil }
+        return "두 호르몬이 함께 낮아지는 시기라 몸과 마음이 예민해질 수 있어요."
     }
 
     /// 애플 공휴일 캘린더(연동 시) 우선, 내장 테이블 폴백 — SeasonCalendarView와 같은 규칙

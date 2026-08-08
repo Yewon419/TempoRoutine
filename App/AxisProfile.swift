@@ -69,9 +69,13 @@ struct AxisProfile {
     /// ⚠ 개정 M: 발화 게이트가 1주기 → 유효 3주기(§5.3 학습 계약)로 강화됐다.
     var hasEnoughData: Bool { type != nil }
 
-    /// §5.3 층 2 `P` — 학습된 저컨디션 윈도우. nil이면 소비처가 디폴트 5를 쓴다.
-    /// ⚠ 홀드아웃 채택 게이트(§5.3)는 소비처를 붙이는 시점에 함께 구현한다.
+    /// §5.3 층 2 `P` — 원시 학습값. 분석·내보내기용(소비처는 adoptedPreWindow).
     var preMenstrualWindow: Int? { WindowStatsEngine.preMenstrualWindow(cycles: cycles) }
+
+    /// 소비처용 `P` — 홀드아웃 채택 게이트(§5.3 ③) 통과분, 못 넘으면 디폴트 5.
+    var adoptedPreWindow: Int {
+        WindowStatsEngine.adoptedPreWindow(cycles: cycles) ?? WindowStatsEngine.defaultPreWindow
+    }
 
     /// §2.3 H1 — 배란 주변 기분 상승. true일 때만 여름 상승 서사 발화 허용.
     var h1SummerMoodLift: Bool? {

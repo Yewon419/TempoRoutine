@@ -85,4 +85,18 @@ struct CycleSnapshot {
         occurrences(of: recurrence, createdAt: createdAt)
             .first { Calendar.current.isDate($0.date, inSameDayAs: day) }
     }
+
+    /// 그 날짜가 속한 주기에서 다음 시작까지 남은 일수 r(양방향 앵커 §5.12 ①).
+    /// 과거 주기 = 실측 길이, 현재·미래 = 예측 N. S0·투영 지평 밖이면 nil.
+    func daysUntilNextStart(on date: Date) -> Int? {
+        let cal = Calendar.current
+        let windows = CycleOccurrences.cycleWindows(periodStarts: starts, averageLength: averageLength,
+                                                    horizonCycles: horizonCycles)
+        for window in windows {
+            guard let offset = cal.dateComponents([.day], from: window.start, to: date).day,
+                  offset >= 0, offset < window.length else { continue }
+            return window.length - offset
+        }
+        return nil
+    }
 }
