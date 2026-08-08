@@ -3,7 +3,8 @@
 // ② 기준일 순차 플로우(개정 M — 3분기 칩 폐기): 연동 스위치 카드 → 분기 = 권한 아님 **병합 결과
 //    에피소드 수**(§5.7 read 거부 판별 불가) → 지속일 스피너 → 월 캘린더 자동 채움(지난달 가능,
 //    스킵 secondary) → 에피소드 1개일 때만 주기 스피너(→ N prior, T1b).
-// ③ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals) ④ 저장 위치 조건부 카피+체크 카드.
+// ③ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals, 항목 ⓘ 설명) ④ 저장 위치 조건부 카피+체크 카드
+// ⑤ 사전 설문 코드(2026-08-08 별도 장) ⑥ 리듬 설문 제안.
 // 진행 점은 인트로 숨김·2단계부터. 실권한은 실제 연동 순간만(§3.6.1).
 
 import SwiftUI
@@ -62,8 +63,7 @@ struct OnboardingFlow: View {
     @State private var trackSleep = true
     @State private var trackAppetite = true
     @State private var trackNote = true
-    // 사전 설문 코드 입력(v1.6 §9 3-8) — 접이식, 실패해도 온보딩을 막지 않는다
-    @State private var showCodeField = false
+    // 사전 설문 코드 입력(v1.6 §9 3-8) — ⑤ 별도 장(2026-08-08), 실패해도 온보딩을 막지 않는다
     @State private var codeInput = ""
     @State private var codeMessage: String?
     @State private var redeeming = false
@@ -84,6 +84,7 @@ struct OnboardingFlow: View {
                     case 2: baselineStep
                     case 3: signalsStep
                     case 4: storageStep
+                    case 5: codeStep
                     default: surveyStep
                     }
                 }
@@ -222,7 +223,7 @@ struct OnboardingFlow: View {
     private var primaryLabel: String {
         switch step {
         case 1: introScene == 0 ? "시작" : "다음"
-        case 2, 3, 4: "다음"
+        case 2, 3, 4, 5: "다음"
         default: "오늘 화면으로"
         }
     }
@@ -250,7 +251,8 @@ struct OnboardingFlow: View {
                                                         appetite: trackAppetite, note: trackNote,
                                                         irritability: false)
             step = 4
-        case 4: step = 5   // ⑤ 리듬 설문(2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다)
+        case 4: step = 5   // ⑤ 사전 설문 코드(2026-08-08 베타 피드백 — ④ 접이식에서 분리)
+        case 5: step = 6   // ⑥ 리듬 설문(2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다)
         default: onboardingDone = true
         }
     }
@@ -283,7 +285,7 @@ struct OnboardingFlow: View {
     // ── 진행 점 (인트로 숨김) — 지난·현재 스텝 채움 + 현재 스텝만 알약형(시안 .ob-dot 이식) ──
     private var dots: some View {
         HStack(spacing: 8) {
-            ForEach(1...5, id: \.self) { i in
+            ForEach(1...6, id: \.self) { i in
                 Capsule()
                     .fill(i <= step ? Ink.text : Ink.text.opacity(0.22))
                     .frame(width: i == step ? 16 : 6, height: 6)
@@ -391,18 +393,19 @@ struct OnboardingFlow: View {
 
     private static let wheelPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
     private static let wheelNodeDelays: [Double] = [1.36, 1.68, 2.06, 2.44]   // 시안 ob-node-winter~autumn
-    private static let wheelGapHalf: CGFloat = 0.035   // 노드당 원 스트로크 gap 절반 폭(트림 프랙션, 약 12.6° — 글리프+라벨 폭 커버, 2026-07-22 재조정)
 
     /// 주기 원 드로잉 — 은필 원(1.5s, 1.3s 지연 후) + 4계절 노드(원이 지나가는 시점에 개별 페이드인)
     private var cycleWheel: some View {
         ZStack {
             if !reduceMotion { orbitDot }   // 원보다 아래 레이어(2026-07-22 사용자 결정) — 완성 후 도는 잉크 점, Reduce Motion엔 숨김
+            // 노드 위치의 끊김 = 지우개 하드컷 폐기 → 잉크가 옅어지며 스러지는 테이퍼(2026-08-08
+            // 베타 피드백 "끊어놓은 게 약간 부자연스럽네"). 은필 선이 손을 든 자리처럼 읽힌다.
+            // 부수 변화: 궤도 점이 끊긴 구간에서도 라벨 아래로 계속 보인다(지우개가 점까지 덮던 종전과 다름).
             Circle()
                 .trim(from: 0, to: sceneAppeared ? 1 : 0)
-                .stroke(Ink.winter.opacity(0.7), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
+                .stroke(ringGradient, style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(reduceMotion ? nil : .easeInOut(duration: 1.5).delay(1.3), value: sceneAppeared)
-            if sceneAppeared { ringGapErasers }   // 헤일로 대신 원 자체를 노드 위치에서 끊음(2026-07-22 베타 피드백)
             ForEach(Array(Self.wheelPhases.enumerated()), id: \.offset) { index, phase in
                 let angle = Double(index) * 90.0 - 90.0
                 let meta = seasonMeta(for: phase)
@@ -431,22 +434,22 @@ struct OnboardingFlow: View {
             .fadeIn(sceneAppeared, delay: 3.1, duration: 0.6, reduceMotion: reduceMotion)
     }
 
-    /// 계절 노드 위치에서 원 스트로크를 끊는다 — 헤일로 대신(2026-07-22 베타 피드백: "가독성 높이지 말고 큰 원을 계절 위치에서 끊는 식으로")
-    private var ringGapErasers: some View {
-        ForEach(0..<4, id: \.self) { index in
-            let t = CGFloat(index) * 0.25
-            let half = Self.wheelGapHalf
-            Circle()
-                .trim(from: max(0, t - half), to: min(1, t + half))
-                .stroke(Ink.paper, style: StrokeStyle(lineWidth: 1.4 + 2, lineCap: .butt))
-                .rotationEffect(.degrees(-90))
-            if index == 0 {
-                Circle()   // 이음매(0≡1 = 겨울 위치) 반대편도 지워야 대칭으로 끊김
-                    .trim(from: 1 - half, to: 1)
-                    .stroke(Ink.paper, style: StrokeStyle(lineWidth: 1.4 + 2, lineCap: .butt))
-                    .rotationEffect(.degrees(-90))
-            }
+    /// 노드 4곳에서 잉크가 옅어지며 자연히 끊기는 각도 그라데이션(2026-08-08 베타 피드백).
+    /// AngularGradient의 0도와 Circle trim 0은 둘 다 +x에서 시작하고 같은 rotationEffect(-90)를
+    /// 받으므로 프랙션 공간이 그대로 정렬된다. 노드 중심 ±0.02 = 완전 공백, ±0.055까지 본색 복귀.
+    private var ringGradient: AngularGradient {
+        let ink = Ink.winter.opacity(0.7)
+        let clear = Ink.winter.opacity(0)
+        let gapHalf = 0.02
+        let fadeHalf = 0.055
+        var stops: [Gradient.Stop] = []
+        for t in [0.0, 0.25, 0.5, 0.75, 1.0] {
+            if t - fadeHalf > 0 { stops.append(.init(color: ink, location: t - fadeHalf)) }
+            stops.append(.init(color: clear, location: max(0, t - gapHalf)))
+            stops.append(.init(color: clear, location: min(1, t + gapHalf)))
+            if t + fadeHalf < 1 { stops.append(.init(color: ink, location: t + fadeHalf)) }
         }
+        return AngularGradient(gradient: Gradient(stops: stops), center: .center)
     }
 
     private var sceneWave: some View {
@@ -518,12 +521,12 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
                 .padding(.bottom, 6)
-            // 개정 M-1c(2026-08-08 사용자 확정): 단계명 대신 관찰 가능한 위치 앵커 + 생활 서술.
-            // 겨울=봄이 몸(에너지), 여름이 마음(기분) — §2.3 신호 분리. 겨울·가을=허락, 봄·여름=충동.
-            seasonRow(.menstrual, "생리 기간, 아무것도 안 해도 괜찮은 때")
-            seasonRow(.follicular, "생리 직후, 미뤄둔 일이 만만해지는 때")
-            seasonRow(.ovulation, "배란 무렵, 의욕이 충만해지는 때")
-            seasonRow(.luteal, "생리 전, 나부터 챙겨도 되는 때")
+            // 2026-08-08 베타 피드백: 나열 순서 = 표시 순서(봄여름가을겨울 — §8.1 온보딩 예외 폐지,
+            // 원·곡선 드로잉의 겨울 시작 서사는 유지) + 카피 = 사용자 지정 문안 그대로(위치 앵커 걷음).
+            seasonRow(.follicular, "미뤄둔 일이 만만해지는 시간")
+            seasonRow(.ovulation, "의욕이 충만해지는 시간")
+            seasonRow(.luteal, "나를 돌보기 시작하는 시간")
+            seasonRow(.menstrual, "스스로에게 휴식을 줘도 괜찮은 시간")
             Spacer()
             VStack(alignment: .leading, spacing: 2) {
                 Text("일반적인 경향이에요.")
@@ -545,6 +548,8 @@ struct OnboardingFlow: View {
             Text(desc)
                 .font(.system(.subheadline, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.7))
+                .fixedSize(horizontal: false, vertical: true)   // 압축 시 말줄임 금지 — 줄바꿈으로(2026-08-08 베타 피드백)
+                .lineSpacing(2)
             Spacer()
         }
         .padding(.vertical, 13)   // 계절 행 간 간격 확대(2026-07-22 베타 피드백)
@@ -657,12 +662,16 @@ struct OnboardingFlow: View {
     private var calendarPage: some View {
         VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "기준일", title: "마지막 생리는\n언제 시작했나요?")
+            // 문장 단위 3줄 + fixedSize — 캘린더에 밀려 압축될 때 둘째 줄이 말줄임으로 잘리던
+            // 결함 수정(2026-08-08 베타 피드백 "이전 생리도 기록할 수 있어요 하고 문장 마무리").
             VStack(alignment: .leading, spacing: 2) {
                 Text("시작한 날을 누르면 \(periodLength)일만큼 채워져요.")
-                Text("칸을 다시 누르면 지워지고, 지난달로 넘겨 이전 생리도 남길 수 있어요.")
+                Text("칸을 다시 누르면 지워져요.")
+                Text("지난달로 넘기면 이전 생리도 기록할 수 있어요.")
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
+            .fixedSize(horizontal: false, vertical: true)
             OnboardingCalendar(periodDays: periodDays, fillLength: periodLength) {
                 lightFeedback += 1
             }
@@ -699,12 +708,14 @@ struct OnboardingFlow: View {
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
+            // 항목 ⓘ 설명(2026-08-08 베타 피드백) — 체크인 행에서 걷어낸 설명의 새 자리.
+            // 롱프레스 중간값 힌트도 여기서 알린다(체크인 ⓘ 제거로 사라진 발견 경로 승계).
             VStack(spacing: 0) {
-                baseRow("에너지")
-                baseRow("기분")
-                toggleRow("수면", $trackSleep)
-                toggleRow("식욕", $trackAppetite)
-                toggleRow("오늘 한 줄", $trackNote)
+                baseRow("에너지", info: "하루를 지내는 힘이 얼마나 있었는지예요. 좋고 나쁨이 아니라 오르내림을 봐요. 기록할 때 칩을 길게 누르면 중간값이 돼요.")
+                baseRow("기분", info: "마음의 날씨예요. 맑음도 흐림도 그대로 적으면 돼요. 기록할 때 칩을 길게 누르면 중간값이 돼요.")
+                toggleRow("수면", $trackSleep, info: "지난밤 잠의 결이에요. 뒤척였는지, 푹 잤는지.")
+                toggleRow("식욕", $trackAppetite, info: "그날 입맛이 어땠는지예요.")
+                toggleRow("오늘 한 줄", $trackNote, info: "하루를 한 문장으로 남기는 자리예요. 나의 리듬 탭에서 모아 볼 수 있어요.")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
@@ -718,8 +729,9 @@ struct OnboardingFlow: View {
         }
     }
 
-    private func baseRow(_ name: String) -> some View {
-        HStack {
+    private func baseRow(_ name: String, info: String) -> some View {
+        HStack(spacing: 4) {
+            InfoBadge(title: name, message: info)
             Text(name).font(.subheadline).foregroundStyle(Ink.text)
             Text("기본")
                 .font(.caption2)
@@ -732,12 +744,16 @@ struct OnboardingFlow: View {
         .padding(.vertical, 11)
     }
 
-    private func toggleRow(_ name: String, _ value: Binding<Bool>) -> some View {
-        Toggle(name, isOn: value)
-            .font(.subheadline)
-            .tint(Ink.text)
-            .padding(.vertical, 7)
-            .onChange(of: value.wrappedValue) { _, _ in lightFeedback += 1 }
+    private func toggleRow(_ name: String, _ value: Binding<Bool>, info: String) -> some View {
+        Toggle(isOn: value) {
+            HStack(spacing: 4) {
+                InfoBadge(title: name, message: info)
+                Text(name).font(.subheadline).foregroundStyle(Ink.text)
+            }
+        }
+        .tint(Ink.text)
+        .padding(.vertical, 7)
+        .onChange(of: value.wrappedValue) { _, _ in lightFeedback += 1 }
     }
 
     // ══ ④ 저장 위치 ══
@@ -777,11 +793,10 @@ struct OnboardingFlow: View {
             Text("아무와도 공유하지 않아요. 언제든 내보내고 지울 수 있어요.")
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))
-            precursorCodeRow
         }
     }
 
-    // ══ ⑤ 리듬 설문 (2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다) ══
+    // ══ ⑥ 리듬 설문 (2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다) ══
     // 강요하지 않는다: 하단 primary는 "오늘 화면으로"(건너뛰기 겸)이고 설문은 별도 버튼.
     // 여기서 답하면 나의 리듬 탭의 설문 프롬프트는 다시 뜨지 않는다(레코드 존재로 판정).
     private var surveyStep: some View {
@@ -824,30 +839,23 @@ struct OnboardingFlow: View {
         }
     }
 
-    // ── 사전 설문 참여 코드 (v1.6 §9 3-8) ──
-    // 접이식이라 코드가 없는 사람의 온보딩 길이는 그대로다. 실패해도 다음 단계를 막지 않는다.
-    @ViewBuilder
-    private var precursorCodeRow: some View {
-        if SurveyCode.isPrecursorUnlocked {
-            Label("선행 테마가 열려 있어요.", systemImage: "checkmark.seal")
-                .font(.footnote)
-                .foregroundStyle(Ink.text.opacity(0.6))
-        } else {
-            VStack(alignment: .leading, spacing: 10) {
-                Button {
-                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
-                        showCodeField.toggle()
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("사전 설문 코드가 있어요")
-                        Image(systemName: showCodeField ? "chevron.up" : "chevron.down")
-                            .font(.caption2)
-                    }
+    // ══ ⑤ 사전 설문 참여 코드 (v1.6 §9 3-8 — 2026-08-08 베타 피드백로 ④ 접이식에서 별도 장 분리) ══
+    // 코드가 없어도 primary 「다음」으로 그대로 지나간다. 실패해도 다음 단계를 막지 않는다.
+    private var codeStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(eyebrow: "사전 설문", title: "참여 코드가\n있나요?")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("사전 설문에서 받은 코드를 넣으면 선행 테마가 열려요.")
+                Text("코드가 없다면 그대로 다음으로 가면 돼요.")
+            }
+            .font(.system(.footnote, design: .serif))
+            .foregroundStyle(Ink.text.opacity(0.55))
+            if SurveyCode.isPrecursorUnlocked {
+                Label("선행 테마가 열려 있어요.", systemImage: "checkmark.seal")
                     .font(.footnote)
                     .foregroundStyle(Ink.text.opacity(0.6))
-                }
-                if showCodeField {
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 8) {
                         TextField("TEMPO-XXXXXXXX", text: $codeInput)
                             .textInputAutocapitalization(.characters)
@@ -868,6 +876,8 @@ struct OnboardingFlow: View {
                             .foregroundStyle(Ink.text.opacity(0.6))
                     }
                 }
+                .padding(16)
+                .milkGlass()
             }
         }
     }

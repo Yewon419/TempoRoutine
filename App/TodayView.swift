@@ -319,6 +319,7 @@ struct TodayView: View {
                 Text(kind.rawValue)
                     .font(.almanac(size: 17, weight: .bold))
                     .foregroundStyle(Ink.text)
+                InfoBadge(title: kind.rawValue, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
                 Spacer()
                 Button {
                     lightFeedback += 1

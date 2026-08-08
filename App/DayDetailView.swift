@@ -13,6 +13,43 @@ enum CardKind: String, CaseIterable, Identifiable {
     case input = "Input"
     case output = "Output"
     var id: String { rawValue }
+
+    /// 구획 ⓘ 설명(2026-08-06 베타 피드백 — 체크인 행이 아니라 구획 제목 뒤).
+    /// 문안 = 코치마크(§3.6 카드 정의의 사용자 언어)와 같은 계열.
+    var info: String {
+        switch self {
+        case .schedule: "약속이나 생일처럼 못 옮기는 날들이에요. 하루의 닻이라, 계절과 상관없이 그대로 둬요."
+        case .input: "식단이나 운동처럼 나를 채우는 일들이에요. 가볍게 체크만 하면 되고, 주기 기준으로 반복시킬 수도 있어요."
+        case .output: "프로젝트나 공부처럼 내보내는 일들이에요. 진행도로 쌓이고, 계절에 맞춰 시동과 마무리를 보여드려요."
+        }
+    }
+}
+
+/// 회색 물음표 뱃지 — 탭 = 설명 알럿. 구획 제목·온보딩 항목 공용(2026-08-06 베타 피드백).
+/// 알럿을 자체 보유해 부모 뷰에 상태를 요구하지 않는다.
+struct InfoBadge: View {
+    let title: String
+    let message: String
+    @State private var show = false
+
+    var body: some View {
+        Button {
+            show = true
+        } label: {
+            Image(systemName: "questionmark.circle")
+                .font(.caption)
+                .foregroundStyle(Ink.text.opacity(0.35))
+                .frame(width: 24, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title) 설명")
+        .alert(title, isPresented: $show) {
+            Button("확인") {}
+        } message: {
+            Text(message)
+        }
+    }
 }
 
 struct DayDetailView: View {
@@ -227,6 +264,7 @@ struct DayDetailView: View {
                 Text(kind.rawValue)
                     .font(.almanac(size: 17, weight: .bold))
                     .foregroundStyle(Ink.text)
+                InfoBadge(title: kind.rawValue, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
                 Spacer()
                 Button {
                     lightFeedback += 1

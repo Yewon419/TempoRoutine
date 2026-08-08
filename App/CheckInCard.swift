@@ -21,7 +21,6 @@ struct CheckInCard: View {
     @State private var draftAppetite = 0
     @State private var draftNote = ""
     @State private var draftLoaded = false
-    @State private var infoText: String?   // 항목 설명 알럿(2026-08-05 베타 피드백)
 
     /// 어떤 행을 보여줄지는 온보딩·설정에서 고른 추적 항목이 정한다(§3.10).
     /// ⚠ 종전에는 이 배선이 없어 통증·식욕을 켜도 카드에 나오지 않았다(2026-08-04 발견).
@@ -46,17 +45,15 @@ struct CheckInCard: View {
                 .foregroundStyle(Ink.text)
             // 예민함·몸 행 = 2026-08-05 사용자 결정으로 제거(기분·에너지와 겹침, 6줄 부담).
             // 저장 필드는 남아 있고 과거 기록은 리듬 집계에 계속 유효하다 — 새 입력 경로만 없다.
-            checkInRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy,
-                       info: "하루를 지내는 힘이 얼마나 있었는지예요. 좋고 나쁨이 아니라 오르내림을 봐요. 칩을 길게 누르면 중간값이 돼요.")
-            checkInRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood,
-                       info: "마음의 날씨예요. 맑음도 흐림도 그대로 적으면 돼요. 칩을 길게 누르면 중간값이 돼요.")
+            // 항목 ⓘ 설명 = 2026-08-06 베타 피드백 교정으로 여기서 걷고 온보딩 ③으로 이동
+            // ("체크인 항목이 아니었어"). 구획 제목 ⓘ는 오늘 탭·하루 상세 셸이 담당.
+            checkInRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
+            checkInRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
             if signals.sleep {
-                checkInRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep,
-                           info: "지난밤 잠의 결이에요. 뒤척였는지, 푹 잤는지. 칩을 길게 누르면 중간값이 돼요.")
+                checkInRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
             }
             if signals.appetite {
-                checkInRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite,
-                           info: "오늘 입맛이 어땠는지예요. 칩을 길게 누르면 중간값이 돼요.")
+                checkInRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite)
             }
             VStack(alignment: .leading, spacing: 6) {
                 Text(noteLabel).font(.caption).foregroundStyle(Ink.text.opacity(0.5))
@@ -88,35 +85,14 @@ struct CheckInCard: View {
                 Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
             }
         }
-        .alert("이 항목은", isPresented: Binding(get: { infoText != nil },
-                                             set: { if !$0 { infoText = nil } })) {
-            Button("확인") { infoText = nil }
-        } message: {
-            Text(infoText ?? "")
-        }
     }
 
-    private func checkInRow(label: String, options: [String], value: Binding<Int>,
-                            info: String) -> some View {
+    private func checkInRow(label: String, options: [String], value: Binding<Int>) -> some View {
         HStack(spacing: 8) {
-            HStack(spacing: 4) {
-                // 항목 설명(2026-08-05 베타 피드백 — 이름 왼쪽 회색 물음표, 탭 = 설명)
-                Button {
-                    infoText = info
-                } label: {
-                    Image(systemName: "questionmark.circle")
-                        .font(.caption)
-                        .foregroundStyle(Ink.text.opacity(0.35))
-                        .frame(width: 20, height: 28)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(label) 설명")
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.text.opacity(0.75))
-            }
-            .frame(width: 108, alignment: .leading)
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(Ink.text.opacity(0.75))
+                .frame(width: 108, alignment: .leading)
             ForEach(Array(options.enumerated()), id: \.offset) { index, option in
                 let mapped = index * 2 + 1   // 3탭 = 1·3·5
                 let current = value.wrappedValue
