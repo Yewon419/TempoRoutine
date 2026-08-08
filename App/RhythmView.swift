@@ -17,6 +17,12 @@ struct RhythmView: View {
     // 나의 사계 → 루틴 추가 연동(2026-08-01 베타 피드백): 계절 칸 + → 종류 선택 → 그 계절 앵커 시트
     @State private var addingSeason: SeasonAnchor?
     @State private var addKind: CardKind?
+    // 루틴 행 살리기(2026-08-08 베타 피드백 "기본적인 기능이 없다시피") — 탭=수정, 길게=삭제
+    @Query private var completions: [ItemCompletion]
+    @State private var editingInput: InputItem?
+    @State private var editingOutput: OutputItem?
+    @State private var pendingDelete: QuickDeleteTarget?
+    @State private var confirmFeedback = 0
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
     // 신호 스위처(§8.2.5 v68) — 사계 칩 선택 시 패널 자리에 낱장 스왑
@@ -103,7 +109,18 @@ struct RhythmView: View {
                 EmptyView()   // 사계는 루틴(Input·Output)만 다룬다 — 일정은 캘린더 몫
             }
         }
+        // 루틴 행 탭 = 수정 시트(2026-08-08) — 오늘 탭 일정 행과 같은 문법
+        .sheet(item: $editingInput) { item in
+            InputAddSheet(currentSeason: nil, editing: item)
+        }
+        .sheet(item: $editingOutput) { item in
+            OutputAddSheet(editing: item)
+        }
+        .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
+        .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
     }
+
+    @Environment(\.modelContext) private var modelContext
 
     // ── 자기보고 설문 제안 (v1.6 §4) ──
     // 첫 주기를 다 기록한 사람에게 1회만. 그 사람은 이탈 위험이 낮고,
@@ -284,16 +301,49 @@ struct RhythmView: View {
     }
 
     // ── 나의 사계 낱장 (§3.5.1 — 기본 노출, 개방형 4단 책력) ──
-    private var routinesBySeason: [CyclePhase: [String]] {
-        var map: [CyclePhase: [String]] = [:]
+    /// 행 모델 — 제목 문자열이 아니라 실물 아이템을 문다(2026-08-08 행 살리기).
+    /// 종전 `ForEach(id: \.self)`는 같은 제목 두 개면 렌더 ID가 충돌했다.
+    private enum SeasonRoutine: Identifiable {
+        case input(InputItem)
+        case output(OutputItem)
+
+        var id: UUID {
+            switch self {
+            case .input(let item): item.id
+            case .output(let item): item.id
+            }
+        }
+        var title: String {
+            switch self {
+            case .input(let item): item.title
+            case .output(let item): item.title
+            }
+        }
+        /// 종류 구분 태그 — §3.5.1 렌더 금지 목록(날짜·주기 시점·체크인·메모·진행도) 밖
+        var kindLabel: String {
+            switch self {
+            case .input: "Input"
+            case .output: "Output"
+            }
+        }
+        var deleteTarget: QuickDeleteTarget {
+            switch self {
+            case .input(let item): .input(item)
+            case .output(let item): .output(item)
+            }
+        }
+    }
+
+    private var routinesBySeason: [CyclePhase: [SeasonRoutine]] {
+        var map: [CyclePhase: [SeasonRoutine]] = [:]
         for item in inputs {
             if case .cycleAnchored(let r) = item.schedule {
-                map[anchorPhase(r), default: []].append(item.title)
+                map[anchorPhase(r), default: []].append(.input(item))
             }
         }
         for item in outputs {
             if case .cycleAnchored(let r) = item.schedule {
-                map[anchorPhase(r), default: []].append(item.title)
+                map[anchorPhase(r), default: []].append(.output(item))
             }
         }
         return map
@@ -391,9 +441,9 @@ struct RhythmView: View {
         .accessibilityLabel("\(entry.day.formatted(.dateTime.month().day())), \(meta?.name ?? ""), \(entry.note ?? "")")
     }
 
-    private func seasonRow(phase: CyclePhase, routines: [String]) -> some View {
+    private func seasonRow(phase: CyclePhase, routines: [SeasonRoutine]) -> some View {
         let meta = seasonMeta(for: phase)
-        return VStack(alignment: .leading, spacing: 6) {
+        return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 SeasonGlyph(phase: phase)
                 Text(meta.name)
@@ -413,21 +463,43 @@ struct RhythmView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(meta.name)에 루틴 추가")
             }
-            if routines.isEmpty {
-                // 빈 계절 = 밑줄 괘선(빈 낱장도 캡처물 성립 — §3.5.1)
-                Rectangle().fill(Ink.winter.opacity(0.18)).frame(height: 1)
-                    .padding(.vertical, 8)
-            } else {
-                ForEach(routines, id: \.self) { name in
-                    Text(name)
-                        .font(.subheadline)
-                        .foregroundStyle(Ink.text)
-                }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(routines.isEmpty ? "\(meta.name), 루틴 없음" : meta.name)
+            // 빈 계절 = 여백 + 행 구분 괘선만(빈 낱장도 캡처물 성립 — §3.5.1).
+            // 안쪽 괘선은 행 구분선과 겹쳐 이중 줄로 보여 걷음(2026-08-08 조판).
+            ForEach(routines) { routine in
+                routineRow(routine)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, routines.isEmpty ? 12 : 8)
         .almanacRule()
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(meta.name), \(routines.isEmpty ? "루틴 없음" : routines.joined(separator: ", "))")
+    }
+
+    /// 루틴 행(2026-08-08 행 살리기) — 탭=수정 시트, 길게=빠른 삭제. 오늘 탭 행과 같은 문법.
+    private func routineRow(_ routine: SeasonRoutine) -> some View {
+        Button {
+            switch routine {
+            case .input(let item): editingInput = item
+            case .output(let item): editingOutput = item
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text(routine.title)
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.text)
+                Spacer(minLength: 8)
+                Text(routine.kindLabel)
+                    .font(.caption2)
+                    .foregroundStyle(Ink.text.opacity(0.4))
+            }
+            .padding(.leading, 24)   // 계절명 텍스트에 맞춘 들여쓰기 — 낱장 위계(2026-08-08 조판)
+            .padding(.vertical, 5)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .simultaneousGesture(quickDeleteGesture(routine.deleteTarget, into: $pendingDelete,
+                                                feedback: $confirmFeedback))
+        .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
+        .accessibilityAction(named: "삭제") { pendingDelete = routine.deleteTarget }
     }
 }

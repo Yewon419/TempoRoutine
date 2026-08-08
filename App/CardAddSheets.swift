@@ -415,16 +415,45 @@ struct InputAddSheet: View {
     /// 기록상 에너지 수준(2026-07-23) — 있으면 제목 예시를 에너지별로, 없으면 계절 매트릭스 폴백
     let energyLevel: EnergyLevel?
 
+    /// nil = 추가 / 값 = 수정(삭제 섹션 노출 — 일정 시트와 같은 문법, 2026-08-08 나의 사계 개선)
+    var editing: InputItem? = nil
+
     /// 지난 날짜에 추가하는 건 대개 "그날 한 번 했다"는 기록이다 — 매일로 잡히면 오늘까지 따라온다.
     /// 오늘·미래는 종전대로 매일 기본(체크리스트가 본질). 2026-07-27 사용자 결정.
     /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
     init(day: Date = .now, currentSeason: SeasonMeta?, energyLevel: EnergyLevel? = nil,
-         presetSeason: SeasonAnchor? = nil) {
+         presetSeason: SeasonAnchor? = nil, editing: InputItem? = nil) {
         self.day = day
         self.currentSeason = currentSeason
         self.energyLevel = energyLevel
+        self.editing = editing
         let cal = Calendar.current
-        if let presetSeason {
+        if let item = editing {
+            _title = State(initialValue: item.title)
+            _category = State(initialValue: item.category)
+            switch item.schedule {
+            case .once:
+                _repeats = State(initialValue: false)
+            case .daily:
+                _repeats = State(initialValue: true)
+            case .weekly:
+                _repeats = State(initialValue: true)
+                _calendarFreq = State(initialValue: .weekly)
+            case .monthly:
+                _repeats = State(initialValue: true)
+                _calendarFreq = State(initialValue: .monthly)
+            case .cycleAnchored(let r):
+                _repeats = State(initialValue: false)
+                _cycleBased = State(initialValue: true)
+                // .cycleStart 앵커는 월경기 시작과 동치 — 기본값 winter가 그대로 맞는다
+                if case .phase(let p) = r.anchor,
+                   let season = SeasonAnchor.allCases.first(where: { $0.phase == p }) {
+                    _anchor = State(initialValue: season)
+                }
+                _offset = State(initialValue: r.dayOffset)
+                _everyCycle = State(initialValue: r.repeatsEveryCycle)
+            }
+        } else if let presetSeason {
             _repeats = State(initialValue: false)
             _cycleBased = State(initialValue: true)
             _anchor = State(initialValue: presetSeason)
@@ -443,6 +472,7 @@ struct InputAddSheet: View {
     @State private var anchor: SeasonAnchor = .winter
     @State private var offset = 0
     @State private var everyCycle = true
+    @State private var showDeleteConfirm = false
 
     private static let calendarChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly]
 
@@ -506,8 +536,28 @@ struct InputAddSheet: View {
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
                 }
+                if editing != nil {
+                    // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
+                    Section {
+                        Button("Input 삭제", role: .destructive) { showDeleteConfirm = true }
+                            .foregroundStyle(Ink.danger)
+                    }
+                }
             }
-            .navigationTitle("Input 추가")
+            .confirmationDialog("이 Input을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("삭제", role: .destructive) {
+                    if let item = editing {
+                        // 완료 기록 동반 삭제(§5.5.2 고아 방지) — QuickDelete와 같은 경로
+                        let all = (try? modelContext.fetch(FetchDescriptor<ItemCompletion>())) ?? []
+                        QuickDeleteTarget.input(item).delete(from: modelContext, completions: all)
+                    }
+                    dismiss()
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("체크 기록이 함께 지워져요. 되돌릴 수 없어요.")
+            }
+            .navigationTitle(editing == nil ? "Input 추가" : "Input 수정")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
@@ -529,10 +579,17 @@ struct InputAddSheet: View {
                         } else {
                             schedule = .once
                         }
-                        let cal = Calendar.current
-                        modelContext.insert(InputItem(title: title, category: category, schedule: schedule,
-                                                      createdAt: anchorDate(for: day),
-                                                      backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now)))
+                        if let item = editing {
+                            // createdAt·backfilled는 건드리지 않는다 — 시작 기준선·소급 플래그는 생성 시점의 사실
+                            item.title = title
+                            item.category = category
+                            item.schedule = schedule
+                        } else {
+                            let cal = Calendar.current
+                            modelContext.insert(InputItem(title: title, category: category, schedule: schedule,
+                                                          createdAt: anchorDate(for: day),
+                                                          backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now)))
+                        }
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)
@@ -548,10 +605,44 @@ struct OutputAddSheet: View {
     /// 어느 날에 추가하는가 — InputAddSheet와 같은 근거(2026-07-26)
     let day: Date
 
+    /// nil = 추가 / 값 = 수정(삭제 섹션 노출 — 일정 시트와 같은 문법, 2026-08-08 나의 사계 개선)
+    var editing: OutputItem? = nil
+
     /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
-    init(day: Date = .now, presetSeason: SeasonAnchor? = nil) {
+    init(day: Date = .now, presetSeason: SeasonAnchor? = nil, editing: OutputItem? = nil) {
         self.day = day
-        if let presetSeason {
+        self.editing = editing
+        if let item = editing {
+            _title = State(initialValue: item.title)
+            switch item.schedule {
+            case .once:
+                break
+            case .daily:
+                _repeats = State(initialValue: true)
+            case .weekly:
+                _repeats = State(initialValue: true)
+                _calendarFreq = State(initialValue: .weekly)
+            case .monthly:
+                _repeats = State(initialValue: true)
+                _calendarFreq = State(initialValue: .monthly)
+            case .cycleAnchored(let r):
+                _cycleBased = State(initialValue: true)
+                if case .phase(let p) = r.anchor,
+                   let season = SeasonAnchor.allCases.first(where: { $0.phase == p }) {
+                    _anchor = State(initialValue: season)
+                }
+                _offset = State(initialValue: r.dayOffset)
+                _everyCycle = State(initialValue: r.repeatsEveryCycle)
+                _wholePhase = State(initialValue: r.spansWholePhase)
+            }
+            _kind = State(initialValue: item.progressKind)
+            if item.targetSessions > 0 { _targetSessions = State(initialValue: item.targetSessions) }
+            _initialPercent = State(initialValue: item.percent)
+            if let target = item.targetDate {
+                _hasTargetDate = State(initialValue: true)
+                _targetDate = State(initialValue: target)
+            }
+        } else if let presetSeason {
             _cycleBased = State(initialValue: true)
             _anchor = State(initialValue: presetSeason)
         }
@@ -574,6 +665,7 @@ struct OutputAddSheet: View {
     @State private var subtaskDraft = ""
     @State private var subtasks: [String] = []
     @State private var initialPercent: Double = 0
+    @State private var showDeleteConfirm = false
 
     private static let calendarChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly]
 
@@ -652,6 +744,13 @@ struct OutputAddSheet: View {
                         Stepper("목표 \(targetSessions)세션", value: $targetSessions, in: 1...50)
                     }
                     if kind == .subtasks {
+                        // 수정 모드: 기존 항목은 체크 상태 보존을 위해 여기서 안 고친다 — 추가만(체크·해제는 카드에서)
+                        if let existing = editing?.subtasks?.sorted(by: { $0.order < $1.order }),
+                           !existing.isEmpty {
+                            ForEach(existing) { sub in
+                                Text(sub.title).font(.footnote).foregroundStyle(Ink.text.opacity(0.6))
+                            }
+                        }
                         ForEach(subtasks, id: \.self) { Text($0).font(.footnote) }
                         HStack {
                             TextField("체크리스트 항목 추가", text: $subtaskDraft)
@@ -674,8 +773,26 @@ struct OutputAddSheet: View {
                         }
                     }
                 }
+                if editing != nil {
+                    // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
+                    Section {
+                        Button("Output 삭제", role: .destructive) { showDeleteConfirm = true }
+                            .foregroundStyle(Ink.danger)
+                    }
+                }
             }
-            .navigationTitle("Output 추가")
+            .confirmationDialog("이 Output을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("삭제", role: .destructive) {
+                    if let item = editing {
+                        QuickDeleteTarget.output(item).delete(from: modelContext, completions: [])
+                    }
+                    dismiss()
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("진행도가 함께 지워져요. 되돌릴 수 없어요.")
+            }
+            .navigationTitle(editing == nil ? "Output 추가" : "Output 수정")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
@@ -700,15 +817,32 @@ struct OutputAddSheet: View {
                         } else {
                             schedule = .once
                         }
-                        let item = OutputItem(title: title, schedule: schedule, progressKind: kind,
-                                              createdAt: anchorDate(for: day))
-                        if kind == .sessions { item.targetSessions = targetSessions }
-                        if kind == .subtasks {
-                            item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
+                        if let item = editing {
+                            // createdAt·완료 기록(loggedSessions·기존 서브태스크 isDone)은 보존
+                            item.title = title
+                            item.schedule = schedule
+                            item.progressKind = kind
+                            if kind == .sessions { item.targetSessions = targetSessions }
+                            if kind == .subtasks, !subtasks.isEmpty {
+                                let base = (item.subtasks ?? []).map(\.order).max().map { $0 + 1 } ?? 0
+                                let added = subtasks.enumerated().map {
+                                    OutputSubtask(title: $0.element, order: base + $0.offset)
+                                }
+                                item.subtasks = (item.subtasks ?? []) + added
+                            }
+                            if kind == .percent { item.percent = initialPercent }
+                            item.targetDate = hasTargetDate ? Calendar.current.startOfDay(for: targetDate) : nil
+                        } else {
+                            let item = OutputItem(title: title, schedule: schedule, progressKind: kind,
+                                                  createdAt: anchorDate(for: day))
+                            if kind == .sessions { item.targetSessions = targetSessions }
+                            if kind == .subtasks {
+                                item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
+                            }
+                            if kind == .percent { item.percent = initialPercent }
+                            if hasTargetDate { item.targetDate = Calendar.current.startOfDay(for: targetDate) }
+                            modelContext.insert(item)
                         }
-                        if kind == .percent { item.percent = initialPercent }
-                        if hasTargetDate { item.targetDate = Calendar.current.startOfDay(for: targetDate) }
-                        modelContext.insert(item)
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)
