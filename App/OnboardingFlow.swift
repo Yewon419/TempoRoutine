@@ -4,7 +4,8 @@
 //    에피소드 수**(§5.7 read 거부 판별 불가) → 지속일 스피너 → 월 캘린더 자동 채움(지난달 가능,
 //    스킵 secondary) → 에피소드 1개일 때만 주기 스피너(→ N prior, T1b).
 // ③ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals, 항목 ⓘ 설명) ④ 저장 위치 조건부 카피+체크 카드
-// ⑤ 리듬 설문 제안. (사전 설문 코드 장은 2026-08-09 사용자 결정으로 폐기 — 사전 설문 자체를 접음)
+// ⑤ 리듬 설문 — primary 「시작하기」 + 「지금은 넘어가기」 secondary(2026-08-09 승격.
+//    사전 설문 코드 장은 같은 날 폐기 — 웹 사전 설문 자체를 접음)
 // 진행 점은 인트로 숨김·2단계부터. 실권한은 실제 연동 순간만(§3.6.1).
 
 import SwiftUI
@@ -172,6 +173,15 @@ struct OnboardingFlow: View {
             if step == 2 && baselinePage == 3 {
                 ghostButton("잘 모르겠어요") { AppSettings.cycleLengthPrior = nil; step = 3 }
             }
+            // ⑤ 설문 건너뛰기(2026-08-09 사용자 결정) — 설문은 primary로 승격하되 강요는 안 한다.
+            // ② 생리주기 질문의 secondary와 별개다(그쪽은 넘어가기가 있어도 필수 성격).
+            if step == 5 && selfReports.isEmpty {
+                ghostButton("지금은 넘어가기") { onboardingDone = true }
+                Text("언제든 설정에서 다시 답변할 수 있어요.")
+                    .font(.caption)
+                    .foregroundStyle(Ink.text.opacity(0.45))
+                    .frame(maxWidth: .infinity)
+            }
             if step >= 2 { dots }
         }
         .padding(.horizontal, 24)
@@ -218,7 +228,8 @@ struct OnboardingFlow: View {
         switch step {
         case 1: introScene == 0 ? "시작" : "다음"
         case 2, 3, 4: "다음"
-        default: "오늘 화면으로"
+        // ⑤ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
+        default: selfReports.isEmpty ? "시작하기" : "오늘 화면으로"
         }
     }
 
@@ -246,7 +257,9 @@ struct OnboardingFlow: View {
                                                         irritability: false)
             step = 4
         case 4: step = 5   // ⑤ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
-        default: onboardingDone = true
+        default:
+            if selfReports.isEmpty { showSurvey = true }   // 「시작하기」 — 제출·닫힘 처리는 sheet onDismiss
+            else { onboardingDone = true }
         }
     }
 
@@ -789,8 +802,9 @@ struct OnboardingFlow: View {
         }
     }
 
-    // ══ ⑤ 리듬 설문 (2026-08-05 사용자 결정 — 온보딩에서 설문을 받는다) ══
-    // 강요하지 않는다: 하단 primary는 "오늘 화면으로"(건너뛰기 겸)이고 설문은 별도 버튼.
+    // ══ ⑤ 리듬 설문 (2026-08-05 신설 → 2026-08-09 승격, 사용자 결정) ══
+    // 설문이 primary(「시작하기」)다 — 생리 앱의 신뢰를 첫인상에서 세우는 단계라서.
+    // 강요하지 않기는 유지: 바로 아래 「지금은 넘어가기」 + 설정 재답변 안내(bottomBar).
     // 여기서 답하면 나의 리듬 탭의 설문 프롬프트는 다시 뜨지 않는다(레코드 존재로 판정).
     private var surveyStep: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -802,29 +816,7 @@ struct OnboardingFlow: View {
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
-            if selfReports.isEmpty {
-                Button {
-                    lightFeedback += 1
-                    showSurvey = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "list.bullet.rectangle")
-                            .font(.subheadline)
-                        Text("설문 답해보기")
-                            .font(.subheadline.weight(.semibold))
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(Ink.text.opacity(0.4))
-                    }
-                    .foregroundStyle(Ink.text)
-                    .padding(12)
-                    .background(Ink.text.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
-                }
-                Text("나중에 설정에서도 할 수 있어요.")
-                    .font(.caption)
-                    .foregroundStyle(Ink.text.opacity(0.45))
-            } else {
+            if !selfReports.isEmpty {
                 Label("답이 담겼어요. 고마워요.", systemImage: "checkmark.seal")
                     .font(.footnote)
                     .foregroundStyle(Ink.text.opacity(0.6))
