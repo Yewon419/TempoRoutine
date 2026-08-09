@@ -43,6 +43,38 @@ enum Seeds {
         checkIns.filter { isAwarded($0) }.count
     }
 
+    // ── 소비 — 테마 심기 (2026-08-09 테마 탭, §3.8.1 「심기」 언어) ──
+    private static let plantedKey = "plantedThemes"
+    private static let spentKey = "seedsSpent"
+
+    /// 심은 테마(rawValue 집합). 심은 테마는 기록 철회로 획득이 줄어도 유지된다 — 재화 신뢰.
+    static var planted: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: plantedKey) ?? []) }
+        set { UserDefaults.standard.set(Array(newValue).sorted(), forKey: plantedKey) }
+    }
+
+    static var spent: Int {
+        get { UserDefaults.standard.integer(forKey: spentKey) }
+        set { UserDefaults.standard.set(newValue, forKey: spentKey) }
+    }
+
+    /// 쓸 수 있는 씨앗 = 획득 − 소비. 기록 철회로 획득이 줄면 음수가 될 수 있어
+    /// 표시·판정 하한 0(§3.8.1 하한 처리 — 이미 심은 테마는 회수하지 않는다).
+    static func available(_ checkIns: [DailyCheckIn]) -> Int {
+        max(0, balance(checkIns) - spent)
+    }
+
+    /// 심기 — 이미 심었으면 참(멱등), 잔액 부족이면 거짓. 성공 시 소비 원장에 기록.
+    static func plant(_ theme: AppTheme, price: Int, checkIns: [DailyCheckIn]) -> Bool {
+        guard !planted.contains(theme.rawValue) else { return true }
+        guard available(checkIns) >= price else { return false }
+        spent += price
+        var set = planted
+        set.insert(theme.rawValue)
+        planted = set
+        return true
+    }
+
     static func awardedDays(_ checkIns: [DailyCheckIn]) -> Set<Date> {
         Set(checkIns.filter { isAwarded($0) }.map(\.day))
     }

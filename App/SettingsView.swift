@@ -40,17 +40,8 @@ struct SettingsView: View {
     /// 임시 테스트 알림 안내 문구(2026-08-08 — 기능 제거 시 함께 걷을 것)
     @State private var testNoticeHint: String?
 
-    /// 테마 선택 — 리빌드(.id) 전에 팔레트 캐시를 먼저 확정한다(선 apply, Theme.swift 반응성 설계)
-    private var themeBinding: Binding<AppTheme> {
-        Binding(
-            get: { AppTheme(rawValue: appTheme) ?? .standard },
-            set: { theme in
-                lightFeedback += 1
-                ThemeStore.apply(theme.rawValue)
-                appTheme = theme.rawValue
-            }
-        )
-    }
+    /// 테마 진입 = 테마 탭 시트(2026-08-09 — 구 인라인 Picker 폐기, 심기·적용은 ThemeShopView 담당)
+    @State private var showThemeShop = false
 
     /// 브리핑·예측 토글 — 켜는 순간 권한 확인(미결정이면 시트), 거부면 되돌린다.
     /// 재스케줄은 DailyNotices가 앱 활성·백그라운드마다 돌아 토글 반영이 늦지 않지만,
@@ -225,19 +216,27 @@ struct SettingsView: View {
                          : "마지막 응답 \(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 쌓여요.")
                 }
 
-                // 테마(§8.2.6 — 무료 설정 스위치, 테스트 중. IAP 설계 확정 시 재검토 — 2026-07-29)
+                // 테마(2026-08-09 — 테마 탭 진입 행. 심기·적용·미리보기는 ThemeShopView, §3.8.1)
                 Section {
-                    Picker("테마", selection: themeBinding) {
-                        ForEach(AppTheme.allCases) { theme in
-                            Text(theme.displayName).tag(theme)
+                    Button {
+                        lightFeedback += 1
+                        showThemeShop = true
+                    } label: {
+                        HStack {
+                            Text("테마").foregroundStyle(Ink.text)
+                            Spacer()
+                            Text((AppTheme(rawValue: appTheme) ?? .standard).displayName)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Ink.text.opacity(0.35))
                         }
                     }
-                    .tint(Ink.text)
                 } header: {
                     Text("테마")
                 } footer: {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
-                    Text("모던 테마는 실험 중이에요. 화면 전체의 색이 바뀌어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
+                    Text("체크인으로 모은 씨앗으로 새 테마를 심을 수 있어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
                 }
 
                 // 파괴적 액션 — 분리 배치(§8.2.6)
@@ -268,6 +267,7 @@ struct SettingsView: View {
             ActivityShareSheet(url: file.url)
         }
         .sheet(isPresented: $showSelfReport) { SelfReportFlow() }
+        .sheet(isPresented: $showThemeShop) { ThemeShopView() }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)
         }

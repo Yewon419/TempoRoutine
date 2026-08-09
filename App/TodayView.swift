@@ -96,6 +96,7 @@ struct TodayView: View {
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
     // 알림 권한 안내 카드(2026-08-08) — 기본 켬 알림의 능동 권한 획득 경로, 1회
     @State private var showNoticeCard = false
+    @State private var showThemeShop = false   // 씨앗 배지 탭 = 테마 탭(2026-08-09)
 
 
     private var cal: Calendar { Calendar.current }
@@ -172,6 +173,7 @@ struct TodayView: View {
             compactBar
         }
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet() }
+        .sheet(isPresented: $showThemeShop) { ThemeShopView() }
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: today)
@@ -235,10 +237,18 @@ struct TodayView: View {
     // ── 컬랩싱 헤더: 큰 층 ──
     private var largeHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 씨앗 잔액(2026-08-09 사용자 결정 — 오늘 탭 우상단). 규칙·판정 = Seeds.
+            // 씨앗 잔액(2026-08-09 — 오늘 탭 우상단). 규칙·판정 = Seeds.
+            // 탭 = 테마 탭 진입(사용자 지시) / 표시값 = 소비 차감 후 available(심기 도입).
             HStack {
                 Spacer()
-                SeedBadge(count: Seeds.balance(checkIns))
+                Button {
+                    lightFeedback += 1
+                    showThemeShop = true
+                } label: {
+                    SeedBadge(count: Seeds.available(checkIns))
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("테마 화면을 엽니다")
             }
             if let info = todayInfo {
                 // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
