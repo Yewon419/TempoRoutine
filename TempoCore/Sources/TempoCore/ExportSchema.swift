@@ -156,10 +156,13 @@ public struct DailyCheckInDTO: Codable, Equatable, Sendable {
     /// 2026-08-04 추가 — 둘 다 optional/기본값이라 구 내보내기 파일도 그대로 재임포트된다
     public var irritability: Int?
     public var isBackfilled: Bool?
+    /// 2026-08-09 추가(같은 optional 패턴) — 씨앗 재화 근거(체크인 최초 완성 시각).
+    /// 백업·전체 삭제 undo가 이 봉투를 쓰므로 동봉하지 않으면 복원 때 씨앗이 사라진다.
+    public var completedAt: Date?
 
     public init(id: UUID, day: String, energy: Int, mood: Int, sleep: Int?, pain: Int?,
                 appetite: Int?, note: String?, createdAt: Date,
-                irritability: Int? = nil, isBackfilled: Bool? = nil) {
+                irritability: Int? = nil, isBackfilled: Bool? = nil, completedAt: Date? = nil) {
         self.id = id
         self.day = day
         self.energy = energy
@@ -171,6 +174,7 @@ public struct DailyCheckInDTO: Codable, Equatable, Sendable {
         self.createdAt = createdAt
         self.irritability = irritability
         self.isBackfilled = isBackfilled
+        self.completedAt = completedAt
     }
 }
 

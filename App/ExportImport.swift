@@ -101,7 +101,8 @@ enum ExportImport {
                                 mood: $0.mood, sleep: $0.sleep, pain: $0.pain, appetite: $0.appetite,
                                 note: $0.note, createdAt: $0.createdAt,
                                 irritability: $0.irritability,
-                                isBackfilled: $0.isBackfilled ? true : nil)
+                                isBackfilled: $0.isBackfilled ? true : nil,
+                                completedAt: $0.completedAt)
             },
             trackedSignals: AppSettings.trackedSignals,
             rhythmSummary: RhythmSummaryDTO.build(cycles: axis.cycles,
@@ -195,6 +196,7 @@ enum ExportImport {
             record.irritability = dto.irritability
             record.note = dto.note
             record.createdAt = dto.createdAt
+            record.completedAt = dto.completedAt   // 씨앗 근거 복원(2026-08-09)
             context.insert(record)
             added += 1
         }
