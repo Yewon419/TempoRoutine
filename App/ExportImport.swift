@@ -90,7 +90,10 @@ enum ExportImport {
                               },
                               targetSessions: item.targetSessions, loggedSessions: item.loggedSessions,
                               percent: item.percent, createdAt: item.createdAt,
-                              targetDate: item.targetDate)
+                              targetDate: item.targetDate,
+                              targetSeconds: item.targetSeconds,
+                              // 실행 중이어도 스냅샷은 접힌 경과로(실행 상태는 봉투 밖)
+                              elapsedSeconds: item.elapsedSeconds() > 0 ? item.elapsedSeconds() : nil)
             },
             completions: store.completions.map {
                 ItemCompletionDTO(id: $0.id, itemID: $0.itemID,
@@ -159,6 +162,8 @@ enum ExportImport {
             item.loggedSessions = dto.loggedSessions
             item.percent = dto.percent
             item.targetDate = dto.targetDate
+            item.targetSeconds = dto.targetSeconds
+            item.elapsedAccumSeconds = dto.elapsedSeconds ?? 0   // 복원 = 정지 상태(2026-08-09)
             item.subtasks = dto.subtasks.map { sub in
                 let subtask = OutputSubtask(title: sub.title, order: sub.order)
                 subtask.id = sub.id

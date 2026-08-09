@@ -246,10 +246,22 @@ final class OutputItem {
     var createdAt: Date = Date()
     /// 목표일(디데이, 2026-08-01 베타 피드백). optional = CloudKit 규칙 + 기존 저장분 경량 마이그레이션.
     var targetDate: Date?
+    // 타이머·스톱워치(2026-08-09 사용자 결정) — 시간도 수명 누적(§5.5.2).
+    // 실행 상태는 timerStartedAt 앵커 하나로 영속 — 앱이 죽어도 경과가 이어진다.
+    var targetSeconds: Int?                 // 타이머 목표(초). 스톱워치·타 진행 방식 = nil
+    var elapsedAccumSeconds: Double = 0     // 일시정지까지 누적된 초
+    var timerStartedAt: Date?               // 진행 중 시작 앵커 — nil = 멈춤
 
     var schedule: OutputSchedule {
         get { (try? JSONDecoder().decode(OutputSchedule.self, from: scheduleData)) ?? .daily }
         set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
+    }
+
+    var isTimerRunning: Bool { timerStartedAt != nil }
+
+    /// 현재 경과(초) — 누적 + 진행 중 델타
+    func elapsedSeconds(at now: Date = .now) -> Double {
+        elapsedAccumSeconds + (timerStartedAt.map { max(0, now.timeIntervalSince($0)) } ?? 0)
     }
 
     /// createdAt = 시작되는 날 — InputItem과 같은 근거(2026-07-26).
@@ -264,6 +276,9 @@ final class OutputItem {
         self.loggedSessions = 0
         self.percent = 0
         self.createdAt = createdAt
+        self.targetSeconds = nil
+        self.elapsedAccumSeconds = 0
+        self.timerStartedAt = nil
     }
 
     /// .once·.daily·.weekly·.monthly 판정(달력 기준) — InputItem.occursByCalendar와 동형(§ 반복 통일).
@@ -300,6 +315,11 @@ final class OutputItem {
             return targetSessions > 0 && loggedSessions >= targetSessions
         case .percent:
             return percent >= 1.0
+        case .timer:
+            guard let target = targetSeconds, target > 0 else { return false }
+            return elapsedSeconds() >= Double(target)
+        case .stopwatch:
+            return false   // 측정 전용 — 완료 개념 없음(§5.5.2 파생 완료의 명시적 예외)
         }
     }
 }

@@ -122,6 +122,19 @@ enum WidgetBridge {
                                           id: item.id, kind: item.progressKind.rawValue, dday: dday)
             case .subtasks:
                 return subtaskLine(item, dday: dday)
+            case .timer:
+                // 스냅샷은 정적 — 발행 시점 경과로 그린다(진행 중 초는 Live Activity 몫)
+                let target = max(1, item.targetSeconds ?? 1)
+                let elapsed = min(Double(target), item.elapsedSeconds())
+                return WidgetProgressLine(title: item.title,
+                                          label: "\(Int(elapsed) / 60)/\(target / 60)분",
+                                          fraction: min(1, elapsed / Double(target)),
+                                          id: item.id, kind: item.progressKind.rawValue, dday: dday)
+            case .stopwatch:
+                return WidgetProgressLine(title: item.title,
+                                          label: "\(Int(item.elapsedSeconds()) / 60)분",
+                                          fraction: 0,
+                                          id: item.id, kind: item.progressKind.rawValue, dday: dday)
             }
         }
         return (lines, rows.count)

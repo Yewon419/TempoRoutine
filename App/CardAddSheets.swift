@@ -640,6 +640,9 @@ struct OutputAddSheet: View {
             }
             _kind = State(initialValue: item.progressKind)
             if item.targetSessions > 0 { _targetSessions = State(initialValue: item.targetSessions) }
+            if let seconds = item.targetSeconds, seconds > 0 {
+                _targetMinutes = State(initialValue: max(5, seconds / 60))
+            }
             _initialPercent = State(initialValue: item.percent)
             if let target = item.targetDate {
                 _hasTargetDate = State(initialValue: true)
@@ -665,6 +668,7 @@ struct OutputAddSheet: View {
     @State private var targetDate = Date()
     @State private var kind: OutputProgressKind = .percent
     @State private var targetSessions = 3
+    @State private var targetMinutes = 30   // 타이머 목표(분, 2026-08-09)
     @State private var subtaskDraft = ""
     @State private var subtasks: [String] = []
     @State private var initialPercent: Double = 0
@@ -736,15 +740,30 @@ struct OutputAddSheet: View {
                     }
                 }
                 Section("진행 방식") {
+                    // 5종이 되며 segmented가 좁아져 menu로 전환(2026-08-09 타이머·스톱워치 추가)
                     Picker("진행 방식", selection: $kind) {
                         // 라벨만 개명(2026-08-01 베타 피드백) — rawValue "subtasks"는 저장 호환 때문에 불변
                         Text("체크리스트").tag(OutputProgressKind.subtasks)
                         Text("세션").tag(OutputProgressKind.sessions)
                         Text("퍼센트").tag(OutputProgressKind.percent)
+                        Text("타이머").tag(OutputProgressKind.timer)
+                        Text("스톱워치").tag(OutputProgressKind.stopwatch)
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
+                    .tint(Ink.text)
                     if kind == .sessions {
                         Stepper("목표 \(targetSessions)세션", value: $targetSessions, in: 1...50)
+                    }
+                    if kind == .timer {
+                        Stepper("목표 \(targetMinutes)분", value: $targetMinutes, in: 5...240, step: 5)
+                        Text("시작하면 잠금화면에서도 남은 시간이 보여요.")
+                            .font(.footnote)
+                            .foregroundStyle(Ink.text.opacity(0.5))
+                    }
+                    if kind == .stopwatch {
+                        Text("쓴 시간을 재요. 시작하면 잠금화면에서도 이어져요.")
+                            .font(.footnote)
+                            .foregroundStyle(Ink.text.opacity(0.5))
                     }
                     if kind == .subtasks {
                         // 수정 모드: 기존 항목은 체크 상태 보존을 위해 여기서 안 고친다 — 추가만(체크·해제는 카드에서)
@@ -821,11 +840,12 @@ struct OutputAddSheet: View {
                             schedule = .once
                         }
                         if let item = editing {
-                            // createdAt·완료 기록(loggedSessions·기존 서브태스크 isDone)은 보존
+                            // createdAt·완료 기록(loggedSessions·기존 서브태스크 isDone·경과 시간)은 보존
                             item.title = title
                             item.schedule = schedule
                             item.progressKind = kind
                             if kind == .sessions { item.targetSessions = targetSessions }
+                            if kind == .timer { item.targetSeconds = targetMinutes * 60 }
                             if kind == .subtasks, !subtasks.isEmpty {
                                 let base = (item.subtasks ?? []).map(\.order).max().map { $0 + 1 } ?? 0
                                 let added = subtasks.enumerated().map {
@@ -839,6 +859,7 @@ struct OutputAddSheet: View {
                             let item = OutputItem(title: title, schedule: schedule, progressKind: kind,
                                                   createdAt: anchorDate(for: day))
                             if kind == .sessions { item.targetSessions = targetSessions }
+                            if kind == .timer { item.targetSeconds = targetMinutes * 60 }
                             if kind == .subtasks {
                                 item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
                             }

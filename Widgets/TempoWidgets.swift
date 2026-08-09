@@ -48,6 +48,7 @@ struct TempoWidgetsBundle: WidgetBundle {
         InputTodayWidget()     // A단계 (2026-08-02) — Input 전폭
         OutputTodayWidget()    // A단계 (2026-08-02) — Output 전폭 + D-day
         CardLockWidget()       // A단계 (2026-08-02) — 잠금화면 Input 요약 + Output 1건
+        TimerActivityWidget()  // 타이머·스톱워치 Live Activity (2026-08-09)
     }
 }
 

@@ -524,6 +524,10 @@ struct DayDetailView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityValue(item.percent.formatted(.percent.precision(.fractionLength(0))))
+        case .timer, .stopwatch:
+            TimerProgressControl(item: item) { completed in
+                if completed { confirmFeedback += 1 } else { lightFeedback += 1 }
+            }
         }
     }
 }

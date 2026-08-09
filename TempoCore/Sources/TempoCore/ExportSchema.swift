@@ -112,10 +112,15 @@ public struct OutputItemDTO: Codable, Equatable, Sendable {
     public var createdAt: Date
     /// 목표일(디데이, 2026-08-01 베타 피드백). Optional = 구버전 백업엔 키가 없다(자동 합성이 nil로 흡수).
     public var targetDate: Date?
+    /// 타이머·스톱워치(2026-08-09, 같은 optional 패턴). elapsedSeconds = 내보내는 순간의
+    /// 정지 스냅샷(실행 중 델타 접어서) — 실행 상태 자체는 이 기기 것이라 봉투에 안 싣는다.
+    public var targetSeconds: Int?
+    public var elapsedSeconds: Double?
 
     public init(id: UUID, title: String, schedule: OutputSchedule, progressKind: OutputProgressKind,
                 subtasks: [OutputSubtaskDTO], targetSessions: Int, loggedSessions: Int,
-                percent: Double, createdAt: Date, targetDate: Date? = nil) {
+                percent: Double, createdAt: Date, targetDate: Date? = nil,
+                targetSeconds: Int? = nil, elapsedSeconds: Double? = nil) {
         self.id = id
         self.title = title
         self.schedule = schedule
@@ -126,6 +131,8 @@ public struct OutputItemDTO: Codable, Equatable, Sendable {
         self.percent = percent
         self.createdAt = createdAt
         self.targetDate = targetDate
+        self.targetSeconds = targetSeconds
+        self.elapsedSeconds = elapsedSeconds
     }
 }
 
