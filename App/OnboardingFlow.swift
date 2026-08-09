@@ -3,7 +3,8 @@
 // ② 기준일 순차 플로우(개정 M — 3분기 칩 폐기): 연동 스위치 카드 → 분기 = 권한 아님 **병합 결과
 //    에피소드 수**(§5.7 read 거부 판별 불가) → 지속일 스피너 → 월 캘린더 자동 채움(지난달 가능,
 //    스킵 secondary) → 에피소드 1개일 때만 주기 스피너(→ N prior, T1b).
-// ③ 세 가지 카드 소개(일정·Input·Output — 문안 = CardKind.info, 2026-08-09)
+// ③ 세 가지 카드 소개(일정·Input·Output — 탭 진행형 3장 + Input·Output 예시 담기 칩, 2026-08-09.
+//    문안 = CardKind.info)
 // ④ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals, 항목 ⓘ 설명) ⑤ 저장 위치 조건부 카피+체크 카드
 // ⑥ 리듬 설문 — primary 「시작하기」 + 「지금은 넘어가기」 secondary(2026-08-09 승격.
 //    사전 설문 코드 장은 같은 날 폐기 — 웹 사전 설문 자체를 접음)
@@ -65,6 +66,10 @@ struct OnboardingFlow: View {
     @State private var trackSleep = true
     @State private var trackAppetite = true
     @State private var trackNote = true
+    // ③ 세 가지 카드 — 탭 진행형(2026-08-09): 0=일정 / 1=Input / 2=Output + 예시 담기
+    @State private var cardPage = 0
+    @State private var addedExamples: Set<String> = []
+
     // ⑤ 리듬 설문(2026-08-05 사용자 결정) — 온보딩 마지막 단계에서 제안, 강요하지 않는다
     @State private var showSurvey = false
     @Query private var selfReports: [SelfReportRecord]
@@ -251,7 +256,7 @@ struct OnboardingFlow: View {
                 step = 3
             default: break
             }
-        case 3: step = 4   // ③ 세 가지 카드 소개(2026-08-09 사용자 지시) → ④ 추적 항목
+        case 3: advanceCardPage()   // ③ 세 가지 카드 — 장 안에서 진행, 마지막 장이면 ④로
         case 4:
             // pain·irritability = false 고정(2026-08-05 병합) — 입력 행이 없는데 켜두면
             // 설정 복원·백업 경로에서 유령 행이 부활한다. 스키마 필드는 저장 호환 위해 유지.
@@ -276,9 +281,12 @@ struct OnboardingFlow: View {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { introScene -= 1 }
                     } else if step == 2, let prev = baselineStack.popLast() {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { baselinePage = prev }
+                    } else if step == 3 && cardPage > 0 {
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.4)) { cardPage -= 1 }
                     } else {
                         step -= 1
                         if step == 1 { introScene = 2 }
+                        if step == 3 { cardPage = 2 }   // ④에서 돌아오면 마지막 장부터(인트로와 동형)
                     }
                 } label: {
                     Image(systemName: "chevron.left")
@@ -706,38 +714,101 @@ struct OnboardingFlow: View {
         }
     }
 
-    // ══ ③ 세 가지 카드 (2026-08-09 사용자 지시 — 일정·Input·Output 소개) ══
+    // ══ ③ 세 가지 카드 (2026-08-09 사용자 지시 — 탭 진행형: 한 장에 한 항목) ══
     // 문안 = CardKind.info 그대로(코치마크 §3.6 계열) — 온보딩에서 배운 말을
     // 오늘 탭·하루 상세의 ⓘ가 같은 말로 받아야 어휘가 하나로 남는다.
+    // Input·Output 장엔 예시 칩 — 탭하면 실제 아이템으로 바로 담긴다(사용자 지정 예시 4종).
     private var cardsStep: some View {
+        Group {
+            cardPageView(CardKind.allCases[cardPage])
+        }
+        .id(cardPage)
+        .transition(.opacity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .contentShape(Rectangle())
+        .onTapGesture { advanceCardPage() }   // 인트로와 같은 탭 진행 문법
+    }
+
+    private func cardPageView(_ kind: CardKind) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "하루의 구성", title: "하루를 세 가지로\n담아요.")
-            Text("오늘 탭과 하루 상세에서 이 세 구획을 만나요.")
-                .font(.system(.footnote, design: .serif))
-                .foregroundStyle(Ink.text.opacity(0.55))
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(CardKind.allCases) { kind in
-                    cardIntroRow(kind)
-                }
+            stepHeader(eyebrow: "하루의 구성 \(cardPage + 1) / 3", title: kind.rawValue)
+            Text(kind.info)
+                .font(.system(.body, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.78))
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+            if kind == .input {
+                exampleBlock(chips: [("아침명상 5분", "input-meditation"),
+                                     ("잠들기 전 차 한 잔", "input-tea")])
+            } else if kind == .output {
+                exampleBlock(chips: [("시험공부 6챕터", "output-study"),
+                                     ("영어 듣기 30분", "output-listening")])
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .milkGlass()
         }
     }
 
-    private func cardIntroRow(_ kind: CardKind) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(kind.rawValue)
-                .font(.almanac(size: 17, weight: .bold))
-                .foregroundStyle(Ink.text)
-            Text(kind.info)
-                .font(.system(.footnote, design: .serif))
-                .foregroundStyle(Ink.text.opacity(0.65))
-                .fixedSize(horizontal: false, vertical: true)
+    private func advanceCardPage() {
+        lightFeedback += 1
+        if cardPage < 2 {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.4)) { cardPage += 1 }
+        } else {
+            step = 4
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 12)
+    }
+
+    /// 예시 칩 — 탭 = 실제 아이템 추가(1회, 담기면 체크로 바뀜). 삭제는 본 화면에서 언제든.
+    private func exampleBlock(chips: [(label: String, key: String)]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("이런 것들이에요. 탭하면 바로 담겨요.")
+                .font(.caption)
+                .foregroundStyle(Ink.text.opacity(0.5))
+            ForEach(chips, id: \.key) { chip in
+                exampleChip(chip.label, key: chip.key)
+            }
+        }
+        .padding(.top, 6)
+    }
+
+    private func exampleChip(_ label: String, key: String) -> some View {
+        let added = addedExamples.contains(key)
+        return Button {
+            addExample(key)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: added ? "checkmark" : "plus")
+                    .font(.caption2.weight(.bold))
+                Text(label)
+                    .font(.footnote)
+            }
+            .foregroundStyle(Ink.text.opacity(added ? 0.45 : 1))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Ink.text.opacity(added ? 0.04 : 0.08), in: Capsule())
+        }
+        .disabled(added)
+        .accessibilityValue(added ? "담김" : "")
+    }
+
+    private func addExample(_ key: String) {
+        guard !addedExamples.contains(key) else { return }
+        addedExamples.insert(key)
+        lightFeedback += 1
+        switch key {
+        case "input-meditation":
+            modelContext.insert(InputItem(title: "아침명상 5분", category: .other, schedule: .daily))
+        case "input-tea":
+            modelContext.insert(InputItem(title: "잠들기 전 차 한 잔", category: .food, schedule: .daily))
+        case "output-study":
+            let item = OutputItem(title: "시험공부", schedule: .once, progressKind: .subtasks)
+            item.subtasks = (1...6).map { OutputSubtask(title: "\($0)챕터", order: $0 - 1) }
+            modelContext.insert(item)
+        case "output-listening":
+            let item = OutputItem(title: "영어 듣기", schedule: .once, progressKind: .timer)
+            item.targetSeconds = 30 * 60
+            modelContext.insert(item)
+        default:
+            break
+        }
     }
 
     // ══ ④ 추적 항목 ══
