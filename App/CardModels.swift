@@ -163,6 +163,9 @@ final class InputItem {
     /// 지난 날짜에 소급해 적은 기록인가(2026-07-27) — .once의 "완료 전까지 이어짐"을 끄고
     /// 적어 넣은 그날에만 둔다. 오늘 적은 단발 할 일은 종전대로 완료할 때까지 따라온다.
     var backfilled: Bool = false
+    /// 하루 중 시각(자정 기준 분, 2026-08-09 사용자 결정) — 제목 시각 파서가 채운다.
+    /// 정렬(시각 있는 것 시간순, 없으면 맨 뒤)과 행 표시에만 쓰고 발생 판정엔 관여하지 않는다.
+    var timeMinutes: Int?
 
     var schedule: InputSchedule {
         get { (try? JSONDecoder().decode(InputSchedule.self, from: scheduleData)) ?? .daily }
@@ -179,6 +182,7 @@ final class InputItem {
         self.scheduleData = (try? JSONEncoder().encode(schedule)) ?? Data()
         self.createdAt = createdAt
         self.backfilled = backfilled
+        self.timeMinutes = nil
     }
 
     /// .once가 이 날짜에 뜨는가 — 소급 기록은 적어 넣은 그날에만. 완료 판정은 호출부(뷰) 책임.
@@ -251,6 +255,8 @@ final class OutputItem {
     var targetSeconds: Int?                 // 타이머 목표(초). 스톱워치·타 진행 방식 = nil
     var elapsedAccumSeconds: Double = 0     // 일시정지까지 누적된 초
     var timerStartedAt: Date?               // 진행 중 시작 앵커 — nil = 멈춤
+    /// 하루 중 시각(자정 기준 분, 2026-08-09) — InputItem.timeMinutes와 동일 계약
+    var timeMinutes: Int?
 
     var schedule: OutputSchedule {
         get { (try? JSONDecoder().decode(OutputSchedule.self, from: scheduleData)) ?? .daily }
@@ -279,6 +285,7 @@ final class OutputItem {
         self.targetSeconds = nil
         self.elapsedAccumSeconds = 0
         self.timerStartedAt = nil
+        self.timeMinutes = nil
     }
 
     /// .once·.daily·.weekly·.monthly 판정(달력 기준) — InputItem.occursByCalendar와 동형(§ 반복 통일).
@@ -322,4 +329,28 @@ final class OutputItem {
             return false   // 측정 전용 — 완료 개념 없음(§5.5.2 파생 완료의 명시적 예외)
         }
     }
+}
+
+// ── 하루 중 시각 공용 (2026-08-09 사용자 결정 — Input·Output 시각 인식) ──
+
+/// 자정 기준 분 → 로케일 시각 표기(오전 8:00). 일정 행의 time .shortened와 같은 문법.
+func timeOfDayLabel(_ minutes: Int) -> String {
+    var comps = Calendar.current.dateComponents([.year, .month, .day], from: .now)
+    comps.hour = minutes / 60
+    comps.minute = minutes % 60
+    guard let date = Calendar.current.date(from: comps) else { return "" }
+    return date.formatted(date: .omitted, time: .shortened)
+}
+
+/// 하루 안 정렬(2026-08-09): 시각 있는 항목 = 시간순, 없는 항목 = 맨 뒤. 동률·무시각은
+/// 원래 순서 유지(안정 정렬 — enumerated 인덱스 대조).
+func sortedByTimeOfDay<T>(_ items: [T], time: (T) -> Int?) -> [T] {
+    items.enumerated().sorted { a, b in
+        switch (time(a.element), time(b.element)) {
+        case let (t1?, t2?): t1 == t2 ? a.offset < b.offset : t1 < t2
+        case (.some, .none): true
+        case (.none, .some): false
+        case (.none, .none): a.offset < b.offset
+        }
+    }.map(\.element)
 }

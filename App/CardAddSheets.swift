@@ -433,6 +433,7 @@ struct InputAddSheet: View {
         if let item = editing {
             _title = State(initialValue: item.title)
             _category = State(initialValue: item.category)
+            _timeMinutes = State(initialValue: item.timeMinutes)
             switch item.schedule {
             case .once:
                 _repeats = State(initialValue: false)
@@ -468,6 +469,10 @@ struct InputAddSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var category: InputCategory = .other
+    // 제목 시각 파서(2026-08-09 사용자 결정 — 일정 시트 문법 승계): 원문 불변, 지운 표현은 재적용 안 함
+    @State private var timeMinutes: Int?
+    @State private var lastMatch: String?
+    @State private var rejectedMatch: String?
     @State private var repeats = true      // 기본 = 매일(체크리스트가 본질). 반복+주기 둘 다 끔 = .once(2026-07-23)
     @State private var cycleBased = false
     @State private var calendarFreq: ScheduleRepeat = .daily   // 반복(달력 기준) 칩 선택 — daily/weekly/monthly만 사용
@@ -494,10 +499,31 @@ struct InputAddSheet: View {
         return "예: \(ex)"
     }
 
+    /// 제목에서 시각 읽기 — 일정 시트와 같은 규칙(원문 불변·지운 표현 재적용 안 함).
+    /// 수정 프리필 시각(lastMatch == nil)은 제목이 바뀌어도 유지된다.
+    private func applyTitleTimeParse() {
+        let parsed = ScheduleTextParser.parse(title)
+        if let start = parsed.start {
+            guard parsed.matchedText != rejectedMatch else { return }
+            timeMinutes = start.minutesOfDay
+            lastMatch = parsed.matchedText
+        } else if lastMatch != nil {
+            timeMinutes = nil
+            lastMatch = nil
+            rejectedMatch = nil
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 TextField(placeholder, text: $title)
+                    .onChange(of: title) { applyTitleTimeParse() }
+                cardTimeHint(timeMinutes: timeMinutes) {
+                    rejectedMatch = lastMatch
+                    timeMinutes = nil
+                    lastMatch = nil
+                }
                 Picker("카테고리", selection: $category) {
                     Text("식단").tag(InputCategory.food)
                     Text("운동").tag(InputCategory.exercise)
@@ -586,11 +612,14 @@ struct InputAddSheet: View {
                             item.title = title
                             item.category = category
                             item.schedule = schedule
+                            item.timeMinutes = timeMinutes
                         } else {
                             let cal = Calendar.current
-                            modelContext.insert(InputItem(title: title, category: category, schedule: schedule,
-                                                          createdAt: anchorDate(for: day),
-                                                          backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now)))
+                            let item = InputItem(title: title, category: category, schedule: schedule,
+                                                 createdAt: anchorDate(for: day),
+                                                 backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now))
+                            item.timeMinutes = timeMinutes
+                            modelContext.insert(item)
                         }
                         confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
                         dismiss()
@@ -639,6 +668,7 @@ struct OutputAddSheet: View {
                 _wholePhase = State(initialValue: r.spansWholePhase)
             }
             _kind = State(initialValue: item.progressKind)
+            _timeMinutes = State(initialValue: item.timeMinutes)
             if item.targetSessions > 0 { _targetSessions = State(initialValue: item.targetSessions) }
             if let seconds = item.targetSeconds, seconds > 0 {
                 _targetMinutes = State(initialValue: max(5, seconds / 60))
@@ -657,6 +687,10 @@ struct OutputAddSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
+    // 제목 시각 파서(2026-08-09) — InputAddSheet와 동형
+    @State private var timeMinutes: Int?
+    @State private var lastMatch: String?
+    @State private var rejectedMatch: String?
     @State private var repeats = false     // 반복 끔 + 주기 끔 = .once(2026-07-22 베타 피드백 — 단발 목표)
     @State private var cycleBased = false
     @State private var calendarFreq: ScheduleRepeat = .daily   // 반복(달력 기준) 칩 선택 — daily/weekly/monthly만 사용
@@ -680,6 +714,12 @@ struct OutputAddSheet: View {
         NavigationStack {
             Form {
                 TextField("예: 자격증 공부", text: $title)
+                    .onChange(of: title) { applyTitleTimeParse() }
+                cardTimeHint(timeMinutes: timeMinutes) {
+                    rejectedMatch = lastMatch
+                    timeMinutes = nil
+                    lastMatch = nil
+                }
                 Section {
                     // 표기 개편(2026-08-01 베타 피드백): 「반복」→「기간 반복」(달력 주기),
                     // 「주기 기준」→「<계절> 반복」(몸의 주기). 상호 배타 — 둘 다 끄면 반복 없음.
@@ -844,6 +884,7 @@ struct OutputAddSheet: View {
                             item.title = title
                             item.schedule = schedule
                             item.progressKind = kind
+                            item.timeMinutes = timeMinutes
                             if kind == .sessions { item.targetSessions = targetSessions }
                             if kind == .timer { item.targetSeconds = targetMinutes * 60 }
                             if kind == .subtasks, !subtasks.isEmpty {
@@ -858,6 +899,7 @@ struct OutputAddSheet: View {
                         } else {
                             let item = OutputItem(title: title, schedule: schedule, progressKind: kind,
                                                   createdAt: anchorDate(for: day))
+                            item.timeMinutes = timeMinutes
                             if kind == .sessions { item.targetSessions = targetSessions }
                             if kind == .timer { item.targetSeconds = targetMinutes * 60 }
                             if kind == .subtasks {
@@ -874,6 +916,37 @@ struct OutputAddSheet: View {
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
+        }
+    }
+
+    /// 제목에서 시각 읽기 — InputAddSheet와 동형(원문 불변·지운 표현 재적용 안 함)
+    private func applyTitleTimeParse() {
+        let parsed = ScheduleTextParser.parse(title)
+        if let start = parsed.start {
+            guard parsed.matchedText != rejectedMatch else { return }
+            timeMinutes = start.minutesOfDay
+            lastMatch = parsed.matchedText
+        } else if lastMatch != nil {
+            timeMinutes = nil
+            lastMatch = nil
+            rejectedMatch = nil
+        }
+    }
+}
+
+/// Input·Output 공용 — 파서가 읽은 시각 안내 한 줄 + 「지우기」(2026-08-09 사용자 결정).
+/// 시각은 표시·정렬용이고 발생 판정·알림엔 관여하지 않는다.
+@ViewBuilder
+func cardTimeHint(timeMinutes: Int?, clear: @escaping () -> Void) -> some View {
+    if let t = timeMinutes {
+        HStack {
+            Text("\(timeOfDayLabel(t))에 하는 걸로 표시돼요")
+                .font(.footnote)
+                .foregroundStyle(Ink.text.opacity(0.55))
+            Spacer()
+            Button("지우기", action: clear)
+                .font(.footnote)
+                .foregroundStyle(Ink.text.opacity(0.5))
         }
     }
 }

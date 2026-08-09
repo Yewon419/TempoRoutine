@@ -74,15 +74,18 @@ public struct InputItemDTO: Codable, Equatable, Sendable {
     /// 소급 기록 여부(2026-07-27, v1 내 optional 추가 — 구 봉투는 nil=false).
     /// 빠지면 복원 시 소급 .once가 "완료 전까지 이어짐"으로 되살아난다.
     public var backfilled: Bool?
+    /// 하루 중 시각(자정 기준 분, 2026-08-09 — 제목 시각 파서. 같은 optional 패턴)
+    public var timeMinutes: Int?
 
     public init(id: UUID, title: String, category: InputCategory, schedule: InputSchedule,
-                createdAt: Date, backfilled: Bool? = nil) {
+                createdAt: Date, backfilled: Bool? = nil, timeMinutes: Int? = nil) {
         self.id = id
         self.title = title
         self.category = category
         self.schedule = schedule
         self.createdAt = createdAt
         self.backfilled = backfilled
+        self.timeMinutes = timeMinutes
     }
 }
 
@@ -116,11 +119,13 @@ public struct OutputItemDTO: Codable, Equatable, Sendable {
     /// 정지 스냅샷(실행 중 델타 접어서) — 실행 상태 자체는 이 기기 것이라 봉투에 안 싣는다.
     public var targetSeconds: Int?
     public var elapsedSeconds: Double?
+    /// 하루 중 시각(자정 기준 분, 2026-08-09 — InputItemDTO와 동일 계약)
+    public var timeMinutes: Int?
 
     public init(id: UUID, title: String, schedule: OutputSchedule, progressKind: OutputProgressKind,
                 subtasks: [OutputSubtaskDTO], targetSessions: Int, loggedSessions: Int,
                 percent: Double, createdAt: Date, targetDate: Date? = nil,
-                targetSeconds: Int? = nil, elapsedSeconds: Double? = nil) {
+                targetSeconds: Int? = nil, elapsedSeconds: Double? = nil, timeMinutes: Int? = nil) {
         self.id = id
         self.title = title
         self.schedule = schedule
@@ -133,6 +138,7 @@ public struct OutputItemDTO: Codable, Equatable, Sendable {
         self.targetDate = targetDate
         self.targetSeconds = targetSeconds
         self.elapsedSeconds = elapsedSeconds
+        self.timeMinutes = timeMinutes
     }
 }
 

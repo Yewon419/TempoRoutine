@@ -45,12 +45,13 @@ enum WidgetBridge {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
-    /// 그날 일정 줄 — 하루 상세와 같은 소스(occurs 판정). 종일 먼저, 최대 4줄(위젯 예산).
+    /// 그날 일정 줄 — 하루 상세와 같은 소스(occurs 판정). 최대 4줄(위젯 예산).
+    /// 시각 있는 것 시간순·종일은 맨 뒤(2026-08-09 사용자 결정 — 앱 행 정렬과 통일, 구 종일 선두 폐기).
     private static func scheduleLines(on day: Date, schedules: [ScheduleItem]) -> [WidgetScheduleLine]? {
         let rows = schedules.filter { $0.occurs(on: day) }
         guard !rows.isEmpty else { return nil }
         let sorted = rows.sorted { a, b in
-            if a.isAllDay != b.isAllDay { return a.isAllDay }
+            if a.isAllDay != b.isAllDay { return b.isAllDay }
             return a.date < b.date
         }
         return sorted.prefix(4).map { item in
@@ -85,8 +86,9 @@ enum WidgetBridge {
             }
         }
         guard !rows.isEmpty else { return nil }
-        // 6줄까지 — 중형 위젯이 5줄을 그린다(종전 4는 중형에서 모자랐다)
-        let lines = rows.prefix(6).map { WidgetCheckLine(title: $0.title, done: checked($0.id), id: $0.id) }
+        // 시각 정렬(2026-08-09 — 앱 행과 통일) 후 6줄까지 — 중형 위젯이 5줄을 그린다
+        let ordered = sortedByTimeOfDay(rows) { $0.timeMinutes }
+        let lines = ordered.prefix(6).map { WidgetCheckLine(title: $0.title, done: checked($0.id), id: $0.id) }
         return (lines, rows.count, rows.filter { checked($0.id) }.count)
     }
 
@@ -106,8 +108,10 @@ enum WidgetBridge {
             }
         }
         guard !rows.isEmpty else { return nil }
+        // 시각 정렬(2026-08-09 — 앱 행과 통일)
+        let ordered = sortedByTimeOfDay(rows) { $0.timeMinutes }
         // 클로저 반환 타입 명시 — 문장 추가로 암묵 반환이 깨진 자리(CLAUDE.md Swift 6 함정 ②)
-        let lines = rows.prefix(6).map { item -> WidgetProgressLine in
+        let lines = ordered.prefix(6).map { item -> WidgetProgressLine in
             let dday = ddayLabel(target: item.targetDate, from: day)
             switch item.progressKind {
             case .percent:

@@ -403,8 +403,13 @@ struct TodayView: View {
         .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)
     }
 
-    // ① 일정 (오늘)
-    private var todaySchedules: [ScheduleItem] { schedules.filter { $0.occurs(on: today) } }
+    // ① 일정 (오늘) — 시각 있는 것 시간순, 종일(무시각)은 맨 뒤(2026-08-09 사용자 결정)
+    private var todaySchedules: [ScheduleItem] {
+        sortedByTimeOfDay(schedules.filter { $0.occurs(on: today) }) { item in
+            item.isAllDay ? nil : cal.component(.hour, from: item.date) * 60
+                + cal.component(.minute, from: item.date)
+        }
+    }
 
     @ViewBuilder
     private var scheduleSection: some View {
@@ -443,8 +448,13 @@ struct TodayView: View {
         CalendarConnectRow()
     }
 
-    // ② Input (오늘) — 하루 상세와 동일 데이터(ItemCompletion) 양방향 동기화
+    // ② Input (오늘) — 하루 상세와 동일 데이터(ItemCompletion) 양방향 동기화.
+    // 시각 있는 것 시간순·없으면 맨 뒤(2026-08-09)
     private var todayInputs: [InputItem] {
+        sortedByTimeOfDay(todayInputsUnsorted) { $0.timeMinutes }
+    }
+
+    private var todayInputsUnsorted: [InputItem] {
         inputs.filter { item in
             switch item.schedule {
             case .once:
@@ -498,6 +508,12 @@ struct TodayView: View {
                             .foregroundStyle(Ink.text)
                             .strikethrough(checked, color: Ink.dim)
                         Spacer()
+                        // 파서가 읽은 시각 — 일정 행과 같은 trailing 문법(2026-08-09)
+                        if let t = item.timeMinutes {
+                            Text(timeOfDayLabel(t))
+                                .font(.caption)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                        }
                     }
                 }
                 .simultaneousGesture(quickDeleteGesture(.input(item), into: $pendingDelete,
@@ -508,8 +524,12 @@ struct TodayView: View {
         }
     }
 
-    // ③ Output (오늘 occurrence) + 계절 레버 카피
+    // ③ Output (오늘 occurrence) + 계절 레버 카피 — 시각 정렬은 Input과 동일(2026-08-09)
     private var todayOutputs: [OutputItem] {
+        sortedByTimeOfDay(todayOutputsUnsorted) { $0.timeMinutes }
+    }
+
+    private var todayOutputsUnsorted: [OutputItem] {
         outputs.filter { item in
             switch item.schedule {
             case .once, .daily, .weekly, .monthly:
@@ -548,6 +568,11 @@ struct TodayView: View {
                             Text("완료").font(.caption2.weight(.semibold)).foregroundStyle(Ink.text.opacity(0.6))
                         }
                         Spacer()
+                        if let t = item.timeMinutes {   // 파서 시각 — trailing 문법(2026-08-09)
+                            Text(timeOfDayLabel(t))
+                                .font(.caption)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                        }
                     }
                     outputProgress(item)
                 }

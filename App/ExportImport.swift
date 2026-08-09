@@ -80,7 +80,8 @@ enum ExportImport {
             inputItems: store.inputs.map {
                 InputItemDTO(id: $0.id, title: $0.title, category: $0.category,
                              schedule: $0.schedule, createdAt: $0.createdAt,
-                             backfilled: $0.backfilled ? true : nil)
+                             backfilled: $0.backfilled ? true : nil,
+                             timeMinutes: $0.timeMinutes)
             },
             outputItems: store.outputs.map { item in
                 OutputItemDTO(id: item.id, title: item.title, schedule: item.schedule,
@@ -93,7 +94,8 @@ enum ExportImport {
                               targetDate: item.targetDate,
                               targetSeconds: item.targetSeconds,
                               // 실행 중이어도 스냅샷은 접힌 경과로(실행 상태는 봉투 밖)
-                              elapsedSeconds: item.elapsedSeconds() > 0 ? item.elapsedSeconds() : nil)
+                              elapsedSeconds: item.elapsedSeconds() > 0 ? item.elapsedSeconds() : nil,
+                              timeMinutes: item.timeMinutes)
             },
             completions: store.completions.map {
                 ItemCompletionDTO(id: $0.id, itemID: $0.itemID,
@@ -149,6 +151,7 @@ enum ExportImport {
                                  backfilled: dto.backfilled ?? false)
             item.id = dto.id
             item.createdAt = dto.createdAt
+            item.timeMinutes = dto.timeMinutes
             context.insert(item)
             added += 1
         }
@@ -164,6 +167,7 @@ enum ExportImport {
             item.targetDate = dto.targetDate
             item.targetSeconds = dto.targetSeconds
             item.elapsedAccumSeconds = dto.elapsedSeconds ?? 0   // 복원 = 정지 상태(2026-08-09)
+            item.timeMinutes = dto.timeMinutes
             item.subtasks = dto.subtasks.map { sub in
                 let subtask = OutputSubtask(title: sub.title, order: sub.order)
                 subtask.id = sub.id

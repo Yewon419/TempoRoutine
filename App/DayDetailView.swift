@@ -291,8 +291,13 @@ struct DayDetailView: View {
         .milkGlass()
     }
 
-    // ① 일정
-    private var scheduleRows: [ScheduleItem] { schedules.filter { $0.occurs(on: day) } }
+    // ① 일정 — 시각 있는 것 시간순, 종일(무시각)은 맨 뒤(2026-08-09 사용자 결정, 오늘 탭과 동형)
+    private var scheduleRows: [ScheduleItem] {
+        sortedByTimeOfDay(schedules.filter { $0.occurs(on: day) }) { item in
+            item.isAllDay ? nil : cal.component(.hour, from: item.date) * 60
+                + cal.component(.minute, from: item.date)
+        }
+    }
 
     private var scheduleCard: some View {
         cardShell(.schedule, empty: false) {
@@ -351,6 +356,10 @@ struct DayDetailView: View {
     }
 
     private var inputRows: [InputRow] {
+        sortedByTimeOfDay(inputRowsUnsorted) { $0.item.timeMinutes }
+    }
+
+    private var inputRowsUnsorted: [InputRow] {
         inputs.compactMap { item in
             switch item.schedule {
             case .once:
@@ -412,6 +421,11 @@ struct DayDetailView: View {
                             Text("예상").font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
                         }
                         Spacer()
+                        if let t = row.item.timeMinutes {   // 파서 시각 — trailing 문법(2026-08-09)
+                            Text(timeOfDayLabel(t))
+                                .font(.caption)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                        }
                     }
                     .font(.subheadline)
                 }
@@ -431,6 +445,10 @@ struct DayDetailView: View {
     }
 
     private var outputRows: [OutputRow] {
+        sortedByTimeOfDay(outputRowsUnsorted) { $0.item.timeMinutes }
+    }
+
+    private var outputRowsUnsorted: [OutputRow] {
         outputs.compactMap { item in
             switch item.schedule {
             case .once, .daily, .weekly, .monthly:
@@ -475,6 +493,11 @@ struct DayDetailView: View {
                             Text("완료").font(.caption2.weight(.semibold)).foregroundStyle(Ink.text.opacity(0.6))
                         }
                         Spacer()
+                        if let t = row.item.timeMinutes {   // 파서 시각 — trailing 문법(2026-08-09)
+                            Text(timeOfDayLabel(t))
+                                .font(.caption)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                        }
                     }
                     progressControl(row.item)
                 }
