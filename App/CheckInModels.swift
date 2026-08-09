@@ -22,6 +22,9 @@ final class DailyCheckIn {
     /// 소급 입력 여부(v1.5 §3-4) — 회상 기반이라 EMA(순간 자기보고)와 측정 시간 척도가 다르다.
     /// 적합에서 가중치를 낮추거나 제외하기 위한 플래그. CloudKit 규칙상 기본값 필수.
     var isBackfilled: Bool = false
+    /// 체크인이 처음 완성된 시각(씨앗 재화 근거, 2026-08-09 — 판정·지급 규칙은 Seeds).
+    /// optional 추가라 구 저장분 디코딩·CloudKit 규칙 모두 무영향. nil = 미완성.
+    var completedAt: Date?
 
     init(day: Date, energy: Int, mood: Int, isBackfilled: Bool = false) {
         self.id = UUID()
@@ -35,5 +38,6 @@ final class DailyCheckIn {
         self.note = nil
         self.createdAt = .now
         self.isBackfilled = isBackfilled
+        self.completedAt = nil
     }
 }

@@ -176,6 +176,7 @@ struct CheckInCard: View {
                 // 과거에 기록된 값을 0 초안으로 덮어쓰면 리듬 집계 표본이 파괴된다.
                 existing.appetite = draftAppetite > 0 ? draftAppetite : nil
                 existing.note = hasNote ? draftNote : nil
+                Seeds.stampCompletion(existing, signals: signals)   // 씨앗 완료 도장(2026-08-09)
             } else {
                 modelContext.delete(existing)   // 전부 해제 = 기록 철회(스킵 무벌점)
             }
@@ -187,6 +188,7 @@ struct CheckInCard: View {
             created.sleep = draftSleep > 0 ? draftSleep : nil
             created.appetite = draftAppetite > 0 ? draftAppetite : nil
             created.note = hasNote ? draftNote : nil
+            Seeds.stampCompletion(created, signals: signals)   // 씨앗 완료 도장(2026-08-09)
             modelContext.insert(created)
         }
     }

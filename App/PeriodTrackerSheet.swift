@@ -400,6 +400,7 @@ struct CheckInEditor: View {
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
                 existing.note = hasNote ? draftNote : nil
+                Seeds.stampCompletion(existing, signals: AppSettings.trackedSignals)   // 씨앗(2026-08-09)
             } else {
                 modelContext.delete(existing)
             }
@@ -407,6 +408,7 @@ struct CheckInEditor: View {
             let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood)
             new.sleep = draftSleep > 0 ? draftSleep : nil
             new.note = hasNote ? draftNote : nil
+            Seeds.stampCompletion(new, signals: AppSettings.trackedSignals)   // 씨앗(2026-08-09)
             modelContext.insert(new)
         }
     }

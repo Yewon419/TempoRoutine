@@ -235,6 +235,11 @@ struct TodayView: View {
     // ── 컬랩싱 헤더: 큰 층 ──
     private var largeHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // 씨앗 잔액(2026-08-09 사용자 결정 — 오늘 탭 우상단). 규칙·판정 = Seeds.
+            HStack {
+                Spacer()
+                SeedBadge(count: Seeds.balance(checkIns))
+            }
             if let info = todayInfo {
                 // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
                 // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
