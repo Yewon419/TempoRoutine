@@ -21,6 +21,7 @@ struct CheckInCard: View {
     @State private var draftAppetite = 0
     @State private var draftNote = ""
     @State private var draftLoaded = false
+    @State private var seedEarned = 0   // 씨앗 획득 연출 트리거(2026-08-09)
 
     /// 어떤 행을 보여줄지는 온보딩·설정에서 고른 추적 항목이 정한다(§3.10).
     /// ⚠ 종전에는 이 배선이 없어 통증·식욕을 켜도 카드에 나오지 않았다(2026-08-04 발견).
@@ -74,6 +75,7 @@ struct CheckInCard: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
+        .seedBurst(trigger: seedEarned)   // 획득 연출(2026-08-09)
         .onAppear(perform: loadDraft)
         // 날짜가 바뀌면 그날 것으로 다시 읽는다(2026-08-03 베타 피드백 "어제 저장한 게 오늘까지 표시").
         // onAppear 한 번만 로드하면, 앱을 백그라운드에 둔 채 자정을 넘겼을 때 day는 오늘로 바뀌는데
@@ -176,7 +178,7 @@ struct CheckInCard: View {
                 // 과거에 기록된 값을 0 초안으로 덮어쓰면 리듬 집계 표본이 파괴된다.
                 existing.appetite = draftAppetite > 0 ? draftAppetite : nil
                 existing.note = hasNote ? draftNote : nil
-                Seeds.stampCompletion(existing, signals: signals)   // 씨앗 완료 도장(2026-08-09)
+                if Seeds.stampCompletion(existing, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
             } else {
                 modelContext.delete(existing)   // 전부 해제 = 기록 철회(스킵 무벌점)
             }
@@ -188,7 +190,7 @@ struct CheckInCard: View {
             created.sleep = draftSleep > 0 ? draftSleep : nil
             created.appetite = draftAppetite > 0 ? draftAppetite : nil
             created.note = hasNote ? draftNote : nil
-            Seeds.stampCompletion(created, signals: signals)   // 씨앗 완료 도장(2026-08-09)
+            if Seeds.stampCompletion(created, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
             modelContext.insert(created)
         }
     }

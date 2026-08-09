@@ -321,6 +321,7 @@ struct CheckInEditor: View {
     @State private var draftSleep = 0
     @State private var draftNote = ""
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 신호 선택, 확정 아님)
+    @State private var seedEarned = 0      // 씨앗 획득 연출 트리거(2026-08-09)
 
     private var today: Date { Calendar.current.startOfDay(for: .now) }
     private var isFuture: Bool { day > today }
@@ -345,6 +346,7 @@ struct CheckInEditor: View {
         }
         .padding(16)
         .milkGlass(radius: 14)
+        .seedBurst(trigger: seedEarned)   // 획득 연출(2026-08-09)
         .opacity(isFuture ? 0.45 : 1.0)
         .disabled(isFuture)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
@@ -400,7 +402,7 @@ struct CheckInEditor: View {
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
                 existing.note = hasNote ? draftNote : nil
-                Seeds.stampCompletion(existing, signals: AppSettings.trackedSignals)   // 씨앗(2026-08-09)
+                if Seeds.stampCompletion(existing, signals: AppSettings.trackedSignals) { seedEarned += 1 }
             } else {
                 modelContext.delete(existing)
             }
@@ -408,7 +410,7 @@ struct CheckInEditor: View {
             let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood)
             new.sleep = draftSleep > 0 ? draftSleep : nil
             new.note = hasNote ? draftNote : nil
-            Seeds.stampCompletion(new, signals: AppSettings.trackedSignals)   // 씨앗(2026-08-09)
+            if Seeds.stampCompletion(new, signals: AppSettings.trackedSignals) { seedEarned += 1 }
             modelContext.insert(new)
         }
     }
