@@ -3,8 +3,9 @@
 // ② 기준일 순차 플로우(개정 M — 3분기 칩 폐기): 연동 스위치 카드 → 분기 = 권한 아님 **병합 결과
 //    에피소드 수**(§5.7 read 거부 판별 불가) → 지속일 스피너 → 월 캘린더 자동 채움(지난달 가능,
 //    스킵 secondary) → 에피소드 1개일 때만 주기 스피너(→ N prior, T1b).
-// ③ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals, 항목 ⓘ 설명) ④ 저장 위치 조건부 카피+체크 카드
-// ⑤ 리듬 설문 — primary 「시작하기」 + 「지금은 넘어가기」 secondary(2026-08-09 승격.
+// ③ 세 가지 카드 소개(일정·Input·Output — 문안 = CardKind.info, 2026-08-09)
+// ④ 추적 항목(에너지·기분 기본 + 옵션 → TrackedSignals, 항목 ⓘ 설명) ⑤ 저장 위치 조건부 카피+체크 카드
+// ⑥ 리듬 설문 — primary 「시작하기」 + 「지금은 넘어가기」 secondary(2026-08-09 승격.
 //    사전 설문 코드 장은 같은 날 폐기 — 웹 사전 설문 자체를 접음)
 // 진행 점은 인트로 숨김·2단계부터. 실권한은 실제 연동 순간만(§3.6.1).
 
@@ -78,8 +79,9 @@ struct OnboardingFlow: View {
                     switch step {
                     case 1: intro
                     case 2: baselineStep
-                    case 3: signalsStep
-                    case 4: storageStep
+                    case 3: cardsStep
+                    case 4: signalsStep
+                    case 5: storageStep
                     default: surveyStep
                     }
                 }
@@ -173,9 +175,9 @@ struct OnboardingFlow: View {
             if step == 2 && baselinePage == 3 {
                 ghostButton("잘 모르겠어요") { AppSettings.cycleLengthPrior = nil; step = 3 }
             }
-            // ⑤ 설문 건너뛰기(2026-08-09 사용자 결정) — 설문은 primary로 승격하되 강요는 안 한다.
+            // ⑥ 설문 건너뛰기(2026-08-09 사용자 결정) — 설문은 primary로 승격하되 강요는 안 한다.
             // ② 생리주기 질문의 secondary와 별개다(그쪽은 넘어가기가 있어도 필수 성격).
-            if step == 5 && selfReports.isEmpty {
+            if step == 6 && selfReports.isEmpty {
                 ghostButton("지금은 넘어가기") { onboardingDone = true }
                 Text("언제든 설정에서 다시 답변할 수 있어요.")
                     .font(.caption)
@@ -227,8 +229,8 @@ struct OnboardingFlow: View {
     private var primaryLabel: String {
         switch step {
         case 1: introScene == 0 ? "시작" : "다음"
-        case 2, 3, 4: "다음"
-        // ⑤ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
+        case 2, 3, 4, 5: "다음"
+        // ⑥ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
         default: selfReports.isEmpty ? "시작하기" : "오늘 화면으로"
         }
     }
@@ -249,14 +251,15 @@ struct OnboardingFlow: View {
                 step = 3
             default: break
             }
-        case 3:
+        case 3: step = 4   // ③ 세 가지 카드 소개(2026-08-09 사용자 지시) → ④ 추적 항목
+        case 4:
             // pain·irritability = false 고정(2026-08-05 병합) — 입력 행이 없는데 켜두면
             // 설정 복원·백업 경로에서 유령 행이 부활한다. 스키마 필드는 저장 호환 위해 유지.
             AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: false,
                                                         appetite: trackAppetite, note: trackNote,
                                                         irritability: false)
-            step = 4
-        case 4: step = 5   // ⑤ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
+            step = 5
+        case 5: step = 6   // ⑥ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
         default:
             if selfReports.isEmpty { showSurvey = true }   // 「시작하기」 — 제출·닫힘 처리는 sheet onDismiss
             else { onboardingDone = true }
@@ -291,7 +294,7 @@ struct OnboardingFlow: View {
     // ── 진행 점 (인트로 숨김) — 지난·현재 스텝 채움 + 현재 스텝만 알약형(시안 .ob-dot 이식) ──
     private var dots: some View {
         HStack(spacing: 8) {
-            ForEach(1...5, id: \.self) { i in
+            ForEach(1...6, id: \.self) { i in
                 Capsule()
                     .fill(i <= step ? Ink.text : Ink.text.opacity(0.22))
                     .frame(width: i == step ? 16 : 6, height: 6)
@@ -703,7 +706,41 @@ struct OnboardingFlow: View {
         }
     }
 
-    // ══ ③ 추적 항목 ══
+    // ══ ③ 세 가지 카드 (2026-08-09 사용자 지시 — 일정·Input·Output 소개) ══
+    // 문안 = CardKind.info 그대로(코치마크 §3.6 계열) — 온보딩에서 배운 말을
+    // 오늘 탭·하루 상세의 ⓘ가 같은 말로 받아야 어휘가 하나로 남는다.
+    private var cardsStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(eyebrow: "하루의 구성", title: "하루를 세 가지로\n담아요.")
+            Text("오늘 탭과 하루 상세에서 이 세 구획을 만나요.")
+                .font(.system(.footnote, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.55))
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(CardKind.allCases) { kind in
+                    cardIntroRow(kind)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .milkGlass()
+        }
+    }
+
+    private func cardIntroRow(_ kind: CardKind) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(kind.rawValue)
+                .font(.almanac(size: 17, weight: .bold))
+                .foregroundStyle(Ink.text)
+            Text(kind.info)
+                .font(.system(.footnote, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.65))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12)
+    }
+
+    // ══ ④ 추적 항목 ══
     private var signalsStep: some View {
         VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "기록할 것", title: "무엇을 기록할까요?")
@@ -762,7 +799,7 @@ struct OnboardingFlow: View {
         .onChange(of: value.wrappedValue) { _, _ in lightFeedback += 1 }
     }
 
-    // ══ ④ 저장 위치 ══
+    // ══ ⑤ 저장 위치 ══
     // 2026-07-23 개정(§5.2 동기화 실장): iCloud 행·카피는 실제 활성일 때만(정확성 — §7 privacy-washing 금지).
     // iPad 타깃 추가로 "이 아이폰" → "이 기기". 마지막 줄 = §3.10 공유·통제 고정 한 줄.
     private var storageStep: some View {
@@ -802,7 +839,7 @@ struct OnboardingFlow: View {
         }
     }
 
-    // ══ ⑤ 리듬 설문 (2026-08-05 신설 → 2026-08-09 승격, 사용자 결정) ══
+    // ══ ⑥ 리듬 설문 (2026-08-05 신설 → 2026-08-09 승격, 사용자 결정) ══
     // 설문이 primary(「시작하기」)다 — 생리 앱의 신뢰를 첫인상에서 세우는 단계라서.
     // 강요하지 않기는 유지: 바로 아래 「지금은 넘어가기」 + 설정 재답변 안내(bottomBar).
     // 여기서 답하면 나의 리듬 탭의 설문 프롬프트는 다시 뜨지 않는다(레코드 존재로 판정).
