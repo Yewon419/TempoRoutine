@@ -27,9 +27,12 @@ struct SelfReportFlow: View {
         NavigationStack {
             ZStack {
                 Ink.paper.ignoresSafeArea()
+                // "설문지" 인상 걷어내기(2026-08-08 베타 피드백 "하기 싫게 생겼어") —
+                // 온보딩과 같은 겨울 광 + 감쇠 텍스처로 앱의 지면 어휘를 잇는다
+                SeasonLight(phase: .menstrual, motif: .onboarding)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        progressRule
+                        progressHeader
                         content
                         actions
                     }
@@ -47,15 +50,27 @@ struct SelfReportFlow: View {
         }
     }
 
-    private var progressRule: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Rectangle().fill(Ink.text.opacity(0.15))
-                Rectangle().fill(Ink.text)
-                    .frame(width: proxy.size.width * Double(step) / Double(totalSteps))
+    // 진행도 명시(2026-08-08 베타 피드백 "진행도도 표시해줘") — 얇은 실선만으론 안 읽혔다
+    private var progressHeader: some View {
+        HStack(spacing: 10) {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Ink.text.opacity(0.12))
+                    Capsule().fill(Ink.text.opacity(0.65))
+                        .frame(width: max(step > 0 ? 6 : 0,
+                                          proxy.size.width * Double(step) / Double(totalSteps)))
+                }
+            }
+            .frame(height: 4)
+            if step > 0 {
+                Text("\(step) / \(totalSteps)")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(Ink.text.opacity(0.55))
             }
         }
-        .frame(height: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("진행도 \(step) / \(totalSteps)")
     }
 
     @ViewBuilder
@@ -120,11 +135,14 @@ struct SelfReportFlow: View {
         }
     }
 
+    // 문항 = 세리프 표제 + 라디오·괘선 리스트(2026-08-08 베타 피드백 — 회색 캡슐 12개가
+    // 벽처럼 쌓이던 조판 폐기, 책력 개방 조판으로). 측정 로직·저장 키는 무변경.
     private func questionBlock(_ question: SurveyQuestion) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(question.text)
-                .font(.subheadline.weight(.medium))
+                .font(.almanacBody(.subheadline, size: 16, weight: .bold))
                 .foregroundStyle(Ink.text)
+                .padding(.bottom, 4)
             ForEach(question.choices, id: \.value) { choice in
                 choiceRow(question: question, choice: choice)
             }
@@ -136,17 +154,20 @@ struct SelfReportFlow: View {
         return Button {
             answers[question.id] = selected ? nil : choice.value
         } label: {
-            HStack {
-                Text(choice.label)
+            HStack(spacing: 10) {
+                Image(systemName: selected ? "circle.inset.filled" : "circle")
                     .font(.subheadline)
-                    .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.85))
+                    .foregroundStyle(selected ? Ink.text : Ink.text.opacity(0.3))
+                Text(choice.label)
+                    .font(.subheadline.weight(selected ? .semibold : .regular))
+                    .foregroundStyle(Ink.text.opacity(selected ? 1.0 : 0.75))
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 14)
             .padding(.vertical, 11)
-            .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.06)),
-                        in: RoundedRectangle(cornerRadius: 10))
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .almanacRule(opacity: 0.12)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
