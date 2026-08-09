@@ -17,6 +17,7 @@ struct SeasonCalendarView: View {
     @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
+    @Query private var checkIns: [DailyCheckIn]   // 씨앗 스티커 근거(2026-08-09)
 
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
@@ -37,6 +38,10 @@ struct SeasonCalendarView: View {
     @Environment(\.colorScheme) private var colorScheme   // 상단 계절광 다크 감쇠
     @State private var pressFeedback = 0        // 길게 누르기 진입 햅틱(중간 — 탭보다 강하게)
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
+    // 씨앗 스티커(2026-08-09) — 켬이 기본, 끄면 계획(일정 글줄)이 깨끗하게 보인다
+    @AppStorage("calendarStickersOn") private var stickersOn = true
+    @State private var awardedDays: Set<Date> = []
+    @State private var stickersIn = false       // 등장 연출 트리거 — 탭 진입마다 리플레이
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
@@ -124,6 +129,29 @@ struct SeasonCalendarView: View {
                 DayDetailView(day: pushedDay)
             }
         }
+        // 씨앗 스티커(2026-08-09) — 완료일 집합은 상태로 들고 셀은 조회만(드래그 프레임 경로 규칙).
+        // seedStamp가 id라 도장·개수 변화 때만 재계산되고, 탭 재진입마다 등장 연출을 다시 돈다.
+        .task(id: seedStamp) { awardedDays = Seeds.awardedDays(checkIns) }
+        .task { await replayStickers() }
+        .onChange(of: stickersOn) { _, on in
+            if on { Task { await replayStickers() } }
+        }
+    }
+
+    // ── 씨앗 스티커 상태 (2026-08-09 사용자 결정 — "기록 완료한 날 보상") ──
+    /// 도장 유무·개수만 요약한 스탬프 — body 평가당 O(n) 1회로 재계산 트리거를 만든다
+    /// (@Query 배열은 Equatable이 아니라 onChange 불가, 셀마다 파생 계산은 드래그 규칙 위반).
+    private var seedStamp: Int {
+        checkIns.count &* 1000 &+ checkIns.filter { $0.completedAt != nil }.count
+    }
+
+    /// 탭에 들어올 때마다 스티커가 쫑쫑 붙는 등장 연출. Reduce Motion = 즉시 완성 상태.
+    @MainActor
+    private func replayStickers() async {
+        stickersIn = false
+        guard !reduceMotion else { stickersIn = true; return }
+        try? await Task.sleep(nanoseconds: 120_000_000)
+        stickersIn = true
     }
 
     /// 캘린더 본문 — 지면·계절광·(아이패드)분할. body에서 떼어내 타입체크 부담을 줄인다.
@@ -220,6 +248,7 @@ struct SeasonCalendarView: View {
             monthCarousel
                 .coachAnchor(.calendarGrid)
             legend
+            stickerToggleRow
             Spacer(minLength: 0)
         }
         .padding(20)
@@ -231,8 +260,10 @@ struct SeasonCalendarView: View {
     /// 계절 라인 + 생리 기록 버튼 — 상단 순서 분기용 추출(2026-07-29, 내용 무변화)
     private var seasonHeaderRow: some View {
         HStack(alignment: .firstTextBaseline) {
+            // 번들 서체 명시(2026-08-09 베타 피드백 "봄 10일차 저거도" — New York은 한글 글리프가
+            // 없어 고딕 폴백되던 것, 08-01 계절 라벨 2건과 같은 뿌리)
             Text(seasonLine)
-                .font(.system(.subheadline, design: .serif))
+                .font(.almanacBody(.subheadline, size: 15))
                 .foregroundStyle(Ink.text.opacity(0.65))
             Spacer()
             // 기록 편집 진입 — 캘린더 탭 자체는 조회 전용
@@ -802,7 +833,9 @@ struct SeasonCalendarView: View {
                                 Circle().fill(Ink.frost).frame(width: 33, height: 33)
                             }
                             if isToday {
-                                Circle().fill(Ink.accent)
+                                // 기본 = 표제와 같은 먹색(2026-08-09 베타 피드백 "8월 글씨색이랑 같게"
+                                // — §8.1 은필 확정을 뒤집는 사용자 결정) / 모던 = accent(흰) 시안 유지
+                                Circle().fill(ThemeStore.current == .modern ? Ink.accent : Ink.text)
                             } else if ThemeStore.current == .modern && render.periodShown.contains(date) {
                                 Circle().fill(Ink.record.opacity(0.3))
                             }
@@ -858,14 +891,41 @@ struct SeasonCalendarView: View {
                     RoundedRectangle(cornerRadius: 10).stroke(Ink.text.opacity(0.28), lineWidth: 1)
                 }
             }
+            .overlay(alignment: .topTrailing) { seedSticker(for: date) }
     }
 
-    /// 캘린더 숫자 서체 — 모던 = Pretendard 500(오늘 600, 시안 §1.3-3), 기본 = 시스템 유지
+    /// 씨앗 스티커(2026-08-09) — 체크인 완료일의 우상단 도장. 탭 진입마다 날짜 순서로
+    /// 쫑쫑 붙는다(delay = 일자 비례). 계획 가독이 우선이라 하단 토글로 끌 수 있다.
+    @ViewBuilder
+    private func seedSticker(for date: Date) -> some View {
+        if stickersOn && awardedDays.contains(date) {
+            SeedGlyph()
+                .fill(Ink.text.opacity(0.6))
+                .frame(width: 7, height: 10)
+                .rotationEffect(.degrees(18))
+                .padding(.top, 2)
+                .padding(.trailing, 3)
+                .scaleEffect(stickersIn ? 1 : 0.01)
+                .opacity(stickersIn ? 1 : 0)
+                .animation(reduceMotion ? nil
+                           : .spring(response: 0.32, dampingFraction: 0.6)
+                               .delay(Double(cal.component(.day, from: date)) * 0.035),
+                           value: stickersIn)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// 캘린더 숫자 서체 — 모던 = Pretendard 500(오늘 600, 시안 §1.3-3),
+    /// 기본 = 표제와 같은 번들 서체(2026-08-09 베타 피드백 "8월 폰트랑 같게" — 시스템 산세리프 폐기)
     private func numberFont(isToday: Bool) -> Font {
         if ThemeStore.current == .modern, ThemeFont.available {
             return .custom(isToday ? "Pretendard-SemiBold" : "Pretendard-Medium", size: 14)
         }
-        return .system(size: 14, weight: isToday ? .bold : .semibold)
+        guard AlmanacFont.available else {
+            return .system(size: 14, weight: isToday ? .bold : .semibold, design: .serif)
+        }
+        return .custom(isToday ? "GowunBatang-Bold" : "GowunBatang-Regular", size: 14)
     }
 
     /// 하루짜리 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성). 높이·R2·서체 = 띠 동일
@@ -981,6 +1041,24 @@ struct SeasonCalendarView: View {
             Text(meta.name)
                 .font(.system(size: 12, weight: .semibold, design: .serif))
                 .foregroundStyle(meta.color)
+        }
+    }
+
+    // ── 씨앗 스티커 온오프 (2026-08-09 사용자 결정 — "계획이 안 보이면 안 되니까") ──
+    private var stickerToggleRow: some View {
+        HStack(spacing: 6) {
+            Spacer()
+            SeedGlyph()
+                .fill(Ink.text.opacity(0.5))
+                .frame(width: 7, height: 10)
+                .rotationEffect(.degrees(16))
+            Text("스티커")
+                .font(.caption)
+                .foregroundStyle(Ink.text.opacity(0.6))
+            Toggle("씨앗 스티커 표시", isOn: $stickersOn)
+                .labelsHidden()
+                .tint(Ink.text)
+                .controlSize(.mini)
         }
     }
 
