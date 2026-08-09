@@ -1,6 +1,7 @@
 // 템포루틴 — 테마 탭 (2026-08-09 사용자 지시, §8.2.6·§3.8.1)
-// 진입 = 설정 「테마」 행 + 오늘 탭 씨앗 배지 탭. 구매 언어 = 「심기」(상거래 밖 — §3.8.1,
-// 돈 문법 금지). 가격: 모던 = 씨앗 7개(2026-08-09 사용자 확정 — §3.8.1 미결 ① 해소).
+// 진입 = 설정 「테마」 행 + 오늘 탭 씨앗 배지 탭. UI 언어 = 평문 「구매」·「적용」(2026-08-09
+// 2차 번복 — 「심기」는 "너무 추상적". 코드 식별자 plant/planted는 유지, 사용자 표면만 평문).
+// 가격: 모던 = 씨앗 7개(2026-08-09 사용자 확정 — §3.8.1 미결 ① 해소).
 // 미리보기·엠블럼은 활성 테마와 무관하게 각 테마의 팔레트 리터럴로 그린다(Ink 미사용) —
 // 지금 무슨 테마를 쓰든 다른 테마의 얼굴이 제 색으로 보여야 미리보기다.
 
@@ -73,32 +74,32 @@ struct ThemeShopView: View {
         }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sensoryFeedback(.success, trigger: celebrateTick)
-        // 심기 확인(2026-08-09) — 씨앗을 쓰는 확정 액션이라 한 번 묻는다(§8.2.6 확인 문법)
+        // 구매 확인(2026-08-09) — 씨앗을 쓰는 확정 액션이라 한 번 묻는다(§8.2.6 확인 문법)
         .confirmationDialog(
-            plantCandidate.map { "「\($0.displayName)」 심기" } ?? "",
+            plantCandidate.map { "「\($0.displayName)」 구매" } ?? "",
             isPresented: Binding(get: { plantCandidate != nil },
                                  set: { if !$0 { plantCandidate = nil } }),
             titleVisibility: .visible
         ) {
             if let price = plantCandidate?.seedPrice {
-                Button("씨앗 \(price)개 심기") {
+                Button("씨앗 \(price)개로 구매") {
                     if let theme = plantCandidate { plant(theme) }
                     plantCandidate = nil
                 }
             }
             Button("취소", role: .cancel) { plantCandidate = nil }
         } message: {
-            Text("심은 테마는 사라지지 않아요. 적용은 심은 뒤 언제든 할 수 있어요.")
+            Text("구매한 테마는 사라지지 않아요. 적용은 언제든 할 수 있어요.")
         }
-        // 성공 메시지(연출 한 박자 뒤) — 심기와 적용이 분리라 여기서 적용을 권한다
-        .alert(plantedAlert.map { "「\($0.displayName)」이 피었어요" } ?? "",
+        // 성공 메시지(연출 한 박자 뒤) — 구매와 적용이 분리라 여기서 적용을 권한다
+        .alert(plantedAlert.map { "「\($0.displayName)」을 구매했어요" } ?? "",
                isPresented: Binding(get: { plantedAlert != nil },
                                     set: { if !$0 { plantedAlert = nil } }),
                presenting: plantedAlert) { theme in
-            Button("지금 갈아입기") { apply(theme) }
+            Button("지금 적용하기") { apply(theme) }
             Button("나중에") { plantedAlert = nil }
         } message: { theme in
-            Text("씨앗 \(theme.seedPrice ?? 0)개가 새 지면으로 피어났어요. 마음이 내킬 때 갈아입어 보세요.")
+            Text("씨앗 \(theme.seedPrice ?? 0)개를 썼어요. 마음이 내킬 때 갈아입어 보세요.")
         }
         .onAppear {
             // 이미 모던을 쓰던 베타 기기 = 심긴 것으로 승계 — 쓰던 테마를 잠그지 않는다(신뢰)
@@ -113,7 +114,7 @@ struct ThemeShopView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 10) {
-            Text("모은 씨앗으로\n새 지면을 심을 수 있어요.")
+            Text("모은 씨앗으로\n새 테마를 구매할 수 있어요.")
                 .font(.almanacBody(.subheadline, size: 16, weight: .bold))
                 .foregroundStyle(Ink.text)
                 .fixedSize(horizontal: false, vertical: true)
@@ -187,7 +188,7 @@ struct ThemeShopView: View {
                             .fill(Ink.paper)
                             .frame(width: 8, height: 11)
                             .rotationEffect(.degrees(16))
-                        Text("씨앗 \(price)개 심기")
+                        Text("씨앗 \(price)개로 구매")
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(Ink.paper)
@@ -202,7 +203,7 @@ struct ThemeShopView: View {
                         .fill(Ink.text.opacity(0.4))
                         .frame(width: 8, height: 11)
                         .rotationEffect(.degrees(16))
-                    Text("씨앗 \(price)개로 심을 수 있어요 · 지금 \(available)개")
+                    Text("씨앗 \(price)개로 구매할 수 있어요 · 지금 \(available)개")
                         .font(.footnote)
                         .foregroundStyle(Ink.text.opacity(0.55))
                 }

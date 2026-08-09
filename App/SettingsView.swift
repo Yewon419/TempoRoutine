@@ -239,7 +239,7 @@ struct SettingsView: View {
                     Text("테마")
                 } footer: {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
-                    Text("체크인으로 모은 씨앗으로 새 테마를 심을 수 있어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
+                    Text("체크인으로 모은 씨앗으로 새 테마를 구매할 수 있어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
                 }
 
                 // 파괴적 액션 — 분리 배치(§8.2.6)
