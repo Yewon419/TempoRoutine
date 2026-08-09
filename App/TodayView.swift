@@ -237,9 +237,10 @@ struct TodayView: View {
     // ── 컬랩싱 헤더: 큰 층 ──
     private var largeHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 씨앗 잔액(2026-08-09 — 오늘 탭 우상단). 규칙·판정 = Seeds.
-            // 탭 = 테마 탭 진입(사용자 지시) / 표시값 = 소비 차감 후 available(심기 도입).
+            // 좌상단 브랜드 표식(2026-08-09 사용자 지시) + 우상단 씨앗 잔액.
+            // 씨앗 탭 = 테마 탭 진입 / 표시값 = 소비 차감 후 available(심기 도입).
             HStack {
+                BrandMark(diameter: 18, color: Ink.text.opacity(0.75))
                 Spacer()
                 Button {
                     lightFeedback += 1

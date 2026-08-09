@@ -222,6 +222,11 @@ struct SeasonCalendarView: View {
     /// 캘린더 열 — compact에선 전체 화면, regular에선 분할 좌측(2026-07-23)
     private func calendarColumn() -> some View {
         VStack(alignment: .leading, spacing: 12) {
+            // 좌상단 브랜드 표식(2026-08-09 사용자 지시) — 오늘 탭과 같은 자리·크기
+            HStack {
+                BrandMark(diameter: 18, color: Ink.text.opacity(0.75))
+                Spacer()
+            }
             // 상단 순서(시안 §1.3-6, 모던 전용 분기 — 2026-07-29 사용자 결정):
             // 모던 = 계절 라인·기록 버튼이 상단 제자리, 거대 표제는 그 아래
             if ThemeStore.current == .modern {

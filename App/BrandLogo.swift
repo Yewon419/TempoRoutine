@@ -67,9 +67,52 @@ struct BrandLogo: View {
     }
 }
 
+/// 심볼 단독(끊긴 원 + 점) — 탭 좌상단 브랜드 표식 등 소형 사용처(2026-08-09 사용자 지시).
+/// 소형에선 로고 원비율 획(3.125%)·점(5.3%)이 흐려져 두께·점만 키운다 — 앱 아이콘이
+/// 작은 크기에서 링을 두껍게 보정한 것과 같은 근거. 끊김 각도는 원비율 유지.
+struct BrandMark: View {
+    var diameter: CGFloat = 18
+    var color: Color = Ink.text
+
+    private static let gapHalf: CGFloat = 0.0331   // BrandLogo와 동값(12시 끊김)
+    private static let strokeRatio: CGFloat = 0.07
+    private static let dotRatio: CGFloat = 0.085
+
+    private var stroke: CGFloat { diameter * Self.strokeRatio }
+
+    var body: some View {
+        ZStack {
+            ring
+            dot
+        }
+        .frame(width: diameter, height: diameter)
+        .accessibilityHidden(true)   // 장식 표식 — 탭 이름이 이미 맥락을 준다
+    }
+
+    private var ring: some View {
+        let side: CGFloat = diameter - stroke
+        return Circle()
+            .trim(from: Self.gapHalf, to: 1 - Self.gapHalf)
+            .stroke(color, style: StrokeStyle(lineWidth: stroke, lineCap: .round))
+            .rotationEffect(.degrees(-90))
+            .frame(width: side, height: side)
+    }
+
+    private var dot: some View {
+        let size: CGFloat = diameter * Self.dotRatio * 2
+        return Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            .offset(y: -diameter / 2)
+    }
+}
+
 #Preview {
     ZStack {
         Ink.paper.ignoresSafeArea()
-        BrandLogo(diameter: 120)
+        VStack(spacing: 30) {
+            BrandLogo(diameter: 120)
+            BrandMark(diameter: 18)
+        }
     }
 }
