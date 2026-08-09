@@ -273,10 +273,10 @@ struct SeasonLight: View {
                     Color(red: 150 / 255, green: 152 / 255, blue: 158 / 255).opacity(0.13))
         }
         return switch phase {
-        case .follicular:
-            (Color(red: 216 / 255, green: 196 / 255, blue: 132 / 255).opacity(0.55),
-             Color(red: 228 / 255, green: 214 / 255, blue: 164 / 255).opacity(0.38),
-             Color(red: 208 / 255, green: 190 / 255, blue: 138 / 255).opacity(0.42))
+        case .follicular:   // 파스텔 옐로 보정(2026-08-09 사용자 지시 "칙칙해" — 구 겨자·카키 톤 폐기)
+            (Color(red: 248 / 255, green: 228 / 255, blue: 140 / 255).opacity(0.55),
+             Color(red: 252 / 255, green: 240 / 255, blue: 184 / 255).opacity(0.38),
+             Color(red: 244 / 255, green: 224 / 255, blue: 148 / 255).opacity(0.42))
         case .ovulation:   // 연두 보정(채도↓명도↑, 2026-07-21 사용자 결정)
             (Color(red: 207 / 255, green: 221 / 255, blue: 179 / 255).opacity(0.55),
              Color(red: 231 / 255, green: 237 / 255, blue: 214 / 255).opacity(0.38),
