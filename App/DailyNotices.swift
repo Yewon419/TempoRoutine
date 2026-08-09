@@ -94,8 +94,12 @@ enum DailyNotices {
         if briefingOn {
             for offset in 0..<briefingDays {
                 guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
-                // EventKit 오버레이 일정은 제외(로컬 일정만 — 위젯 §8.2.8과 같은 경계)
+                // 애플 캘린더(EventKit) 일정 포함(2026-08-09 사용자 결정 — "브리핑이 안 온다"의 원인이
+                // 일정을 캘린더 앱으로 관리하는 사용 방식이었음). 종전 제외는 위젯 §8.2.8 경계의 준용
+                // 이었는데 위젯(스냅샷 파일)과 달리 브리핑은 예약 시점 라이브 쿼리라 제약이 없다.
+                // dedup 없음(§3.6.1 신뢰 식별자 없음) — 같은 제목이 양쪽에 있으면 두 번 나열된다.
                 let titles = schedules.filter { $0.occurs(on: day) }.map(\.title)
+                    + EventOverlay.shared.events(on: day).map(\.title)
                 guard !titles.isEmpty,
                       let fire = cal.date(bySettingHour: briefingHour, minute: 0, second: 0, of: day),
                       fire > .now else { continue }
