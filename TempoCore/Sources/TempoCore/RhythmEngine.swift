@@ -8,11 +8,13 @@
 
 import Foundation
 
-/// 스위처가 다루는 신호(§8.2.5 — 에너지·기분·수면). pain은 M축 전용이라 여기 없다.
+/// 리듬 탭이 다루는 신호(§8.2.5 — 에너지·기분·수면·식욕). pain은 M축 전용이라 여기 없다.
+/// appetite = 2026-08-09 추가(베타 피드백 "에너지 기분 수면 식욕 다 넣어놓되 세로로 쭉").
 public enum SignalKind: String, CaseIterable, Equatable, Sendable {
     case energy
     case mood
     case sleep
+    case appetite
 }
 
 /// 집계 입력 행 — 앱의 DailyCheckIn에서 변환해 넘긴다(TempoCore는 SwiftData를 모른다).
@@ -21,12 +23,15 @@ public struct SignalSample: Equatable, Sendable {
     public let energy: Int
     public let mood: Int
     public let sleep: Int?
+    public let appetite: Int?
 
-    public init(day: Date, energy: Int, mood: Int, sleep: Int?) {
+    /// appetite 기본 nil — 기존 콜사이트·테스트(3인자) 하위 호환.
+    public init(day: Date, energy: Int, mood: Int, sleep: Int?, appetite: Int? = nil) {
         self.day = day
         self.energy = energy
         self.mood = mood
         self.sleep = sleep
+        self.appetite = appetite
     }
 
     func value(of signal: SignalKind) -> Int? {
@@ -34,6 +39,7 @@ public struct SignalSample: Equatable, Sendable {
         case .energy: energy
         case .mood: mood
         case .sleep: sleep
+        case .appetite: appetite
         }
     }
 }

@@ -6,28 +6,8 @@
 import SwiftUI
 import TempoCore
 
-/// 신호 하위 칩 [에너지|기분|수면] — 2026-08-09 나의 리듬 재편으로 「나의 사계」 섹션 안의
-/// 2층 스위처가 됐다(구 v68의 4번째 「나의 사계」 낱장 스왑 칩은 상위 섹션 스위처로 승격·폐기).
-enum RhythmSignalTab: String, CaseIterable, Identifiable {
-    case energy, mood, sleep
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .energy: "에너지"
-        case .mood: "기분"
-        case .sleep: "수면"
-        }
-    }
-
-    var signal: SignalKind {
-        switch self {
-        case .energy: .energy
-        case .mood: .mood
-        case .sleep: .sleep
-        }
-    }
-}
+// 신호 칩 enum은 2026-08-09 세로 나열 재편으로 폐기 — 「나의 사계」 탭이 신호 패널 전부를
+// 스택으로 편다(베타 피드백 "세로로 쭉 펼쳐놓으란 뜻"). 패널이 자기 이름표를 단다.
 
 struct SignalPanel: View {
     let signal: SignalKind
@@ -40,12 +20,23 @@ struct SignalPanel: View {
     private var narratable: Bool { RhythmEngine.narratable(summaries, signal: signal) }
     private var totalCount: Int { bySignal.reduce(0) { $0 + $1.sampleCount } }
 
-    // ── 신호별 어휘 (에너지 높게/낮게 · 기분 밝게/잔잔하게 · 수면은 체크인 칩 어휘) ──
+    // ── 신호별 어휘 (에너지 높게/낮게 · 기분 밝게/잔잔하게 · 수면·식욕은 체크인 칩 어휘) ──
+    /// 이름표(카드 제목) — 세로 나열 재편(2026-08-09)으로 패널이 자기 신호명을 단다.
+    var titleName: String {
+        switch signal {
+        case .energy: "에너지"
+        case .mood: "기분"
+        case .sleep: "수면"
+        case .appetite: "식욕"
+        }
+    }
+
     private var signalName: String {
         switch signal {
         case .energy: "에너지"
         case .mood: "기분"
         case .sleep: "잠"
+        case .appetite: "식욕"
         }
     }
 
@@ -55,6 +46,7 @@ struct SignalPanel: View {
         case .energy: "에너지는"
         case .mood: "기분은"
         case .sleep: "잠은"
+        case .appetite: "식욕은"
         }
     }
 
@@ -63,6 +55,7 @@ struct SignalPanel: View {
         case .energy: "가장 높고"
         case .mood: "가장 밝고"
         case .sleep: "가장 포근하고"
+        case .appetite: "가장 좋고"
         }
     }
 
@@ -71,6 +64,7 @@ struct SignalPanel: View {
         case .energy: "가장 낮게"
         case .mood: "가장 잔잔하게"
         case .sleep: "가장 뒤척인 걸로"
+        case .appetite: "가장 떨어진 걸로"
         }
     }
 
@@ -79,6 +73,7 @@ struct SignalPanel: View {
         case .energy: "가장 높게"
         case .mood: "가장 밝게"
         case .sleep: "가장 포근하게"
+        case .appetite: "가장 좋게"
         }
     }
 
@@ -87,6 +82,7 @@ struct SignalPanel: View {
         case .energy: "가장 낮게"
         case .mood: "가장 잔잔하게"
         case .sleep: "가장 뒤척임"
+        case .appetite: "가장 떨어짐"
         }
     }
 
@@ -95,6 +91,7 @@ struct SignalPanel: View {
         case .energy: "가장 높게"
         case .mood: "가장 밝게"
         case .sleep: "가장 포근하게"
+        case .appetite: "가장 좋게"
         }
     }
 
@@ -156,6 +153,10 @@ struct SignalPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            // 이름표 — 세로 나열에서 어느 신호의 패널인지(2026-08-09)
+            Text(titleName)
+                .font(.almanac(size: 17, weight: .bold))
+                .foregroundStyle(Ink.text)
             Text(narration)
                 .font(.system(.subheadline, design: .serif))
                 .foregroundStyle(Ink.text)
