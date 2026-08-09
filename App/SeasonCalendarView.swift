@@ -21,6 +21,8 @@ struct SeasonCalendarView: View {
 
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
+    @State private var showNotices = false          // 소식란(2026-08-09)
+    private let noticeFeed = NoticeFeed.shared      // @Observable — 미읽음 점 추종
     @State private var pushedDay: Date?
     @State private var selectedDay: Date?       // regular 분할 뷰의 우측 하루 상세 선택(2026-07-23)
     @State private var quickAddDay: Date?       // 길게 누른 날짜 → 빠른 일정 시트(2026-07-25)
@@ -116,6 +118,8 @@ struct SeasonCalendarView: View {
         .sheet(isPresented: $showLogSheet) {
             PeriodTrackerSheet()
         }
+        .sheet(isPresented: $showNotices) { NoticesView() }
+        .task { await noticeFeed.refresh() }   // 캘린더 진입 시 미읽음 점 갱신(1시간 캐시)
         .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sensoryFeedback(.impact(weight: .medium), trigger: pressFeedback)
@@ -422,6 +426,23 @@ struct SeasonCalendarView: View {
             } label: {
                 Image(systemName: "chevron.right").frame(width: 44, height: 44)
             }
+            // 소식란(2026-08-09 사용자 지시 — 우상단 확성기, 미읽음 점)
+            Button {
+                lightFeedback += 1
+                showNotices = true
+            } label: {
+                Image(systemName: "megaphone")
+                    .font(.system(size: 15, weight: .medium))
+                    .frame(width: 40, height: 44)
+                    .overlay(alignment: .topTrailing) {
+                        if noticeFeed.hasUnread {
+                            Circle().fill(Ink.holiday)
+                                .frame(width: 6, height: 6)
+                                .offset(x: -5, y: 12)
+                        }
+                    }
+            }
+            .accessibilityLabel(noticeFeed.hasUnread ? "소식, 새 글 있음" : "소식")
         }
         .foregroundStyle(Ink.text)
     }

@@ -58,10 +58,34 @@ enum Seeds {
         set { UserDefaults.standard.set(newValue, forKey: spentKey) }
     }
 
-    /// 쓸 수 있는 씨앗 = 획득 − 소비. 기록 철회로 획득이 줄면 음수가 될 수 있어
+    // ── 보너스 — 소식란 씨앗 뿌리기 (2026-08-09, 공지 id별 1회 수령) ──
+    private static let bonusKey = "seedsBonus"
+    private static let claimedNoticesKey = "claimedNotices"
+
+    static var bonus: Int {
+        get { UserDefaults.standard.integer(forKey: bonusKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bonusKey) }
+    }
+
+    static var claimedNotices: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: claimedNoticesKey) ?? []) }
+        set { UserDefaults.standard.set(Array(newValue).sorted(), forKey: claimedNoticesKey) }
+    }
+
+    /// 공지 씨앗 수령 — 공지 id별 1회. 성공 시 보너스 원장에 누적.
+    static func claim(noticeID: String, seeds: Int) -> Bool {
+        guard seeds > 0, !claimedNotices.contains(noticeID) else { return false }
+        bonus += seeds
+        var set = claimedNotices
+        set.insert(noticeID)
+        claimedNotices = set
+        return true
+    }
+
+    /// 쓸 수 있는 씨앗 = 획득 + 보너스 − 소비. 기록 철회로 획득이 줄면 음수가 될 수 있어
     /// 표시·판정 하한 0(§3.8.1 하한 처리 — 이미 심은 테마는 회수하지 않는다).
     static func available(_ checkIns: [DailyCheckIn]) -> Int {
-        max(0, balance(checkIns) - spent)
+        max(0, balance(checkIns) + bonus - spent)
     }
 
     /// 심기 — 이미 심었으면 참(멱등), 잔액 부족이면 거짓. 성공 시 소비 원장에 기록.
