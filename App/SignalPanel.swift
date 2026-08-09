@@ -6,9 +6,10 @@
 import SwiftUI
 import TempoCore
 
-/// 스위처 칩 순서 = 시안 v68: [에너지|기분|수면|나의 사계]. 사계는 패널이 아니라 낱장 스왑.
+/// 신호 하위 칩 [에너지|기분|수면] — 2026-08-09 나의 리듬 재편으로 「나의 사계」 섹션 안의
+/// 2층 스위처가 됐다(구 v68의 4번째 「나의 사계」 낱장 스왑 칩은 상위 섹션 스위처로 승격·폐기).
 enum RhythmSignalTab: String, CaseIterable, Identifiable {
-    case energy, mood, sleep, seasons
+    case energy, mood, sleep
     var id: String { rawValue }
 
     var label: String {
@@ -16,16 +17,14 @@ enum RhythmSignalTab: String, CaseIterable, Identifiable {
         case .energy: "에너지"
         case .mood: "기분"
         case .sleep: "수면"
-        case .seasons: "나의 사계"
         }
     }
 
-    var signal: SignalKind? {
+    var signal: SignalKind {
         switch self {
         case .energy: .energy
         case .mood: .mood
         case .sleep: .sleep
-        case .seasons: nil
         }
     }
 }

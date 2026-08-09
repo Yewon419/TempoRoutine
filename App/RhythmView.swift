@@ -1,6 +1,10 @@
-// 템포루틴 — 나의 리듬 탭 (MASTER §8.2.5 P0 표면: 콜드스타트 + 나의 사계 낱장 기본 노출)
-// 신호 패널·집계 서술은 P1 로직(§5.6.3 — P0는 데이터 형태만 락). 카피 = 프로토 v77 전사.
-// 나의 사계(§3.5.1 공유 안전 화면): 렌더 금지 = 날짜·주기 시점·체크인·메모·진행도 — 루틴 이름만.
+// 템포루틴 — 나의 리듬 탭 (MASTER §8.2.5 — 2026-08-09 사용자 지시로 3섹션 재편)
+// 상위 스위처 [나의 사계 | 나의 루틴 | 한 줄 기록]:
+//   나의 사계 = 관측 패턴(구 신호 패널 — 콜드 카드 + 신호 하위 칩 에너지·기분·수면 + 패널)
+//   나의 루틴 = 구 「나의 사계」 낱장 개명(§3.5.1 공유 안전 화면 — 렌더 금지: 날짜·주기 시점·
+//               체크인·메모·진행도, 루틴 이름·종류 태그만)
+//   한 줄 기록 = 일기 모음(구 하단 상시 카드에서 분리)
+// 신호 패널·집계 서술은 §5.6.3 계약. 카피 = 프로토 v77 전사.
 
 import SwiftUI
 import SwiftData
@@ -25,7 +29,8 @@ struct RhythmView: View {
     @State private var confirmFeedback = 0
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
-    // 신호 스위처(§8.2.5 v68) — 사계 칩 선택 시 패널 자리에 낱장 스왑
+    // 상위 섹션 스위처(2026-08-09 재편) + 사계 안의 신호 하위 칩
+    @State private var section: RhythmSection = .seasons
     @State private var signalTab: RhythmSignalTab = .energy
 
     private var cal: Calendar { Calendar.current }
@@ -70,19 +75,23 @@ struct RhythmView: View {
                     almanacDisplay("나의 리듬", size: 44, color: Ink.text)
                         .padding(.top, 12)
                     selfReportPrompt
-                    coldCard
-                    if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
-                        meanwhileCard
+                    sectionSwitcher
+                    switch section {
+                    case .seasons:
+                        // 관측 패턴 — 콜드 문법 승계: 서술 가능한 신호가 없으면 진행 카드만
+                        coldCard
+                        if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
+                            meanwhileCard
+                        }
+                        if showSwitcher {
+                            signalSwitcher
+                            signalPanelArea
+                        }
+                    case .routines:
+                        routinesSheet
+                    case .diary:
+                        diarySheet
                     }
-                    if showSwitcher {
-                        // 완료 상태(v68): 스위처 + 패널, 사계는 4번째 칩으로 낱장 스왑
-                        signalSwitcher
-                        signalPanelArea
-                    } else {
-                        // 콜드(v77): 스위처 부재 — 사계 낱장 상시 노출(§3.5.1 체크인 비의존)
-                        seasonsSheet
-                    }
-                    diarySheet
                 }
                 .padding(20)
                 .centeredColumn(720)   // 아이패드 중앙 조판(2026-07-23)
@@ -149,54 +158,71 @@ struct RhythmView: View {
         }
     }
 
-    // ── 신호 스위처 (v68 — 칩 [에너지|기분|수면|나의 사계]) ──
+    // ── 상위 섹션 스위처 (2026-08-09 재편 — [나의 사계|나의 루틴|한 줄 기록]) ──
+    private enum RhythmSection: String, CaseIterable, Identifiable {
+        case seasons = "나의 사계"
+        case routines = "나의 루틴"
+        case diary = "한 줄 기록"
+        var id: String { rawValue }
+    }
+
+    private var sectionSwitcher: some View {
+        HStack(spacing: 8) {
+            ForEach(RhythmSection.allCases) { item in
+                chip(label: item.rawValue, selected: section == item) { section = item }
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("보기 선택")
+    }
+
+    // ── 신호 하위 칩 (사계 섹션 안 — [에너지|기분|수면]) ──
     /// 선택 탭이 숨겨진 칩(수면 추적 끔)이면 에너지로 폴백 — 아무 칩도 선택 안 된 상태 방지.
     private var activeTab: RhythmSignalTab {
         signalTabs.contains(signalTab) ? signalTab : .energy
     }
 
     /// SwiftUI 타입체크 폭발 방지(CLAUDE.md) — 패널 분기를 body 식에서 뗀다.
-    @ViewBuilder
     private var signalPanelArea: some View {
-        if let signal = activeTab.signal {
-            SignalPanel(signal: signal,
-                        summaries: signalSummaries,
-                        topPhases: RhythmEngine.perCycleTopPhases(signal: signal,
-                                                                  samples: signalSamples,
-                                                                  periodStarts: snapshot.starts,
-                                                                  menstrualLength: snapshot.menstrualLength),
-                        // "지난 N주기" = 표본이 든 주기만(2026-08-05 실기기 — HK 이어받기 사용자는
-                        // 전체 주기 수가 23 같은 값이 되어 서술이 어긋난다)
-                        completedCycles: RhythmEngine.cyclesWithData(signal: signal,
+        let signal = activeTab.signal
+        return SignalPanel(signal: signal,
+                           summaries: signalSummaries,
+                           topPhases: RhythmEngine.perCycleTopPhases(signal: signal,
                                                                      samples: signalSamples,
-                                                                     periodStarts: snapshot.starts),
-                        currentPhase: snapshot.phase(on: today))
-        } else {
-            seasonsSheet
-        }
+                                                                     periodStarts: snapshot.starts,
+                                                                     menstrualLength: snapshot.menstrualLength),
+                           // "지난 N주기" = 표본이 든 주기만(2026-08-05 실기기 — HK 이어받기 사용자는
+                           // 전체 주기 수가 23 같은 값이 되어 서술이 어긋난다)
+                           completedCycles: RhythmEngine.cyclesWithData(signal: signal,
+                                                                        samples: signalSamples,
+                                                                        periodStarts: snapshot.starts),
+                           currentPhase: snapshot.phase(on: today))
     }
 
     private var signalSwitcher: some View {
         HStack(spacing: 8) {
             ForEach(signalTabs) { tab in
-                let selected = activeTab == tab
-                Button {
-                    signalTab = tab
-                } label: {
-                    Text(tab.label)
-                        .font(.caption)
-                        .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(selected ? AnyShapeStyle(Ink.text)
-                                             : AnyShapeStyle(Ink.text.opacity(0.08)), in: Capsule())
-                }
-                .accessibilityAddTraits(selected ? [.isSelected] : [])
+                chip(label: tab.label, selected: activeTab == tab) { signalTab = tab }
             }
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("신호 선택")
+    }
+
+    /// 칩 공용 렌더 — 상위 섹션·신호 하위 칩이 같은 문법을 쓴다(v68 칩 시각 그대로).
+    private func chip(label: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(selected ? AnyShapeStyle(Ink.text)
+                                     : AnyShapeStyle(Ink.text.opacity(0.08)), in: Capsule())
+        }
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     // ── 콜드스타트 카드 (§8.2.5 개정 2026-07-23 — "약 41일" 폐기) ──
@@ -272,7 +298,7 @@ struct RhythmView: View {
         .milkGlass()
     }
 
-    // ── 나의 사계 낱장 (§3.5.1 — 기본 노출, 개방형 4단 책력) ──
+    // ── 나의 루틴 낱장 (§3.5.1 — 구 「나의 사계」, 2026-08-09 개명. 개방형 4단 책력) ──
     /// 행 모델 — 제목 문자열이 아니라 실물 아이템을 문다(2026-08-08 행 살리기).
     /// 종전 `ForEach(id: \.self)`는 같은 제목 두 개면 렌더 ID가 충돌했다.
     private enum SeasonRoutine: Identifiable {
@@ -328,7 +354,7 @@ struct RhythmView: View {
         }
     }
 
-    private var seasonsSheet: some View {
+    private var routinesSheet: some View {
         let routines = routinesBySeason
         return VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 6) {
@@ -336,7 +362,7 @@ struct RhythmView: View {
                     .font(.system(.footnote, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.5))
                     .kerning(2)
-                Text("나의 사계")
+                Text("나의 루틴")
                     .font(.almanac(size: 28, weight: .bold))
                     .foregroundStyle(Ink.text)
             }
@@ -354,8 +380,8 @@ struct RhythmView: View {
         .milkGlass(radius: 18)
     }
 
-    // ── 한 줄 일기 모음 (2026-07-22 사용자 요청 — 오늘 탭 "오늘 한 줄"의 열람 표면) ──
-    // 나의 사계 낱장과 별도 카드: 사계는 공유 안전 화면(§3.5.1 메모 렌더 금지)이라 일기는 섞지 않는다.
+    // ── 한 줄 기록 (2026-07-22 사용자 요청 — 오늘 탭 "오늘 한 줄"의 열람 표면. 2026-08-09 섹션 분리) ──
+    // 루틴 낱장과 별도 화면: 낱장은 공유 안전 화면(§3.5.1 메모 렌더 금지)이라 일기는 섞지 않는다.
     private var diaryEntries: [DailyCheckIn] {
         checkIns.filter { !($0.note ?? "").isEmpty }
     }
@@ -367,7 +393,7 @@ struct RhythmView: View {
                     .font(.system(.footnote, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.5))
                     .kerning(2)
-                Text("한 줄 일기")
+                Text("한 줄 기록")
                     .font(.almanac(size: 28, weight: .bold))
                     .foregroundStyle(Ink.text)
             }
