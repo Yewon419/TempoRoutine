@@ -69,6 +69,13 @@ struct OnboardingFlow: View {
     // ③ 세 가지 카드 — 탭 진행형(2026-08-09): 0=일정 / 1=Input / 2=Output + 예시 담기
     @State private var cardPage = 0
     @State private var addedExamples: Set<String> = []
+    // 재탭 = 빠짐(2026-08-09 베타 피드백) — 지우려면 참조가 필요해 담은 실물을 들고 있는다
+    @State private var exampleInputs: [String: InputItem] = [:]
+    @State private var exampleOutputs: [String: OutputItem] = [:]
+    @State private var cardDraw: CGFloat = 0   // 장별 선화 드로잉(인트로 trim 문법)
+    // 설정 「온보딩 다시 보기」 재진입 표식(2026-08-09 베타 피드백) — 좌상단 X 노출 조건.
+    // 첫 실행 온보딩엔 X가 없다(최초 설정은 건너뛸 수 없음).
+    @AppStorage("onboardingRevisit") private var isRevisit = false
 
     // ⑤ 리듬 설문(2026-08-05 사용자 결정) — 온보딩 마지막 단계에서 제안, 강요하지 않는다
     @State private var showSurvey = false
@@ -100,7 +107,7 @@ struct OnboardingFlow: View {
         .safeAreaInset(edge: .bottom) { bottomBar.centeredColumn(560) }
         // 설문을 제출하고 닫혔으면 온보딩도 끝낸다 — "오늘 화면으로"를 한 번 더 누르게 하지 않는다.
         .sheet(isPresented: $showSurvey, onDismiss: {
-            if !selfReports.isEmpty { onboardingDone = true }
+            if !selfReports.isEmpty { finishOnboarding() }
         }) { SelfReportFlow() }
         .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil },
                                               set: { if !$0 { syncMessage = nil; syncOffersPermission = false; consumeLinkAdvance() } })) {
@@ -183,7 +190,7 @@ struct OnboardingFlow: View {
             // ⑥ 설문 건너뛰기(2026-08-09 사용자 결정) — 설문은 primary로 승격하되 강요는 안 한다.
             // ② 생리주기 질문의 secondary와 별개다(그쪽은 넘어가기가 있어도 필수 성격).
             if step == 6 && selfReports.isEmpty {
-                ghostButton("지금은 넘어가기") { onboardingDone = true }
+                ghostButton("지금은 넘어가기") { finishOnboarding() }
                 Text("언제든 설정에서 다시 답변할 수 있어요.")
                     .font(.caption)
                     .foregroundStyle(Ink.text.opacity(0.45))
@@ -267,13 +274,31 @@ struct OnboardingFlow: View {
         case 5: step = 6   // ⑥ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
         default:
             if selfReports.isEmpty { showSurvey = true }   // 「시작하기」 — 제출·닫힘 처리는 sheet onDismiss
-            else { onboardingDone = true }
+            else { finishOnboarding() }
         }
     }
 
+    /// 온보딩 종료 한 창구 — 재진입 표식도 여기서 내린다(다음 첫 실행과 혼동 방지)
+    private func finishOnboarding() {
+        isRevisit = false
+        onboardingDone = true
+    }
+
     // ── 상단: back — 2단계부터, 그리고 인트로 씬B·C에서도 이전 씬으로(2026-07-22 사용자 요청) ──
+    // 재진입(설정 「온보딩 다시 보기」)이면 좌상단 X = 즉시 나가기(2026-08-09 베타 피드백).
     private var topBar: some View {
         HStack {
+            if isRevisit {
+                Button {
+                    lightFeedback += 1
+                    finishOnboarding()
+                } label: {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(Ink.text.opacity(0.6))
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("온보딩 닫기")
+            }
             if step >= 2 || (step == 1 && introScene > 0) {
                 Button {
                     lightFeedback += 1
@@ -727,11 +752,19 @@ struct OnboardingFlow: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .contentShape(Rectangle())
         .onTapGesture { advanceCardPage() }   // 인트로와 같은 탭 진행 문법
+        // 장별 선화 드로잉 — 인트로 원·곡선과 같은 trim 문법(2026-08-09 그림 추가)
+        .task(id: cardPage) {
+            cardDraw = 0
+            guard !reduceMotion else { cardDraw = 1; return }
+            try? await Task.sleep(nanoseconds: 60_000_000)
+            withAnimation(.easeOut(duration: 1.0)) { cardDraw = 1 }
+        }
     }
 
     private func cardPageView(_ kind: CardKind) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "하루의 구성 \(cardPage + 1) / 3", title: kind.rawValue)
+            cardSketch(kind)
             Text(kind.info)
                 .font(.system(.body, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.78))
@@ -747,6 +780,28 @@ struct OnboardingFlow: View {
         }
     }
 
+    /// 장별 선화 — 일정=닻(못 옮기는 날) / Input=찻잔(채우는 일) / Output=종이비행기(내보내는 일).
+    /// 은필 단색 스트로크, 카피의 은유를 그대로 그림으로(§4 선화 계열).
+    @ViewBuilder
+    private func cardSketch(_ kind: CardKind) -> some View {
+        let style = StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)
+        let ink = Ink.text.opacity(0.65)
+        Group {
+            switch kind {
+            case .schedule:
+                AnchorSketch().trim(from: 0, to: cardDraw).stroke(ink, style: style)
+            case .input:
+                TeacupSketch().trim(from: 0, to: cardDraw).stroke(ink, style: style)
+            case .output:
+                PaperPlaneSketch().trim(from: 0, to: cardDraw).stroke(ink, style: style)
+            }
+        }
+        .frame(width: 128, height: 108)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .accessibilityHidden(true)
+    }
+
     private func advanceCardPage() {
         lightFeedback += 1
         if cardPage < 2 {
@@ -756,10 +811,10 @@ struct OnboardingFlow: View {
         }
     }
 
-    /// 예시 칩 — 탭 = 실제 아이템 추가(1회, 담기면 체크로 바뀜). 삭제는 본 화면에서 언제든.
+    /// 예시 칩 — 탭 = 실제 아이템 추가, 다시 탭 = 빠짐(2026-08-09 베타 피드백 토글 전환).
     private func exampleBlock(chips: [(label: String, key: String)]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("이런 것들이에요. 탭하면 바로 담겨요.")
+            Text("이런 것들이에요. 탭해서 담고, 다시 탭하면 빠져요.")
                 .font(.caption)
                 .foregroundStyle(Ink.text.opacity(0.5))
             ForEach(chips, id: \.key) { chip in
@@ -772,7 +827,7 @@ struct OnboardingFlow: View {
     private func exampleChip(_ label: String, key: String) -> some View {
         let added = addedExamples.contains(key)
         return Button {
-            addExample(key)
+            toggleExample(key)
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: added ? "checkmark" : "plus")
@@ -780,31 +835,41 @@ struct OnboardingFlow: View {
                 Text(label)
                     .font(.footnote)
             }
-            .foregroundStyle(Ink.text.opacity(added ? 0.45 : 1))
+            .foregroundStyle(Ink.text.opacity(added ? 0.55 : 1))
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(Ink.text.opacity(added ? 0.04 : 0.08), in: Capsule())
         }
-        .disabled(added)
-        .accessibilityValue(added ? "담김" : "")
+        .accessibilityValue(added ? "담김 — 다시 탭하면 빠져요" : "")
     }
 
-    private func addExample(_ key: String) {
-        guard !addedExamples.contains(key) else { return }
-        addedExamples.insert(key)
+    private func toggleExample(_ key: String) {
         lightFeedback += 1
+        if addedExamples.contains(key) {
+            addedExamples.remove(key)
+            if let item = exampleInputs.removeValue(forKey: key) { modelContext.delete(item) }
+            if let item = exampleOutputs.removeValue(forKey: key) { modelContext.delete(item) }
+            return
+        }
+        addedExamples.insert(key)
         switch key {
         case "input-meditation":
-            modelContext.insert(InputItem(title: "아침명상 5분", category: .other, schedule: .daily))
+            let item = InputItem(title: "아침명상 5분", category: .other, schedule: .daily)
+            exampleInputs[key] = item
+            modelContext.insert(item)
         case "input-tea":
-            modelContext.insert(InputItem(title: "잠들기 전 차 한 잔", category: .food, schedule: .daily))
+            let item = InputItem(title: "잠들기 전 차 한 잔", category: .food, schedule: .daily)
+            exampleInputs[key] = item
+            modelContext.insert(item)
         case "output-study":
             let item = OutputItem(title: "시험공부", schedule: .once, progressKind: .subtasks)
             item.subtasks = (1...6).map { OutputSubtask(title: "\($0)챕터", order: $0 - 1) }
+            exampleOutputs[key] = item
             modelContext.insert(item)
         case "output-listening":
             let item = OutputItem(title: "영어 듣기", schedule: .once, progressKind: .timer)
             item.targetSeconds = 30 * 60
+            exampleOutputs[key] = item
             modelContext.insert(item)
         default:
             break
@@ -953,6 +1018,81 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
         }
+    }
+}
+
+// ── 온보딩 ③ 장별 선화 (2026-08-09 그림 추가 — 은필 스트로크, trim 드로잉) ──
+// 카피의 은유를 그대로: 일정 = "하루의 닻" / Input = 채우는 찻잔 / Output = 내보내는 종이비행기.
+
+/// 닻 — 일정 장
+struct AnchorSketch: Shape {
+    func path(in rect: CGRect) -> Path {
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + x * rect.width, y: rect.minY + y * rect.height)
+        }
+        var p = Path()
+        // 고리
+        p.addEllipse(in: CGRect(x: rect.minX + 0.43 * rect.width, y: rect.minY + 0.02 * rect.height,
+                                width: 0.14 * rect.width, height: 0.13 * rect.height))
+        // 축·가로대
+        p.move(to: pt(0.5, 0.15)); p.addLine(to: pt(0.5, 0.82))
+        p.move(to: pt(0.34, 0.30)); p.addLine(to: pt(0.66, 0.30))
+        // 양 팔 + 갈고리 촉
+        p.move(to: pt(0.5, 0.82))
+        p.addQuadCurve(to: pt(0.20, 0.58), control: pt(0.26, 0.84))
+        p.move(to: pt(0.5, 0.82))
+        p.addQuadCurve(to: pt(0.80, 0.58), control: pt(0.74, 0.84))
+        p.move(to: pt(0.20, 0.58)); p.addLine(to: pt(0.29, 0.61))
+        p.move(to: pt(0.80, 0.58)); p.addLine(to: pt(0.71, 0.61))
+        return p
+    }
+}
+
+/// 찻잔 — Input 장 (예시 "잠들기 전 차 한 잔"과 이어지는 그림)
+struct TeacupSketch: Shape {
+    func path(in rect: CGRect) -> Path {
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + x * rect.width, y: rect.minY + y * rect.height)
+        }
+        var p = Path()
+        // 잔 몸통 + 입구
+        p.move(to: pt(0.22, 0.50))
+        p.addLine(to: pt(0.27, 0.74))
+        p.addQuadCurve(to: pt(0.57, 0.74), control: pt(0.42, 0.85))
+        p.addLine(to: pt(0.62, 0.50))
+        p.move(to: pt(0.22, 0.50)); p.addLine(to: pt(0.62, 0.50))
+        // 손잡이
+        p.move(to: pt(0.62, 0.55))
+        p.addQuadCurve(to: pt(0.62, 0.69), control: pt(0.79, 0.62))
+        // 받침 괘선
+        p.move(to: pt(0.16, 0.85)); p.addLine(to: pt(0.68, 0.85))
+        // 김 두 줄
+        p.move(to: pt(0.35, 0.41))
+        p.addQuadCurve(to: pt(0.39, 0.24), control: pt(0.28, 0.32))
+        p.move(to: pt(0.50, 0.41))
+        p.addQuadCurve(to: pt(0.54, 0.24), control: pt(0.43, 0.32))
+        return p
+    }
+}
+
+/// 종이비행기 — Output 장
+struct PaperPlaneSketch: Shape {
+    func path(in rect: CGRect) -> Path {
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + x * rect.width, y: rect.minY + y * rect.height)
+        }
+        var p = Path()
+        let nose = pt(0.86, 0.26)
+        // 윗날개
+        p.move(to: nose)
+        p.addLine(to: pt(0.10, 0.52))
+        p.addLine(to: pt(0.47, 0.59))
+        p.addLine(to: nose)
+        // 용골(아랫날개)
+        p.move(to: pt(0.47, 0.59))
+        p.addLine(to: pt(0.40, 0.80))
+        p.addLine(to: nose)
+        return p
     }
 }
 

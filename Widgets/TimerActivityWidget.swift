@@ -52,7 +52,8 @@ struct TimerActivityWidget: Widget {
                 .monospacedDigit()
         }
         .padding(14)
-        .activityBackgroundTint(Color(red: 0xF1 / 255, green: 0xEE / 255, blue: 0xE6 / 255).opacity(0.85))
+        // 배경 틴트 없음(2026-08-09 베타 피드백 "기본 알림들이랑 같은 색으로") —
+        // 시스템 기본 재질·라벨색을 그대로 쓴다(종이색 커스텀 폐기)
     }
 
     /// 타이머 = 카운트다운(0:00에서 멈춤), 스톱워치 = 카운트업 — 시스템이 초를 굴린다

@@ -195,6 +195,9 @@ struct SettingsView: View {
                     // 기록은 건드리지 않는다(플래그만 내림) — 온보딩에서 기준일을 다시 적으면 그때 반영.
                     Button("온보딩 다시 보기") {
                         lightFeedback += 1
+                        // 재진입 표식(2026-08-09 베타 피드백) — 온보딩 좌상단 X(즉시 나가기) 노출 조건.
+                        // 첫 실행 온보딩엔 X가 없어야 한다(건너뛸 수 없는 최초 설정).
+                        UserDefaults.standard.set(true, forKey: "onboardingRevisit")
                         onboardingDone = false
                     }
                     .foregroundStyle(Ink.text)
