@@ -19,12 +19,15 @@ enum Seeds {
     }
 
     /// 완료 도장 — 처음 완성된 순간에만 찍는다(이후 수정해도 최초 시각 유지 = 중복 지급 없음).
-    static func stampCompletion(_ record: DailyCheckIn, signals: TrackedSignals) {
+    /// 반환 = 이번 호출로 도장이 새로 찍혔고 지급 대상인지 — 획득 연출 트리거(2026-08-09).
+    @discardableResult
+    static func stampCompletion(_ record: DailyCheckIn, signals: TrackedSignals) -> Bool {
         guard record.completedAt == nil,
               isComplete(energy: record.energy, mood: record.mood,
                          sleep: record.sleep, appetite: record.appetite, signals: signals)
-        else { return }
+        else { return false }
         record.completedAt = .now
+        return isAwarded(record)
     }
 
     /// 지급 판정 — 그날 또는 다음날 안에 완성된 기록만(마감 = day+2일 0시).
@@ -42,6 +45,12 @@ enum Seeds {
 
     static func awardedDays(_ checkIns: [DailyCheckIn]) -> Set<Date> {
         Set(checkIns.filter { isAwarded($0) }.map(\.day))
+    }
+
+    /// 완료 도장이 찍힌 날 전부(지급 기한 무관) — 캘린더 완료 표시용(2026-08-09 베타 피드백
+    /// "숫자 흐리게로 대체"). 씨앗 지급 여부와 분리: 이 표시는 재화가 아니라 완료 사실을 말한다.
+    static func completedDays(_ checkIns: [DailyCheckIn]) -> Set<Date> {
+        Set(checkIns.filter { $0.completedAt != nil }.map(\.day))
     }
 }
 
@@ -61,6 +70,7 @@ struct SeedGlyph: Shape {
 }
 
 /// 오늘 탭 우상단 잔액 배지. 돈 문법(코인·금액) 금지 — 씨앗 글리프 + 개수만.
+/// 개수 변화 = 숫자 롤링 + 스프링(2026-08-09 획득 연출 — 스티커와 같은 놀이 언어).
 struct SeedBadge: View {
     let count: Int
 
@@ -74,12 +84,59 @@ struct SeedBadge: View {
                 .font(.almanacBody(.footnote, size: 13))
                 .monospacedDigit()
                 .foregroundStyle(Ink.text.opacity(0.8))
+                .contentTransition(.numericText(value: Double(count)))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(Ink.surface, in: Capsule())
         .overlay(Capsule().stroke(Ink.text.opacity(0.15), lineWidth: 1))
+        .animation(.spring(response: 0.32, dampingFraction: 0.7), value: count)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("씨앗 \(count)개")
+    }
+}
+
+// ── 획득 연출 (2026-08-09 사용자 지시) ──
+// 도장이 찍히는 순간, 편집기 위로 씨앗이 스프링으로 피어올랐다가 잦아든다(스티커 등장과
+// 같은 놀이 언어 — 데이터 상태 표시가 아니라서 §4 "상태 전환은 즉시" 원칙과 별개 층).
+// trigger 증가 = 1회 재생. 성공 햅틱 동반.
+struct SeedBurst: ViewModifier {
+    let trigger: Int
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .top) {
+                if shown {
+                    SeedGlyph()
+                        .fill(Ink.text.opacity(0.85))
+                        .frame(width: 15, height: 20)
+                        .rotationEffect(.degrees(16))
+                        .offset(y: -26)
+                        .transition(reduceMotion ? .opacity
+                                    : .scale(scale: 0.1).combined(with: .offset(y: 18)))
+                        .accessibilityHidden(true)
+                }
+            }
+            .sensoryFeedback(.success, trigger: trigger)
+            .onChange(of: trigger) { _, _ in
+                withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.55)) {
+                    shown = true
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 1_200_000_000)
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
+                        shown = false
+                    }
+                }
+            }
+    }
+}
+
+extension View {
+    /// 씨앗 획득 연출 — 체크인 편집기(오늘 탭·하루 상세·트래커)에 붙인다.
+    func seedBurst(trigger: Int) -> some View {
+        modifier(SeedBurst(trigger: trigger))
     }
 }
