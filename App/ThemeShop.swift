@@ -30,11 +30,17 @@ extension AppTheme {
 
 struct ThemeShopView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var checkIns: [DailyCheckIn]
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
     /// planted는 UserDefaults라 뷰 갱신이 안 걸린다 — 화면 수명 동안의 사본으로 렌더한다.
     @State private var plantedSet: Set<String> = []
     @State private var lightFeedback = 0
+    // 심기 플로우(2026-08-09 사용자 지시 — 확인 → 축하 연출 → 성공 메시지. 심기와 적용은 분리)
+    @State private var plantCandidate: AppTheme?   // 확인 다이얼로그 대상
+    @State private var sprout: AppTheme?           // 새싹 축하 연출 중인 카드
+    @State private var plantedAlert: AppTheme?     // 성공 알럿(연출 뒤 한 박자 늦게)
+    @State private var celebrateTick = 0           // 성공 햅틱
 
     private var current: AppTheme { AppTheme(rawValue: appTheme) ?? .standard }
     private var available: Int { Seeds.available(checkIns) }
@@ -66,6 +72,34 @@ struct ThemeShopView: View {
             }
         }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .sensoryFeedback(.success, trigger: celebrateTick)
+        // 심기 확인(2026-08-09) — 씨앗을 쓰는 확정 액션이라 한 번 묻는다(§8.2.6 확인 문법)
+        .confirmationDialog(
+            plantCandidate.map { "「\($0.displayName)」 심기" } ?? "",
+            isPresented: Binding(get: { plantCandidate != nil },
+                                 set: { if !$0 { plantCandidate = nil } }),
+            titleVisibility: .visible
+        ) {
+            if let price = plantCandidate?.seedPrice {
+                Button("씨앗 \(price)개 심기") {
+                    if let theme = plantCandidate { plant(theme) }
+                    plantCandidate = nil
+                }
+            }
+            Button("취소", role: .cancel) { plantCandidate = nil }
+        } message: {
+            Text("심은 테마는 사라지지 않아요. 적용은 심은 뒤 언제든 할 수 있어요.")
+        }
+        // 성공 메시지(연출 한 박자 뒤) — 심기와 적용이 분리라 여기서 적용을 권한다
+        .alert(plantedAlert.map { "「\($0.displayName)」이 피었어요" } ?? "",
+               isPresented: Binding(get: { plantedAlert != nil },
+                                    set: { if !$0 { plantedAlert = nil } }),
+               presenting: plantedAlert) { theme in
+            Button("지금 갈아입기") { apply(theme) }
+            Button("나중에") { plantedAlert = nil }
+        } message: { theme in
+            Text("씨앗 \(theme.seedPrice ?? 0)개가 새 지면으로 피어났어요. 마음이 내킬 때 갈아입어 보세요.")
+        }
         .onAppear {
             // 이미 모던을 쓰던 베타 기기 = 심긴 것으로 승계 — 쓰던 테마를 잠그지 않는다(신뢰)
             if current == .modern {
@@ -113,6 +147,16 @@ struct ThemeShopView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
+        // 축하 연출(2026-08-09) — 심는 순간 카드 위로 봄 새싹이 피어오른다(§3.8.1 「피우기」 언어)
+        .overlay(alignment: .top) {
+            if sprout == theme {
+                SeasonGlyph(phase: .follicular, size: 26)
+                    .offset(y: -30)
+                    .transition(reduceMotion ? .opacity
+                                : .scale(scale: 0.1).combined(with: .offset(y: 22)))
+                    .accessibilityHidden(true)
+            }
+        }
     }
 
     @ViewBuilder
@@ -135,7 +179,8 @@ struct ThemeShopView: View {
         } else if let price = theme.seedPrice {
             if available >= price {
                 Button {
-                    plant(theme, price: price)
+                    lightFeedback += 1
+                    plantCandidate = theme   // 구입 확인 다이얼로그(2026-08-09)
                 } label: {
                     HStack(spacing: 6) {
                         SeedGlyph()
@@ -173,10 +218,24 @@ struct ThemeShopView: View {
         appTheme = theme.rawValue
     }
 
-    private func plant(_ theme: AppTheme, price: Int) {
-        guard Seeds.plant(theme, price: price, checkIns: checkIns) else { return }
+    /// 심기 = 구매만(2026-08-09 사용자 지시 — 적용과 분리). 성공 = 새싹 연출 + 성공 햅틱 +
+    /// 한 박자 뒤 성공 알럿(알럿이 연출을 바로 덮지 않게). 적용은 카드의 「적용하기」 또는 알럿 버튼.
+    private func plant(_ theme: AppTheme) {
+        guard let price = theme.seedPrice,
+              Seeds.plant(theme, price: price, checkIns: checkIns) else { return }
         plantedSet = Seeds.planted
-        apply(theme)   // 심으면 바로 그 지면으로 — 확정 햅틱은 apply가 담당
+        celebrateTick += 1
+        withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.55)) {
+            sprout = theme
+        }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            plantedAlert = theme
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
+                sprout = nil
+            }
+        }
     }
 }
 
