@@ -404,11 +404,9 @@ struct TodayView: View {
                 lightFeedback += 1
                 editingSchedule = item
             } label: {
+                // 제목 먼저·시각 trailing(2026-08-09 베타 피드백 "일정명과 종일 위치 바꿔" —
+                // 하루 상세 행과 같은 문법으로 통일)
                 HStack(spacing: 10) {
-                    Text(item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened))
-                        .font(.caption)
-                        .foregroundStyle(Ink.text.opacity(0.5))
-                        .frame(width: 56, alignment: .leading)
                     Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
                     // 여러 날 일정 — 오늘이 몇 일차인지(§8.2.3)
                     if let index = item.dayIndex(on: today) {
@@ -417,6 +415,9 @@ struct TodayView: View {
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
                     Spacer()
+                    Text(item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened))
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.5))
                 }
                 .contentShape(Rectangle())
             }

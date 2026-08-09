@@ -104,15 +104,15 @@ struct OverlayEventRows: View {
 
     var body: some View {
         ForEach(overlay.events(on: day)) { event in
+            // 제목 먼저·시각 trailing(2026-08-09 베타 피드백 — 오늘 탭 로컬 일정 행과 같은 문법)
             HStack(spacing: 10) {
-                Text(event.isAllDay ? "종일" : event.start.formatted(date: .omitted, time: .shortened))
-                    .font(.caption)
-                    .foregroundStyle(Ink.text.opacity(0.5))
-                    .frame(width: 56, alignment: .leading)
                 Text(event.title)
                     .font(.subheadline)
                     .foregroundStyle(Ink.text.opacity(0.8))
                 Spacer()
+                Text(event.isAllDay ? "종일" : event.start.formatted(date: .omitted, time: .shortened))
+                    .font(.caption)
+                    .foregroundStyle(Ink.text.opacity(0.5))
                 // read-only 출처 배지 — dedup 없이 구분만(§3.6.1 G)
                 Text("캘린더")
                     .font(.caption2)

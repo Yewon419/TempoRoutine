@@ -1,6 +1,7 @@
-// 템포루틴 — 나의 리듬 탭 (MASTER §8.2.5 — 2026-08-09 사용자 지시로 3섹션 재편)
-// 상위 스위처 [나의 사계 | 나의 루틴 | 한 줄 기록]:
-//   나의 사계 = 관측 패턴(구 신호 패널 — 콜드 카드 + 신호 하위 칩 에너지·기분·수면 + 패널)
+// 템포루틴 — 나의 리듬 탭 (MASTER §8.2.5 — 2026-08-09 재편 2차: 단일 칩 행)
+// 칩 한 줄 [에너지 | 기분 | 수면 | 나의 루틴 | 한 줄 기록] (베타 피드백 "탭 별도 구분하지말고
+// 한 줄로 쭉" — 구 [나의 사계]+신호 하위 칩 2단 병합). 마지막 본 탭 = AppStorage 복원.
+//   에너지·기분·수면 = 관측 패턴(콜드/진행 카드 + 신호 패널)
 //   나의 루틴 = 구 「나의 사계」 낱장 개명(§3.5.1 공유 안전 화면 — 렌더 금지: 날짜·주기 시점·
 //               체크인·메모·진행도, 루틴 이름·종류 태그만)
 //   한 줄 기록 = 일기 모음(구 하단 상시 카드에서 분리)
@@ -29,9 +30,9 @@ struct RhythmView: View {
     @State private var confirmFeedback = 0
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
-    // 상위 섹션 스위처(2026-08-09 재편) + 사계 안의 신호 하위 칩
-    @State private var section: RhythmSection = .seasons
-    @State private var signalTab: RhythmSignalTab = .energy
+    // 단일 칩 행(2026-08-09 베타 피드백 "탭 별도 구분하지말고 한 줄로 쭉") — 2단 스위처 병합.
+    // 마지막 본 탭은 재진입·재실행 때 복원("들어갈때마다 마지막 탭" — AppStorage).
+    @AppStorage("rhythmLastTab") private var lastTabRaw = RhythmTab.energy.rawValue
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
@@ -50,17 +51,8 @@ struct RhythmView: View {
                                averageLength: snapshot.averageLength,
                                menstrualLength: snapshot.menstrualLength)
     }
-    /// 스위처에 올릴 신호 칩. 수면은 추적을 껐고 표본도 없으면 숨긴다 —
-    /// 사용자가 끈 항목에 "기록이 쌓이면"이라고 말하면 거짓 안내가 된다.
-    private var signalTabs: [RhythmSignalTab] {
-        RhythmSignalTab.allCases.filter { tab in
-            guard tab == .sleep else { return true }
-            return AppSettings.trackedSignals.sleep
-                || signalSummaries.contains { $0.signal == .sleep }
-        }
-    }
-    /// 스위처 노출 = 비교 서술 가능한 신호가 하나라도 있을 때(§5.6.3 임계).
-    /// 그 전엔 콜드 문법 유지 — 콜드 카드 + 사계 낱장 상시(v77).
+    /// 패널 노출 = 비교 서술 가능한 신호가 하나라도 있을 때(§5.6.3 임계).
+    /// 그 전엔 콜드 문법 유지 — 진행 카드만.
     private var showSwitcher: Bool {
         SignalKind.allCases.contains { RhythmEngine.narratable(signalSummaries, signal: $0) }
     }
@@ -76,15 +68,14 @@ struct RhythmView: View {
                         .padding(.top, 12)
                     selfReportPrompt
                     sectionSwitcher
-                    switch section {
-                    case .seasons:
+                    switch tab {
+                    case .energy, .mood, .sleep:
                         // 관측 패턴 — 콜드 문법 승계: 서술 가능한 신호가 없으면 진행 카드만
                         coldCard
                         if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
                             meanwhileCard
                         }
                         if showSwitcher {
-                            signalSwitcher
                             signalPanelArea
                         }
                     case .routines:
@@ -158,34 +149,55 @@ struct RhythmView: View {
         }
     }
 
-    // ── 상위 섹션 스위처 (2026-08-09 재편 — [나의 사계|나의 루틴|한 줄 기록]) ──
-    private enum RhythmSection: String, CaseIterable, Identifiable {
-        case seasons = "나의 사계"
+    // ── 단일 칩 행 (2026-08-09 — 구 [나의 사계]+신호 하위 칩 2단을 한 줄로 병합, 사용자 지시) ──
+    private enum RhythmTab: String, CaseIterable, Identifiable {
+        case energy = "에너지"
+        case mood = "기분"
+        case sleep = "수면"
         case routines = "나의 루틴"
         case diary = "한 줄 기록"
         var id: String { rawValue }
+        var signalTab: RhythmSignalTab? {
+            switch self {
+            case .energy: .energy
+            case .mood: .mood
+            case .sleep: .sleep
+            case .routines, .diary: nil
+            }
+        }
+    }
+
+    /// 수면 칩은 추적 끔+표본 0이면 숨김(구 signalTabs 규칙 승계 — 꺼진 항목 거짓 안내 방지)
+    private var visibleTabs: [RhythmTab] {
+        RhythmTab.allCases.filter { t in
+            guard t == .sleep else { return true }
+            return AppSettings.trackedSignals.sleep
+                || signalSummaries.contains { $0.signal == .sleep }
+        }
+    }
+
+    /// 저장된 마지막 탭 복원 — 숨겨진 칩(수면 추적 끔)이면 에너지 폴백
+    private var tab: RhythmTab {
+        let stored = RhythmTab(rawValue: lastTabRaw) ?? .energy
+        return visibleTabs.contains(stored) ? stored : .energy
     }
 
     private var sectionSwitcher: some View {
-        HStack(spacing: 8) {
-            ForEach(RhythmSection.allCases) { item in
-                chip(label: item.rawValue, selected: section == item) { section = item }
+        // 5칩 한 줄 — 작은 기기(SE) 폭 대비 수평 스크롤 허용
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(visibleTabs) { item in
+                    chip(label: item.rawValue, selected: tab == item) { lastTabRaw = item.rawValue }
+                }
             }
-            Spacer(minLength: 0)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("보기 선택")
     }
 
-    // ── 신호 하위 칩 (사계 섹션 안 — [에너지|기분|수면]) ──
-    /// 선택 탭이 숨겨진 칩(수면 추적 끔)이면 에너지로 폴백 — 아무 칩도 선택 안 된 상태 방지.
-    private var activeTab: RhythmSignalTab {
-        signalTabs.contains(signalTab) ? signalTab : .energy
-    }
-
     /// SwiftUI 타입체크 폭발 방지(CLAUDE.md) — 패널 분기를 body 식에서 뗀다.
     private var signalPanelArea: some View {
-        let signal = activeTab.signal
+        let signal = (tab.signalTab ?? .energy).signal
         return SignalPanel(signal: signal,
                            summaries: signalSummaries,
                            topPhases: RhythmEngine.perCycleTopPhases(signal: signal,
@@ -200,18 +212,7 @@ struct RhythmView: View {
                            currentPhase: snapshot.phase(on: today))
     }
 
-    private var signalSwitcher: some View {
-        HStack(spacing: 8) {
-            ForEach(signalTabs) { tab in
-                chip(label: tab.label, selected: activeTab == tab) { signalTab = tab }
-            }
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("신호 선택")
-    }
-
-    /// 칩 공용 렌더 — 상위 섹션·신호 하위 칩이 같은 문법을 쓴다(v68 칩 시각 그대로).
+    /// 칩 공용 렌더 — v68 칩 시각 그대로(2026-08-09 단일 행 병합 후에도 유지).
     private func chip(label: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
