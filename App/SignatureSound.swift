@@ -13,6 +13,16 @@
 
 import AVFoundation
 import Foundation
+import UserNotifications
+
+/// 알림음 = 시그니처 칼림바(2026-08-09 사용자 지시). UNNotificationSound는 mp3를 지원하지
+/// 않아 wav(리니어 PCM, 2.83초) 변환본을 별도 번들(App/Sounds/signature-notice.wav).
+/// 파일이 없거나 형식이 틀리면 시스템이 기본음으로 폴백한다 — 조용히 안전.
+extension UNNotificationSound {
+    static var signature: UNNotificationSound {
+        UNNotificationSound(named: UNNotificationSoundName("signature-notice.wav"))
+    }
+}
 
 @MainActor
 final class SignatureSound {

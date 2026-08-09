@@ -37,7 +37,7 @@ enum ScheduleReminder {
             } else {
                 "\(date.formatted(date: .omitted, time: .shortened))에 시작해요."
             }
-            content.sound = .default
+            content.sound = .signature   // 시그니처 칼림바(2026-08-09)
             try? await center.add(UNNotificationRequest(identifier: id.uuidString,
                                                         content: content, trigger: trigger))
         }

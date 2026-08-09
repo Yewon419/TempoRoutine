@@ -78,7 +78,7 @@ enum CoverageReminder {
                 let content = UNMutableNotificationContent()
                 content.title = title(quadrant: quadrant)
                 content.body = "이맘때 기록이 하나만 있어도 이번 주기가 리듬 계산에 들어가요."
-                content.sound = .default
+                content.sound = .signature   // 시그니처 칼림바(2026-08-09)
                 // 화면을 깨우지 않는다 — 재촉이 아니라 안내다(§7).
                 content.interruptionLevel = .passive
 

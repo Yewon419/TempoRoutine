@@ -75,7 +75,7 @@ enum DailyNotices {
                 let content = UNMutableNotificationContent()
                 content.title = request.title
                 content.body = request.body
-                content.sound = .default
+                content.sound = .signature   // 시그니처 칼림바(2026-08-09)
                 let trigger = UNCalendarNotificationTrigger(dateMatching: request.fire, repeats: false)
                 try? await center.add(UNNotificationRequest(identifier: request.id,
                                                             content: content, trigger: trigger))

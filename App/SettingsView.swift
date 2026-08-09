@@ -167,7 +167,7 @@ struct SettingsView: View {
                             let content = UNMutableNotificationContent()
                             content.title = "테스트 알림이에요"
                             content.body = "이 문구가 보이면 알림이 정상 동작하는 거예요."
-                            content.sound = .default
+                            content.sound = .signature   // 시그니처 칼림바(2026-08-09)
                             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
                             try? await UNUserNotificationCenter.current().add(
                                 UNNotificationRequest(identifier: "test-notice",
