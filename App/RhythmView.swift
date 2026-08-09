@@ -28,6 +28,7 @@ struct RhythmView: View {
     @State private var editingOutput: OutputItem?
     @State private var pendingDelete: QuickDeleteTarget?
     @State private var confirmFeedback = 0
+    @State private var lightFeedback = 0   // 작은 햅틱(§4 — 칩 전환, 확정 아님. 2026-08-09 사용자 지시)
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
     // 단일 칩 행(2026-08-09 베타 피드백 "탭 별도 구분하지말고 한 줄로 쭉") — 2단 스위처 병합.
@@ -119,6 +120,7 @@ struct RhythmView: View {
         }
         .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
     }
 
     @Environment(\.modelContext) private var modelContext
@@ -166,7 +168,10 @@ struct RhythmView: View {
     private var sectionSwitcher: some View {
         HStack(spacing: 8) {
             ForEach(RhythmTab.allCases) { item in
-                chip(label: item.rawValue, selected: tab == item) { lastTabRaw = item.rawValue }
+                chip(label: item.rawValue, selected: tab == item) {
+                    lightFeedback += 1   // 칩 전환 햅틱(2026-08-09 사용자 지시)
+                    lastTabRaw = item.rawValue
+                }
             }
             Spacer(minLength: 0)
         }
