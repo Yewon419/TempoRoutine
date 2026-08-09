@@ -5,6 +5,15 @@
 import SwiftUI
 import CoreText
 import TempoCore
+import UIKit
+
+/// 확정 햅틱(§4 토큰: 확정 = medium) — 시트 저장처럼 **뷰가 곧바로 사라지는 지점용**.
+/// `.sensoryFeedback`은 상태 변화 관측 기반이라 dismiss와 같은 틱이면 씹힐 수 있다(2026-08-09).
+/// 화면에 남는 뷰의 햅틱은 종전대로 `.sensoryFeedback` 토큰을 쓴다.
+@MainActor
+func confirmHaptic() {
+    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+}
 
 enum AlmanacFont {
     /// 런타임 등록(UIAppFonts 없이) — 한 번만 시도

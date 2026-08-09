@@ -256,6 +256,7 @@ struct ScheduleAddSheet: View {
                                                       isAllDay: allDay, repeatRule: repeatRule,
                                                       reminderMinutes: reminderMinutes)
                         }
+                        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)
@@ -403,6 +404,7 @@ struct QuickScheduleBar: View {
         } else {
             modelContext.insert(ScheduleItem(title: name, date: cal.startOfDay(for: day)))
         }
+        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
         onClose()   // 저장 후 바를 걷는다(2026-08-01 사용자 결정 — 연속 입력 아님)
     }
 }
@@ -590,6 +592,7 @@ struct InputAddSheet: View {
                                                           createdAt: anchorDate(for: day),
                                                           backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now)))
                         }
+                        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)
@@ -843,6 +846,7 @@ struct OutputAddSheet: View {
                             if hasTargetDate { item.targetDate = Calendar.current.startOfDay(for: targetDate) }
                             modelContext.insert(item)
                         }
+                        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
                         dismiss()
                     }
                     .foregroundStyle(Ink.text)
