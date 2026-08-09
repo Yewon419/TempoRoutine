@@ -193,7 +193,7 @@ struct DayDetailView: View {
             }
             if let info = snapshot.phaseInfo(on: day) {
                 HStack(spacing: 6) {
-                    Text("\(info.meta.name) \(info.dayInCycle)일차")
+                    Text("\(info.meta.name) \(info.dayInPhase)일차")   // 계절 내 일차(2026-08-09 통일)
                     if info.projected { Text("· 예상") }
                 }
                 .font(.system(.footnote, design: .serif))

@@ -167,9 +167,10 @@ enum WidgetBridge {
             case .luteal: "autumn"
             }
             let hedge = info.projected ? " · 예상" : ""
+            // 일차 = 계절 내 일차(2026-08-09 — 앱 표면과 통일)
             return WidgetDay(day: day, season: key, title: info.meta.name,
-                             sub: "\(info.meta.name) \(info.dayInCycle)일차\(hedge)",
-                             inline: "\(info.meta.name) \(info.dayInCycle)일차",
+                             sub: "\(info.meta.name) \(info.dayInPhase)일차\(hedge)",
+                             inline: "\(info.meta.name) \(info.dayInPhase)일차",
                              mood: info.meta.moodline, projected: info.projected)
         }
         // S0(기록 전)·투영 지평 밖 공통 — 중립(§3: 임신·질환 추론 금지, 단정 없는 카피)

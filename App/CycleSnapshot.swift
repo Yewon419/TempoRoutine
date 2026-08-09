@@ -34,6 +34,9 @@ struct CycleSnapshot {
     let averageLength: Int
     let menstrualLength: Int   // §5.3 층 2 M(개정 M) — CycleParams 산출
     let horizonCycles: Int   // §5.6.2 투영 지평: low=1 / medium=2 / high=3
+    /// 실측 에피소드 길이(시작일 키) — 관측 우선 판정(2026-08-09 사용자 결정)의 근거.
+    /// episodeStarts·episodeLengths는 같은 episodes(days:)를 순서대로 매핑하므로 zip 정합.
+    let episodeLengthByStart: [Date: Int]
 
     init(periodDays: [PeriodDay]) {
         self.init(days: periodDays.map(\.day))
@@ -41,7 +44,10 @@ struct CycleSnapshot {
 
     /// PeriodDay 모델 없이 day만으로 스냅샷 계산 — 아직 커밋 전인 드래프트 미리보기용(§4 계절 전환 판정 등)
     init(days: [Date]) {
-        self.starts = PeriodMath.episodeStarts(days: days)
+        let starts = PeriodMath.episodeStarts(days: days)
+        self.starts = starts
+        self.episodeLengthByStart = Dictionary(uniqueKeysWithValues:
+            zip(starts, PeriodMath.episodeLengths(days: days)))
         self.averageLength = CycleParams.averageLength(starts: starts)
         self.menstrualLength = CycleParams.menstrualLength(days: days)
         self.horizonCycles = switch CyclePredictor.confidence(periodStarts: starts) {
@@ -54,23 +60,34 @@ struct CycleSnapshot {
     var isColdStart: Bool { starts.isEmpty }
     var isSingleRecord: Bool { starts.count == 1 }   // S1 hedge
 
+    /// 그 날짜가 속한 주기의 유효 겨울 길이 — **관측이 파라미터를 이긴다**(2026-08-09 사용자 결정,
+    /// 베타 피드백 "5일에 생리기록이 있는데 왜 봄인지"). 관측 주기에서 실측 에피소드가 M보다
+    /// 길면 기록일 전체가 겨울. 예측(projected) 주기는 M 그대로. 상한 10 = phaseSpans 클램프 동일.
+    func effectiveMenstrualLength(on date: Date, projected: Bool) -> Int {
+        guard !projected, let start = starts.last(where: { $0 <= date }) else { return menstrualLength }
+        return min(10, max(menstrualLength, episodeLengthByStart[start] ?? 0))
+    }
+
     /// 그 날짜의 단계만 (계절광 등 — S0이면 nil)
     func phase(on date: Date) -> CyclePhase? {
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: averageLength) else {
             return nil
         }
         return CyclePredictor.phaseForDay(r.day, cycleLength: averageLength,
-                                          menstrualLength: menstrualLength)
+                                          menstrualLength: effectiveMenstrualLength(on: date, projected: r.projected))
     }
 
-    /// 그 날짜의 계절·단계 (S0이면 nil)
-    func phaseInfo(on date: Date) -> (meta: SeasonMeta, dayInCycle: Int, projected: Bool)? {
+    /// 그 날짜의 계절·단계 (S0이면 nil). dayInPhase = **계절 내 일차**(2026-08-09 표기 결정 —
+    /// "봄 10일차"가 주기 일차로 읽히던 오독 해소. 표기는 dayInPhase, 데이터 소비는 dayInCycle).
+    func phaseInfo(on date: Date) -> (meta: SeasonMeta, dayInCycle: Int, dayInPhase: Int, projected: Bool)? {
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: averageLength) else {
             return nil
         }
-        let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: averageLength,
-                                                              menstrualLength: menstrualLength))
-        return (meta, r.day, r.projected)
+        let m = effectiveMenstrualLength(on: date, projected: r.projected)
+        let phase = CyclePredictor.phaseForDay(r.day, cycleLength: averageLength, menstrualLength: m)
+        let spanStart = CyclePredictor.phaseSpans(cycleLength: averageLength, menstrualLength: m)
+            .first { $0.phase == phase }?.startDay ?? 1
+        return (seasonMeta(for: phase), r.day, max(1, r.day - spanStart + 1), r.projected)
     }
 
     /// 주기 기준 반복의 occurrence 열거 (§5.6.4 — 과거 실측·현재·미래 지평까지)

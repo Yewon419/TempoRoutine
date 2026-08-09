@@ -102,7 +102,7 @@ struct TodayView: View {
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
-    private var todayInfo: (meta: SeasonMeta, dayInCycle: Int, projected: Bool)? { snapshot.phaseInfo(on: today) }
+    private var todayInfo: (meta: SeasonMeta, dayInCycle: Int, dayInPhase: Int, projected: Bool)? { snapshot.phaseInfo(on: today) }
 
     // 단계별 에너지 프로필(2026-07-23) — 표본 3개+면 무드라인·Input 예시 개인화, 미달이면 기본 유지
     private var energyProfile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
@@ -263,8 +263,9 @@ struct TodayView: View {
                 }
                 HStack(spacing: 6) {
                     // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
-                    // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다
-                    Text("\(info.dayInCycle)일차")
+                    // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
+                    // 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소, 전 표면 통일)
+                    Text("\(info.dayInPhase)일차")
                         .foregroundStyle(info.meta.color.opacity(ThemeStore.current == .modern ? 1.0 : 0.85))
                     if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.text.opacity(0.45)) }
                     else if info.projected { Text("예상").foregroundStyle(Ink.text.opacity(0.45)) }

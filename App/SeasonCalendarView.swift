@@ -191,12 +191,26 @@ struct SeasonCalendarView: View {
         quickAddEnd = nil
     }
 
+    /// 실측 에피소드 길이(시작일 키) + 관측 우선 유효 M(2026-08-09 사용자 결정 —
+    /// "기록된 생리일이 계절 경계를 이긴다"). CycleSnapshot.effectiveMenstrualLength와 같은 규칙 —
+    /// 캘린더가 스냅샷과 다른 M을 쓰면 계절 라인과 밴드가 갈라진다.
+    private var episodeLengthByStart: [Date: Int] {
+        Dictionary(uniqueKeysWithValues:
+            zip(starts, PeriodMath.episodeLengths(days: periodDays.map(\.day))))
+    }
+
+    private func effectiveM(on date: Date, projected: Bool) -> Int {
+        guard !projected, let start = starts.last(where: { $0 <= date }) else { return menstrualLength }
+        return min(10, max(menstrualLength, episodeLengthByStart[start] ?? 0))
+    }
+
     /// 오늘의 단계 — 상단 글로우 색 결정용(seasonLine과 같은 계산 경로)
     private var todayPhase: CyclePhase? {
         guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
             return nil
         }
-        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength, menstrualLength: menstrualLength)
+        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength,
+                                          menstrualLength: effectiveM(on: today, projected: r.projected))
     }
 
     /// 상단 계절광(2026-07-28 시안 결정) — SeasonLight 원색 2겹을 상단 앵커로만, 다크는 감쇠
@@ -890,11 +904,9 @@ struct SeasonCalendarView: View {
                         seasonBand(date: date, index: index, meta: meta,
                                    projected: style.projected, render: render)
                     }
-                    // 모던은 형광펜 밴드 대신 숫자 원이 기록을 담당(시안 §1.3-4)
-                    if ThemeStore.current != .modern, render.periodShown.contains(date) {
-                        highlightBand(for: date, index: index, recorded: true, render: render)
-                            .transaction { $0.animation = nil }   // 형광펜 on/off 즉시 전환
-                    }
+                    // 기본 테마 기록 회색 형광펜 = 폐기(2026-08-09 사용자 결정 — "회색 형광펜이
+                    // 뭔지 모르겠어". 관측 우선으로 기록일이 전부 겨울 밴드에 들어가 존재 이유 소멸).
+                    // 모던의 기록 회색 원(시안 §1.3-4)은 별개 문법이라 유지.
                 }
             }
             .overlay {
@@ -982,8 +994,9 @@ struct SeasonCalendarView: View {
         guard let r = CyclePredictor.cycleDay(of: date, periodStarts: starts, averageLength: avgLength) else {
             return (Ink.text, nil, false)
         }
+        // 관측 우선 유효 M(2026-08-09) — 기록된 생리일은 전부 겨울 밴드 안에 들어간다
         let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: avgLength,
-                                                              menstrualLength: menstrualLength))
+                                                              menstrualLength: effectiveM(on: date, projected: r.projected)))
         return (meta.color.opacity(r.projected ? 0.55 : 1.0), meta, r.projected)   // 미래/역투영 = faded
     }
 
@@ -1012,11 +1025,15 @@ struct SeasonCalendarView: View {
         guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
             return "첫 생리일을 기록하면 계절이 채워져요"
         }
-        let meta = seasonMeta(for: CyclePredictor.phaseForDay(r.day, cycleLength: avgLength,
-                                                              menstrualLength: menstrualLength))
+        // 관측 우선 유효 M + 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소)
+        let m = effectiveM(on: today, projected: r.projected)
+        let phase = CyclePredictor.phaseForDay(r.day, cycleLength: avgLength, menstrualLength: m)
+        let meta = seasonMeta(for: phase)
+        let spanStart = CyclePredictor.phaseSpans(cycleLength: avgLength, menstrualLength: m)
+            .first { $0.phase == phase }?.startDay ?? 1
         let hedge = starts.count == 1 ? "아마 " : ""
         let projected = r.projected ? " · 예상" : ""
-        return "\(hedge)\(meta.name) \(r.day)일차\(projected)"
+        return "\(hedge)\(meta.name) \(max(1, r.day - spanStart + 1))일차\(projected)"
     }
 
     // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
