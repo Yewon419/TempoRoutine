@@ -346,6 +346,7 @@ struct SeasonLight: View {
         .compositingGroup()
         .blendMode(.multiply)
         .contrast(motif == .onboarding ? 0.88 : 0.95)
+        .blur(radius: 1.4)   // 살짝 블러(2026-08-10 사용자 지시 — 배경답게 한 걸음 물러남)
         // 0.30 → 0.46 상향(2026-08-09 사용자 "기본 테마에서 그림이 빠졌던데") — 봄 모티프처럼
         // 잉크가 옅은 판이 밝은 계절광(베이지) 위 multiply에서 안 읽히던 것. 코드 회귀 아님.
         .opacity(motif == .onboarding ? 0.14 : 0.46)
@@ -357,9 +358,17 @@ struct SeasonLight: View {
             // 타일 기준 폭은 아이폰 폭 수준으로 캡핑(2026-07-23) — 아이패드에서 폭 비례로 키우면
             // 타일이 화면보다 훨씬 커져 그림 본체가 밖으로 밀리고 소스 여백만 보인다.
             let base = min(geo.size.width, 430)
+            let side = base * scale
             motifImage
                 .resizable()
-                .frame(width: base * scale, height: base * scale)
+                .frame(width: side, height: side)
+                // 타일 이미지 경계 페더링(2026-08-10 베타 피드백 "그림 살짝 잘린다") —
+                // 가지가 이미지 가장자리에서 하드 컷되던 것을 사방 ~5% 페이드로 스러지게.
+                .mask {
+                    Rectangle()
+                        .padding(side * 0.05)
+                        .blur(radius: side * 0.05)
+                }
                 .frame(width: geo.size.width, height: geo.size.height, alignment: alignment)
                 .clipped()
         }

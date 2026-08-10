@@ -238,7 +238,8 @@ struct SeasonCalendarView: View {
         VStack(alignment: .leading, spacing: 12) {
             // 좌상단 브랜드 표식(2026-08-09 사용자 지시) — 오늘 탭과 같은 자리·크기
             HStack {
-                BrandMark(diameter: 18, color: Ink.text.opacity(0.75))
+                BrandMark(diameter: 22, color: Ink.text.opacity(0.75))   // 오늘 탭과 동일 보정(2026-08-09 피드백)
+                    .padding(.leading, 6)
                 Spacer()
             }
             // 상단 순서(시안 §1.3-6, 모던 전용 분기 — 2026-07-29 사용자 결정):
@@ -673,8 +674,14 @@ struct SeasonCalendarView: View {
                 }
                 guard case .second(true, _) = value, let s = dragStart, let e = dragEnd else { return }
                 guard s != e else {
-                    // 제자리에서 떼면 하루 상세(2026-08-01 반전) — compact = push / regular = 우측 패널 선택
-                    if hSize == .regular { selectedDay = s } else { pushedDay = s }
+                    // 제자리에서 떼면: compact = 하루 상세 push(2026-08-01 반전) /
+                    // regular = 빠른 일정(2026-08-10 베타 피드백 — 탭이 날짜 이동을 가져가서 맞교환)
+                    if hSize == .regular {
+                        quickAddDay = s
+                        quickAddEnd = nil
+                    } else {
+                        pushedDay = s
+                    }
                     return
                 }
                 // 끌었으면 기간 빠른 일정 — 기간 선택의 진입점은 여전히 길게 누르기다
@@ -800,9 +807,15 @@ struct SeasonCalendarView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         lightFeedback += 1
-                        // 2026-08-01 베타 피드백으로 반전: 탭 = 빠른 일정(가장 잦은 동작을 가장 싼 제스처에)
-                        quickAddDay = date
-                        quickAddEnd = nil
+                        if hSize == .regular {
+                            // 아이패드 분할(2026-08-10 베타 피드백): 탭 = 우측 상세 날짜 이동 —
+                            // 상세가 항상 떠 있는 화면에선 날짜 이동이 가장 잦은 동작이다
+                            selectedDay = date
+                        } else {
+                            // 2026-08-01 베타 피드백으로 반전: 탭 = 빠른 일정(가장 잦은 동작을 가장 싼 제스처에)
+                            quickAddDay = date
+                            quickAddEnd = nil
+                        }
                     }
                     .gesture(pressDrag(from: date))   // 길게 = 하루 상세, 끌면 기간 빠른 일정(2026-08-01)
                     .overlay {
@@ -819,9 +832,15 @@ struct SeasonCalendarView: View {
                                                           recorded: render.recorded.contains(date),
                                                           predicted: render.predicted.contains(date)))
                     .accessibilityAddTraits(.isButton)
-                    // 길게 누르기 대체 — 탭이 빠른 일정이 됐으므로 대체 액션은 하루 상세(2026-08-01)
-                    .accessibilityAction(named: "하루 상세 보기") {
-                        if hSize == .regular { selectedDay = date } else { pushedDay = date }
+                    // 길게 누르기 대체 액션 — 각 폼팩터에서 탭이 안 가져간 쪽을 연다
+                    // (compact: 탭=빠른 일정 → 대체=하루 상세 / regular: 탭=날짜 이동 → 대체=빠른 일정, 2026-08-10)
+                    .accessibilityAction(named: hSize == .regular ? "빠른 일정 추가" : "하루 상세 보기") {
+                        if hSize == .regular {
+                            quickAddDay = date
+                            quickAddEnd = nil
+                        } else {
+                            pushedDay = date
+                        }
                     }
             } else {
                 cellBody(date: date, index: index, render: render)

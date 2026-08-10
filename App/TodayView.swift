@@ -240,7 +240,9 @@ struct TodayView: View {
             // 좌상단 브랜드 표식(2026-08-09 사용자 지시) + 우상단 씨앗 잔액.
             // 씨앗 탭 = 테마 탭 진입 / 표시값 = 소비 차감 후 available(심기 도입).
             HStack {
-                BrandMark(diameter: 18, color: Ink.text.opacity(0.75))
+                // 22pt + leading 6(2026-08-09 베타 피드백 "살짝 오른쪽으로 그리고 좀 더 크게")
+                BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
+                    .padding(.leading, 6)
                 Spacer()
                 Button {
                     lightFeedback += 1
