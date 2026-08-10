@@ -42,6 +42,8 @@ struct SettingsView: View {
 
     /// 테마 진입 = 테마 탭 시트(2026-08-09 — 구 인라인 Picker 폐기, 심기·적용은 ThemeShopView 담당)
     @State private var showThemeShop = false
+    /// 기기 간 동기화 토글 상태(2026-08-10) — 원장은 PlannerSync, 여기는 렌더 트리거용 미러
+    @State private var syncOn = PlannerSync.isEnabled
 
     /// 브리핑·예측 토글 — 켜는 순간 권한 확인(미결정이면 시트), 거부면 되돌린다.
     /// 재스케줄은 DailyNotices가 앱 활성·백그라운드마다 돌아 토글 반영이 늦지 않지만,
@@ -135,6 +137,35 @@ struct SettingsView: View {
                         Text(healthCaption)
                         if mirror.linked && !mirror.lastSyncReport.isEmpty {
                             Text("마지막 동기화 · \(mirror.lastSyncReport)")
+                        }
+                    }
+                }
+
+                // 기기 간 동기화(2026-08-10 재구현 — PlannerSync/CKSyncEngine, §5.2)
+                Section {
+                    Toggle("기기 간 동기화", isOn: Binding(
+                        get: { syncOn },
+                        set: { on in
+                            lightFeedback += 1
+                            syncOn = on
+                            PlannerSync.shared.setEnabled(on)
+                        }
+                    ))
+                    .tint(Ink.text)
+                    if syncOn {
+                        Button("지금 동기화") {
+                            lightFeedback += 1
+                            Task { await PlannerSync.shared.syncNow() }
+                        }
+                        .foregroundStyle(Ink.text)
+                    }
+                } header: {
+                    Text("기기 간 동기화")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 이어져요. 생리 기록은 iCloud로 보내지 않아요 — 기기 간 전달은 건강 앱 연동이 맡아요.")
+                        if !PlannerSync.shared.lastReport.isEmpty {
+                            Text("마지막 동기화 · \(PlannerSync.shared.lastReport)")
                         }
                     }
                 }

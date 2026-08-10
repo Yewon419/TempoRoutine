@@ -1,17 +1,35 @@
 // 템포루틴 — 앱 엔트리
-// 저장 = 단일 SwiftData 스토어(default.store). 2층 CloudKit 분리는 2026-07-24 롤백
-// (실기기 영속화 결함 — 저장 후 재시작 시 @Query가 0을 읽음, split-brain·회수 시도 모두 실패,
-//  Windows/CI-only라 멀티컨피그 디버그 불가). 기기 간 동기화는 맥 확보 후 별도 재구현(§5.2).
-// 새 @Model 추가 시 아래 .modelContainer(for:) 배열에 반드시 등록(repo CLAUDE.md).
+// 저장 = 단일 SwiftData 스토어(default.store). 2층 CloudKit 스토어 분리는 2026-07-24 롤백
+// (실기기 영속화 결함 — Windows/CI-only라 멀티컨피그 디버그 불가) — 그 방식은 재도전 금지.
+// 기기 간 동기화는 2026-08-10 재구현: 스토어는 그대로 두고 CKSyncEngine이 플래너·체크인
+// 레코드만 미러한다(PlannerSync — §5.2 계약, 생리 기록은 절대 미동기).
+// 새 @Model 추가 시 아래 Schema 배열에 반드시 등록(repo CLAUDE.md).
 
 import SwiftUI
 import SwiftData
 
 @main
 struct TempoRoutineApp: App {
+    /// 단일 스토어 컨테이너 — 종전 .modelContainer(for:)와 같은 스키마·같은 기본 위치(default.store).
+    /// 명시 생성으로 바꾼 이유 = PlannerSync(CKSyncEngine)가 뷰 밖에서 같은 스토어를 써야 해서.
+    /// ⚠ 폴백 분기 금지(repo CLAUDE.md split-brain 규칙) — 실패는 조용한 갈라짐보다 크래시가 낫다.
+    static let container: ModelContainer = {
+        let schema = Schema([PeriodDay.self, ScheduleItem.self, InputItem.self,
+                             OutputItem.self, OutputSubtask.self, ItemCompletion.self,
+                             DailyCheckIn.self, SelfReportRecord.self])
+        do {
+            return try ModelContainer(for: schema)
+        } catch {
+            fatalError("스토어 열기 실패: \(error)")
+        }
+    }()
+
     init() {
         // 팔레트 캐시는 첫 렌더 전에 확정돼야 한다(Ink가 정적 캐시를 읽는다 — Theme.swift)
         ThemeStore.apply(UserDefaults.standard.string(forKey: ThemeStore.storageKey))
+        // 수동 생성 컨테이너는 autosave 명시(repo CLAUDE.md 2026-07-23 실측)
+        Self.container.mainContext.autosaveEnabled = true
+        PlannerSync.shared.configure(container: Self.container)
     }
 
     var body: some Scene {
@@ -19,8 +37,6 @@ struct TempoRoutineApp: App {
             RootTabView()
             // 다크 = 적응형 토큰으로 대응(Ink — 2026-07-20 사용자 결정). 정식 다크 테마는 미학 패스.
         }
-        .modelContainer(for: [PeriodDay.self, ScheduleItem.self, InputItem.self,
-                              OutputItem.self, OutputSubtask.self, ItemCompletion.self,
-                              DailyCheckIn.self, SelfReportRecord.self])
+        .modelContainer(Self.container)
     }
 }
