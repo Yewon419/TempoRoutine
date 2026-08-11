@@ -30,6 +30,9 @@ struct TempoRoutineApp: App {
         // 수동 생성 컨테이너는 autosave 명시(repo CLAUDE.md 2026-07-23 실측)
         Self.container.mainContext.autosaveEnabled = true
         PlannerSync.shared.configure(container: Self.container)
+        // 앱 밖에서 끝난 결제(승인 대기 통과·다른 기기)를 받아 finish 한다 — 안 걸어두면
+        // 그 거래가 큐에 남아 실행마다 다시 전달된다(StoreKit 2 계약).
+        TipStore.shared.startListening()
     }
 
     var body: some Scene {

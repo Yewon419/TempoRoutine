@@ -43,6 +43,9 @@ struct ThemeShopView: View {
     @State private var sprout: AppTheme?           // 새싹 축하 연출 중인 카드
     @State private var plantedAlert: AppTheme?     // 성공 알럿(연출 뒤 한 박자 늦게)
     @State private var celebrateTick = 0           // 성공 햅틱
+    // 커피 한 잔(2026-08-11) — 우상단 캐릭터 + 말풍선. 씨앗 트랙 밖의 팁이다(§3.8).
+    private var tips = TipStore.shared
+    @State private var showTip = false
 
     private var current: AppTheme { AppTheme(rawValue: appTheme) ?? .standard }
     private var available: Int { Seeds.available(checkIns) }
@@ -64,6 +67,7 @@ struct ThemeShopView: View {
                     .padding(20)
                     .centeredColumn(640)
                 }
+                tipLayer
             }
             .navigationTitle("테마")
             .navigationBarTitleDisplayMode(.inline)
@@ -71,8 +75,10 @@ struct ThemeShopView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("닫기") { dismiss() }.foregroundStyle(Ink.text)
                 }
+                ToolbarItem(placement: .confirmationAction) { mascotButton }
             }
         }
+        .task { await tips.load() }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sensoryFeedback(.success, trigger: celebrateTick)
         // 구매 확인(2026-08-09) — 씨앗을 쓰는 확정 액션이라 한 번 묻는다(§8.2.6 확인 문법)
@@ -107,6 +113,48 @@ struct ThemeShopView: View {
             // 낸 값 0으로 적힌다(Seeds.grandfather) — 구매분과 섞이면 병합 때 유료로 오인된다.
             if current == .modern { Seeds.grandfather(.modern) }
         }
+    }
+
+    // ── 커피 한 잔 (2026-08-11) ──
+    /// 말풍선은 툴바 아이템에 붙이면 내비게이션 바 밖으로 잘린다 — 화면 ZStack 위에 얹고
+    /// 우상단 아래로 정렬해 꼬리가 캐릭터를 가리키게 한다. 바깥을 누르면 닫힌다.
+    @ViewBuilder
+    private var tipLayer: some View {
+        if showTip {
+            Color.clear
+                .contentShape(Rectangle())
+                .ignoresSafeArea()
+                .onTapGesture { closeTip() }
+            TipBubble(store: tips)
+                .padding(.trailing, 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .transition(reduceMotion ? .opacity
+                            : .scale(scale: 0.85, anchor: .topTrailing).combined(with: .opacity))
+        }
+    }
+
+    private var mascotButton: some View {
+        Button {
+            lightFeedback += 1
+            if showTip {
+                closeTip()
+            } else {
+                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.78)) {
+                    showTip = true
+                }
+            }
+        } label: {
+            TipMascot(diameter: 26, color: Ink.text, resting: tips.cups > 0)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("만드는 사람에게 커피 한 잔")
+    }
+
+    private func closeTip() {
+        withAnimation(reduceMotion ? nil : .spring(response: 0.26, dampingFraction: 0.85)) {
+            showTip = false
+        }
+        tips.rest()
     }
 
     private var header: some View {
