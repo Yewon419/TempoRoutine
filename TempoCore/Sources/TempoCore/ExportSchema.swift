@@ -299,6 +299,47 @@ public struct RhythmSummaryDTO: Codable, Equatable, Sendable {
     }
 }
 
+// ── 씨앗 소비 원장 (§3.8.1, 2026-08-11) ──
+// 획득은 DailyCheckIn.completedAt 파생이라 체크인을 타고 기기 간에 이어지는데, 소비는 기기마다
+// 따로 놀았다(폰에서 산 테마가 패드에선 잠김). 원장을 동기·백업 대상으로 올리면서 자료형을
+// **늘기만 하는 맵**으로 바꾼다 — 병합이 합집합이면 왕복 순서에 무관하게 수렴하고, 잔액이
+// 음수가 되거나 같은 테마에 두 번 값을 치르는 상태 자체가 만들어지지 않는다.
+// (전체 페이로드 last-writer-wins로 두면 폰 구매와 패드 공지 수령이 겹칠 때 한쪽이 통째로 날아간다.)
+public struct SeedLedgerDTO: Codable, Equatable, Sendable {
+    /// 보유 테마 rawValue → 그때 낸 씨앗 수. 승계분(쓰던 테마 자동 보유)은 0 — 구매분과 구분해야
+    /// 병합이 승계를 유료로 오인하지 않는다.
+    public var purchases: [String: Int]
+    /// 수령한 공지 id → 그때 받은 씨앗 수.
+    public var claims: [String: Int]
+    /// 맵 원장 이전 판(UserDefaults `seedsBonus`)에서 넘어온 수령 총액. 공지별로 쪼갤 수 없어
+    /// 따로 둔다 — 병합은 max(합산하면 같은 공지를 두 기기에서 받은 게 두 배가 된다).
+    public var legacyBonus: Int
+
+    public init(purchases: [String: Int] = [:], claims: [String: Int] = [:], legacyBonus: Int = 0) {
+        self.purchases = purchases
+        self.claims = claims
+        self.legacyBonus = legacyBonus
+    }
+
+    public var spent: Int { purchases.values.reduce(0, +) }
+    public var bonus: Int { claims.values.reduce(0, +) + legacyBonus }
+    public var ownedThemes: Set<String> { Set(purchases.keys) }
+
+    /// 합집합 병합. 키가 겹치면 잔액이 부풀지 않는 쪽(소비는 큰 값·수령은 작은 값)을 고른다 —
+    /// 셋 다 교환·결합·멱등이라 어느 기기에서 어떤 순서로 돌려도 같은 결과에 수렴한다.
+    public func merged(with other: SeedLedgerDTO) -> SeedLedgerDTO {
+        var out = self
+        for (theme, paid) in other.purchases {
+            out.purchases[theme] = max(out.purchases[theme] ?? paid, paid)
+        }
+        for (notice, seeds) in other.claims {
+            out.claims[notice] = min(out.claims[notice] ?? seeds, seeds)
+        }
+        out.legacyBonus = max(legacyBonus, other.legacyBonus)
+        return out
+    }
+}
+
 // ── 봉투 ──
 public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
     public var schemaVersion: Int
@@ -313,11 +354,16 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
     /// 개정 M-6c(2026-08-08) — v1 내 optional 추가라 구 파일 decode 무영향(backfilled 패턴).
     /// 재임포트는 이 필드를 읽지 않는다(read-only 산출물).
     public var rhythmSummary: RhythmSummaryDTO?
+    /// 씨앗 소비 원장(2026-08-11, §3.8.1) — 같은 optional 추가 패턴. 획득 근거(체크인 completedAt)만
+    /// 동봉하던 탓에 백업 복원·기기 이전에서 산 테마가 사라지고 씨앗만 돌아왔다. 재임포트는 이
+    /// 필드를 **병합**한다(덮어쓰기 아님 — 「구매한 테마는 사라지지 않아요」).
+    public var seedLedger: SeedLedgerDTO?
 
     public init(exportedAt: Date, periodDays: [PeriodDayDTO], scheduleItems: [ScheduleItemDTO],
                 inputItems: [InputItemDTO], outputItems: [OutputItemDTO],
                 completions: [ItemCompletionDTO], checkIns: [DailyCheckInDTO],
-                trackedSignals: TrackedSignals, rhythmSummary: RhythmSummaryDTO? = nil) {
+                trackedSignals: TrackedSignals, rhythmSummary: RhythmSummaryDTO? = nil,
+                seedLedger: SeedLedgerDTO? = nil) {
         self.schemaVersion = ExportCodec.schemaVersion
         self.exportedAt = exportedAt
         self.periodDays = periodDays
@@ -328,6 +374,7 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
         self.checkIns = checkIns
         self.trackedSignals = trackedSignals
         self.rhythmSummary = rhythmSummary
+        self.seedLedger = seedLedger
     }
 }
 

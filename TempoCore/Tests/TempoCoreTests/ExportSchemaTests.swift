@@ -101,4 +101,58 @@ final class ExportSchemaTests: XCTestCase {
         XCTAssertEqual(summary.perCycleRanges, [2, 2, 2])
         XCTAssertEqual(summary.constants, .current)
     }
+
+    // ── 씨앗 소비 원장 (2026-08-11, §3.8.1 — 기기 간 불일치 P-6 수정) ──
+
+    // T46: 구 봉투에 없는 optional이라 decode 무영향 + 실으면 왕복 보존
+    func testT46_seedLedgerEnvelopeRoundTrip() throws {
+        XCTAssertNil(try ExportCodec.decode(try ExportCodec.encode(sampleEnvelope())).seedLedger)
+
+        var envelope = sampleEnvelope()
+        let ledger = SeedLedgerDTO(purchases: ["modern": 7], claims: ["notice-1": 7], legacyBonus: 3)
+        envelope.seedLedger = ledger
+        XCTAssertEqual(try ExportCodec.decode(try ExportCodec.encode(envelope)).seedLedger, ledger)
+    }
+
+    // T47: 잔액 셈 — 소비는 구매액 합, 보너스는 수령액 합 + 구판 잔재
+    func testT47_seedLedgerTotals() {
+        let ledger = SeedLedgerDTO(purchases: ["modern": 7, "letterpress": 0],
+                                   claims: ["notice-1": 7, "notice-2": 2], legacyBonus: 3)
+        XCTAssertEqual(ledger.spent, 7, "승계분(0)은 소비에 안 잡힌다")
+        XCTAssertEqual(ledger.bonus, 12)
+        XCTAssertEqual(ledger.ownedThemes, ["modern", "letterpress"])
+    }
+
+    // T48: 병합 = 합집합. 폰 구매 + 패드 공지 수령이 겹쳐도 어느 쪽도 안 날아간다
+    // (전체 페이로드 last-writer-wins였다면 한쪽이 통째로 사라진다 — 이 수정의 요지)
+    func testT48_seedLedgerMergeIsUnion() {
+        let phone = SeedLedgerDTO(purchases: ["modern": 7], claims: [:], legacyBonus: 0)
+        let pad = SeedLedgerDTO(purchases: [:], claims: ["notice-1": 7], legacyBonus: 0)
+        let merged = phone.merged(with: pad)
+        XCTAssertEqual(merged.purchases, ["modern": 7])
+        XCTAssertEqual(merged.claims, ["notice-1": 7])
+        XCTAssertEqual(merged.spent, 7)
+        XCTAssertEqual(merged.bonus, 7)
+    }
+
+    // T49: 교환·결합·멱등 — 어느 기기에서 어떤 순서로 돌려도 같은 값에 수렴해야 왕복이 멈춘다
+    func testT49_seedLedgerMergeConverges() {
+        let a = SeedLedgerDTO(purchases: ["modern": 7], claims: ["n1": 7], legacyBonus: 3)
+        let b = SeedLedgerDTO(purchases: ["letterpress": 5], claims: ["n2": 2], legacyBonus: 0)
+        let c = SeedLedgerDTO(purchases: ["modern": 0], claims: ["n1": 7], legacyBonus: 9)
+
+        XCTAssertEqual(a.merged(with: b), b.merged(with: a), "교환")
+        XCTAssertEqual(a.merged(with: b).merged(with: c), a.merged(with: b.merged(with: c)), "결합")
+        XCTAssertEqual(a.merged(with: a), a, "멱등")
+        // 같은 테마를 승계(0)와 구매(7)로 각각 들고 있으면 잔액이 부푸는 쪽을 안 고른다
+        XCTAssertEqual(a.merged(with: c).purchases["modern"], 7)
+        XCTAssertEqual(a.merged(with: c).legacyBonus, 9, "구판 잔재는 합산 아닌 max — 이중 지급 방지")
+    }
+
+    // T50: 두 기기가 같은 공지를 따로 받아도 병합하면 한 번으로 접힌다(합산이면 두 배가 된다)
+    func testT50_seedLedgerClaimCountsOnce() {
+        let phone = SeedLedgerDTO(claims: ["notice-1": 7])
+        let pad = SeedLedgerDTO(claims: ["notice-1": 7])
+        XCTAssertEqual(phone.merged(with: pad).bonus, 7)
+    }
 }
