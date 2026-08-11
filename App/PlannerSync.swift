@@ -452,8 +452,14 @@ extension PlannerSync: CKSyncEngineDelegate {
                 persistSynced()
                 UserDefaults.standard.set(false, forKey: "plannerSyncZoneSaved")
             }
-        case .sentDatabaseChanges:
-            UserDefaults.standard.set(true, forKey: "plannerSyncZoneSaved")
+        case .sentDatabaseChanges(let sent):
+            // ⚠ 성공분이 있을 때만 플래그 — 실패까지 true로 접으면 존 저장이 영영 재시도 안 됨(08-11 정정)
+            if !sent.savedZones.isEmpty {
+                UserDefaults.standard.set(true, forKey: "plannerSyncZoneSaved")
+            }
+            for failure in sent.failedZoneSaves {
+                stampReport(suffix: "존 오류 \((failure.error as? CKError)?.code.rawValue ?? -1)")
+            }
         case .sentRecordZoneChanges(let sent):
             var pushed = 0
             for record in sent.savedRecords {
@@ -501,7 +507,21 @@ extension PlannerSync: CKSyncEngineDelegate {
             recordCache[recordID] = nil
             syncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
         default:
-            stampReport(suffix: "오류 \(ckError.code.rawValue)")
+            // 진단 상세(2026-08-11 — "오류 12"만으론 원인 특정 불가했던 교훈): 코드 이름+설명까지
+            let detail = ckError.localizedDescription.prefix(80)
+            stampReport(suffix: "오류 \(ckError.code.rawValue)(\(Self.codeName(ckError.code))) \(detail)")
+        }
+    }
+
+    private static func codeName(_ code: CKError.Code) -> String {
+        switch code {
+        case .invalidArguments: "invalidArguments — 프로덕션 스키마 미배포 의심"
+        case .notAuthenticated: "notAuthenticated"
+        case .permissionFailure: "permissionFailure"
+        case .quotaExceeded: "quotaExceeded"
+        case .networkUnavailable, .networkFailure: "network"
+        case .serverRejectedRequest: "serverRejected"
+        default: String(describing: code)
         }
     }
 
