@@ -127,6 +127,11 @@ final class PlannerSync: NSObject {
     }
 
     func syncNow() async {
+        // 수동 「지금 동기화」 자가 회복(2026-08-11 실기기 — 패드가 "동기화 꺼짐" 리포트에 갇힘):
+        // 토글이 꺼져 있으면 켜고 시작한다 — 버튼을 눌렀다는 것 자체가 켜겠다는 의사다.
+        if !Self.isEnabled {
+            UserDefaults.standard.set(true, forKey: Self.enabledKey)
+        }
         if engine == nil { await start() }
         guard let engine else { return }
         queueLocalDiff()
