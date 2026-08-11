@@ -40,8 +40,9 @@ struct SettingsView: View {
     /// 임시 테스트 알림 안내 문구(2026-08-08 — 기능 제거 시 함께 걷을 것)
     @State private var testNoticeHint: String?
 
-    /// 테마 진입 = 테마 탭 시트(2026-08-09 — 구 인라인 Picker 폐기, 심기·적용은 ThemeShopView 담당)
-    @State private var showThemeShop = false
+    /// 테마 진입 = 테마 탭 시트(2026-08-09 — 구 인라인 Picker 폐기, 심기·적용은 ThemeShopView 담당).
+    /// 오늘 탭 진입과 같은 키를 공유한다 — 테마 리빌드에서 살아남아야 해서 뷰 밖에 둔다(RootTab 주석).
+    @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
     /// 기기 간 동기화 토글 상태(2026-08-10) — 원장은 PlannerSync, 여기는 렌더 트리거용 미러
     @State private var syncOn = PlannerSync.isEnabled
 
@@ -305,7 +306,7 @@ struct SettingsView: View {
             ActivityShareSheet(url: file.url)
         }
         .sheet(isPresented: $showSelfReport) { SelfReportFlow() }
-        .sheet(isPresented: $showThemeShop) { ThemeShopView() }
+        // 테마 탭 시트 표시는 RootTabView 한 곳(2026-08-11) — 여기선 플래그만 세운다
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)
         }

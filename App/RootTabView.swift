@@ -4,6 +4,15 @@
 import SwiftUI
 import SwiftData
 
+/// 루트 탭 식별자 — 리빌드를 건너 살아남아야 해서 문자열로 저장한다(§8.1 탭 순서).
+enum RootTab: String {
+    case today, calendar, rhythm, settings
+
+    static let storageKey = "rootTab"
+    /// 테마 탭 시트도 같은 이유로 뷰 밖에 둔다 — 시트가 열린 채 테마를 갈아입어도 닫히지 않는다
+    static let themeShopKey = "themeShopOpen"
+}
+
 struct RootTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
@@ -14,21 +23,33 @@ struct RootTabView: View {
     @Query private var completions: [ItemCompletion]
     @AppStorage("onboardingDone") private var onboardingDone = false
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
+    /// 선택 탭을 뷰 밖(UserDefaults)에 둔다 — 아래 `.id(appTheme)` 리빌드가 TabView의 내부
+    /// 선택 상태를 통째로 버려서, 테마를 갈아입을 때마다 첫 탭으로 튕기던 결함(2026-08-11).
+    /// 실행 간 이월은 안 한다(TempoRoutineApp.init에서 「오늘」로 되돌린다) — 이번 수정 범위는
+    /// 리빌드 생존까지다.
+    @AppStorage(RootTab.storageKey) private var rootTab = RootTab.today.rawValue
+    /// 테마 탭 시트 — 진입점은 둘(오늘 탭 씨앗 배지·설정 테마 행)이지만 표시는 여기 한 곳이다.
+    /// 각 화면에서 띄우면 같은 플래그를 보는 시트가 두 개가 된다.
+    @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
 
     var body: some View {
-        TabView {
+        TabView(selection: $rootTab) {
             TodayView()
                 .tabItem { Label("오늘", systemImage: "circle.inset.filled") }
+                .tag(RootTab.today.rawValue)
             NavigationStack {
                 SeasonCalendarView()
             }
             .tabItem { Label("캘린더", systemImage: "calendar") }
+            .tag(RootTab.calendar.rawValue)
             RhythmView()
                 .tabItem { Label("나의 리듬", systemImage: "chart.xyaxis.line") }
+                .tag(RootTab.rhythm.rawValue)
             NavigationStack {
                 SettingsView()
             }
             .tabItem { Label("설정", systemImage: "gearshape") }
+            .tag(RootTab.settings.rawValue)
         }
         .tint(Ink.text)
         // 모던 = 항상 다크 단일 외관(시안 §1.1) — 시스템 라이트에서 탭바 유리·ultraThinMaterial·
@@ -44,6 +65,7 @@ struct RootTabView: View {
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)
         }
+        .sheet(isPresented: $showThemeShop) { ThemeShopView() }
         // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow()

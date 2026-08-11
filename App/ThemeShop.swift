@@ -257,7 +257,8 @@ struct ThemeShopView: View {
     }
 
     /// 선 apply → AppStorage 갱신(설정과 같은 경로 — 루트 `.id` 리빌드가 전 화면을 갈아입힌다).
-    /// 리빌드로 이 시트도 함께 닫힌다 — 새 지면이 곧바로 보이는 게 자연스러운 마무리.
+    /// ~~리빌드로 이 시트도 함께 닫힌다~~ **폐기(2026-08-11 사용자: "계속 테마 탭에 머물게")** —
+    /// 탭·시트 플래그를 뷰 밖에 둬서 리빌드를 건너 살아남는다. 갈아입은 뒤에도 이 화면에 머문다.
     private func apply(_ theme: AppTheme) {
         confirmHaptic()
         ThemeStore.apply(theme.rawValue)

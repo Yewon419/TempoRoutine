@@ -96,7 +96,9 @@ struct TodayView: View {
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
     // 알림 권한 안내 카드(2026-08-08) — 기본 켬 알림의 능동 권한 획득 경로, 1회
     @State private var showNoticeCard = false
-    @State private var showThemeShop = false   // 씨앗 배지 탭 = 테마 탭(2026-08-09)
+    // 씨앗 배지 탭 = 테마 탭(2026-08-09). 플래그를 뷰 밖에 두는 이유는 RootTab 주석 참조 —
+    // 테마를 갈아입으면 루트가 리빌드돼 @State였던 이 값이 날아가고 시트가 닫혔다(2026-08-11).
+    @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
     /// 씨앗 원장 방송 카운터 — 소비·수령은 생 UserDefaults라 이 키를 지켜봐야 배지가 따라온다
     /// (2026-08-11: 소식란에서 씨앗을 받아도 배지가 옛 숫자로 남아 있던 결함)
     @AppStorage(Seeds.revisionKey) private var seedRevision = 0
@@ -176,7 +178,8 @@ struct TodayView: View {
             compactBar
         }
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet() }
-        .sheet(isPresented: $showThemeShop) { ThemeShopView() }
+        // 테마 탭 시트 표시는 RootTabView 한 곳 — 진입점이 둘(여기·설정)이라 각자 띄우면
+        // 같은 플래그를 보는 시트가 두 개가 된다(2026-08-11). 여기선 플래그만 세운다.
         .sheet(item: $addSheet) { kind in
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: today)

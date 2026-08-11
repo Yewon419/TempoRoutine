@@ -246,7 +246,7 @@ struct TipBubble: View {
 
     private var message: String {
         if store.cups > 0 {
-            return "커피 \(store.cups)잔을 받았어요. 덕분에 며칠 더 즐겁게 만들었어요."
+            return "커피 \(store.cups)잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!"
         }
         return "광고도 구독도 없이 만들고 있어요."
     }

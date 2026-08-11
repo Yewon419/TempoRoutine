@@ -33,6 +33,10 @@ struct TempoRoutineApp: App {
         // 앱 밖에서 끝난 결제(승인 대기 통과·다른 기기)를 받아 finish 한다 — 안 걸어두면
         // 그 거래가 큐에 남아 실행마다 다시 전달된다(StoreKit 2 계약).
         TipStore.shared.startListening()
+        // 탭·시트 상태는 테마 리빌드에서 살아남으려고 UserDefaults에 두지만 실행 간에는
+        // 이월하지 않는다(2026-08-11) — 앱을 다시 열면 「오늘」에서, 시트는 닫힌 채로 시작한다.
+        UserDefaults.standard.set(RootTab.today.rawValue, forKey: RootTab.storageKey)
+        UserDefaults.standard.set(false, forKey: RootTab.themeShopKey)
     }
 
     var body: some Scene {
