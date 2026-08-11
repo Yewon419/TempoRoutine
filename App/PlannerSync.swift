@@ -135,8 +135,31 @@ final class PlannerSync: NSObject {
         if engine == nil { await start() }
         guard let engine else { return }
         queueLocalDiff()
-        try? await engine.sendChanges()
-        try? await engine.fetchChanges()
+        // 오류를 삼키지 않는다(2026-08-11 — 패드가 원인 안 보이는 채 멈춰 있던 교훈).
+        // 리포트가 이 왕복에서 안 바뀌었으면 "변경 없음"이라도 찍는다 — 침묵이 제일 나쁘다.
+        let before = lastReport
+        do {
+            try await engine.sendChanges()
+        } catch {
+            stampReport(suffix: "보내기 오류 — \(shortError(error))")
+            return
+        }
+        do {
+            try await engine.fetchChanges()
+        } catch {
+            stampReport(suffix: "가져오기 오류 — \(shortError(error))")
+            return
+        }
+        if lastReport == before {
+            stampReport(suffix: "왕복 완료 — 새 변경 없음")
+        }
+    }
+
+    private func shortError(_ error: Error) -> String {
+        if let ck = error as? CKError {
+            return "\(ck.code.rawValue)(\(Self.codeName(ck.code)))"
+        }
+        return String(describing: error).prefix(60).description
     }
 
     // ── 스냅샷·diff ──

@@ -167,6 +167,10 @@ struct SettingsView: View {
                         if !PlannerSync.shared.lastReport.isEmpty {
                             Text("마지막 동기화 · \(PlannerSync.shared.lastReport)")
                         }
+                        // 연결 상태 진단(2026-08-11) — 엔진이 안 떠 있으면 기기 iCloud 설정 안내
+                        if syncOn && !PlannerSync.shared.running {
+                            Text("iCloud 연결 안 됨 — 기기 설정 > Apple 계정 > iCloud에서 템포루틴이 켜져 있는지, 폰과 같은 계정인지 확인해 주세요.")
+                        }
                     }
                 }
 
