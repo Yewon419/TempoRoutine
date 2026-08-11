@@ -31,6 +31,18 @@ final class TipStore {
     private static let cupsKey = "tipCups"
     private static let countedKey = "tipCountedTransactions"
 
+    /// TestFlight·샌드박스 빌드에서만 참(영수증 파일명이 sandboxReceipt). App Store 배포본은
+    /// receipt라 항상 거짓이다 — 아래 무료 지급 경로가 프로덕션으로 새어나갈 수 없다.
+    /// 상품 등록 전에 구매 후 화면(감사 문구·잔 수·흔들림 정지)을 확인하려고 둔 시험 경로다
+    /// (2026-08-11 사용자 지시). 상품이 실제로 등록되면 product가 잡혀 이 경로는 안 탄다.
+    static let isSandbox: Bool = {
+        guard let url = Bundle.main.appStoreReceiptURL else { return false }
+        return url.lastPathComponent == "sandboxReceipt"
+    }()
+
+    /// 상품이 없는데 시험 빌드다 = 무료 지급 버튼을 띄운다
+    var isFreeTrial: Bool { product == nil && Self.isSandbox }
+
     enum Status: Equatable {
         case loading
         case unavailable            // 상품 미등록·네트워크 실패 — 버튼을 비활성으로 두고 사실만 적는다
@@ -78,15 +90,20 @@ final class TipStore {
                 product = first
                 status = .ready
             } else {
-                status = .unavailable   // 콘솔 미등록·심사 미승인 — 코드 문제가 아니다
+                // 콘솔 미등록·심사 미승인 — 코드 문제가 아니다. 시험 빌드면 무료 지급으로 연다
+                status = Self.isSandbox ? .ready : .unavailable
             }
         } catch {
-            status = .unavailable
+            status = Self.isSandbox ? .ready : .unavailable
         }
     }
 
     func buy() async {
-        guard let product, status != .purchasing else { return }
+        guard status != .purchasing else { return }
+        guard let product else {
+            if Self.isSandbox { grantFree() }
+            return
+        }
         status = .purchasing
         do {
             switch try await product.purchase() {
@@ -119,6 +136,13 @@ final class TipStore {
         case .thanks, .failed, .pending: status = product == nil ? .unavailable : .ready
         default: break
         }
+    }
+
+    /// 시험 지급 — 결제 없이 잔만 올린다. 트랜잭션이 없으므로 중복 방지 키도 없다.
+    private func grantFree() {
+        cups += 1
+        UserDefaults.standard.set(cups, forKey: Self.cupsKey)
+        status = .thanks
     }
 
     private func record(_ id: UInt64) {
@@ -254,12 +278,12 @@ struct TipBubble: View {
 
     @ViewBuilder
     private var buyButton: some View {
-        if let product = store.product {
+        if let label = buyLabel {
             Button {
                 confirmHaptic()
                 Task { await store.buy() }
             } label: {
-                Text("커피 한 잔 · \(product.displayPrice)")
+                Text(label)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Ink.paper)
                     .padding(.horizontal, 16)
@@ -268,6 +292,14 @@ struct TipBubble: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// 상품이 잡히면 실제 가격, 시험 빌드면 값 없이 「시험용」 표기(진짜 결제로 오인하지 않게)
+    private var buyLabel: String? {
+        if let product = store.product {
+            return "커피 한 잔 · \(product.displayPrice)"
+        }
+        return store.isFreeTrial ? "커피 한 잔 (시험용)" : nil
     }
 
     private func note(_ text: String) -> some View {
