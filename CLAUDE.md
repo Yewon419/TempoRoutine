@@ -54,6 +54,11 @@
   화면 밖 콘텐츠(캐러셀 옆 패널)를 아예 렌더하지 않는다.
 - **이 리포 커밋은 명시 경로로만** — `git add -A` 금지(2026-07-28 실측: 병렬 세션의 브랜딩
   작업 파일이 무관한 커밋에 딸려 들어감). 병렬 Claude 세션이 같은 워킹트리를 쓸 수 있다.
+- **CloudKit 커스텀 레코드 타입은 콘솔 스키마 프로덕션 배포가 선행 조건**(2026-08-11 실측:
+  PlannerSync TRItem이 오류 12 invalidArguments). TestFlight = 프로덕션 환경이고 JIT 스키마
+  생성은 개발 환경 전용 — 새 레코드 타입/필드를 코드로 추가하면 콘솔에서 Development에 만들고
+  Deploy to Production까지 해야 실기기에서 저장된다. TestFlight 빌드가 안 뜰 땐 ASC API로
+  builds(VALID)·buildBetaDetail(IN_BETA_TESTING) 확인 — 처리 지연이 20분+일 수 있다.
 - Swift 6 strict(CI Xcode 26.5) 실측 2건(2026-07-29, 각 CI 한 바퀴 소진): ① 전역 가변
   `static var`는 그대로 두면 concurrency 에러 — 쓰기 경로가 메인 한정이면
   `nonisolated(unsafe)` + 근거 주석(ThemeStore 사례. @MainActor 격리는 정적 API 콜사이트
