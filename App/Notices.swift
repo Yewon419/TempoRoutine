@@ -83,8 +83,8 @@ final class NoticeFeed {
 struct NoticesView: View {
     @Environment(\.dismiss) private var dismiss
     private var feed = NoticeFeed.shared
-    /// 수령 상태는 UserDefaults 원장 — 화면 수명 동안의 사본으로 렌더한다(테마 탭과 같은 문법)
-    @State private var claimed: Set<String> = []
+    /// 수령 상태는 씨앗 원장 — 생 UserDefaults 읽기는 무효화가 안 걸려서 방송 카운터를 지켜본다
+    @AppStorage(Seeds.revisionKey) private var seedRevision = 0
 
     var body: some View {
         NavigationStack {
@@ -118,7 +118,6 @@ struct NoticesView: View {
             }
         }
         .task {
-            claimed = Seeds.claimedNotices
             await feed.refresh(force: true)
             feed.markAllSeen()
         }
@@ -160,7 +159,7 @@ struct NoticesView: View {
 
     @ViewBuilder
     private func seedRow(notice: Notice, seeds: Int) -> some View {
-        if claimed.contains(notice.id) {
+        if Seeds.claimedNotices.contains(notice.id) {
             Label("씨앗 \(seeds)개를 받았어요", systemImage: "checkmark.seal")
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.55))
@@ -168,7 +167,6 @@ struct NoticesView: View {
             Button {
                 guard Seeds.claim(noticeID: notice.id, seeds: seeds) else { return }
                 confirmHaptic()
-                claimed = Seeds.claimedNotices
             } label: {
                 HStack(spacing: 6) {
                     SeedGlyph()

@@ -26,6 +26,10 @@ final class PlannerSync: NSObject {
     private static let zoneName = "TempoSync"
     private static let recordType = "TRItem"
     private static let lastReportKey = "plannerSyncLastReport"
+    /// 씨앗 소비 원장(2026-08-11, §3.8.1) — 아이템이 아니라 단일 원장이라 고정 이름 1건.
+    /// **기존 TRItem 타입을 그대로 쓴다** — 새 레코드 타입은 CloudKit 콘솔 프로덕션 스키마 배포가
+    /// 선행 조건이라(08-11 "오류 12" 실측) 코드만으로 못 켠다.
+    private static let ledgerRecordName = "seedledger"
 
     /// 사용자 토글(기본 켬) — 끄면 엔진을 내리되 로컬 데이터·동기 상태 파일은 보존
     static var isEnabled: Bool {
@@ -228,6 +232,10 @@ final class PlannerSync: NSObject {
                                 isBackfilled: item.isBackfilled ? true : nil,
                                 completedAt: item.completedAt))
         }
+        // 씨앗 소비 원장 — 획득(체크인 completedAt)만 이어지고 소비는 기기마다 따로 놀던 결함(P-6)
+        if let ledger = try? Self.payloadEncoder.encode(Seeds.ledger) {
+            map[Self.ledgerRecordName] = ledger
+        }
         return map
     }
 
@@ -263,15 +271,34 @@ final class PlannerSync: NSObject {
     private func apply(records: [CKRecord], deletions: [CKRecord.ID]) {
         guard let context = container?.mainContext else { return }
         var pulled = 0
+        var ledgerMerged = false
         for record in records {
             guard let payload = record["payload"] as? Data else { continue }
             let name = record.recordID.recordName
             recordCache[record.recordID] = record
             if synced[name] == payload { continue }   // 에코(내가 올린 것)
+            // 씨앗 원장만 덮어쓰기가 아니라 병합이다 — 전체 last-writer-wins면 이쪽 구매와
+            // 저쪽 공지 수령이 겹칠 때 한쪽이 통째로 날아간다(합집합이라 왕복이 수렴한다).
+            if name == Self.ledgerRecordName {
+                if let remote = try? JSONDecoder().decode(SeedLedgerDTO.self, from: payload),
+                   Seeds.merge(remote) {
+                    ledgerMerged = true
+                }
+                synced[name] = payload
+                pulled += 1
+                continue
+            }
             if upsert(name: name, payload: payload, context: context) {
                 pulled += 1
                 synced[name] = payload
             }
+        }
+        // 병합 결과(원격 ≠ 로컬)를 되올린다 — 다음 왕복까지 미루면 저쪽은 계속 옛 원장을 본다
+        if ledgerMerged, let engine {
+            pendingPayloads[Self.ledgerRecordName] = try? Self.payloadEncoder.encode(Seeds.ledger)
+            engine.state.add(pendingRecordZoneChanges: [
+                .saveRecord(CKRecord.ID(recordName: Self.ledgerRecordName, zoneID: zone))
+            ])
         }
         var removed = 0
         for recordID in deletions {

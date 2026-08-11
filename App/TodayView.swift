@@ -97,6 +97,9 @@ struct TodayView: View {
     // 알림 권한 안내 카드(2026-08-08) — 기본 켬 알림의 능동 권한 획득 경로, 1회
     @State private var showNoticeCard = false
     @State private var showThemeShop = false   // 씨앗 배지 탭 = 테마 탭(2026-08-09)
+    /// 씨앗 원장 방송 카운터 — 소비·수령은 생 UserDefaults라 이 키를 지켜봐야 배지가 따라온다
+    /// (2026-08-11: 소식란에서 씨앗을 받아도 배지가 옛 숫자로 남아 있던 결함)
+    @AppStorage(Seeds.revisionKey) private var seedRevision = 0
 
 
     private var cal: Calendar { Calendar.current }

@@ -112,7 +112,10 @@ enum ExportImport {
             trackedSignals: AppSettings.trackedSignals,
             rhythmSummary: RhythmSummaryDTO.build(cycles: axis.cycles,
                                                   menstrualLength: axis.menstrualLength,
-                                                  computedAt: .now)
+                                                  computedAt: .now),
+            // 씨앗 소비 원장(2026-08-11) — 획득 근거(체크인 completedAt)만 싣던 탓에 복원·기기
+            // 이전에서 산 테마가 사라지고 씨앗만 되돌아왔다(§3.8.1 「구매한 테마는 사라지지 않아요」)
+            seedLedger: Seeds.ledger
         )
     }
 
@@ -209,6 +212,10 @@ enum ExportImport {
             context.insert(record)
             added += 1
         }
+
+        // 씨앗 소비 원장 — 덮어쓰기가 아니라 합집합 병합. 백업이 이 기기보다 오래됐어도 그 사이에
+        // 산 테마를 되돌리지 않는다. 아이템 추가 건수(added)에는 세지 않는다 — 재화는 항목이 아니다.
+        if let remote = envelope.seedLedger { Seeds.merge(remote) }
         return added
     }
 

@@ -43,59 +43,104 @@ enum Seeds {
         checkIns.filter { isAwarded($0) }.count
     }
 
-    // ── 소비 — 테마 심기 (2026-08-09 테마 탭, §3.8.1 「심기」 언어) ──
-    private static let plantedKey = "plantedThemes"
-    private static let spentKey = "seedsSpent"
+    // ── 소비 원장 (2026-08-09 테마 탭 / 2026-08-11 맵 원장으로 개정) ──
+    // 종전엔 plantedThemes·seedsSpent·seedsBonus·claimedNotices 네 키로 흩어져 있었고 전부
+    // 이 기기 UserDefaults였다 — 폰에서 산 테마가 패드에선 잠기고 잔액은 더 많아 보였다(P-6).
+    // 지금은 `SeedLedgerDTO` 한 덩어리 = 동기화(PlannerSync)·백업(내보내기 봉투)이 실어 나른다.
+    private static let ledgerKey = "seedLedger"
+    private static let migratedKey = "seedLedgerMigrated"
+    /// 원장 변경 방송용 카운터. SwiftUI는 생 UserDefaults 읽기를 무효화하지 못해서, 소식란에서
+    /// 씨앗을 받아도 오늘 탭 배지가 옛 숫자에 남아 있었다 — 표면은 이 키를 @AppStorage로 지켜본다.
+    static let revisionKey = "seedLedgerRevision"
 
-    /// 심은 테마(rawValue 집합). 심은 테마는 기록 철회로 획득이 줄어도 유지된다 — 재화 신뢰.
-    static var planted: Set<String> {
-        get { Set(UserDefaults.standard.stringArray(forKey: plantedKey) ?? []) }
-        set { UserDefaults.standard.set(Array(newValue).sorted(), forKey: plantedKey) }
+    static var ledger: SeedLedgerDTO {
+        migrateIfNeeded()
+        guard let data = UserDefaults.standard.data(forKey: ledgerKey),
+              let decoded = try? JSONDecoder().decode(SeedLedgerDTO.self, from: data)
+        else { return SeedLedgerDTO() }
+        return decoded
     }
 
-    static var spent: Int {
-        get { UserDefaults.standard.integer(forKey: spentKey) }
-        set { UserDefaults.standard.set(newValue, forKey: spentKey) }
+    /// 쓰기는 전부 이 창구로 — 읽고·고치고·쓰는 순서라 마이그레이션이 새 값을 덮을 일이 없다.
+    private static func write(_ ledger: SeedLedgerDTO) {
+        guard let data = try? JSONEncoder().encode(ledger) else { return }
+        let defaults = UserDefaults.standard
+        defaults.set(data, forKey: ledgerKey)
+        defaults.set(defaults.integer(forKey: revisionKey) + 1, forKey: revisionKey)
     }
 
-    // ── 보너스 — 소식란 씨앗 뿌리기 (2026-08-09, 공지 id별 1회 수령) ──
-    private static let bonusKey = "seedsBonus"
-    private static let claimedNoticesKey = "claimedNotices"
-
-    static var bonus: Int {
-        get { UserDefaults.standard.integer(forKey: bonusKey) }
-        set { UserDefaults.standard.set(newValue, forKey: bonusKey) }
+    /// 산개 원장(v1) → 맵 원장. 1회. 테마별로 얼마를 냈는지는 남아 있지 않아 총 소비를 가격대로
+    /// 배분하고, 배분이 끝난 뒤 남은 테마는 승계분(0)으로 본다 — 승계 기기의 무료 보유가 유료로
+    /// 둔갑하지 않는다. 공지별 수령액도 남아 있지 않아 총액은 legacyBonus로 옮긴다.
+    private static func migrateIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: migratedKey) else { return }
+        defaults.set(true, forKey: migratedKey)
+        var ledger = SeedLedgerDTO()
+        var remaining = defaults.integer(forKey: "seedsSpent")
+        for raw in (defaults.stringArray(forKey: "plantedThemes") ?? []).sorted() {
+            let paid = min(remaining, AppTheme(rawValue: raw)?.seedPrice ?? 0)
+            remaining -= paid
+            ledger.purchases[raw] = paid
+        }
+        for id in defaults.stringArray(forKey: "claimedNotices") ?? [] {
+            ledger.claims[id] = 0
+        }
+        ledger.legacyBonus = defaults.integer(forKey: "seedsBonus")
+        write(ledger)
     }
 
-    static var claimedNotices: Set<String> {
-        get { Set(UserDefaults.standard.stringArray(forKey: claimedNoticesKey) ?? []) }
-        set { UserDefaults.standard.set(Array(newValue).sorted(), forKey: claimedNoticesKey) }
-    }
+    /// 보유 테마(rawValue 집합). 보유 테마는 기록 철회로 획득이 줄어도 유지된다 — 재화 신뢰.
+    static var owned: Set<String> { ledger.ownedThemes }
 
-    /// 공지 씨앗 수령 — 공지 id별 1회. 성공 시 보너스 원장에 누적.
+    static var claimedNotices: Set<String> { Set(ledger.claims.keys) }
+
+    /// 공지 씨앗 수령 — 공지 id별 1회. 받은 액수를 공지 id에 붙여 적는다(합산 카운터 아님 —
+    /// 두 기기에서 같은 공지를 받아도 병합하면 한 번으로 접힌다).
     static func claim(noticeID: String, seeds: Int) -> Bool {
-        guard seeds > 0, !claimedNotices.contains(noticeID) else { return false }
-        bonus += seeds
-        var set = claimedNotices
-        set.insert(noticeID)
-        claimedNotices = set
+        guard seeds > 0 else { return false }
+        var next = ledger
+        guard next.claims[noticeID] == nil else { return false }
+        next.claims[noticeID] = seeds
+        write(next)
         return true
     }
 
     /// 쓸 수 있는 씨앗 = 획득 + 보너스 − 소비. 기록 철회로 획득이 줄면 음수가 될 수 있어
-    /// 표시·판정 하한 0(§3.8.1 하한 처리 — 이미 심은 테마는 회수하지 않는다).
+    /// 표시·판정 하한 0(§3.8.1 하한 처리 — 이미 산 테마는 회수하지 않는다).
     static func available(_ checkIns: [DailyCheckIn]) -> Int {
-        max(0, balance(checkIns) + bonus - spent)
+        available(checkIns, ledger: ledger)
     }
 
-    /// 심기 — 이미 심었으면 참(멱등), 잔액 부족이면 거짓. 성공 시 소비 원장에 기록.
+    private static func available(_ checkIns: [DailyCheckIn], ledger: SeedLedgerDTO) -> Int {
+        max(0, balance(checkIns) + ledger.bonus - ledger.spent)
+    }
+
+    /// 구매 — 이미 보유했으면 참(멱등), 잔액 부족이면 거짓. 성공 시 낸 값을 테마에 붙여 적는다.
     static func plant(_ theme: AppTheme, price: Int, checkIns: [DailyCheckIn]) -> Bool {
-        guard !planted.contains(theme.rawValue) else { return true }
-        guard available(checkIns) >= price else { return false }
-        spent += price
-        var set = planted
-        set.insert(theme.rawValue)
-        planted = set
+        var next = ledger
+        guard next.purchases[theme.rawValue] == nil else { return true }
+        guard available(checkIns, ledger: next) >= price else { return false }
+        next.purchases[theme.rawValue] = price
+        write(next)
+        return true
+    }
+
+    /// 승계 — 씨앗 도입 전부터 쓰던 테마를 잠그지 않는다(§3.8.1). 낸 값 0으로 적어 구매분과 구분한다.
+    static func grandfather(_ theme: AppTheme) {
+        var next = ledger
+        guard next.purchases[theme.rawValue] == nil else { return }
+        next.purchases[theme.rawValue] = 0
+        write(next)
+    }
+
+    /// 다른 기기·백업본 원장 병합(합집합). 바뀐 게 있으면 참 — 부른 쪽이 되올릴지 판단한다.
+    @discardableResult
+    static func merge(_ remote: SeedLedgerDTO) -> Bool {
+        let current = ledger
+        let merged = current.merged(with: remote)
+        guard merged != current else { return false }
+        write(merged)
         return true
     }
 

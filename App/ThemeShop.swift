@@ -34,8 +34,9 @@ struct ThemeShopView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var checkIns: [DailyCheckIn]
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
-    /// planted는 UserDefaults라 뷰 갱신이 안 걸린다 — 화면 수명 동안의 사본으로 렌더한다.
-    @State private var plantedSet: Set<String> = []
+    /// 원장 방송 카운터 — 생 UserDefaults 읽기는 무효화가 안 걸려서, 이 키를 지켜봐야 구매 직후와
+    /// 동기화로 내려온 다른 기기의 구매가 화면에 반영된다(2026-08-11).
+    @AppStorage(Seeds.revisionKey) private var seedRevision = 0
     @State private var lightFeedback = 0
     // 심기 플로우(2026-08-09 사용자 지시 — 확인 → 축하 연출 → 성공 메시지. 심기와 적용은 분리)
     @State private var plantCandidate: AppTheme?   // 확인 다이얼로그 대상
@@ -102,13 +103,9 @@ struct ThemeShopView: View {
             Text("씨앗 \(theme.seedPrice ?? 0)개를 썼어요. 마음이 내킬 때 갈아입어 보세요.")
         }
         .onAppear {
-            // 이미 모던을 쓰던 베타 기기 = 심긴 것으로 승계 — 쓰던 테마를 잠그지 않는다(신뢰)
-            if current == .modern {
-                var planted = Seeds.planted
-                planted.insert(AppTheme.modern.rawValue)
-                Seeds.planted = planted
-            }
-            plantedSet = Seeds.planted
+            // 이미 모던을 쓰던 베타 기기 = 보유로 승계 — 쓰던 테마를 잠그지 않는다(신뢰).
+            // 낸 값 0으로 적힌다(Seeds.grandfather) — 구매분과 섞이면 병합 때 유료로 오인된다.
+            if current == .modern { Seeds.grandfather(.modern) }
         }
     }
 
@@ -124,7 +121,7 @@ struct ThemeShopView: View {
     }
 
     private func isPlanted(_ theme: AppTheme) -> Bool {
-        theme.seedPrice == nil || plantedSet.contains(theme.rawValue)
+        theme.seedPrice == nil || Seeds.owned.contains(theme.rawValue)
     }
 
     private func themeCard(_ theme: AppTheme) -> some View {
@@ -224,7 +221,6 @@ struct ThemeShopView: View {
     private func plant(_ theme: AppTheme) {
         guard let price = theme.seedPrice,
               Seeds.plant(theme, price: price, checkIns: checkIns) else { return }
-        plantedSet = Seeds.planted
         celebrateTick += 1
         withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.55)) {
             sprout = theme
