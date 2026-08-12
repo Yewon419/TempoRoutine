@@ -46,6 +46,10 @@ struct SettingsView: View {
     /// 기기 간 동기화 토글 상태(2026-08-10) — 원장은 PlannerSync, 여기는 렌더 트리거용 미러
     @State private var syncOn = PlannerSync.isEnabled
 
+    /// 개인정보 처리방침(2026-08-12) — ASC 메타데이터에 등록한 것과 같은 주소여야 한다.
+    /// 커스텀 도메인을 붙이면 여기와 ASC를 함께 고칠 것.
+    static let privacyPolicyURL = URL(string: "https://yewon419.github.io/temporoutine-site/privacy.html")!
+
     /// 브리핑·예측 토글 — 켜는 순간 권한 확인(미결정이면 시트), 거부면 되돌린다.
     /// 재스케줄은 DailyNotices가 앱 활성·백그라운드마다 돌아 토글 반영이 늦지 않지만,
     /// 켠 직후 바로 반영되도록 여기서도 한 번 건다.
@@ -111,6 +115,11 @@ struct SettingsView: View {
                     Button("JSON으로 내보내기") { exportData() }
                         .foregroundStyle(Ink.text)
                     Button("백업 가져오기") { showImporter = true }
+                        .foregroundStyle(Ink.text)
+                    // 심사 지침 5.1.1(i)은 ASC 메타데이터뿐 아니라 **앱 안에서도** 처리방침에
+                    // 닿을 수 있기를 요구한다(2026-08-12). 데이터 섹션에 두는 이유 = 내보내기·
+                    // 삭제와 같은 "내 기록이 어디 있나" 맥락.
+                    Link("개인정보 처리방침", destination: Self.privacyPolicyURL)
                         .foregroundStyle(Ink.text)
                 } header: {
                     Text("데이터")
