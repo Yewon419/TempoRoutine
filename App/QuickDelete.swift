@@ -46,6 +46,13 @@ enum QuickDeleteTarget: Identifiable {
             for record in completions where record.itemID == item.id {
                 context.delete(record)
             }
+            // 진행 레코드도 함께(2026-08-12) — itemID 참조라 관계 cascade가 닿지 않는다.
+            // 남겨두면 같은 UUID가 재발급될 일은 없어도 스토어에 영영 고아로 쌓인다.
+            // (InputSubtask는 관계 cascade라 아이템과 같이 지워진다)
+            let progresses = (try? context.fetch(FetchDescriptor<InputProgress>())) ?? []
+            for record in progresses where record.itemID == item.id {
+                context.delete(record)
+            }
             context.delete(item)
         case .output(let item):
             context.delete(item)

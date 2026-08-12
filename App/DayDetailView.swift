@@ -71,6 +71,7 @@ struct DayDetailView: View {
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
+    @Query private var inputProgresses: [InputProgress]   // Input 진행 방식(2026-08-12)
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query private var completions: [ItemCompletion]
     @Query private var checkIns: [DailyCheckIn]
@@ -406,7 +407,50 @@ struct DayDetailView: View {
     private var inputCard: some View {
         cardShell(.input, empty: inputRows.isEmpty) {
             ForEach(inputRows) { row in
-                let checked = isCompleted(row.item.id)
+                VStack(alignment: .leading, spacing: 4) {
+                    inputCheckRow(row)
+                    // 진행 방식이 붙은 Input만(2026-08-12) — 미래는 조작 금지(원칙 4)
+                    if let goal = row.item.progressGoal, !isFuture {
+                        InputProgressControl(
+                            goal: goal,
+                            subtasks: row.item.subtasks ?? [],
+                            progress: progressRecord(row.item.id),
+                            ensureProgress: { ensureProgress(row.item.id) },
+                            onChange: { fulfilled in syncAutoCompletion(row.item, fulfilled: fulfilled) }
+                        )
+                        .padding(.leading, 26)   // 체크 아이콘 폭만큼 들여쓰기
+                    }
+                }
+            }
+        }
+    }
+
+    /// 그날의 진행 레코드 — 없으면 nil(안 만진 날은 레코드도 없다)
+    private func progressRecord(_ itemID: UUID) -> InputProgress? {
+        inputProgresses.first { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: day) }
+    }
+
+    private func ensureProgress(_ itemID: UUID) -> InputProgress {
+        if let existing = progressRecord(itemID) { return existing }
+        let created = InputProgress(itemID: itemID, occurredOn: day)
+        modelContext.insert(created)
+        return created
+    }
+
+    /// 목표 도달 = 그날 체크(2026-08-12 사용자 결정). 되돌리면 체크도 풀린다 —
+    /// 진행 방식이 붙은 Input은 체크가 진행도에서 파생된다(§5.5.2 "진행도 갱신이 곧 기록"과 같은 정신).
+    /// 스톱워치·목표 없음은 판정이 항상 false라 손 체크를 지우지 않도록 여기서 걸러낸다.
+    private func syncAutoCompletion(_ item: InputItem, fulfilled: Bool) {
+        guard item.progressKind != .stopwatch else { return }
+        let checked = isCompleted(item.id)
+        guard fulfilled != checked else { return }
+        confirmFeedback += 1
+        toggleCompletion(item.id)
+    }
+
+    private func inputCheckRow(_ row: InputRow) -> some View {
+        let checked = isCompleted(row.item.id)
+        return Group {
                 Button {
                     confirmFeedback += 1
                     toggleCompletion(row.item.id)
@@ -433,7 +477,6 @@ struct DayDetailView: View {
                 .simultaneousGesture(quickDeleteGesture(.input(row.item), into: $pendingDelete, feedback: $confirmFeedback))
                 .accessibilityValue(checked ? "완료" : "미완료")
                 .accessibilityAction(named: "삭제") { pendingDelete = .input(row.item) }
-            }
         }
     }
 

@@ -83,6 +83,7 @@ struct TodayView: View {
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]
+    @Query private var inputProgresses: [InputProgress]   // Input 진행 방식(2026-08-12)
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query private var completions: [ItemCompletion]
     @Query private var checkIns: [DailyCheckIn]
@@ -503,37 +504,76 @@ struct TodayView: View {
         }
     }
 
+    /// 그날의 진행 레코드 — 없으면 nil(안 만진 날은 레코드도 안 생긴다)
+    private func progressRecord(_ itemID: UUID) -> InputProgress? {
+        inputProgresses.first { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: today) }
+    }
+
+    private func ensureProgress(_ itemID: UUID) -> InputProgress {
+        if let existing = progressRecord(itemID) { return existing }
+        let created = InputProgress(itemID: itemID, occurredOn: today)
+        modelContext.insert(created)
+        return created
+    }
+
+    /// 목표 도달 = 그날 체크(2026-08-12). 하루 상세와 같은 규칙 — 되돌리면 체크도 풀리고,
+    /// 스톱워치는 판정이 항상 false라 손 체크를 지우지 않도록 걸러낸다.
+    private func syncAutoCompletion(_ item: InputItem, fulfilled: Bool) {
+        guard item.progressKind != .stopwatch else { return }
+        let checked = isChecked(item.id)
+        guard fulfilled != checked else { return }
+        confirmFeedback += 1
+        toggleCheck(item.id)
+    }
+
+    private func inputCheckRow(_ item: InputItem) -> some View {
+        let checked = isChecked(item.id)
+        return Button {
+            confirmFeedback += 1
+            toggleCheck(item.id)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: checked ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(checked ? Ink.text : Ink.text.opacity(0.35))
+                Text(item.title)
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.text)
+                    .strikethrough(checked, color: Ink.dim)
+                Spacer()
+                // 파서가 읽은 시각 — 일정 행과 같은 trailing 문법(2026-08-09)
+                if let t = item.timeMinutes {
+                    Text(timeOfDayLabel(t))
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.5))
+                }
+            }
+        }
+        .simultaneousGesture(quickDeleteGesture(.input(item), into: $pendingDelete,
+                                                feedback: $confirmFeedback))
+        .accessibilityValue(checked ? "완료" : "미완료")
+        .accessibilityAction(named: "삭제") { pendingDelete = .input(item) }
+    }
+
     @ViewBuilder
     private var inputSection: some View {
         if todayInputs.isEmpty {
             Text("아직 없어요").font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
         } else {
             ForEach(todayInputs) { item in
-                let checked = isChecked(item.id)
-                Button {
-                    confirmFeedback += 1
-                    toggleCheck(item.id)
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: checked ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(checked ? Ink.text : Ink.text.opacity(0.35))
-                        Text(item.title)
-                            .font(.subheadline)
-                            .foregroundStyle(Ink.text)
-                            .strikethrough(checked, color: Ink.dim)
-                        Spacer()
-                        // 파서가 읽은 시각 — 일정 행과 같은 trailing 문법(2026-08-09)
-                        if let t = item.timeMinutes {
-                            Text(timeOfDayLabel(t))
-                                .font(.caption)
-                                .foregroundStyle(Ink.text.opacity(0.5))
-                        }
+                VStack(alignment: .leading, spacing: 4) {
+                    inputCheckRow(item)
+                    // 진행 방식이 붙은 Input만(2026-08-12) — 하루 상세와 같은 데이터·같은 컨트롤
+                    if let goal = item.progressGoal {
+                        InputProgressControl(
+                            goal: goal,
+                            subtasks: item.subtasks ?? [],
+                            progress: progressRecord(item.id),
+                            ensureProgress: { ensureProgress(item.id) },
+                            onChange: { fulfilled in syncAutoCompletion(item, fulfilled: fulfilled) }
+                        )
+                        .padding(.leading, 26)   // 체크 아이콘 폭만큼 들여쓰기
                     }
                 }
-                .simultaneousGesture(quickDeleteGesture(.input(item), into: $pendingDelete,
-                                                        feedback: $confirmFeedback))
-                .accessibilityValue(checked ? "완료" : "미완료")
-                .accessibilityAction(named: "삭제") { pendingDelete = .input(item) }
             }
         }
     }
