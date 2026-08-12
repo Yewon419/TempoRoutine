@@ -87,6 +87,8 @@ struct RhythmView: View {
                             signalSwitcher    // 신호 하위 칩(2026-08-13)
                             signalStack
                             preWindowNote     // 생리 전 저컨디션 윈도우 서술(§5.3 P 소비처)
+                            routineNote       // 계절별 루틴 수행(2026-08-13)
+                            cycleLengthNote   // 주기 길이(2026-08-13)
                         }
                     case .routines:
                         routinesSheet
@@ -200,6 +202,97 @@ struct RhythmView: View {
                 return AppSettings.trackedSignals.appetite
                     || signalSummaries.contains { $0.signal == .appetite }
             }
+        }
+    }
+
+    // ── 계절별 루틴 수행 (2026-08-13) ──
+    // 이 앱만 만들 수 있는 통계다 — 주기 앱은 플래너가 없고 플래너는 주기가 없다.
+    // ⚠ **「수행률」이 아니라 「하루당 마친 수」**로 잡는다. 예정 occurrence를 분모로 쓰면
+    //   앱을 안 연 날이 전부 실패로 잡혀 통계가 왜곡되고, 백분율은 낮은 계절에서 자책을
+    //   부른다(§7 재촉 금지). 계절 길이로 나눈 밀도만 비교하고 **비율은 표시하지 않는다.**
+    // ⚠ 집계를 TempoCore로 안 뺀 이유: 핵심이 계절 판정(CycleSnapshot, 앱 소유)이고
+    //   남는 건 max/min뿐이라 옮길 실익이 없다. 통계적 집계인 신호 패널과는 성격이 다르다.
+    private var routineDensityByPhase: [CyclePhase: Double] {
+        var done: [CyclePhase: Int] = [:]
+        var days: [CyclePhase: Set<Date>] = [:]
+        let cal = Calendar.current
+        for completion in completions {
+            let day = cal.startOfDay(for: completion.occurredOn)
+            guard let phase = snapshot.phase(on: day) else { continue }
+            done[phase, default: 0] += 1
+        }
+        // 분모 = 그 계절로 판정된 날 수(기록 구간 안에서만)
+        guard let first = completions.map({ cal.startOfDay(for: $0.occurredOn) }).min() else { return [:] }
+        var cursor = first
+        let end = today
+        while cursor <= end {
+            if let phase = snapshot.phase(on: cursor) { days[phase, default: []].insert(cursor) }
+            cursor = cal.date(byAdding: .day, value: 1, to: cursor) ?? end.addingTimeInterval(1)
+        }
+        return done.reduce(into: [:]) { acc, pair in
+            let count = days[pair.key]?.count ?? 0
+            if count > 0 { acc[pair.key] = Double(pair.value) / Double(count) }
+        }
+    }
+
+    /// 임계 — 계절 2개 이상 + 완료 12건 이상일 때만 말한다. 그 아래선 우연이 패턴처럼 읽힌다.
+    @ViewBuilder
+    private var routineNote: some View {
+        let density = routineDensityByPhase
+        if density.count >= 2, completions.count >= 12,
+           let top = density.max(by: { $0.value < $1.value }) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("계절과 루틴")
+                    .font(.almanacBody(.footnote, size: 12))
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                Text("기록상 \(seasonMeta(for: top.key).name)에 계획한 걸 가장 많이 마쳤어요.")
+                    .font(.almanacBody(.subheadline, size: 15))
+                    .foregroundStyle(Ink.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("마친 기록 \(completions.count)건 기준")
+                    .font(.caption)
+                    .foregroundStyle(Ink.text.opacity(0.45))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .milkGlass()
+        }
+    }
+
+    // ── 주기 길이 (2026-08-13) ──
+    // ⚠ 추세 서술("짧아지고 있어요")은 단정이라 금지(§7 의료 레인). 숫자만 담백하게 놓는다.
+    //   유효 범위 [21,35] 필터는 예측 엔진 v1.1과 같은 기준 — 기록 공백이 만든 gap을 뺀다.
+    private var recentCycleLengths: [Int] {
+        let starts = snapshot.starts.sorted()
+        guard starts.count >= 2 else { return [] }
+        let cal = Calendar.current
+        return zip(starts, starts.dropFirst()).compactMap { a, b in
+            let gap = cal.dateComponents([.day], from: a, to: b).day ?? 0
+            return (21...35).contains(gap) ? gap : nil
+        }
+    }
+
+    @ViewBuilder
+    private var cycleLengthNote: some View {
+        let lengths = recentCycleLengths
+        if let last = lengths.last, lengths.count >= 2 {
+            let lo = lengths.min() ?? last
+            let hi = lengths.max() ?? last
+            VStack(alignment: .leading, spacing: 6) {
+                Text("주기 길이")
+                    .font(.almanacBody(.footnote, size: 12))
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                Text("최근 주기 \(last)일")
+                    .font(.almanacBody(.subheadline, size: 15))
+                    .foregroundStyle(Ink.text)
+                Text(lo == hi ? "기록된 \(lengths.count)주기 모두 \(lo)일"
+                              : "기록된 \(lengths.count)주기 \(lo)~\(hi)일")
+                    .font(.caption)
+                    .foregroundStyle(Ink.text.opacity(0.45))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .milkGlass()
         }
     }
 
