@@ -224,10 +224,13 @@ extension ThemePalette {
         // ⚠ glow*는 계절광(장식)이 아니라 **캘린더 계절 밑줄 색**이다. 정보 구조라 끄면
         // 계절 구분이 통째로 사라진다(2026-08-12 시안 1차 결함). 장식인 계절광은 SeasonLight
         // 자체를 chrome.showsSeasonLight로 끈다.
-        glowWinter: Color(light: .rgb(0xA8, 0xB4, 0xC2), dark: .rgb(0x5E, 0x6A, 0x78)),
-        glowSpring: Color(light: .rgb(0xA9, 0xC4, 0x9A), dark: .rgb(0x5C, 0x74, 0x50)),
-        glowSummer: Color(light: .rgb(0xE0, 0xC4, 0x89), dark: .rgb(0x7A, 0x66, 0x3E)),
-        glowAutumn: Color(light: .rgb(0xD4, 0xA1, 0x92), dark: .rgb(0x7A, 0x55, 0x4A)),
+        // ⚠⚠ 밴드는 **지면 대비**로 읽힌다. 라이트는 흰 지면 위라 「옅게」가 맞지만, 다크는
+        // 검정 위라 같은 방향으로 어둡게 잡으면 밴드가 사라진다(2026-08-12 다크 시안에서 실측).
+        // 다크 값은 계절색보다 조금 어두운 정도까지만 내린다.
+        glowWinter: Color(light: .rgb(0xA8, 0xB4, 0xC2), dark: .rgb(0x7A, 0x86, 0x94)),
+        glowSpring: Color(light: .rgb(0xA9, 0xC4, 0x9A), dark: .rgb(0x7E, 0x9B, 0x70)),
+        glowSummer: Color(light: .rgb(0xE0, 0xC4, 0x89), dark: .rgb(0xB0, 0x8F, 0x52)),
+        glowAutumn: Color(light: .rgb(0xD4, 0xA1, 0x92), dark: .rgb(0xA5, 0x70, 0x5F)),
         surface: Color(light: .rgb(0xFF, 0xFF, 0xFF), dark: .rgb(0x1C, 0x1C, 0x1E)),
         accent: .flat(0x8E, 0x8E, 0x93)          // systemGray — 괘선·요일·테두리를 배경으로 물린다
     )
