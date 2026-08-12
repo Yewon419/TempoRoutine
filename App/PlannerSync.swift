@@ -198,7 +198,26 @@ final class PlannerSync: NSObject {
                 InputItemDTO(id: item.id, title: item.title, category: item.category,
                              schedule: item.schedule, createdAt: item.createdAt,
                              backfilled: item.backfilled ? true : nil,
-                             timeMinutes: item.timeMinutes))
+                             timeMinutes: item.timeMinutes,
+                             // 진행 방식 정의(2026-08-12) — 값은 아래 inputprogress 레코드
+                             progressKind: item.progressKind,
+                             targetSessions: item.targetSessions > 0 ? item.targetSessions : nil,
+                             targetSeconds: item.targetSeconds,
+                             subtasks: (item.subtasks?.isEmpty ?? true) ? nil
+                                 : item.subtasks?.sorted { $0.order < $1.order }
+                                     .map { InputSubtaskDTO(id: $0.id, title: $0.title, order: $0.order) }))
+        }
+        // Input 그날치 진행(2026-08-12) — 레코드 1개 = 아이템 × 날짜 1개.
+        // 실행 중인 타이머는 접힌 경과만 싣는다(실행 상태는 이 기기 것 — Output과 같은 계약).
+        let inputProgresses = (try? context.fetch(FetchDescriptor<InputProgress>())) ?? []
+        for record in inputProgresses {
+            put("inputprogress", record.id,
+                InputProgressDTO(id: record.id, itemID: record.itemID,
+                                 occurredOn: record.occurredOn,
+                                 loggedSessions: record.loggedSessions,
+                                 percent: record.percent,
+                                 elapsedSeconds: record.elapsedAccumSeconds,
+                                 doneSubtaskIDs: record.doneSubtaskIDs.sorted { $0.uuidString < $1.uuidString }))
         }
         let outputs = (try? context.fetch(FetchDescriptor<OutputItem>())) ?? []
         for item in outputs {
@@ -349,7 +368,27 @@ final class PlannerSync: NSObject {
             item.createdAt = dto.createdAt
             item.backfilled = dto.backfilled ?? false
             item.timeMinutes = dto.timeMinutes
+            // 진행 방식 정의(2026-08-12) — 구 기기가 올린 레코드는 전부 nil이라 단순 체크로 내려온다
+            item.progressKind = dto.progressKind
+            item.targetSessions = dto.targetSessions ?? 0
+            item.targetSeconds = dto.targetSeconds
+            reconcileInputSubtasks(item: item, dtos: dto.subtasks ?? [], context: context)
             if existing == nil { context.insert(item) }
+            return true
+        }
+        // prefix가 "input_"이 아니라 "inputprogress_"라 위 분기와 겹치지 않는다
+        if name.hasPrefix("inputprogress_"), let dto = try? dec.decode(InputProgressDTO.self, from: payload) {
+            let existing = fetchOne(InputProgress.self, id: dto.id, context: context)
+            let record = existing ?? InputProgress(itemID: dto.itemID, occurredOn: dto.occurredOn)
+            record.id = dto.id
+            record.itemID = dto.itemID
+            record.occurredOn = Calendar.current.startOfDay(for: dto.occurredOn)
+            record.loggedSessions = dto.loggedSessions
+            record.percent = dto.percent
+            // 실행 중(timerStartedAt)은 이 기기 상태 — 누적만 맞춘다(Output 타이머와 같은 규칙)
+            if !record.isTimerRunning { record.elapsedAccumSeconds = dto.elapsedSeconds }
+            record.doneSubtaskIDs = Set(dto.doneSubtaskIDs)
+            if existing == nil { context.insert(record) }
             return true
         }
         if name.hasPrefix("output_"), let dto = try? dec.decode(OutputItemDTO.self, from: payload) {
@@ -415,7 +454,15 @@ final class PlannerSync: NSObject {
             return true
         }
         if name.hasPrefix("input_"), let item = fetchOne(InputItem.self, id: uuid, context: context) {
+            // 진행 레코드는 itemID 참조라 cascade가 닿지 않는다(2026-08-12) — 손으로 걷는다.
+            // 체크리스트 항목(InputSubtask)은 관계 cascade라 아이템과 같이 지워진다.
+            let progresses = (try? context.fetch(FetchDescriptor<InputProgress>())) ?? []
+            for record in progresses where record.itemID == item.id { context.delete(record) }
             context.delete(item)
+            return true
+        }
+        if name.hasPrefix("inputprogress_"), let record = fetchOne(InputProgress.self, id: uuid, context: context) {
+            context.delete(record)
             return true
         }
         if name.hasPrefix("output_"), let item = fetchOne(OutputItem.self, id: uuid, context: context) {
@@ -443,6 +490,26 @@ final class PlannerSync: NSObject {
     private func fetchCheckIn(day: Date, context: ModelContext) -> DailyCheckIn? {
         let all = (try? context.fetch(FetchDescriptor<DailyCheckIn>())) ?? []
         return all.first { $0.day == day }
+    }
+
+    /// Input 체크리스트 항목 조정 — isDone이 없다는 것 말고는 Output판과 같다(2026-08-12).
+    /// 완료 여부는 그날의 InputProgress가 id로 참조하므로 여기서 id를 보존해야 한다.
+    private func reconcileInputSubtasks(item: InputItem, dtos: [InputSubtaskDTO], context: ModelContext) {
+        var existing = Dictionary(uniqueKeysWithValues: (item.subtasks ?? []).map { ($0.id, $0) })
+        var next: [InputSubtask] = []
+        for dto in dtos {
+            if let sub = existing.removeValue(forKey: dto.id) {
+                sub.title = dto.title
+                sub.order = dto.order
+                next.append(sub)
+            } else {
+                let sub = InputSubtask(title: dto.title, order: dto.order)
+                sub.id = dto.id
+                next.append(sub)
+            }
+        }
+        for (_, orphan) in existing { context.delete(orphan) }
+        item.subtasks = next
     }
 
     private func reconcileSubtasks(item: OutputItem, dtos: [OutputSubtaskDTO], context: ModelContext) {

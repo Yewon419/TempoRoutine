@@ -21,6 +21,7 @@ struct SettingsView: View {
     @Query private var outputs: [OutputItem]
     @Query private var completions: [ItemCompletion]
     @Query private var checkIns: [DailyCheckIn]
+    @Query private var inputProgresses: [InputProgress]   // 내보내기·삭제 동반 처리(2026-08-12)
 
     @State private var shareURL: URL?
     @State private var showImporter = false
@@ -108,7 +109,8 @@ struct SettingsView: View {
 
     private var store: StoreArrays {
         StoreArrays(periodDays: periodDays, schedules: schedules, inputs: inputs,
-                    outputs: outputs, completions: completions, checkIns: checkIns)
+                    outputs: outputs, completions: completions, checkIns: checkIns,
+                    inputProgresses: inputProgresses)
     }
 
     var body: some View {

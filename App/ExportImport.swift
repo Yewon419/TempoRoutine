@@ -55,6 +55,8 @@ struct StoreArrays {
     let outputs: [OutputItem]
     let completions: [ItemCompletion]
     let checkIns: [DailyCheckIn]
+    /// Input 그날치 진행(2026-08-12). 기본값 = 구 호출부 무영향
+    var inputProgresses: [InputProgress] = []
 }
 
 enum ExportImport {
@@ -81,7 +83,14 @@ enum ExportImport {
                 InputItemDTO(id: $0.id, title: $0.title, category: $0.category,
                              schedule: $0.schedule, createdAt: $0.createdAt,
                              backfilled: $0.backfilled ? true : nil,
-                             timeMinutes: $0.timeMinutes)
+                             timeMinutes: $0.timeMinutes,
+                             // 진행 방식 정의(2026-08-12) — 없으면 전부 nil이라 구 봉투와 같은 모양이 된다
+                             progressKind: $0.progressKind,
+                             targetSessions: $0.targetSessions > 0 ? $0.targetSessions : nil,
+                             targetSeconds: $0.targetSeconds,
+                             subtasks: ($0.subtasks?.isEmpty ?? true) ? nil
+                                 : $0.subtasks?.sorted { $0.order < $1.order }
+                                     .map { InputSubtaskDTO(id: $0.id, title: $0.title, order: $0.order) })
             },
             outputItems: store.outputs.map { item in
                 OutputItemDTO(id: item.id, title: item.title, schedule: item.schedule,
@@ -115,7 +124,24 @@ enum ExportImport {
                                                   computedAt: .now),
             // 씨앗 소비 원장(2026-08-11) — 획득 근거(체크인 completedAt)만 싣던 탓에 복원·기기
             // 이전에서 산 테마가 사라지고 씨앗만 되돌아왔다(§3.8.1 「구매한 테마는 사라지지 않아요」)
-            seedLedger: Seeds.ledger
+            seedLedger: Seeds.ledger,
+            // Input 진행도(2026-08-12) — 값이 0뿐인 레코드는 싣지 않는다(복원해도 아무 뜻이 없다).
+            // Output과 같은 계약: 실행 중이어도 스냅샷은 접힌 경과로.
+            inputProgress: {
+                let rows = store.inputProgresses.compactMap { record -> InputProgressDTO? in
+                    let elapsed = record.elapsedSeconds()
+                    let done = Array(record.doneSubtaskIDs)
+                    guard record.loggedSessions > 0 || record.percent > 0 || elapsed > 0 || !done.isEmpty
+                    else { return nil }
+                    return InputProgressDTO(id: record.id, itemID: record.itemID,
+                                            occurredOn: record.occurredOn,
+                                            loggedSessions: record.loggedSessions,
+                                            percent: record.percent,
+                                            elapsedSeconds: elapsed,
+                                            doneSubtaskIDs: done)
+                }
+                return rows.isEmpty ? nil : rows
+            }()
         )
     }
 
@@ -155,7 +181,35 @@ enum ExportImport {
             item.id = dto.id
             item.createdAt = dto.createdAt
             item.timeMinutes = dto.timeMinutes
+            // 진행 방식 정의(2026-08-12) — 구 봉투는 전부 nil이라 종전 단순 체크로 들어온다
+            item.progressKind = dto.progressKind
+            item.targetSessions = dto.targetSessions ?? 0
+            item.targetSeconds = dto.targetSeconds
+            if let subs = dto.subtasks, !subs.isEmpty {
+                item.subtasks = subs.map { sub in
+                    let created = InputSubtask(title: sub.title, order: sub.order)
+                    created.id = sub.id   // 진행 레코드의 완료 id가 이 id를 가리킨다
+                    return created
+                }
+            }
             context.insert(item)
+            added += 1
+        }
+
+        // Input 그날치 진행(2026-08-12) — 같은 아이템·같은 날 레코드가 이미 있으면 건드리지 않는다.
+        // 씨앗 원장과 달리 병합 규칙이 합집합이 아닌 이유: 진행도는 "얼마나 했나"라서 두 기기 값을
+        // 더하면 안 된다. 없을 때만 채우는 게 가져오기의 기존 문법(완료 기록과 같다).
+        let existingProgress = Set(store.inputProgresses.map { ProgressKey($0.itemID, $0.occurredOn) })
+        for dto in envelope.inputProgress ?? [] {
+            let day = Calendar.current.startOfDay(for: dto.occurredOn)
+            guard !existingProgress.contains(ProgressKey(dto.itemID, day)) else { continue }
+            let record = InputProgress(itemID: dto.itemID, occurredOn: day)
+            record.id = dto.id
+            record.loggedSessions = dto.loggedSessions
+            record.percent = dto.percent
+            record.elapsedAccumSeconds = dto.elapsedSeconds   // 실행 상태는 싣지 않는다(멈춘 채로 온다)
+            record.doneSubtaskIDs = Set(dto.doneSubtaskIDs)
+            context.insert(record)
             added += 1
         }
 
@@ -224,9 +278,22 @@ enum ExportImport {
         store.schedules.forEach { ScheduleReminder.cancel(id: $0.id) }
         store.periodDays.forEach { context.delete($0) }
         store.schedules.forEach { context.delete($0) }
-        store.inputs.forEach { context.delete($0) }
+        store.inputs.forEach { context.delete($0) }      // InputSubtask는 cascade
         store.outputs.forEach { context.delete($0) }     // subtasks는 cascade
         store.completions.forEach { context.delete($0) }
         store.checkIns.forEach { context.delete($0) }
+        // 진행 레코드는 itemID 참조라 cascade가 닿지 않는다(2026-08-12)
+        store.inputProgresses.forEach { context.delete($0) }
+    }
+}
+
+/// 아이템 × 날짜 — 진행 레코드 중복 판정 키(2026-08-12)
+private struct ProgressKey: Hashable {
+    let itemID: UUID
+    let day: Date
+
+    init(_ itemID: UUID, _ day: Date) {
+        self.itemID = itemID
+        self.day = Calendar.current.startOfDay(for: day)
     }
 }

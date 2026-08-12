@@ -76,9 +76,18 @@ public struct InputItemDTO: Codable, Equatable, Sendable {
     public var backfilled: Bool?
     /// 하루 중 시각(자정 기준 분, 2026-08-09 — 제목 시각 파서. 같은 optional 패턴)
     public var timeMinutes: Int?
+    /// 진행 방식 **정의**(2026-08-12, 같은 optional 패턴 — 구 봉투는 nil = 단순 체크).
+    /// 그날의 값은 여기가 아니라 `ExportEnvelopeV1.inputProgress`에 따로 실린다.
+    public var progressKind: OutputProgressKind?
+    public var targetSessions: Int?
+    public var targetSeconds: Int?
+    /// 이름·순서만 — 완료 여부는 날짜별이라 아이템에 실을 수 없다(OutputSubtaskDTO와 다른 점)
+    public var subtasks: [InputSubtaskDTO]?
 
     public init(id: UUID, title: String, category: InputCategory, schedule: InputSchedule,
-                createdAt: Date, backfilled: Bool? = nil, timeMinutes: Int? = nil) {
+                createdAt: Date, backfilled: Bool? = nil, timeMinutes: Int? = nil,
+                progressKind: OutputProgressKind? = nil, targetSessions: Int? = nil,
+                targetSeconds: Int? = nil, subtasks: [InputSubtaskDTO]? = nil) {
         self.id = id
         self.title = title
         self.category = category
@@ -86,6 +95,46 @@ public struct InputItemDTO: Codable, Equatable, Sendable {
         self.createdAt = createdAt
         self.backfilled = backfilled
         self.timeMinutes = timeMinutes
+        self.progressKind = progressKind
+        self.targetSessions = targetSessions
+        self.targetSeconds = targetSeconds
+        self.subtasks = subtasks
+    }
+}
+
+/// Input 체크리스트 항목 — 이름·순서만. isDone이 없는 게 OutputSubtaskDTO와의 차이다(2026-08-12).
+public struct InputSubtaskDTO: Codable, Equatable, Sendable {
+    public var id: UUID
+    public var title: String
+    public var order: Int
+
+    public init(id: UUID, title: String, order: Int) {
+        self.id = id
+        self.title = title
+        self.order = order
+    }
+}
+
+/// Input의 그날치 진행(2026-08-12). 아이템 × 날짜 하나.
+/// 실행 중인 타이머는 싣지 않는다 — 실행 상태는 이 기기 것이다(OutputItemDTO.elapsedSeconds와 같은 계약).
+public struct InputProgressDTO: Codable, Equatable, Sendable {
+    public var id: UUID
+    public var itemID: UUID
+    public var occurredOn: Date
+    public var loggedSessions: Int
+    public var percent: Double
+    public var elapsedSeconds: Double
+    public var doneSubtaskIDs: [UUID]
+
+    public init(id: UUID, itemID: UUID, occurredOn: Date, loggedSessions: Int,
+                percent: Double, elapsedSeconds: Double, doneSubtaskIDs: [UUID]) {
+        self.id = id
+        self.itemID = itemID
+        self.occurredOn = occurredOn
+        self.loggedSessions = loggedSessions
+        self.percent = percent
+        self.elapsedSeconds = elapsedSeconds
+        self.doneSubtaskIDs = doneSubtaskIDs
     }
 }
 
@@ -358,12 +407,15 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
     /// 동봉하던 탓에 백업 복원·기기 이전에서 산 테마가 사라지고 씨앗만 돌아왔다. 재임포트는 이
     /// 필드를 **병합**한다(덮어쓰기 아님 — 「구매한 테마는 사라지지 않아요」).
     public var seedLedger: SeedLedgerDTO?
+    /// Input 진행도(2026-08-12) — 아이템의 **정의**는 InputItemDTO에, 그날의 **값**은 여기.
+    /// 빠지면 백업 복원·기기 이전에서 오늘 채운 진행이 사라진다(씨앗 원장 P-6와 같은 구멍).
+    public var inputProgress: [InputProgressDTO]?
 
     public init(exportedAt: Date, periodDays: [PeriodDayDTO], scheduleItems: [ScheduleItemDTO],
                 inputItems: [InputItemDTO], outputItems: [OutputItemDTO],
                 completions: [ItemCompletionDTO], checkIns: [DailyCheckInDTO],
                 trackedSignals: TrackedSignals, rhythmSummary: RhythmSummaryDTO? = nil,
-                seedLedger: SeedLedgerDTO? = nil) {
+                seedLedger: SeedLedgerDTO? = nil, inputProgress: [InputProgressDTO]? = nil) {
         self.schemaVersion = ExportCodec.schemaVersion
         self.exportedAt = exportedAt
         self.periodDays = periodDays
@@ -375,6 +427,7 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
         self.trackedSignals = trackedSignals
         self.rhythmSummary = rhythmSummary
         self.seedLedger = seedLedger
+        self.inputProgress = inputProgress
     }
 }
 
