@@ -26,14 +26,18 @@ enum WFont {
     }()
 
     static func almanac(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        if WThemeStore.isModern {
+        switch WThemeStore.key {
+        case "modern":
             guard pretendardAvailable else {
                 return .system(size: size, weight: weight == .bold ? .semibold : .medium)
             }
             return .custom(weight == .bold ? "Pretendard-SemiBold" : "Pretendard-Medium", size: size)
+        case "standard":
+            guard available else { return .system(size: size, weight: weight, design: .serif) }
+            return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
+        default:
+            return .system(size: size, weight: weight)   // 기본 = 시스템 서체
         }
-        guard available else { return .system(size: size, weight: weight, design: .serif) }
-        return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
     }
 }
 
@@ -90,6 +94,29 @@ struct WPalette {
         accent: dyn((0x55, 0x60, 0x6C), (0x98, 0xA6, 0xB4))
     )
 
+    /// 기본 — Apple 기본 UI 계열(앱 ThemePalette.plain 사본, 2026-08-12).
+    /// 지면 하나(paper == frost) + 흰 카드 + systemGray 악센트.
+    /// ⚠ glow*는 계절광이 아니라 캘린더 계절 밴드 색이다 — 끄면 계절 구분이 사라진다.
+    static let plain = WPalette(
+        winter: dyn((0x6E, 0x7A, 0x8A), (0x9A, 0xA6, 0xB6)),
+        spring: dyn((0x7B, 0x9E, 0x6B), (0xA3, 0xC4, 0x94)),
+        summer: dyn((0xC9, 0x97, 0x4B), (0xE0, 0xB4, 0x74)),
+        autumn: dyn((0xB5, 0x70, 0x5A), (0xD1, 0x93, 0x7E)),
+        text: dyn((0x1C, 0x1C, 0x1E), (0xF2, 0xF2, 0xF7)),
+        paper: dyn((0xF2, 0xF2, 0xF7), (0x1C, 0x1C, 0x1E)),
+        coral: dyn((0x63, 0x63, 0x66), (0xAE, 0xAE, 0xB2)),
+        record: dyn((0x63, 0x63, 0x66), (0xAE, 0xAE, 0xB2)),
+        predictGray: dyn((0x8E, 0x8E, 0x93), (0x8E, 0x8E, 0x93)),
+        holidayRed: dyn((0xD6, 0x45, 0x3C), (0xFF, 0x6B, 0x60)),
+        saturday: dyn((0x3D, 0x6B, 0xC4), (0x7F, 0xA4, 0xE8)),
+        frost: dyn((0xF2, 0xF2, 0xF7), (0x1C, 0x1C, 0x1E)),
+        glowWinter: dyn((0xA8, 0xB4, 0xC2), (0x5E, 0x6A, 0x78)),
+        glowSpring: dyn((0xA9, 0xC4, 0x9A), (0x5C, 0x74, 0x50)),
+        glowSummer: dyn((0xE0, 0xC4, 0x89), (0x7A, 0x66, 0x3E)),
+        glowAutumn: dyn((0xD4, 0xA1, 0x92), (0x7A, 0x55, 0x4A)),
+        accent: dyn((0x8E, 0x8E, 0x93), (0x8E, 0x8E, 0x93))
+    )
+
     /// 모던 — 시안 SSOT §1.2(니어블랙 + 무채 램프 + 다홍 시그널 + 로즈 관례색)
     static let modern = WPalette(
         winter: flat((0xE0, 0x70, 0x5C)),
@@ -113,9 +140,18 @@ struct WPalette {
 }
 
 enum WThemeStore {
-    /// 스냅샷 테마 키 1회 읽기 — 위젯 프로세스 수명 = 렌더 1회
-    nonisolated(unsafe) static let isModern: Bool = WidgetSnapshot.load()?.theme == "modern"
-    static var palette: WPalette { isModern ? .modern : .standard }
+    /// 스냅샷 테마 키 1회 읽기 — 위젯 프로세스 수명 = 렌더 1회.
+    /// ⚠ 종전엔 `isModern: Bool`이었다. 테마가 셋이 되면서 「모던이 아닌 것」이 전부 은필로
+    /// 떨어져 새 기본 테마가 은필 지면으로 그려졌다(2026-08-12). 키를 그대로 들고 간다.
+    nonisolated(unsafe) static let key: String = WidgetSnapshot.load()?.theme ?? "plain"
+
+    static var palette: WPalette {
+        switch key {
+        case "modern":   .modern
+        case "standard": .standard
+        default:         .plain     // 저장값 없음 = 새 설치 = 기본
+        }
+    }
 }
 
 enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀) — 정적 API 유지, 백킹만 위임
