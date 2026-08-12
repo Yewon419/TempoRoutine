@@ -93,28 +93,34 @@ extension ThemePalette {
         accent: Color(light: .rgb(0x55, 0x60, 0x6C), dark: .rgb(0x98, 0xA6, 0xB4))
     )
 
-    /// 모던 (시안 SSOT §1.2) — 니어블랙 + 무채 램프 + 다홍 단일 시그널. 항상 다크 단일 외관.
+    /// 모던 (시안 SSOT §1.2) — 도트 그리드 + 무채 램프 + 다홍 단일 시그널.
+    /// ⚠ **2026-08-12부터 시스템 라이트/다크를 따라간다**(사용자 지시). 종전 「항상 다크 단일
+    /// 외관」 확정을 뒤집는 것 — 라이트는 같은 문법을 밝은 지면으로 뒤집어 옮겼다.
+    /// ⚠ 여름·가을 명도차 확대(사용자 지적: 구분이 거의 안 됨). **다크에선 가을을 내리는 게
+    /// 아니라 여름을 올려서 벌린다** — 가을을 더 내리면 니어블랙 지면에 묻힌다(시안 실측).
+    /// 라이트는 반대로 가을을 내려서 벌린다(흰 지면).
     static let modern = ThemePalette(
-        winter: .flat(0xE0, 0x70, 0x5C),          // 겨울(생리) = 다홍 시그널
-        spring: .flat(0xED, 0xEF, 0xF3),          // 봄 흰 → 여름 회 → 가을 짙은 회 무채 램프
-        summer: .flat(0xA5, 0xAA, 0xB4),
-        autumn: .flat(0x87, 0x8C, 0x97),
-        text: .flat(0xE9, 0xE7, 0xF0),
-        paper: .flat(0x0A, 0x0A, 0x0C),
-        coral: .flat(0xE0, 0x70, 0x5C),           // 은퇴 색 — 사용처 0, 다홍 동값 보관
-        record: .flat(0xA9, 0xAF, 0xC0),          // 기록 = 달빛 회색
-        danger: .flat(0xE0, 0x6D, 0x62),
-        dim: Color(red: 0xE9 / 255, green: 0xE7 / 255, blue: 0xF0 / 255).opacity(0.5),
-        oxide: .flat(0x9A, 0xA0, 0xAA),           // 과거 일정도 회색 통일(산화 갈색 은퇴)
-        holiday: .flat(0xEC, 0x8A, 0xA0),         // 관례 빨강 → 로즈(다홍 = 생리 전용 사수)
+        winter: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),  // 생리 = 다홍
+        spring: Color(light: .rgb(0x9E, 0xA4, 0xAE), dark: .rgb(0xED, 0xEF, 0xF3)),
+        summer: Color(light: .rgb(0x6F, 0x76, 0x81), dark: .rgb(0xC2, 0xC8, 0xD2)),
+        autumn: Color(light: .rgb(0x3D, 0x43, 0x4D), dark: .rgb(0x7C, 0x81, 0x8C)),
+        text: Color(light: .rgb(0x10, 0x10, 0x14), dark: .rgb(0xE9, 0xE7, 0xF0)),
+        paper: Color(light: .rgb(0xFA, 0xFA, 0xFC), dark: .rgb(0x0A, 0x0A, 0x0C)),
+        coral: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),   // 은퇴 색
+        record: Color(light: .rgb(0x5B, 0x62, 0x70), dark: .rgb(0xA9, 0xAF, 0xC0)),
+        danger: Color(light: .rgb(0xC2, 0x45, 0x3C), dark: .rgb(0xE0, 0x6D, 0x62)),
+        dim: Color(light: Color(red: 0x10 / 255, green: 0x10 / 255, blue: 0x14 / 255).opacity(0.5),
+                   dark: Color(red: 0xE9 / 255, green: 0xE7 / 255, blue: 0xF0 / 255).opacity(0.5)),
+        oxide: Color(light: .rgb(0x8A, 0x90, 0x99), dark: .rgb(0x9A, 0xA0, 0xAA)),
+        holiday: Color(light: .rgb(0xC2, 0x45, 0x6A), dark: .rgb(0xEC, 0x8A, 0xA0)),  // 로즈
         saturday: .flat(0x7F, 0xA4, 0xE8),
-        frost: .flat(0x06, 0x06, 0x07),
-        glowWinter: .flat(0xE2, 0x5B, 0x45),
-        glowSpring: .flat(0xF5, 0xF6, 0xF8),
-        glowSummer: .flat(0xA9, 0xAE, 0xB8),
-        glowAutumn: .flat(0x7C, 0x81, 0x8C),
-        surface: Color.white.opacity(0.05),
-        accent: .flat(0xF2, 0xF3, 0xF6)           // 구조 악센트 = 흰색
+        frost: Color(light: .rgb(0xF4, 0xF4, 0xF7), dark: .rgb(0x06, 0x06, 0x07)),
+        glowWinter: Color(light: .rgb(0xD4, 0x55, 0x3E), dark: .rgb(0xE2, 0x5B, 0x45)),
+        glowSpring: Color(light: .rgb(0xB4, 0xBA, 0xC4), dark: .rgb(0xF5, 0xF6, 0xF8)),
+        glowSummer: Color(light: .rgb(0x84, 0x8B, 0x96), dark: .rgb(0xC6, 0xCC, 0xD6)),
+        glowAutumn: Color(light: .rgb(0x54, 0x5A, 0x64), dark: .rgb(0x70, 0x75, 0x7F)),
+        surface: Color(light: Color.white.opacity(0.72), dark: Color.white.opacity(0.05)),
+        accent: Color(light: .rgb(0x10, 0x10, 0x14), dark: .rgb(0xF2, 0xF3, 0xF6))
     )
 }
 
@@ -172,11 +178,12 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: false
     )
 
-    /// 모던 — 종전 `== .modern` 경로와 동값
+    /// 모던 — 2026-08-12부터 시스템 라이트/다크를 따라간다(종전 다크 고정 해제).
+    /// `dimsInDarkMode`는 계속 false — 계절광이 무채라 다크에서 감쇠할 이유가 없다.
     static let modern = ThemeChrome(
         typeFace: .pretendard, texture: .dotGrid, outlineDisplay: true,
         showsSeasonLight: true, neutralSeasonLight: true,
-        dimsInDarkMode: false, forcesDarkAppearance: true,
+        dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: true, todayCircleUsesAccent: true,
         circlesRecordedDays: true, boostsContrast: true
     )

@@ -213,8 +213,17 @@ struct SeasonCalendarView: View {
                                           menstrualLength: effectiveM(on: today, projected: r.projected))
     }
 
-    /// 상단 계절광(2026-07-28 시안 결정) — SeasonLight 원색 2겹을 상단 앵커로만, 다크는 감쇠
+    /// 상단 계절광(2026-07-28 시안 결정) — SeasonLight 원색 2겹을 상단 앵커로만, 다크는 감쇠.
+    /// ⚠ 캘린더는 `SeasonLight` 뷰를 쓰지 않고 여기서 직접 그린다 — 게이트를 따로 걸어야 한다
+    /// (2026-08-12: 기본 테마에서 캘린더 탭만 계절광이 남아 지면이 다른 탭과 달라 보였다).
+    @ViewBuilder
     private var calendarTopGlow: some View {
+        if ThemeStore.chrome.showsSeasonLight {
+            calendarTopGlowLayers
+        }
+    }
+
+    private var calendarTopGlowLayers: some View {
         let l = SeasonLight.lightColors(for: todayPhase)
         let top = RadialGradient(colors: [l.a, .clear],
                                  center: UnitPoint(x: 0.18, y: -0.10),

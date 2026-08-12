@@ -243,7 +243,13 @@ struct DotGrid: View {
     var body: some View {
         Canvas { context, size in
             let spacing: CGFloat = 22
-            let dot = Color(red: 233 / 255, green: 231 / 255, blue: 240 / 255).opacity(0.05)
+            // 모던이 시스템을 따라가면서(2026-08-12) 도트도 지면 대비로 뒤집어야 한다 —
+            // 흰 도트는 밝은 지면에서 안 보인다.
+            let dot = Color(uiColor: UIColor { trait in
+                trait.userInterfaceStyle == .dark
+                    ? UIColor(red: 233 / 255, green: 231 / 255, blue: 240 / 255, alpha: 0.05)
+                    : UIColor(red: 16 / 255, green: 16 / 255, blue: 20 / 255, alpha: 0.06)
+            })
             var y: CGFloat = spacing / 2
             while y < size.height {
                 var x: CGFloat = spacing / 2
@@ -285,9 +291,15 @@ struct SeasonLight: View {
         if ThemeStore.chrome.neutralSeasonLight {
             // 시안 수치(.12/.07/.09)가 실기기 OLED에선 거의 안 보임(베타 피드백 2026-07-29
             // "뒤쪽에 은은한 빛 깔린 것처럼") — 50% 상향. 실기기 재확인 항목.
-            return (Color.white.opacity(0.18),
-                    Color(red: 190 / 255, green: 192 / 255, blue: 198 / 255).opacity(0.11),
-                    Color(red: 150 / 255, green: 152 / 255, blue: 158 / 255).opacity(0.13))
+            // 라이트에선 흰 빛이 안 보인다 — 지면 대비로 뒤집어 어두운 쪽으로(2026-08-12)
+            func neutral(_ darkAlpha: Double, _ lightAlpha: Double) -> Color {
+                Color(uiColor: UIColor { trait in
+                    trait.userInterfaceStyle == .dark
+                        ? UIColor(white: 1, alpha: darkAlpha)
+                        : UIColor(white: 0, alpha: lightAlpha)
+                })
+            }
+            return (neutral(0.18, 0.05), neutral(0.11, 0.03), neutral(0.13, 0.04))
         }
         return switch phase {
         case .follicular:   // 베이지 전환(2026-08-09 사용자 지시 "노랑이 구려" — 같은 날 파스텔 옐로도 폐기)
