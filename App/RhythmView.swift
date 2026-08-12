@@ -34,10 +34,16 @@ struct RhythmView: View {
     // 단일 칩 행(2026-08-09 베타 피드백 "탭 별도 구분하지말고 한 줄로 쭉") — 2단 스위처 병합.
     // 마지막 본 탭은 재진입·재실행 때 복원("들어갈때마다 마지막 탭" — AppStorage).
     @AppStorage("rhythmLastTab") private var lastTabRaw = RhythmTab.seasons.rawValue
+    /// 사계 안의 신호 하위 탭(2026-08-13 사용자: "내리면서 보기 너무 힘들다").
+    /// 2026-08-09 재편 3차의 세로 스택을 되돌리되, 신호를 사계 **밖으로** 빼지는 않는다 —
+    /// 그때 피드백("사계 안에 에너지·기분·수면을 다 넣어달라")도 같이 지켜야 해서 2단으로 간다.
+    @AppStorage("rhythmLastSignal") private var lastSignalRaw = SignalKind.energy.rawValue
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
+    /// 축 프로필 — `P`(생리 전 저컨디션 윈도우) 서술의 출처(§5.3 층 2)
+    private var axis: AxisProfile { AxisProfile(checkIns: checkIns, snapshot: snapshot) }
     private var profile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
     // 유형 카드(비바체·안단테·루바토)는 2026-08-09 사용자 결정으로 UI에서 내림 —
     // 엔진(WindowStats)·내보내기(rhythmSummary)·자기돌봄 소비처(AxisProfile)는 유지.
@@ -78,7 +84,9 @@ struct RhythmView: View {
                             meanwhileCard
                         }
                         if showSwitcher {
+                            signalSwitcher    // 신호 하위 칩(2026-08-13)
                             signalStack
+                            preWindowNote     // 생리 전 저컨디션 윈도우 서술(§5.3 P 소비처)
                         }
                     case .routines:
                         routinesSheet
@@ -195,9 +203,63 @@ struct RhythmView: View {
         }
     }
 
-    /// 신호 패널 전부 세로 스택(03:08 베타 피드백 "세로로 쭉 펼쳐놓으란 뜻") — 패널마다 이름표.
+    /// 생리 전 저컨디션 윈도우(§5.3 층 2 `P`) 서술. MASTER가 「나의 사계 가을 서사」를 P의
+    /// 소비처로 지정해뒀는데 실제 소비처는 하루 상세뿐이었다(2026-08-13 보완).
+    /// ⚠ 단정 금지 — 과거형 + 「기록상」(신호 패널과 같은 문법). 채택값이 기본값이면 침묵한다
+    /// (학습된 게 없는데 숫자를 말하면 근거 없는 단정이 된다).
+    @ViewBuilder
+    private var preWindowNote: some View {
+        if let learned = axis.preMenstrualWindow, learned > 0 {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("겨울로 넘어가기 전")
+                    .font(.almanacBody(.footnote, size: 12))
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                Text("기록상 생리 시작 \(learned)일 전부터 컨디션이 낮게 기록됐어요.")
+                    .font(.almanacBody(.subheadline, size: 15))
+                    .foregroundStyle(Ink.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .milkGlass()
+        }
+    }
+
+    /// 선택된 신호 — 저장값이 지금 숨김 상태면 첫 노출 신호로 떨어진다(수면·식욕 추적 끔 대응)
+    private var selectedSignal: SignalKind {
+        let saved = SignalKind(rawValue: lastSignalRaw)
+        if let saved, visibleSignals.contains(saved) { return saved }
+        return visibleSignals.first ?? .energy
+    }
+
+    /// 신호 하위 칩 행 — 사계 안에서만 도는 2단 스위처
+    private var signalSwitcher: some View {
+        HStack(spacing: 8) {
+            ForEach(visibleSignals, id: \.self) { signal in
+                chip(label: signalLabel(signal), selected: selectedSignal == signal) {
+                    lightFeedback += 1
+                    lastSignalRaw = signal.rawValue
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("신호 선택")
+    }
+
+    private func signalLabel(_ signal: SignalKind) -> String {
+        switch signal {
+        case .energy: "에너지"
+        case .mood: "기분"
+        case .sleep: "수면"
+        case .appetite: "식욕"
+        }
+    }
+
+    /// 선택 신호 패널 하나만(2026-08-13 — 종전 전량 세로 스택은 스크롤이 너무 길었다)
     private var signalStack: some View {
-        ForEach(visibleSignals, id: \.self) { signal in
+        Group {
+            let signal = selectedSignal
             SignalPanel(signal: signal,
                         summaries: signalSummaries,
                         topPhases: RhythmEngine.perCycleTopPhases(signal: signal,
