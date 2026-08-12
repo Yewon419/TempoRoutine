@@ -10,6 +10,8 @@ import SwiftUI
 enum CoachAnchor: String {
     case todaySchedule, todayInput, todayOutput
     case calendarLog, calendarGrid
+    case todaySeed                              // 씨앗 최초 획득 안내(2026-08-12)
+    case themeSeedBalance, themeCardAction      // 테마 탭 첫 진입 안내(2026-08-12)
 }
 
 struct CoachStep {
@@ -20,6 +22,10 @@ struct CoachStep {
 
 enum CoachID: String, CaseIterable {
     case today, calendar
+    /// 씨앗을 처음 얻은 뒤 오늘 탭 배지에서 1회(2026-08-12 사용자 지시)
+    case seed
+    /// 테마 탭 첫 진입 1회(2026-08-12 사용자 지시)
+    case themeShop
 }
 
 enum CoachStore {
@@ -53,6 +59,21 @@ enum CoachSteps {
         CoachStep(anchor: .calendarGrid, title: "날짜 뒤 빛이 계절이에요",
                   body: "같은 계절이 이어지는 동안은 빛도 띠처럼 이어져요. 날짜를 탭하면 그날의 일정과 계획이 열리고, 길게 누르면 일정을 바로 적어요. 누른 채 끌면 여러 날로 잡을 수 있고요."),
     ]
+    /// 씨앗 최초 획득 — 오늘 탭 우상단 배지에서 1회(2026-08-12 사용자 지시).
+    /// 얻는 법·쓰는 곳을 한 번에 말한다. 재촉은 하지 않는다(§7) — 사실만.
+    static let seed: [CoachStep] = [
+        // 제목에 개수를 넣지 않는다 — 「사용법 다시 보기」로 리셋하면 이미 여러 개를 가진
+        // 사람에게도 다시 뜬다(2026-08-12).
+        CoachStep(anchor: .todaySeed, title: "씨앗이 모였어요",
+                  body: "하루 체크인을 완성할 때마다 씨앗이 하나씩 모여요. 탭하면 테마 화면이 열리고, 모은 씨앗으로 새 테마를 구매할 수 있어요."),
+    ]
+    /// 테마 탭 첫 진입 — 잔액이 무엇인지, 구매와 적용이 왜 따로인지(§3.8.1 구매·적용 분리)
+    static let themeShop: [CoachStep] = [
+        CoachStep(anchor: .themeSeedBalance, title: "지금 가진 씨앗",
+                  body: "하루 체크인을 완성하면 씨앗이 하나씩 모여요. 여기 숫자가 지금 쓸 수 있는 만큼이에요."),
+        CoachStep(anchor: .themeCardAction, title: "구매와 적용은 따로예요",
+                  body: "구매한 테마는 사라지지 않아요. 갈아입는 건 그다음이라, 마음이 내킬 때 언제든 다시 바꿀 수 있어요."),
+    ]
 }
 
 // ── 앵커 수집 (JejuNow의 data-coach 속성 등가 — 좌표가 아니라 뷰에 붙어 따라간다) ──
@@ -69,9 +90,12 @@ extension View {
         anchorPreference(key: CoachAnchorKey.self, value: .bounds) { [id: $0] }
     }
 
-    func coachOverlay(id: CoachID, steps: [CoachStep]) -> some View {
+    /// `enabled` = 화면 진입 말고 다른 순간에 열려야 하는 코치용(2026-08-12 씨앗 최초 획득).
+    /// false로 시작해 true가 되는 순간에도 발동한다 — onAppear만 보면 화면에 머무는 동안
+    /// 생긴 조건(체크인을 완성해 씨앗이 처음 생김)을 영영 못 잡는다.
+    func coachOverlay(id: CoachID, steps: [CoachStep], enabled: Bool = true) -> some View {
         overlayPreferenceValue(CoachAnchorKey.self) { anchors in
-            CoachOverlay(id: id, steps: steps, anchors: anchors)
+            CoachOverlay(id: id, steps: steps, anchors: anchors, enabled: enabled)
         }
     }
 }
@@ -81,6 +105,7 @@ private struct CoachOverlay: View {
     let id: CoachID
     let steps: [CoachStep]
     let anchors: [CoachAnchor: Anchor<CGRect>]
+    let enabled: Bool
 
     @State private var active = false
     @State private var index = 0
@@ -122,12 +147,15 @@ private struct CoachOverlay: View {
         }
         .ignoresSafeArea()
         .sensoryFeedback(.success, trigger: successFeedback)
-        .onAppear {
-            guard !CoachStore.isDone(id) else { return }
-            Task {   // 대상이 그려질 때까지 한 박자 양보(JejuNow 400ms와 동형)
-                try? await Task.sleep(nanoseconds: 400_000_000)
-                active = true
-            }
+        .onAppear { activateIfNeeded() }
+        .onChange(of: enabled) { _, _ in activateIfNeeded() }
+    }
+
+    private func activateIfNeeded() {
+        guard enabled, !active, !CoachStore.isDone(id) else { return }
+        Task {   // 대상이 그려질 때까지 한 박자 양보(JejuNow 400ms와 동형)
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            active = true
         }
     }
 
@@ -161,9 +189,12 @@ private struct CoachOverlay: View {
         let y = below ? min(rect.maxY + 14, size.height - cardHeight - 20)
                       : max(rect.minY - cardHeight - 14, 20)
         return VStack(alignment: .leading, spacing: 8) {
-            Text("\(shownIndex + 1) / \(steps.count)")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Ink.winter)
+            // 단계가 하나뿐인 코치(씨앗 획득)는 「1 / 1」이 정보가 아니라 잡음이다(2026-08-12)
+            if steps.count > 1 {
+                Text("\(shownIndex + 1) / \(steps.count)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Ink.winter)
+            }
             Text(step.title)
                 .font(.almanac(size: 19, weight: .bold))
                 .foregroundStyle(Ink.text)
@@ -172,9 +203,12 @@ private struct CoachOverlay: View {
                 .foregroundStyle(Ink.text.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
-                Button("건너뛰기") { finish() }
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.text.opacity(0.55))
+                // 단계가 하나면 건너뛰기와 「알겠어요」가 같은 동작이라 버튼이 둘일 이유가 없다
+                if steps.count > 1 {
+                    Button("건너뛰기") { finish() }
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.text.opacity(0.55))
+                }
                 Spacer()
                 Button {
                     advance(from: shownIndex)
@@ -197,6 +231,8 @@ private struct CoachOverlay: View {
         .frame(maxWidth: .infinity)
         .offset(y: y)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("사용법 안내 \(shownIndex + 1) / \(steps.count). \(step.title). \(step.body)")
+        .accessibilityLabel(steps.count > 1
+                            ? "사용법 안내 \(shownIndex + 1) / \(steps.count). \(step.title). \(step.body)"
+                            : "사용법 안내. \(step.title). \(step.body)")
     }
 }

@@ -22,6 +22,12 @@ struct SelfReportFlow: View {
     @State private var symptomOrder: [SurveyQuestion] = SelfReportSurvey.symptomQuestions.shuffled()
 
     private var totalSteps: Int { 5 }
+    /// 스크롤 리셋 대상(2026-08-12) — 장이 바뀌면 여기로 되돌린다.
+    private static let topAnchor = "survey-top"
+
+    /// 문항이 하나뿐인 장 — 선택이 곧 그 장의 답이라 「다음」을 한 번 더 누를 이유가 없다
+    /// (2026-08-12 베타 피드백 "선택하면 다음 안눌러도 넘어가게"). 1장 = 캘리브레이션 단문항.
+    private var isSingleQuestionStep: Bool { step == 1 }
 
     var body: some View {
         NavigationStack {
@@ -30,14 +36,21 @@ struct SelfReportFlow: View {
                 // "설문지" 인상 걷어내기(2026-08-08 베타 피드백 "하기 싫게 생겼어") —
                 // 온보딩과 같은 겨울 광 + 감쇠 텍스처로 앱의 지면 어휘를 잇는다
                 SeasonLight(phase: .menstrual, motif: .onboarding)
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        progressHeader
-                        content
-                        actions
+                // 장을 넘기면 맨 위부터 보여준다(2026-08-12 베타 피드백) — 종전엔 이전 장의
+                // 스크롤 위치가 남아 새 장이 중간부터 열렸다.
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 18) {
+                            progressHeader.id(Self.topAnchor)
+                            content
+                            actions
+                        }
+                        .padding(20)
+                        .centeredColumn(640)
                     }
-                    .padding(20)
-                    .centeredColumn(640)
+                    .onChange(of: step) { _, _ in
+                        proxy.scrollTo(Self.topAnchor, anchor: .top)
+                    }
                 }
             }
             .navigationTitle("리듬 설문")
@@ -152,7 +165,7 @@ struct SelfReportFlow: View {
     private func choiceRow(question: SurveyQuestion, choice: SurveyChoice) -> some View {
         let selected = answers[question.id] == choice.value
         return Button {
-            answers[question.id] = selected ? nil : choice.value
+            select(question: question, choice: choice, wasSelected: selected)
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: selected ? "circle.inset.filled" : "circle")
@@ -202,6 +215,19 @@ struct SelfReportFlow: View {
         case 3: SelfReportSurvey.symptomQuestions.allSatisfy { answers[$0.id] != nil }
         case 4: SelfReportSurvey.amplitudeQuestions.allSatisfy { answers[$0.id] != nil }
         default: true
+        }
+    }
+
+    /// 선택 반영 + 단문항 장이면 자동 진행(2026-08-12). 재탭 해제로는 넘어가지 않는다.
+    /// 한 박자 늦추는 이유 = 고른 표시(라디오 채움)를 보고 넘어가야 무엇을 골랐는지 남는다.
+    private func select(question: SurveyQuestion, choice: SurveyChoice, wasSelected: Bool) {
+        answers[question.id] = wasSelected ? nil : choice.value
+        guard !wasSelected, isSingleQuestionStep else { return }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 260_000_000)
+            // 사이에 사용자가 직접 넘겼거나 답을 지웠으면 손대지 않는다
+            guard isSingleQuestionStep, canAdvance else { return }
+            advance()
         }
     }
 

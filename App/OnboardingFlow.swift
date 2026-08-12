@@ -814,7 +814,9 @@ struct OnboardingFlow: View {
     /// 예시 칩 — 탭 = 실제 아이템 추가, 다시 탭 = 빠짐(2026-08-09 베타 피드백 토글 전환).
     private func exampleBlock(chips: [(label: String, key: String)]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("이런 것들이에요. 탭해서 담고, 다시 탭하면 빠져요.")
+            // 2026-08-12 베타 피드백("간단하게만 안내") — 빠지는 법은 눌러 보면 알게 되는 동작이라
+            // 첫 안내에서 뺀다. 담는 법 한 가지만 남긴다.
+            Text("탭해서 담아볼 수 있어요.")
                 .font(.caption)
                 .foregroundStyle(Ink.text.opacity(0.5))
             ForEach(chips, id: \.key) { chip in

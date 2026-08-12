@@ -77,6 +77,9 @@ struct ThemeShopView: View {
                 ToolbarItem(placement: .confirmationAction) { mascotButton }
             }
         }
+        // 첫 진입 안내(2026-08-12 사용자 지시) — 잔액이 무엇인지, 구매와 적용이 왜 따로인지.
+        // NavigationStack 바깥에 붙여 시트 전체(툴바 포함)를 덮는다.
+        .coachOverlay(id: .themeShop, steps: CoachSteps.themeShop)
         .task { await tips.load() }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sensoryFeedback(.success, trigger: celebrateTick)
@@ -165,7 +168,14 @@ struct ThemeShopView: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             SeedBadge(count: available)
+                .coachAnchor(.themeSeedBalance)   // 첫 진입 안내 1단계(2026-08-12)
         }
+    }
+
+    /// 첫 진입 안내 2단계가 가리킬 카드 — 값을 치르는 첫 테마 하나만 잡는다.
+    /// 여러 카드에 같은 앵커를 붙이면 마지막 하나만 남아 엉뚱한 카드를 가리킨다(PreferenceKey reduce).
+    private var coachTargetTheme: AppTheme? {
+        AppTheme.allCases.first { $0.seedPrice != nil }
     }
 
     private func isPlanted(_ theme: AppTheme) -> Bool {
@@ -188,7 +198,11 @@ struct ThemeShopView: View {
                 Spacer(minLength: 0)
             }
             ThemePreview(theme: theme)
-            actionRow(theme)
+            if theme == coachTargetTheme {
+                actionRow(theme).coachAnchor(.themeCardAction)
+            } else {
+                actionRow(theme)
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

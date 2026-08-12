@@ -93,7 +93,11 @@ public enum SelfReportSurvey {
         SurveyQuestion(id: "Q5", text: "몸이 붓거나 무거워요", choices: symptomChoices),
         SurveyQuestion(id: "Q6", text: "가슴이 아프거나 불편해요", choices: symptomChoices),
         SurveyQuestion(id: "Q7", text: "쉽게 피곤해져요", choices: symptomChoices),
-        SurveyQuestion(id: "Q8", text: "그때도 평소랑 거의 똑같아요", choices: symptomChoices),
+        // 2026-08-12 베타 피드백("이거 질문 이상한듯"): 종전 문구 "그때도 평소랑 거의 똑같아요"는
+        // 상태 서술이라 「심해져요/비슷해요」로 답할 수가 없었다("똑같음이 심해진다"?).
+        // 역문항 기능(아래 isStraightLining)은 그대로 두고 **다른 문항과 같은 증상 서술 형식**으로
+        // 바꾼다 — 방향만 반대인 긍정 문항이면 척도를 공유하면서 모순 판별이 성립한다.
+        SurveyQuestion(id: "Q8", text: "오히려 기운이 넘쳐요", choices: symptomChoices),
     ]
 
     /// 이 셋만 다점 척도 — 진폭과 기능 지장의 상관을 재는 유일한 쌍이라 이진화하면 무의미해진다.

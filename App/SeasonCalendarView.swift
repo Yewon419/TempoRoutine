@@ -697,7 +697,6 @@ struct SeasonCalendarView: View {
         let title: String
         let segment: BandSegment
         let lane: Int
-        let isPast: Bool
     }
 
     private struct BandLayout {
@@ -730,9 +729,8 @@ struct SeasonCalendarView: View {
 
             for (n, segment) in ScheduleSpan.bandSegments(cells: cells).enumerated() {
                 let adjusted = clampToMonth(segment, item: item, layout: layout)
-                let lastDay = layout.date(at: segment.row * 7 + segment.column + segment.length - 1)
                 bars.append(BandBar(id: "\(item.id)-\(n)", title: item.title, segment: adjusted,
-                                    lane: lane, isPast: (lastDay ?? today) < today))
+                                    lane: lane))
             }
         }
         return BandLayout(bars: bars, countByIndex: countByIndex)
@@ -768,7 +766,10 @@ struct SeasonCalendarView: View {
 
     // 타입 체커 과부하를 피해 조각냄(2026-07-25 CI 실측: 한 식에 몰면 unable to type-check)
     private func bandView(bar: BandBar, unit: CGFloat) -> some View {
-        let ink: Color = bar.isPast ? Ink.oxide : Ink.text
+        // 2026-08-12 베타 피드백("일정 색깔 기준이 뭔지 모르겠어 — 여행과 동일한 색으로 통일"):
+        // 지난 일정만 산화 갈색이던 규칙을 걷는다. 모던 팔레트가 먼저 간 방향(oxide 갈색 은퇴)을
+        // 은필도 따른다 — 셀 안에서 색이 뜻하는 건 계절 하나로 족하다.
+        let ink: Color = Ink.text
         let radius: CGFloat = 2   // 직각화(2026-07-28 시안 결정 — 계절 밑줄과 같은 결)
         let width: CGFloat = max(0, unit * CGFloat(bar.segment.length) - 2)
         let x: CGFloat = unit * CGFloat(bar.segment.column) + 1
@@ -898,17 +899,18 @@ struct SeasonCalendarView: View {
                         .foregroundStyle(holiday.isPublic ? Ink.holiday : Ink.text.opacity(0.5))
                 }
                 // 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성) /
-                // occurrence = 종전 잉크 글줄(먹색 78% / 과거 산화색 75% / 예상 옅게, 프로토 v15·16)
+                // occurrence = 잉크 글줄(먹색 78% / 예상 옅게, 프로토 v15·16)
+                // 2026-08-12: 과거 산화색 75% 분기 폐기 — 띠·박스와 같은 이유로 지난 것도 먹색이다
                 // 한 칸의 줄 예산은 2 — 띠·공휴일이 차지한 만큼 줄인다
                 ForEach(Array(cellMarks.prefix(markBudget).enumerated()), id: \.offset) { _, mark in
                     if mark.isSchedule {
-                        scheduleBox(title: mark.title, past: date < today)
+                        scheduleBox(title: mark.title)
                     } else {
                         Text(mark.title)
                             .font(.system(size: 8.5, weight: .medium))
                             .lineLimit(1)
                             .foregroundStyle(mark.projected ? Ink.text.opacity(0.45)
-                                             : (date < today ? Ink.oxide.opacity(0.75) : Ink.text.opacity(0.78)))
+                                             : Ink.text.opacity(0.78))
                     }
                 }
                 Spacer(minLength: 0)
@@ -962,8 +964,8 @@ struct SeasonCalendarView: View {
     }
 
     /// 하루짜리 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성). 높이·R2·서체 = 띠 동일
-    private func scheduleBox(title: String, past: Bool) -> some View {
-        let ink: Color = past ? Ink.oxide : Ink.text
+    private func scheduleBox(title: String) -> some View {
+        let ink: Color = Ink.text   // 지난 일정 갈색 분기 폐기(2026-08-12 — bandView 주석 참조)
         return RoundedRectangle(cornerRadius: 2)
             .fill(ink.opacity(0.13))
             .frame(height: bandHeight)

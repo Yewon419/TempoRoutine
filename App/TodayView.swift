@@ -194,6 +194,11 @@ struct TodayView: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .coachOverlay(id: .today, steps: CoachSteps.today)   // 기능 튜토리얼(2026-07-23)
+        // 씨앗 최초 획득 안내(2026-08-12) — 체크인을 완성해 씨앗이 처음 생기는 순간 발동한다.
+        // 오늘 코치를 끝낸 뒤로 미루는 이유: 둘이 겹치면 어둠이 두 겹으로 깔린다.
+        // 판정은 잔액(available)이 아니라 총 획득(balance) — 다 써서 0이 돼도 이미 겪은 일이다.
+        .coachOverlay(id: .seed, steps: CoachSteps.seed,
+                      enabled: Seeds.balance(checkIns) > 0 && CoachStore.isDone(.today))
         .task(id: schedules.count + periodDays.count) {
             // 예약할 내용이 처음 생기는 시점을 잡는다 — 일정·생리 기록이 바뀔 때마다 재판정
             showNoticeCard = await DailyNotices.shouldOfferPermission(periodDays: periodDays,
@@ -258,6 +263,7 @@ struct TodayView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("테마 화면을 엽니다")
+                .coachAnchor(.todaySeed)   // 최초 획득 안내 대상(2026-08-12)
             }
             if let info = todayInfo {
                 // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
