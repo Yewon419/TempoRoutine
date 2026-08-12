@@ -18,7 +18,10 @@ struct TempoRoutineApp: App {
     /// 명시 생성으로 바꾼 이유 = PlannerSync(CKSyncEngine)가 뷰 밖에서 같은 스토어를 써야 해서.
     /// ⚠ 폴백 분기 금지(repo CLAUDE.md split-brain 규칙) — 실패는 조용한 갈라짐보다 크래시가 낫다.
     static let container: ModelContainer = {
+        // ⚠ 새 @Model은 여기 등록이 필수 — 빠지면 컴파일은 되고 실기기에서 조용히 실패한다
+        // (repo CLAUDE.md 1번 함정). InputSubtask·InputProgress = Input 진행 방식(2026-08-12).
         let schema = Schema([PeriodDay.self, ScheduleItem.self, InputItem.self,
+                             InputSubtask.self, InputProgress.self,
                              OutputItem.self, OutputSubtask.self, ItemCompletion.self,
                              DailyCheckIn.self, SelfReportRecord.self])
         do {

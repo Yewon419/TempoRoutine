@@ -151,11 +151,22 @@ extension ScheduleRepeat {
 }
 
 // ② Input 카드 — 채움. 일일 체크리스트. 완료 = ItemCompletion 존재 여부.
+// 진행 방식(2026-08-12 사용자 지시)은 **정의만** 여기 둔다 — 그날의 값은 InputProgress.
+// Output처럼 아이템에 값을 두면 매일 반복에서 이틀째부터 목표 도달 상태가 된다(§5.5.2 개정).
 @Model
 final class InputItem {
     var id: UUID = UUID()
     var title: String = ""
     var category: InputCategory = InputCategory.other
+    /// 진행 방식 — 빈 문자열 = 종전 단순 체크. raw String 저장 + computed 노출은
+    /// optional enum 저장 동작을 추측하지 않기 위한 선택이다(repo CLAUDE.md).
+    var progressKindRaw: String = ""
+    /// 서브태스크 **이름·순서만** — 완료 여부는 날짜별이라 InputProgress가 갖는다
+    /// (OutputSubtask.isDone과 다른 점). CloudKit 규칙: optional + inverse.
+    @Relationship(deleteRule: .cascade, inverse: \InputSubtask.owner)
+    var subtasks: [InputSubtask]? = []
+    var targetSessions: Int = 0
+    var targetSeconds: Int?
     // 연관값 enum을 SwiftData 속성으로 직접 저장하면 실기기 크래시(§5.5.1 실측 계열)
     // → Data 인코딩 저장 + computed 노출. 빈 Data = .daily 폴백.
     var scheduleData: Data = Data()
@@ -172,6 +183,20 @@ final class InputItem {
         set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
     }
 
+    /// nil = 단순 체크(종전 Input 전부가 여기 해당 — 저장분 무변경으로 그대로 산다)
+    var progressKind: OutputProgressKind? {
+        get { OutputProgressKind(rawValue: progressKindRaw) }
+        set { progressKindRaw = newValue?.rawValue ?? "" }
+    }
+
+    /// 목표 정의 — 판정은 TempoCore의 순수 규칙이 한다(InputProgressRule)
+    var progressGoal: InputProgressGoal? {
+        guard let kind = progressKind else { return nil }
+        return InputProgressGoal(kind: kind, targetSessions: targetSessions,
+                                 targetSeconds: targetSeconds,
+                                 subtaskCount: subtasks?.count ?? 0)
+    }
+
     /// createdAt = 이 아이템이 시작되는 날(발생 판정의 기준선). 하루 상세에서 추가하면 그날이어야
     /// 한다 — 기본값 .now로 두면 지난 날짜에 추가해도 오늘부터 뜬다(2026-07-26 실기기 결함).
     init(title: String, category: InputCategory = .other, schedule: InputSchedule = .daily,
@@ -183,6 +208,10 @@ final class InputItem {
         self.createdAt = createdAt
         self.backfilled = backfilled
         self.timeMinutes = nil
+        self.progressKindRaw = ""   // 기본 = 단순 체크(진행 방식은 시트에서 고른다)
+        self.subtasks = []
+        self.targetSessions = 0
+        self.targetSeconds = nil
     }
 
     /// .once가 이 날짜에 뜨는가 — 소급 기록은 적어 넣은 그날에만. 완료 판정은 호출부(뷰) 책임.
@@ -215,6 +244,70 @@ final class InputItem {
         case .cycleAnchored:
             return false
         }
+    }
+}
+
+/// Input 서브태스크 — **이름·순서만.** 완료 여부는 날짜마다 달라서 InputProgress가 갖는다.
+/// OutputSubtask와 형태가 닮았지만 isDone이 없다는 게 결정적 차이다(2026-08-12).
+@Model
+final class InputSubtask {
+    var id: UUID = UUID()
+    var title: String = ""
+    var order: Int = 0
+    var owner: InputItem?   // inverse — CloudKit 호환(관계 optional + 양방향)
+
+    init(title: String, order: Int) {
+        self.id = UUID()
+        self.title = title
+        self.order = order
+    }
+}
+
+/// Input의 **그날치** 진행 상태(2026-08-12). 완료는 여기가 아니라 ItemCompletion이 맡는다 —
+/// "레코드 존재 = 완료"에 씨앗 판정·위젯·내보내기가 의존해서 미완료 상태를 섞을 수 없다.
+/// 한 아이템 × 한 날짜에 하나. 진행이 0으로 되돌아가면 레코드는 남아도 무해하다.
+@Model
+final class InputProgress {
+    var id: UUID = UUID()
+    var itemID: UUID = UUID()
+    var occurredOn: Date = Date()
+    var loggedSessions: Int = 0
+    var percent: Double = 0
+    var elapsedAccumSeconds: Double = 0
+    /// 진행 중 시작 앵커 — nil = 멈춤. 앱이 죽어도 경과가 이어진다(OutputItem 타이머와 같은 계약)
+    var timerStartedAt: Date?
+    /// 완료된 서브태스크 id 목록(JSON). 배열 직접 저장은 SwiftData 처리를 추측하지 않는다는
+    /// repo 규칙에 따라 Data 인코딩 + computed 노출로 간다.
+    var doneSubtaskData: Data = Data()
+
+    init(itemID: UUID, occurredOn: Date) {
+        self.id = UUID()
+        self.itemID = itemID
+        self.occurredOn = Calendar.current.startOfDay(for: occurredOn)
+        self.loggedSessions = 0
+        self.percent = 0
+        self.elapsedAccumSeconds = 0
+        self.timerStartedAt = nil
+        self.doneSubtaskData = Data()
+    }
+
+    var doneSubtaskIDs: Set<UUID> {
+        get { Set((try? JSONDecoder().decode([UUID].self, from: doneSubtaskData)) ?? []) }
+        set { doneSubtaskData = (try? JSONEncoder().encode(Array(newValue))) ?? doneSubtaskData }
+    }
+
+    var isTimerRunning: Bool { timerStartedAt != nil }
+
+    /// 현재 경과(초) — 누적 + 진행 중 델타
+    func elapsedSeconds(at now: Date = .now) -> Double {
+        elapsedAccumSeconds + (timerStartedAt.map { max(0, now.timeIntervalSince($0)) } ?? 0)
+    }
+
+    /// 판정용 값 타입 — 뷰는 이걸 TempoCore 규칙에 넘긴다
+    func state(at now: Date = .now) -> InputProgressState {
+        InputProgressState(loggedSessions: loggedSessions, percent: percent,
+                           elapsedSeconds: elapsedSeconds(at: now),
+                           doneSubtasks: doneSubtaskIDs.count)
     }
 }
 
