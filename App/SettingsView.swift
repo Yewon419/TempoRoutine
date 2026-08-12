@@ -1,7 +1,10 @@
-// 템포루틴 — 설정 탭 (Phase 0 ⑤: 데이터 섹션만 — MASTER §8.2.6)
+// 템포루틴 — 설정 탭 (MASTER §8.2.6)
+// 섹션 순서(2026-08-12 정보 구조 재편): 테마 → 알림 → 건강 앱 → 기기 간 동기화 →
+// 다시 보기 → 리듬 설문 → 데이터 → 모든 기록 삭제. 자주 만지는 것이 위, 파괴적인 것이 맨 아래.
+// 헤더 규칙 = 여러 행을 묶는 이름일 때만 둔다. 단일 행 섹션(테마·동기화·설문·삭제)은
+// 행 라벨이 곧 이름이라 헤더가 중복이 된다.
 // 내보내기 = 평문 JSON + 공유 시트(유저가 저장 위치 결정) + 민감 경고 / 가져오기 = merge·dedup(§5.5.1)
 // 전체 삭제 = 분리 배치·확인 다이얼로그·undo 토스트(destructive-nav-separation).
-// HealthKit·추적 항목·사운드·테마 섹션은 해당 빌드 단계에서.
 
 import SwiftUI
 import SwiftData
@@ -111,77 +114,25 @@ struct SettingsView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             List {
+                // 테마(2026-08-09 — 테마 탭 진입 행. 심기·적용·미리보기는 ThemeShopView, §3.8.1)
                 Section {
-                    Button("JSON으로 내보내기") { exportData() }
-                        .foregroundStyle(Ink.text)
-                    Button("백업 가져오기") { showImporter = true }
-                        .foregroundStyle(Ink.text)
-                    // 심사 지침 5.1.1(i)은 ASC 메타데이터뿐 아니라 **앱 안에서도** 처리방침에
-                    // 닿을 수 있기를 요구한다(2026-08-12). 데이터 섹션에 두는 이유 = 내보내기·
-                    // 삭제와 같은 "내 기록이 어디 있나" 맥락.
-                    Link("개인정보 처리방침", destination: Self.privacyPolicyURL)
-                        .foregroundStyle(Ink.text)
-                } header: {
-                    Text("데이터")
+                    Button {
+                        lightFeedback += 1
+                        showThemeShop = true
+                    } label: {
+                        HStack {
+                            Text("테마").foregroundStyle(Ink.text)
+                            Spacer()
+                            Text((AppTheme(rawValue: appTheme) ?? .standard).displayName)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Ink.text.opacity(0.35))
+                        }
+                    }
                 } footer: {
-                    // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
-                    Text("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \(periodDays.count)일 · 체크인 \(checkIns.count)건")
-                }
-
-                // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)
-                Section {
-                    Toggle("건강 앱과 연동", isOn: healthBinding)
-                        .tint(Ink.text)
-                        .disabled(!mirror.available)
-                        .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
-                    if mirror.available {
-                        // 읽기 권한 재요청은 애플이 막음(§5.7) — 설정 앱 원탭 이동이 최선(2026-07-24)
-                        Button("건강 권한 설정 열기") { openAppSettings() }
-                            .foregroundStyle(Ink.text)
-                    }
-                } header: {
-                    Text("건강 앱")
-                } footer: {
-                    // 진단 내역은 알럿에서 내려 여기로(2026-08-01) — 0건의 "왜"는 남기되 안내 문구는 깨끗하게
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(healthCaption)
-                        if mirror.linked && !mirror.lastSyncReport.isEmpty {
-                            Text("마지막 동기화 · \(mirror.lastSyncReport)")
-                        }
-                    }
-                }
-
-                // 기기 간 동기화(2026-08-10 재구현 — PlannerSync/CKSyncEngine, §5.2)
-                Section {
-                    Toggle("기기 간 동기화", isOn: Binding(
-                        get: { syncOn },
-                        set: { on in
-                            lightFeedback += 1
-                            syncOn = on
-                            PlannerSync.shared.setEnabled(on)
-                        }
-                    ))
-                    .tint(Ink.text)
-                    if syncOn {
-                        Button("지금 동기화") {
-                            lightFeedback += 1
-                            Task { await PlannerSync.shared.syncNow() }
-                        }
-                        .foregroundStyle(Ink.text)
-                    }
-                } header: {
-                    Text("기기 간 동기화")
-                } footer: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 이어져요. 생리 기록은 iCloud로 보내지 않아요 — 기기 간 전달은 건강 앱 연동이 맡아요.")
-                        if !PlannerSync.shared.lastReport.isEmpty {
-                            Text("마지막 동기화 · \(PlannerSync.shared.lastReport)")
-                        }
-                        // 연결 상태 진단(2026-08-11) — 엔진이 안 떠 있으면 기기 iCloud 설정 안내
-                        if syncOn && !PlannerSync.shared.running {
-                            Text("iCloud 연결 안 됨 — 기기 설정 > Apple 계정 > iCloud에서 템포루틴이 켜져 있는지, 폰과 같은 계정인지 확인해 주세요.")
-                        }
-                    }
+                    // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
+                    Text("체크인으로 모은 씨앗으로 새 테마를 구매할 수 있어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
                 }
 
                 // 알림(§5.11 계열) — 브리핑·예측 = 기본 켬(2026-08-05 사용자 결정),
@@ -229,7 +180,63 @@ struct SettingsView: View {
                          : "브리핑은 일정이 있는 날 아침 8시에 한 번, 예측 알림은 예상 시작 전날과 당일에 한 번씩 와요. 빈 시기 알림은 한 주기를 네 구간으로 나눠 기록이 하나도 없는 구간에만 저녁에 한 번 알려요.")
                 }
 
+                // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)
+                Section {
+                    Toggle("건강 앱과 연동", isOn: healthBinding)
+                        .tint(Ink.text)
+                        .disabled(!mirror.available)
+                        .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
+                    if mirror.available {
+                        // 읽기 권한 재요청은 애플이 막음(§5.7) — 설정 앱 원탭 이동이 최선(2026-07-24)
+                        Button("건강 권한 설정 열기") { openAppSettings() }
+                            .foregroundStyle(Ink.text)
+                    }
+                } header: {
+                    Text("건강 앱")
+                } footer: {
+                    // 진단 내역은 알럿에서 내려 여기로(2026-08-01) — 0건의 "왜"는 남기되 안내 문구는 깨끗하게
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(healthCaption)
+                        if mirror.linked && !mirror.lastSyncReport.isEmpty {
+                            Text("마지막 동기화 · \(mirror.lastSyncReport)")
+                        }
+                    }
+                }
+
+                // 기기 간 동기화(2026-08-10 재구현 — PlannerSync/CKSyncEngine, §5.2)
+                // 토글 라벨이 곧 섹션 이름이라 헤더를 두지 않는다(2026-08-12 정보 구조 재편).
+                Section {
+                    Toggle("기기 간 동기화", isOn: Binding(
+                        get: { syncOn },
+                        set: { on in
+                            lightFeedback += 1
+                            syncOn = on
+                            PlannerSync.shared.setEnabled(on)
+                        }
+                    ))
+                    .tint(Ink.text)
+                    if syncOn {
+                        Button("지금 동기화") {
+                            lightFeedback += 1
+                            Task { await PlannerSync.shared.syncNow() }
+                        }
+                        .foregroundStyle(Ink.text)
+                    }
+                } footer: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 이어져요. 생리 기록은 iCloud로 보내지 않아요 — 기기 간 전달은 건강 앱 연동이 맡아요.")
+                        if !PlannerSync.shared.lastReport.isEmpty {
+                            Text("마지막 동기화 · \(PlannerSync.shared.lastReport)")
+                        }
+                        // 연결 상태 진단(2026-08-11) — 엔진이 안 떠 있으면 기기 iCloud 설정 안내
+                        if syncOn && !PlannerSync.shared.running {
+                            Text("iCloud 연결 안 됨 — 기기 설정 > Apple 계정 > iCloud에서 템포루틴이 켜져 있는지, 폰과 같은 계정인지 확인해 주세요.")
+                        }
+                    }
+                }
+
                 // 기능 튜토리얼 리셋(2026-07-23 — JejuNow 「사용법 다시 보기」 동형)
+                // 두 행을 묶는 이름이 없어 헤더를 붙였다(2026-08-12 정보 구조 재편).
                 Section {
                     Button("사용법 다시 보기") {
                         lightFeedback += 1
@@ -246,6 +253,8 @@ struct SettingsView: View {
                         onboardingDone = false
                     }
                     .foregroundStyle(Ink.text)
+                } header: {
+                    Text("다시 보기")
                 } footer: {
                     Text("사용법은 각 화면을 열 때 처음 안내가 다시 나와요. 온보딩은 첫 실행 화면을 처음부터 다시 봐요 — 기록은 지워지지 않아요.")
                 }
@@ -264,27 +273,23 @@ struct SettingsView: View {
                          : "마지막 응답 \(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 쌓여요.")
                 }
 
-                // 테마(2026-08-09 — 테마 탭 진입 행. 심기·적용·미리보기는 ThemeShopView, §3.8.1)
+                // 데이터 — 내보내기·가져오기·처리방침. 저빈도 액션이라 삭제 바로 위로 내렸다
+                // (2026-08-12 정보 구조 재편 — 「내 기록이 어디 있나」 맥락끼리 인접).
                 Section {
-                    Button {
-                        lightFeedback += 1
-                        showThemeShop = true
-                    } label: {
-                        HStack {
-                            Text("테마").foregroundStyle(Ink.text)
-                            Spacer()
-                            Text((AppTheme(rawValue: appTheme) ?? .standard).displayName)
-                                .foregroundStyle(Ink.text.opacity(0.5))
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(Ink.text.opacity(0.35))
-                        }
-                    }
+                    Button("JSON으로 내보내기") { exportData() }
+                        .foregroundStyle(Ink.text)
+                    Button("백업 가져오기") { showImporter = true }
+                        .foregroundStyle(Ink.text)
+                    // 심사 지침 5.1.1(i)은 ASC 메타데이터뿐 아니라 **앱 안에서도** 처리방침에
+                    // 닿을 수 있기를 요구한다(2026-08-12). 데이터 섹션에 두는 이유 = 내보내기·
+                    // 삭제와 같은 "내 기록이 어디 있나" 맥락.
+                    Link("개인정보 처리방침", destination: Self.privacyPolicyURL)
+                        .foregroundStyle(Ink.text)
                 } header: {
-                    Text("테마")
+                    Text("데이터")
                 } footer: {
-                    // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
-                    Text("체크인으로 모은 씨앗으로 새 테마를 구매할 수 있어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
+                    // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
+                    Text("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \(periodDays.count)일 · 체크인 \(checkIns.count)건")
                 }
 
                 // 파괴적 액션 — 분리 배치(§8.2.6)
