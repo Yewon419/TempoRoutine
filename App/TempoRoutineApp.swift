@@ -10,6 +10,10 @@ import SwiftData
 
 @main
 struct TempoRoutineApp: App {
+    /// 스위처 가림은 씬 단계에서 몬다(§5.7) — 루트 뷰의 scenePhase는 `.id(appTheme)` 리빌드에
+    /// 얽혀 있고, 표지는 테마와 무관하게 항상 떠야 한다.
+    @Environment(\.scenePhase) private var scenePhase
+
     /// 단일 스토어 컨테이너 — 종전 .modelContainer(for:)와 같은 스키마·같은 기본 위치(default.store).
     /// 명시 생성으로 바꾼 이유 = PlannerSync(CKSyncEngine)가 뷰 밖에서 같은 스토어를 써야 해서.
     /// ⚠ 폴백 분기 금지(repo CLAUDE.md split-brain 규칙) — 실패는 조용한 갈라짐보다 크래시가 낫다.
@@ -45,5 +49,12 @@ struct TempoRoutineApp: App {
             // 다크 = 적응형 토큰으로 대응(Ink — 2026-07-20 사용자 결정). 정식 다크 테마는 미학 패스.
         }
         .modelContainer(Self.container)
+        // 앱 스위처 가림(§5.7 P0). **`.inactive`부터 덮는다** — 스냅샷은 백그라운드 진입 시점에
+        // 찍히지만, 스위처를 띄우는 동안(비활성) 카드에 실제 화면이 그대로 보인다. 그 사이 기기를
+        // 건네주면 가린 의미가 없다. 대가로 시스템 권한 시트가 뜰 때도 잠깐 표지가 스친다 —
+        // 거슬리면 `.background`만 덮는 쪽으로 완화할 수 있다(가림 범위는 그만큼 줄어든다).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { PrivacyShield.uncover() } else { PrivacyShield.cover() }
+        }
     }
 }
