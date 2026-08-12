@@ -434,6 +434,12 @@ struct InputAddSheet: View {
             _title = State(initialValue: item.title)
             _category = State(initialValue: item.category)
             _timeMinutes = State(initialValue: item.timeMinutes)
+            // 진행 방식(2026-08-12) — nil = 종전 단순 체크
+            _progressKind = State(initialValue: item.progressKind)
+            if item.targetSessions > 0 { _targetSessions = State(initialValue: item.targetSessions) }
+            if let seconds = item.targetSeconds, seconds > 0 {
+                _targetMinutes = State(initialValue: max(1, seconds / 60))
+            }
             switch item.schedule {
             case .once:
                 _repeats = State(initialValue: false)
@@ -480,6 +486,12 @@ struct InputAddSheet: View {
     @State private var offset = 0
     @State private var everyCycle = true
     @State private var showDeleteConfirm = false
+    // 진행 방식(2026-08-12 사용자 지시) — nil = 체크만(종전 Input 전부). 값은 날짜마다 리셋된다.
+    @State private var progressKind: OutputProgressKind?
+    @State private var targetSessions = 3
+    @State private var targetMinutes = 10
+    @State private var subtasks: [String] = []
+    @State private var subtaskDraft = ""
 
     private static let calendarChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly]
 
@@ -497,6 +509,84 @@ struct InputAddSheet: View {
         let byCat = Self.examples[category] ?? [:]
         let ex = currentSeason.flatMap { byCat[$0.name] } ?? "스트레칭 10분"
         return "예: \(ex)"
+    }
+
+    /// 진행 방식(2026-08-12 사용자 지시) — Output 시트와 같은 문법이되 **값이 날짜별**이다.
+    /// 퍼센트 초기값 슬라이더는 두지 않는다: 그날치 값이라 "처음 진행도"가 성립하지 않는다.
+    /// 뷰가 커지면 타입 체커가 터진다(repo CLAUDE.md) — 섹션·항목 편집기를 따로 뗐다.
+    @ViewBuilder
+    private var progressSection: some View {
+        Section {
+            Picker("진행 방식", selection: $progressKind) {
+                Text("체크만").tag(OutputProgressKind?.none)
+                Text("체크리스트").tag(OutputProgressKind?.some(.subtasks))
+                Text("세션").tag(OutputProgressKind?.some(.sessions))
+                Text("퍼센트").tag(OutputProgressKind?.some(.percent))
+                Text("타이머").tag(OutputProgressKind?.some(.timer))
+                Text("스톱워치").tag(OutputProgressKind?.some(.stopwatch))
+            }
+            .pickerStyle(.menu)
+            .tint(Ink.text)
+            if progressKind == .sessions {
+                Stepper("목표 \(targetSessions)회", value: $targetSessions, in: 1...50)
+            }
+            if progressKind == .timer {
+                Stepper("목표 \(targetMinutes)분", value: $targetMinutes, in: 1...240)
+                Text("시작하면 잠금화면에서도 남은 시간이 보여요.")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.5))
+            }
+            if progressKind == .stopwatch {
+                Text("쓴 시간을 재요. 목표가 없어서 체크는 직접 눌러요.")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.5))
+            }
+            if progressKind == .subtasks {
+                subtaskEditor
+            }
+        } header: {
+            Text("진행 방식")
+        } footer: {
+            if progressKind != nil {
+                Text("진행도는 날마다 새로 시작해요. 목표에 닿으면 그날 체크가 자동으로 돼요.")
+            } else {
+                Text("체크 한 번으로 끝내도 괜찮아요.")
+            }
+        }
+    }
+
+    /// **정의만** 아이템에 적는다 — 그날의 값(횟수·경과·체크된 항목)은 InputProgress 소관이라
+    /// 여기서 손대지 않는다. 방식을 바꿔도 옛 목표값·항목은 남긴다(되돌리면 그대로 살아난다).
+    private func applyProgress(to item: InputItem) {
+        item.progressKind = progressKind
+        if progressKind == .sessions { item.targetSessions = targetSessions }
+        if progressKind == .timer { item.targetSeconds = targetMinutes * 60 }
+        if progressKind == .subtasks, !subtasks.isEmpty {
+            let base = (item.subtasks ?? []).map(\.order).max().map { $0 + 1 } ?? 0
+            let added = subtasks.enumerated().map {
+                InputSubtask(title: $0.element, order: base + $0.offset)
+            }
+            item.subtasks = (item.subtasks ?? []) + added
+        }
+    }
+
+    /// 기존 항목은 표시만 한다 — 지우면 그날 기록에 남은 완료 id가 갈 곳을 잃는다(Output 시트와 같은 이유).
+    @ViewBuilder
+    private var subtaskEditor: some View {
+        if let existing = editing?.subtasks?.sorted(by: { $0.order < $1.order }), !existing.isEmpty {
+            ForEach(existing) { sub in
+                Text(sub.title).font(.footnote).foregroundStyle(Ink.text.opacity(0.6))
+            }
+        }
+        ForEach(subtasks, id: \.self) { Text($0).font(.footnote) }
+        HStack {
+            TextField("체크리스트 항목 추가", text: $subtaskDraft)
+            Button("추가") {
+                let trimmed = subtaskDraft.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty { subtasks.append(trimmed); subtaskDraft = "" }
+            }
+            .disabled(subtaskDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
     }
 
     /// 제목에서 시각 읽기 — 일정 시트와 같은 규칙(원문 불변·지운 표현 재적용 안 함).
@@ -564,6 +654,7 @@ struct InputAddSheet: View {
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
                 }
+                progressSection
                 if editing != nil {
                     // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
                     Section {
@@ -613,12 +704,14 @@ struct InputAddSheet: View {
                             item.category = category
                             item.schedule = schedule
                             item.timeMinutes = timeMinutes
+                            applyProgress(to: item)
                         } else {
                             let cal = Calendar.current
                             let item = InputItem(title: title, category: category, schedule: schedule,
                                                  createdAt: anchorDate(for: day),
                                                  backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now))
                             item.timeMinutes = timeMinutes
+                            applyProgress(to: item)
                             modelContext.insert(item)
                         }
                         confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
