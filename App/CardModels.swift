@@ -189,10 +189,10 @@ final class InputItem {
         set { progressKindRaw = newValue?.rawValue ?? "" }
     }
 
-    /// 목표 정의 — 판정은 TempoCore의 순수 규칙이 한다(InputProgressRule)
-    var progressGoal: InputProgressGoal? {
+    /// 목표 정의 — 판정은 TempoCore의 순수 규칙이 한다(ProgressRule)
+    var progressGoal: ProgressGoal? {
         guard let kind = progressKind else { return nil }
-        return InputProgressGoal(kind: kind, targetSessions: targetSessions,
+        return ProgressGoal(kind: kind, targetSessions: targetSessions,
                                  targetSeconds: targetSeconds,
                                  subtaskCount: subtasks?.count ?? 0)
     }
@@ -305,8 +305,8 @@ final class InputProgress {
     }
 
     /// 판정용 값 타입 — 뷰는 이걸 TempoCore 규칙에 넘긴다
-    func state(at now: Date = .now) -> InputProgressState {
-        InputProgressState(loggedSessions: loggedSessions, percent: percent,
+    func state(at now: Date = .now) -> ProgressState {
+        ProgressState(loggedSessions: loggedSessions, percent: percent,
                            elapsedSeconds: elapsedSeconds(at: now),
                            doneSubtasks: doneSubtaskIDs.count)
     }
@@ -406,24 +406,31 @@ final class OutputItem {
         }
     }
 
+    /// 목표 정의 — Input과 같은 값 타입을 쓴다(2026-08-13 규칙 통일)
+    var progressGoal: ProgressGoal {
+        ProgressGoal(kind: progressKind, targetSessions: targetSessions,
+                     targetSeconds: targetSeconds, subtaskCount: (subtasks ?? []).count)
+    }
+
+    /// 지금 진행 상태 — Output은 값이 아이템에 누적된다(Input은 그날 레코드)
+    var progressState: ProgressState {
+        ProgressState(loggedSessions: loggedSessions, percent: percent,
+                      elapsedSeconds: elapsedSeconds(),
+                      doneSubtasks: (subtasks ?? []).filter(\.isDone).count)
+    }
+
     /// 완료 = 파생 상태(§5.5.2). 저장 필드 아님.
+    /// 판정은 ProgressRule 한 곳 — 종전엔 같은 규칙이 여기와 TempoCore 두 벌이었다(2026-08-13).
+    /// 스톱워치가 완료 개념 없음도 그 규칙이 갖는다(§5.5.2 파생 완료의 명시적 예외).
     var isComplete: Bool {
-        switch progressKind {
-        case .subtasks:
-            let list = subtasks ?? []
-            return !list.isEmpty && list.allSatisfy(\.isDone)
-        case .sessions:
-            return targetSessions > 0 && loggedSessions >= targetSessions
-        case .percent:
-            return percent >= 1.0
-        case .timer:
-            guard let target = targetSeconds, target > 0 else { return false }
-            return elapsedSeconds() >= Double(target)
-        case .stopwatch:
-            return false   // 측정 전용 — 완료 개념 없음(§5.5.2 파생 완료의 명시적 예외)
-        }
+        ProgressRule.isFulfilled(goal: progressGoal, state: progressState)
     }
 }
+
+// 타이머 저장처 통일(2026-08-13) — 두 모델이 이미 같은 이름·같은 뜻으로 갖고 있어
+// 선언만으로 충족된다. 컨트롤은 이 프로토콜만 알고 어느 카드인지 모른다.
+extension OutputItem: TimerBacking {}
+extension InputProgress: TimerBacking {}
 
 // ── 하루 중 시각 공용 (2026-08-09 사용자 결정 — Input·Output 시각 인식) ──
 

@@ -8,19 +8,17 @@ import Foundation
 
 enum TimerLiveActivity {
     /// 시작 — 같은 아이템의 기존 액티비티는 걷고 다시 건다(일시정지 후 재개 경로).
-    static func start(item: OutputItem) {
+    /// 시작 — 같은 아이템의 기존 액티비티는 걷고 다시 건다(일시정지 후 재개 경로).
+    /// Input·Output 공용이라 모델을 받지 않고 값만 받는다(2026-08-13 통일).
+    static func start(itemID: UUID, title: String, countsDown: Bool,
+                      remaining: Double, elapsedAccum: Double) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-        let attributes = TimerActivityAttributes(title: item.title, itemID: item.id)
-        let state: TimerActivityAttributes.ContentState
-        if item.progressKind == .timer {
-            let remaining = max(0, Double(item.targetSeconds ?? 0) - item.elapsedSeconds())
-            state = TimerActivityAttributes.ContentState(
+        let attributes = TimerActivityAttributes(title: title, itemID: itemID)
+        let state = countsDown
+            ? TimerActivityAttributes.ContentState(
                 anchor: Date.now.addingTimeInterval(remaining), countsDown: true)
-        } else {
-            state = TimerActivityAttributes.ContentState(
-                anchor: Date.now.addingTimeInterval(-item.elapsedAccumSeconds), countsDown: false)
-        }
-        let itemID = item.id
+            : TimerActivityAttributes.ContentState(
+                anchor: Date.now.addingTimeInterval(-elapsedAccum), countsDown: false)
         Task {
             await endActivities(itemID: itemID)
             _ = try? Activity.request(attributes: attributes,

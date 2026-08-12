@@ -566,6 +566,8 @@ struct TodayView: View {
                     if let goal = item.progressGoal {
                         InputProgressControl(
                             goal: goal,
+                            itemID: item.id,
+                            itemTitle: item.title,
                             subtasks: item.subtasks ?? [],
                             progress: progressRecord(item.id),
                             ensureProgress: { ensureProgress(item.id) },
@@ -666,7 +668,9 @@ struct TodayView: View {
                 .accessibilityValue(sub.isDone ? "완료" : "미완료")
             }
         case .sessions:
-            SessionProgressControl(item: item) { completed in
+            SessionProgressControl(logged: item.loggedSessions,
+                                   target: item.targetSessions) { next, completed in
+                item.loggedSessions = next
                 if completed { confirmFeedback += 1 } else { lightFeedback += 1 }
             }
         case .percent:
@@ -681,7 +685,9 @@ struct TodayView: View {
             .accessibilityElement(children: .combine)
             .accessibilityValue(item.percent.formatted(.percent.precision(.fractionLength(0))))
         case .timer, .stopwatch:
-            TimerProgressControl(item: item) { completed in
+            TimerProgressControl(backing: item, activityID: item.id, activityTitle: item.title,
+                                 isTimer: item.progressKind == .timer,
+                                 targetSeconds: item.targetSeconds ?? 0) { completed in
                 if completed { confirmFeedback += 1 } else { lightFeedback += 1 }
             }
         }

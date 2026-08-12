@@ -1,4 +1,6 @@
-// 템포루틴 — Output 세션 진행 컨트롤 (2026-07-23 베타 피드백 개선, §8.1 ProgressControl)
+// 템포루틴 — 세션 진행 컨트롤 (2026-07-23 베타 피드백 개선, §8.1 ProgressControl)
+// **Input·Output 공용**(2026-08-13 통일) — 값을 직접 쓰지 않고 소유자에게 올린다.
+// Output은 아이템에 누적, Input은 그날 레코드에 쌓이지만 컨트롤은 그 차이를 모른다.
 // 목표 1~8세션 = 먹색 점 행(탭 = 그 수만큼, 현재 수 재탭 = 하나 되돌리기 — 체크인 3탭과 같은 문법).
 // 목표 없음·9+ = 카운터 + 진행 바 폴백(점 9개+는 터치 타깃이 §8.1 44pt를 못 지킴).
 // 먹색 채움 통일(§8.1 정정 노트): 채운 점 = --ink. 오늘 탭·하루 상세 공용.
@@ -6,12 +8,16 @@
 import SwiftUI
 
 struct SessionProgressControl: View {
-    let item: OutputItem
-    /// 조정 순간 호출 — completed=true는 목표 도달(확정 햅틱), 그 외 작은 햅틱(§8.1 2단 체계)
-    let onAdjust: (_ completed: Bool) -> Void
+    let logged: Int
+    let target: Int
+    /// 조정 순간 호출 — 값 저장은 소유자 몫이다.
+    /// completed=true는 목표 도달(확정 햅틱), 그 외 작은 햅틱(§8.1 2단 체계)
+    let onSet: (_ next: Int, _ completed: Bool) -> Void
 
-    private var target: Int { item.targetSessions }
-    private var logged: Int { item.loggedSessions }
+    private func set(_ next: Int) {
+        let clamped = max(0, next)
+        onSet(clamped, target > 0 && clamped >= target)
+    }
 
     var body: some View {
         if (1...8).contains(target) {
@@ -27,9 +33,7 @@ struct SessionProgressControl: View {
             ForEach(1...target, id: \.self) { index in
                 let filled = index <= logged
                 Button {
-                    let next = logged == index ? index - 1 : index
-                    onAdjust(next >= target)
-                    item.loggedSessions = next
+                    set(logged == index ? index - 1 : index)
                 } label: {
                     ZStack {
                         Circle()
@@ -57,11 +61,9 @@ struct SessionProgressControl: View {
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment where logged < target:
-                onAdjust(logged + 1 >= target)
-                item.loggedSessions = logged + 1
+                set(logged + 1)
             case .decrement where logged > 0:
-                onAdjust(false)
-                item.loggedSessions = logged - 1
+                set(logged - 1)
             default:
                 break
             }
@@ -93,8 +95,7 @@ struct SessionProgressControl: View {
             }
             Button {
                 guard logged > 0 else { return }
-                onAdjust(false)
-                item.loggedSessions = logged - 1
+                set(logged - 1)
             } label: {
                 Image(systemName: "minus.circle")
                     .frame(width: 40, height: 40)
@@ -102,8 +103,7 @@ struct SessionProgressControl: View {
             }
             .buttonStyle(.plain)
             Button {
-                onAdjust(target > 0 && logged + 1 >= target)
-                item.loggedSessions = logged + 1
+                set(logged + 1)
             } label: {
                 Image(systemName: "plus.circle")
                     .frame(width: 40, height: 40)
@@ -118,11 +118,9 @@ struct SessionProgressControl: View {
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment:
-                onAdjust(target > 0 && logged + 1 >= target)
-                item.loggedSessions = logged + 1
+                set(logged + 1)
             case .decrement where logged > 0:
-                onAdjust(false)
-                item.loggedSessions = logged - 1
+                set(logged - 1)
             default:
                 break
             }
