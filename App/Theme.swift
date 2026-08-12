@@ -9,6 +9,11 @@ import SwiftUI
 import UIKit
 
 enum AppTheme: String, CaseIterable, Identifiable {
+    /// 기본(2026-08-12) — Apple 기본 UI 계열. 장식을 벗고 정보만 남긴 지면.
+    /// ⚠ `allCases` 순서 = 테마 탭 카드 순서. 기본이 맨 위다.
+    case plain
+    /// 은필 — 종전 기본. 2026-08-12부터 씨앗 구매 테마로 내려왔다(MASTER §3.8.1 트랙 분리).
+    /// rawValue는 `standard` 그대로 둔다 — 바꾸면 기존 설치의 저장값이 깨진다.
     case standard
     case modern
 
@@ -16,7 +21,8 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .standard: "기본"
+        case .plain: "기본"
+        case .standard: "은필"
         case .modern: "모던"
         }
     }
@@ -156,6 +162,16 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: false
     )
 
+    /// 기본 — 장식을 전부 끈다(2026-08-12). 계절 정보(글리프·밴드 색)는 팔레트가 담당하므로
+    /// 여기서 끄는 건 배경 선화·계절광·책력 서체뿐이다.
+    static let plain = ThemeChrome(
+        typeFace: .system, texture: .none, outlineDisplay: false,
+        showsSeasonLight: false, neutralSeasonLight: false,
+        dimsInDarkMode: false, forcesDarkAppearance: false,
+        seasonRowFirst: false, todayCircleUsesAccent: false,
+        circlesRecordedDays: false, boostsContrast: false
+    )
+
     /// 모던 — 종전 `== .modern` 경로와 동값
     static let modern = ThemeChrome(
         typeFace: .pretendard, texture: .dotGrid, outlineDisplay: true,
@@ -171,6 +187,7 @@ extension AppTheme {
     /// 컴파일이 막는다 — 종전 삼항 연산자(`== .modern ? :`)는 조용히 은필로 떨어뜨렸다.
     var palette: ThemePalette {
         switch self {
+        case .plain: .plain
         case .standard: .standard
         case .modern: .modern
         }
@@ -178,10 +195,42 @@ extension AppTheme {
 
     var chrome: ThemeChrome {
         switch self {
+        case .plain: .plain
         case .standard: .silverpoint
         case .modern: .modern
         }
     }
+}
+
+extension ThemePalette {
+    /// 기본 — Apple 기본 UI 계열 (2026-08-12, 시안 `ui-mockup/theme/app-plain.html`).
+    /// 지면을 하나로 둔다(paper == frost) — 캘린더만 다른 색이면 탭을 옮길 때 배경이 튄다.
+    /// 라이트 = systemGroupedBackground 위 흰 카드, 다크 = 검정 위 #1C1C1E 카드(iOS 관례).
+    static let plain = ThemePalette(
+        winter: Color(light: .rgb(0x6E, 0x7A, 0x8A), dark: .rgb(0x9A, 0xA6, 0xB6)),
+        spring: Color(light: .rgb(0x7B, 0x9E, 0x6B), dark: .rgb(0xA3, 0xC4, 0x94)),
+        summer: Color(light: .rgb(0xC9, 0x97, 0x4B), dark: .rgb(0xE0, 0xB4, 0x74)),
+        autumn: Color(light: .rgb(0xB5, 0x70, 0x5A), dark: .rgb(0xD1, 0x93, 0x7E)),
+        text: Color(light: .rgb(0x1C, 0x1C, 0x1E), dark: .rgb(0xF2, 0xF2, 0xF7)),
+        paper: Color(light: .rgb(0xF2, 0xF2, 0xF7), dark: .rgb(0x00, 0x00, 0x00)),
+        coral: Color(light: .rgb(0x63, 0x63, 0x66), dark: .rgb(0xAE, 0xAE, 0xB2)),   // 은퇴 토큰
+        record: Color(light: .rgb(0x63, 0x63, 0x66), dark: .rgb(0xAE, 0xAE, 0xB2)),
+        danger: Color(light: .rgb(0xD6, 0x45, 0x3C), dark: .rgb(0xFF, 0x6B, 0x60)),
+        dim: Color(light: .rgb(0xAE, 0xAE, 0xB2), dark: .rgb(0x8E, 0x8E, 0x93)),
+        oxide: Color(light: .rgb(0x8E, 0x8E, 0x93), dark: .rgb(0x8E, 0x8E, 0x93)),
+        holiday: Color(light: .rgb(0xD6, 0x45, 0x3C), dark: .rgb(0xFF, 0x6B, 0x60)),
+        saturday: Color(light: .rgb(0x3D, 0x6B, 0xC4), dark: .rgb(0x7F, 0xA4, 0xE8)),
+        frost: Color(light: .rgb(0xF2, 0xF2, 0xF7), dark: .rgb(0x00, 0x00, 0x00)),
+        // ⚠ glow*는 계절광(장식)이 아니라 **캘린더 계절 밑줄 색**이다. 정보 구조라 끄면
+        // 계절 구분이 통째로 사라진다(2026-08-12 시안 1차 결함). 장식인 계절광은 SeasonLight
+        // 자체를 chrome.showsSeasonLight로 끈다.
+        glowWinter: Color(light: .rgb(0xA8, 0xB4, 0xC2), dark: .rgb(0x5E, 0x6A, 0x78)),
+        glowSpring: Color(light: .rgb(0xA9, 0xC4, 0x9A), dark: .rgb(0x5C, 0x74, 0x50)),
+        glowSummer: Color(light: .rgb(0xE0, 0xC4, 0x89), dark: .rgb(0x7A, 0x66, 0x3E)),
+        glowAutumn: Color(light: .rgb(0xD4, 0xA1, 0x92), dark: .rgb(0x7A, 0x55, 0x4A)),
+        surface: Color(light: .rgb(0xFF, 0xFF, 0xFF), dark: .rgb(0x1C, 0x1C, 0x1E)),
+        accent: .flat(0x8E, 0x8E, 0x93)          // systemGray — 괘선·요일·테두리를 배경으로 물린다
+    )
 }
 
 /// 현재 팔레트의 정적 캐시. 변경 경로는 둘뿐 — 앱 시작(TempoRoutineApp.init)과
@@ -192,12 +241,12 @@ enum ThemeStore {
     // 쓰기는 메인 스레드 한정(앱 init·설정 선apply·루트 onChange — 전부 MainActor 문맥),
     // 읽기는 뷰 body뿐 — Swift 6 strict의 전역 가변 상태 경고를 명시 해제한다.
     // @MainActor 격리는 Ink 정적 API까지 전파돼 콜사이트 무수정 원칙과 충돌(기각).
-    nonisolated(unsafe) private(set) static var current: AppTheme = .standard
-    nonisolated(unsafe) private(set) static var palette: ThemePalette = .standard
-    nonisolated(unsafe) private(set) static var chrome: ThemeChrome = .silverpoint
+    nonisolated(unsafe) private(set) static var current: AppTheme = .plain
+    nonisolated(unsafe) private(set) static var palette: ThemePalette = .plain
+    nonisolated(unsafe) private(set) static var chrome: ThemeChrome = .plain
 
     static func apply(_ rawValue: String?) {
-        let theme = rawValue.flatMap(AppTheme.init(rawValue:)) ?? .standard
+        let theme = rawValue.flatMap(AppTheme.init(rawValue:)) ?? .plain
         current = theme
         palette = theme.palette
         chrome = theme.chrome

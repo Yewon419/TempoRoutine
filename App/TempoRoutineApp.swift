@@ -30,7 +30,14 @@ struct TempoRoutineApp: App {
 
     init() {
         // 팔레트 캐시는 첫 렌더 전에 확정돼야 한다(Ink가 정적 캐시를 읽는다 — Theme.swift)
-        ThemeStore.apply(UserDefaults.standard.string(forKey: ThemeStore.storageKey))
+        let savedTheme = UserDefaults.standard.string(forKey: ThemeStore.storageKey)
+        ThemeStore.apply(savedTheme)
+        // 기본 테마 교체 승계(2026-08-12): 은필이 씨앗 테마로 내려가면서, 종전에 은필·모던을
+        // 쓰던 설치는 쓰던 지면이 갑자기 잠긴다. **저장값이 있다 = 기존 설치**이므로 그 테마를
+        // 낸 값 0으로 보유 처리한다. 새 설치는 키가 없어 승계가 돌지 않는다.
+        if let saved = savedTheme.flatMap(AppTheme.init(rawValue:)), saved.seedPrice != nil {
+            Seeds.grandfather(saved)
+        }
         // 수동 생성 컨테이너는 autosave 명시(repo CLAUDE.md 2026-07-23 실측)
         Self.container.mainContext.autosaveEnabled = true
         PlannerSync.shared.configure(container: Self.container)

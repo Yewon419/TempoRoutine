@@ -10,16 +10,19 @@ import SwiftData
 
 extension AppTheme {
     /// 씨앗 가격 — nil = 기본(무료 상시 보유). §3.8.1 미결 ① 확정값.
+    /// ⚠ 은필은 2026-08-12부터 씨앗 테마다(트랙 분리). 종전 설치는 앱 시작 시 승계된다.
     var seedPrice: Int? {
         switch self {
-        case .standard: nil
+        case .plain: nil
+        case .standard: 7
         case .modern: 7
         }
     }
 
     var shopCaption: String {
         switch self {
-        case .standard: "은필과 종이. 템포루틴의 기본 지면이에요."
+        case .plain: "군더더기 없는 지면. 기록에만 집중해요."
+        case .standard: "은필과 종이. 계절이 빛으로 스며드는 지면이에요."
         case .modern: "니어블랙 지면에 다홍 한 점. 밤의 얼굴이에요."
         }
     }
@@ -29,7 +32,7 @@ struct ThemeShopView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var checkIns: [DailyCheckIn]
-    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
+    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
     /// 원장 방송 카운터 — 생 UserDefaults 읽기는 무효화가 안 걸려서, 이 키를 지켜봐야 구매 직후와
     /// 동기화로 내려온 다른 기기의 구매가 화면에 반영된다(2026-08-11).
     @AppStorage(Seeds.revisionKey) private var seedRevision = 0
@@ -43,7 +46,7 @@ struct ThemeShopView: View {
     private var tips = TipStore.shared
     @State private var showTip = false
 
-    private var current: AppTheme { AppTheme(rawValue: appTheme) ?? .standard }
+    private var current: AppTheme { AppTheme(rawValue: appTheme) ?? .plain }
     private var available: Int { Seeds.available(checkIns) }
 
     var body: some View {
@@ -105,9 +108,10 @@ struct ThemeShopView: View {
             Text("씨앗 \(theme.seedPrice ?? 0)개를 썼어요. 마음이 내킬 때 갈아입어 보세요.")
         }
         .onAppear {
-            // 이미 모던을 쓰던 베타 기기 = 보유로 승계 — 쓰던 테마를 잠그지 않는다(신뢰).
+            // 쓰고 있는 테마가 유료면 보유로 승계 — 쓰던 테마를 잠그지 않는다(신뢰).
             // 낸 값 0으로 적힌다(Seeds.grandfather) — 구매분과 섞이면 병합 때 유료로 오인된다.
-            if current == .modern { Seeds.grandfather(.modern) }
+            // 앱 시작 시에도 같은 승계가 돈다(TempoRoutineApp) — 여기는 보완 벨트.
+            if current.seedPrice != nil { Seeds.grandfather(current) }
         }
     }
 

@@ -22,7 +22,7 @@ struct RootTabView: View {
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query private var completions: [ItemCompletion]
     @AppStorage("onboardingDone") private var onboardingDone = false
-    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
+    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
     /// 선택 탭을 뷰 밖(UserDefaults)에 둔다 — 아래 `.id(appTheme)` 리빌드가 TabView의 내부
     /// 선택 상태를 통째로 버려서, 테마를 갈아입을 때마다 첫 탭으로 튕기던 결함(2026-08-11).
     /// 실행 간 이월은 안 한다(TempoRoutineApp.init에서 「오늘」로 되돌린다) — 이번 수정 범위는
@@ -55,7 +55,7 @@ struct RootTabView: View {
         // 모던 = 항상 다크 단일 외관(시안 §1.1) — 시스템 라이트에서 탭바 유리·ultraThinMaterial·
         // 설정 insetGrouped가 라이트로 렌더되던 결함의 뿌리(베타 피드백 2026-07-29: 탭바 밝아짐·
         // 설정 순백 카드·카드 과명 3건 동일 원인). 기본 테마는 nil = 시스템 따름(기존 다크 대응 유지).
-        .preferredColorScheme((AppTheme(rawValue: appTheme) ?? .standard).chrome.forcesDarkAppearance ? .dark : nil)
+        .preferredColorScheme((AppTheme(rawValue: appTheme) ?? .plain).chrome.forcesDarkAppearance ? .dark : nil)
         // 테마 변경 = 전체 트리 리빌드(정적 팔레트 캐시 갱신 반영 — Theme.swift 반응성 설계).
         // 변경 진입점은 설정뿐이라 스택·스크롤 초기화는 허용 범위(2026-07-29 계획 리스크 ①).
         .id(appTheme)

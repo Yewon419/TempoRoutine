@@ -33,7 +33,7 @@ struct SettingsView: View {
     @State private var undoSnapshot: ExportEnvelopeV1?
     @State private var undoDismissTask: Task<Void, Never>?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
-    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.standard.rawValue
+    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
     /// 사분면 커버 리마인더(§5.12 ⑤) — 기본 꺼짐. 켜는 순간에만 시스템 권한을 묻는다.
     @AppStorage(CoverageReminder.storageKey) private var coverageReminderOn = false
     @State private var notificationDenied = false
@@ -123,7 +123,7 @@ struct SettingsView: View {
                         HStack {
                             Text("테마").foregroundStyle(Ink.text)
                             Spacer()
-                            Text((AppTheme(rawValue: appTheme) ?? .standard).displayName)
+                            Text((AppTheme(rawValue: appTheme) ?? .plain).displayName)
                                 .foregroundStyle(Ink.text.opacity(0.5))
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.semibold))

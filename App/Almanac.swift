@@ -322,15 +322,19 @@ struct SeasonLight: View {
     var body: some View {
         let l = lights
         ZStack {
-            Rectangle().fill(RadialGradient(colors: [l.a, .clear],
-                                            center: UnitPoint(x: 0.18, y: -0.08),
-                                            startRadius: 0, endRadius: 430))
-            Rectangle().fill(RadialGradient(colors: [l.b, .clear],
-                                            center: UnitPoint(x: 0.88, y: 0.22),
-                                            startRadius: 0, endRadius: 340))
-            Rectangle().fill(RadialGradient(colors: [l.c, .clear],
-                                            center: UnitPoint(x: 0.5, y: 1.08),
-                                            startRadius: 0, endRadius: 420))
+            // 계절광을 끄는 테마(기본)는 3겹 radial을 아예 안 그린다 — 지면만 남는다.
+            // ⚠ 계절 밴드 색(팔레트 glow*)과는 별개다. 저쪽은 정보 구조라 끄지 않는다.
+            if ThemeStore.chrome.showsSeasonLight {
+                Rectangle().fill(RadialGradient(colors: [l.a, .clear],
+                                                center: UnitPoint(x: 0.18, y: -0.08),
+                                                startRadius: 0, endRadius: 430))
+                Rectangle().fill(RadialGradient(colors: [l.b, .clear],
+                                                center: UnitPoint(x: 0.88, y: 0.22),
+                                                startRadius: 0, endRadius: 340))
+                Rectangle().fill(RadialGradient(colors: [l.c, .clear],
+                                                center: UnitPoint(x: 0.5, y: 1.08),
+                                                startRadius: 0, endRadius: 420))
+            }
             switch ThemeStore.chrome.texture {
             case .dotGrid: DotGrid()   // 모던 질감 = 도트 그리드(시안 §1.3-1, 은필 선화 대체)
             case .motif:   motifLayer
