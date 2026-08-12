@@ -112,6 +112,78 @@ extension ThemePalette {
     )
 }
 
+// ── 팔레트 밖의 테마 결정 (2026-08-12) ──
+// 색으로 표현되지 않는 것들: 서체·질감·계절광 유무·조판 순서 같은 판단.
+// **왜 생겼나**: 종전엔 `ThemeStore.current == .modern` 분기가 19곳에 흩어져 있었고, 전부
+// 「모던인가 아닌가」 형태였다. 테마가 셋이 되는 순간 새 테마가 전부 「모던이 아닌 것」 =
+// 은필 취급을 받아 배경 선화와 계절광이 딸려온다. 조건을 「이 테마가 무엇을 켜는가」로
+// 뒤집어 각 테마가 스스로 답하게 한다.
+struct ThemeChrome {
+    /// 표제·책력 표기 서체 계열. `.system`은 번들 서체를 쓰지 않는다.
+    enum TypeFace { case gowun, pretendard, system }
+    /// 지면 질감. `.none`은 아무것도 얹지 않는다.
+    enum Texture { case motif, dotGrid, none }
+
+    let typeFace: TypeFace
+    let texture: Texture
+    /// 거대 표제를 아웃라인 타이포로(솔리드 대신)
+    let outlineDisplay: Bool
+    /// 계절광을 그리는가. false면 지면만 남는다.
+    let showsSeasonLight: Bool
+    /// 계절광을 계절 불문 무채로
+    let neutralSeasonLight: Bool
+    /// 시스템 다크에서 배경 레이어를 감쇠하는가. 단일 외관 테마는 감쇠하지 않는다.
+    let dimsInDarkMode: Bool
+    /// 항상 다크 외관으로 고정하는가
+    let forcesDarkAppearance: Bool
+    /// 캘린더 상단에서 계절 라인을 거대 표제보다 위에
+    let seasonRowFirst: Bool
+    /// 오늘 원을 accent로 채우는가(아니면 먹색)
+    let todayCircleUsesAccent: Bool
+    /// 기록일을 회색 원으로 표시하는가(형광펜 대신). 오늘·기록일 원 뒤 지면색 링도 함께 따라간다.
+    let circlesRecordedDays: Bool
+    /// 어두운 지면 대비 보정 — 진행 막대·부인공 텍스트 불투명도를 올린다
+    let boostsContrast: Bool
+}
+
+extension ThemeChrome {
+    /// 은필 — 종전 「모던이 아닌」 경로와 동값(픽셀 변화 0 원칙)
+    static let silverpoint = ThemeChrome(
+        typeFace: .gowun, texture: .motif, outlineDisplay: false,
+        showsSeasonLight: true, neutralSeasonLight: false,
+        dimsInDarkMode: true, forcesDarkAppearance: false,
+        seasonRowFirst: false, todayCircleUsesAccent: false,
+        circlesRecordedDays: false, boostsContrast: false
+    )
+
+    /// 모던 — 종전 `== .modern` 경로와 동값
+    static let modern = ThemeChrome(
+        typeFace: .pretendard, texture: .dotGrid, outlineDisplay: true,
+        showsSeasonLight: true, neutralSeasonLight: true,
+        dimsInDarkMode: false, forcesDarkAppearance: true,
+        seasonRowFirst: true, todayCircleUsesAccent: true,
+        circlesRecordedDays: true, boostsContrast: true
+    )
+}
+
+extension AppTheme {
+    /// ⚠ 새 테마를 추가하면 여기와 `chrome` 양쪽에 케이스를 더해야 한다. switch라 빠뜨리면
+    /// 컴파일이 막는다 — 종전 삼항 연산자(`== .modern ? :`)는 조용히 은필로 떨어뜨렸다.
+    var palette: ThemePalette {
+        switch self {
+        case .standard: .standard
+        case .modern: .modern
+        }
+    }
+
+    var chrome: ThemeChrome {
+        switch self {
+        case .standard: .silverpoint
+        case .modern: .modern
+        }
+    }
+}
+
 /// 현재 팔레트의 정적 캐시. 변경 경로는 둘뿐 — 앱 시작(TempoRoutineApp.init)과
 /// 설정의 테마 선택(쓰기 전 apply → AppStorage 갱신 → 루트 .id 리빌드).
 enum ThemeStore {
@@ -122,10 +194,12 @@ enum ThemeStore {
     // @MainActor 격리는 Ink 정적 API까지 전파돼 콜사이트 무수정 원칙과 충돌(기각).
     nonisolated(unsafe) private(set) static var current: AppTheme = .standard
     nonisolated(unsafe) private(set) static var palette: ThemePalette = .standard
+    nonisolated(unsafe) private(set) static var chrome: ThemeChrome = .silverpoint
 
     static func apply(_ rawValue: String?) {
         let theme = rawValue.flatMap(AppTheme.init(rawValue:)) ?? .standard
         current = theme
-        palette = theme == .modern ? .modern : .standard
+        palette = theme.palette
+        chrome = theme.chrome
     }
 }

@@ -17,10 +17,6 @@ extension AppTheme {
         }
     }
 
-    var palette: ThemePalette {
-        self == .modern ? .modern : .standard
-    }
-
     var shopCaption: String {
         switch self {
         case .standard: "은필과 종이. 템포루틴의 기본 지면이에요."
@@ -312,12 +308,16 @@ struct ThemePreview: View {
     let theme: AppTheme
 
     private var titleFont: Font {
-        if theme == .modern {
+        switch theme.chrome.typeFace {
+        case .pretendard:
             return ThemeFont.available ? .custom("Pretendard-SemiBold", size: 22)
                                        : .system(size: 22, weight: .semibold)
+        case .gowun:
+            return AlmanacFont.available ? .custom("GowunBatang-Bold", size: 22)
+                                         : .system(size: 22, weight: .bold, design: .serif)
+        case .system:
+            return .system(size: 22, weight: .semibold)
         }
-        return AlmanacFont.available ? .custom("GowunBatang-Bold", size: 22)
-                                     : .system(size: 22, weight: .bold, design: .serif)
     }
 
     var body: some View {

@@ -149,7 +149,7 @@ struct SeasonCalendarView: View {
             // 캘린더 자체 지면(2026-07-28 시안 결정) — frost 바탕 + 계절광은 상단에만 걸리고
             // 사그라든다(그리드 영역은 깨끗하게 — 글로우 밑줄 가독 담보)
             Ink.frost.ignoresSafeArea()
-            if ThemeStore.current == .modern {
+            if ThemeStore.chrome.texture == .dotGrid {
                 DotGrid().ignoresSafeArea()   // 모던 전용 질감(시안 §1.3-1)
             }
             calendarTopGlow
@@ -227,7 +227,7 @@ struct SeasonCalendarView: View {
             Rectangle().fill(side)
         }
         // 모던은 항상 다크 단일 외관 — 시스템 다크 감쇠 미적용(시안 --light-dim 1)
-        .opacity(ThemeStore.current == .modern ? 1.0 : (colorScheme == .dark ? 0.35 : 1.0))
+        .opacity(ThemeStore.chrome.dimsInDarkMode && colorScheme == .dark ? 0.35 : 1.0)
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -244,7 +244,7 @@ struct SeasonCalendarView: View {
             }
             // 상단 순서(시안 §1.3-6, 모던 전용 분기 — 2026-07-29 사용자 결정):
             // 모던 = 계절 라인·기록 버튼이 상단 제자리, 거대 표제는 그 아래
-            if ThemeStore.current == .modern {
+            if ThemeStore.chrome.seasonRowFirst {
                 seasonHeaderRow
                 monthHeader
             } else {
@@ -874,14 +874,14 @@ struct SeasonCalendarView: View {
                         // 모던 기록일 = 형광펜 대신 회색 원(시안 §1.3-4). 원에는 지면색 링(3pt)
                         // — 계절 밑줄이 원을 파고들어 보이는 겹침 해소.
                         ZStack {
-                            if ThemeStore.current == .modern && (isToday || render.periodShown.contains(date)) {
+                            if ThemeStore.chrome.circlesRecordedDays && (isToday || render.periodShown.contains(date)) {
                                 Circle().fill(Ink.frost).frame(width: 33, height: 33)
                             }
                             if isToday {
                                 // 기본 = 표제와 같은 먹색(2026-08-09 베타 피드백 "8월 글씨색이랑 같게"
                                 // — §8.1 은필 확정을 뒤집는 사용자 결정) / 모던 = accent(흰) 시안 유지
-                                Circle().fill(ThemeStore.current == .modern ? Ink.accent : Ink.text)
-                            } else if ThemeStore.current == .modern && render.periodShown.contains(date) {
+                                Circle().fill(ThemeStore.chrome.todayCircleUsesAccent ? Ink.accent : Ink.text)
+                            } else if ThemeStore.chrome.circlesRecordedDays && render.periodShown.contains(date) {
                                 Circle().fill(Ink.record.opacity(0.3))
                             }
                         }
@@ -945,13 +945,20 @@ struct SeasonCalendarView: View {
     /// 캘린더 숫자 서체 — 모던 = Pretendard 500(오늘 600, 시안 §1.3-3),
     /// 기본 = 표제와 같은 번들 서체(2026-08-09 베타 피드백 "8월 폰트랑 같게" — 시스템 산세리프 폐기)
     private func numberFont(isToday: Bool) -> Font {
-        if ThemeStore.current == .modern, ThemeFont.available {
+        switch ThemeStore.chrome.typeFace {
+        case .pretendard:
+            guard ThemeFont.available else {
+                return .system(size: 14, weight: isToday ? .semibold : .medium)
+            }
             return .custom(isToday ? "Pretendard-SemiBold" : "Pretendard-Medium", size: 14)
+        case .gowun:
+            guard AlmanacFont.available else {
+                return .system(size: 14, weight: isToday ? .bold : .semibold, design: .serif)
+            }
+            return .custom(isToday ? "GowunBatang-Bold" : "GowunBatang-Regular", size: 14)
+        case .system:
+            return .system(size: 14, weight: isToday ? .bold : .semibold)
         }
-        guard AlmanacFont.available else {
-            return .system(size: 14, weight: isToday ? .bold : .semibold, design: .serif)
-        }
-        return .custom(isToday ? "GowunBatang-Bold" : "GowunBatang-Regular", size: 14)
     }
 
     /// 하루짜리 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성). 높이·R2·서체 = 띠 동일

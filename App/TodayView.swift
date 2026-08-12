@@ -274,7 +274,7 @@ struct TodayView: View {
                     // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
                     // 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소, 전 표면 통일)
                     Text("\(info.dayInPhase)일차")
-                        .foregroundStyle(info.meta.color.opacity(ThemeStore.current == .modern ? 1.0 : 0.85))
+                        .foregroundStyle(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85))
                     if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.text.opacity(0.45)) }
                     else if info.projected { Text("예상").foregroundStyle(Ink.text.opacity(0.45)) }
                 }

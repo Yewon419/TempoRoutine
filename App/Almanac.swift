@@ -39,16 +39,20 @@ extension Font {
     /// 거대 표제·책력 조판 전용. 본문은 시스템 서체 유지(프로토: 표제=Gowun Batang, 본문=산세리프).
     /// 모던 = Pretendard(표제 600, 시안 §1.3-3 — Gowun 세리프 대체), 등록 실패 시 시스템 폴백
     static func almanac(size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        if ThemeStore.current == .modern {
+        switch ThemeStore.chrome.typeFace {
+        case .pretendard:
             guard ThemeFont.available else {
                 return .system(size: size, weight: weight == .bold ? .semibold : .medium)
             }
             return .custom(weight == .bold ? "Pretendard-SemiBold" : "Pretendard-Medium", size: size)
+        case .gowun:
+            guard AlmanacFont.available else {
+                return .system(size: size, weight: weight, design: .serif)
+            }
+            return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
+        case .system:
+            return .system(size: size, weight: weight)
         }
-        guard AlmanacFont.available else {
-            return .system(size: size, weight: weight, design: .serif)
-        }
-        return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
     }
 
     /// 본문급 책력 표기 — Dynamic Type을 따라가는 상대 크기(`relativeTo:`).
@@ -56,14 +60,18 @@ extension Font {
     /// 렌더돼 한 줄 안에서 결이 어긋난다(2026-08-01 베타 피드백: 계절 라벨·한 줄 일기).
     /// 그래서 한글이 섞이는 세리프 표기는 시스템 대신 번들 서체를 명시한다.
     static func almanacBody(_ style: Font.TextStyle, size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        if ThemeStore.current == .modern {
+        switch ThemeStore.chrome.typeFace {
+        case .pretendard:
             guard ThemeFont.available else { return .system(style).weight(weight) }
             return .custom(weight == .bold ? "Pretendard-SemiBold" : "Pretendard-Regular",
                            size: size, relativeTo: style)
+        case .gowun:
+            guard AlmanacFont.available else { return .system(style, design: .serif).weight(weight) }
+            return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular",
+                           size: size, relativeTo: style)
+        case .system:
+            return .system(style).weight(weight)
         }
-        guard AlmanacFont.available else { return .system(style, design: .serif).weight(weight) }
-        return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular",
-                       size: size, relativeTo: style)
     }
 }
 
@@ -130,7 +138,7 @@ struct OutlineText: View {
 /// 거대 표제 공용 진입점 — 모던 = 아웃라인, 그 외(및 폰트 미등록) = 솔리드 almanac
 @ViewBuilder
 func almanacDisplay(_ text: String, size: CGFloat, color: Color) -> some View {
-    if ThemeStore.current == .modern, ThemeFont.available {
+    if ThemeStore.chrome.outlineDisplay, ThemeFont.available {
         OutlineText(text: text, size: size)
     } else {
         Text(text)
@@ -274,7 +282,7 @@ struct SeasonLight: View {
     /// 계절광 3겹 색 — 캘린더 상단 글로우(2026-07-28 시안 결정)도 같은 원색을 쓴다.
     /// 모던 = 계절 불문 무채 3단(시안 §1.3-5 — 하루 상세 포함, 유채 계절광으로 덮지 않는다)
     static func lightColors(for phase: CyclePhase?) -> (a: Color, b: Color, c: Color) {
-        if ThemeStore.current == .modern {
+        if ThemeStore.chrome.neutralSeasonLight {
             // 시안 수치(.12/.07/.09)가 실기기 OLED에선 거의 안 보임(베타 피드백 2026-07-29
             // "뒤쪽에 은은한 빛 깔린 것처럼") — 50% 상향. 실기기 재확인 항목.
             return (Color.white.opacity(0.18),
@@ -323,14 +331,14 @@ struct SeasonLight: View {
             Rectangle().fill(RadialGradient(colors: [l.c, .clear],
                                             center: UnitPoint(x: 0.5, y: 1.08),
                                             startRadius: 0, endRadius: 420))
-            if ThemeStore.current == .modern {
-                DotGrid()   // 모던 질감 = 도트 그리드(시안 §1.3-1, 은필 선화 대체)
-            } else {
-                motifLayer
+            switch ThemeStore.chrome.texture {
+            case .dotGrid: DotGrid()   // 모던 질감 = 도트 그리드(시안 §1.3-1, 은필 선화 대체)
+            case .motif:   motifLayer
+            case .none:    EmptyView()
             }
         }
         // 모던 = 항상 다크 단일 외관(시안 --light-dim 1) — 시스템 다크 감쇠 미적용
-        .opacity(ThemeStore.current == .modern ? 1.0 : (colorScheme == .dark ? 0.35 : 1.0))
+        .opacity(ThemeStore.chrome.dimsInDarkMode && colorScheme == .dark ? 0.35 : 1.0)
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
