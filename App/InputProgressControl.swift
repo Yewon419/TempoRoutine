@@ -143,11 +143,11 @@ struct InputProgressControl: View {
     private var percentRow: some View {
         HStack(spacing: 10) {
             Slider(value: Binding(
-                get: { state.percent / 100 },
-                set: { value in mutate { $0.percent = value * 100 } }
+                get: { state.percent },
+                set: { value in mutate { $0.percent = value } }
             ), in: 0...1)
             .tint(Ink.text)
-            Text((state.percent / 100).formatted(.percent.precision(.fractionLength(0))))
+            Text(state.percent.formatted(.percent.precision(.fractionLength(0))))
                 .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(Ink.text.opacity(0.7))

@@ -272,6 +272,7 @@ final class InputProgress {
     var itemID: UUID = UUID()
     var occurredOn: Date = Date()
     var loggedSessions: Int = 0
+    /// 0~1 스케일 — OutputItem.percent와 같은 단위(2026-08-12 통일)
     var percent: Double = 0
     var elapsedAccumSeconds: Double = 0
     /// 진행 중 시작 앵커 — nil = 멈춤. 앱이 죽어도 경과가 이어진다(OutputItem 타이머와 같은 계약)

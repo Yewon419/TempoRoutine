@@ -57,12 +57,12 @@ final class InputProgressRuleTests: XCTestCase {
             goal: goal, state: InputProgressState(elapsedSeconds: 300)))
     }
 
-    func testPercentFulfillsAtHundred() {
+    func testPercentFulfillsAtFull() {
         let goal = InputProgressGoal(kind: .percent)
         XCTAssertFalse(InputProgressRule.isFulfilled(
-            goal: goal, state: InputProgressState(percent: 99.5)))
+            goal: goal, state: InputProgressState(percent: 0.995)))
         XCTAssertTrue(InputProgressRule.isFulfilled(
-            goal: goal, state: InputProgressState(percent: 100)))
+            goal: goal, state: InputProgressState(percent: 1)))
     }
 
     func testSubtasksFulfillWhenAllDone() {
@@ -86,7 +86,7 @@ final class InputProgressRuleTests: XCTestCase {
     func testFractionClampsToZero() {
         let goal = InputProgressGoal(kind: .percent)
         XCTAssertEqual(InputProgressRule.fraction(
-            goal: goal, state: InputProgressState(percent: -20)), 0)
+            goal: goal, state: InputProgressState(percent: -0.2)), 0)
     }
 
     func testFractionMidway() {

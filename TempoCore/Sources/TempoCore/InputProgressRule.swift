@@ -14,6 +14,8 @@ import Foundation
 /// 그날의 진행 상태 — 저장은 `InputProgress`(@Model), 판정은 이 값 타입으로만 한다.
 public struct InputProgressState: Equatable, Sendable {
     public let loggedSessions: Int
+    /// **0~1 스케일** — OutputItem.percent와 같은 단위다(2026-08-12 통일).
+    /// 같은 이름이 두 곳에서 다른 단위면 언젠가 100배 틀린다.
     public let percent: Double
     public let elapsedSeconds: Double
     public let doneSubtasks: Int
@@ -57,7 +59,7 @@ public enum InputProgressRule {
         case .sessions:
             return goal.targetSessions > 0 && state.loggedSessions >= goal.targetSessions
         case .percent:
-            return state.percent >= 100
+            return state.percent >= 1
         case .timer:
             guard let target = goal.targetSeconds, target > 0 else { return false }
             return state.elapsedSeconds >= Double(target)
@@ -77,7 +79,7 @@ public enum InputProgressRule {
             guard goal.targetSessions > 0 else { return nil }
             return clamp(Double(state.loggedSessions) / Double(goal.targetSessions))
         case .percent:
-            return clamp(state.percent / 100)
+            return clamp(state.percent)
         case .timer:
             guard let target = goal.targetSeconds, target > 0 else { return nil }
             return clamp(state.elapsedSeconds / Double(target))
