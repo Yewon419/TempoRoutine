@@ -545,6 +545,7 @@ protocol SyncIdentifiable {
 
 extension ScheduleItem: SyncIdentifiable { var syncID: UUID { id } }
 extension InputItem: SyncIdentifiable { var syncID: UUID { id } }
+extension InputProgress: SyncIdentifiable { var syncID: UUID { id } }   // 2026-08-12
 extension OutputItem: SyncIdentifiable { var syncID: UUID { id } }
 extension ItemCompletion: SyncIdentifiable { var syncID: UUID { id } }
 extension DailyCheckIn: SyncIdentifiable { var syncID: UUID { id } }
