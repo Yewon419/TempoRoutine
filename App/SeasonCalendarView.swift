@@ -148,7 +148,9 @@ struct SeasonCalendarView: View {
         ZStack {
             // 캘린더 자체 지면(2026-07-28 시안 결정) — frost 바탕 + 계절광은 상단에만 걸리고
             // 사그라든다(그리드 영역은 깨끗하게 — 글로우 밑줄 가독 담보)
-            Ink.frost.ignoresSafeArea()
+            // ⚠ 티켓만 예외: 캘린더 지면이 흰 발권물이다(frost = 블루그레이 색면이라 여기선 안 쓴다).
+            (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
+                .ignoresSafeArea()
             if ThemeStore.chrome.texture == .dotGrid {
                 DotGrid().ignoresSafeArea()   // 모던 전용 질감(시안 §1.3-1)
             }
@@ -245,20 +247,25 @@ struct SeasonCalendarView: View {
     /// 캘린더 열 — compact에선 전체 화면, regular에선 분할 좌측(2026-07-23)
     private func calendarColumn() -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 좌상단 브랜드 표식(2026-08-09 사용자 지시) — 오늘 탭과 같은 자리·크기
-            HStack {
-                BrandMark(diameter: 22, color: Ink.text.opacity(0.75))   // 오늘 탭과 동일 보정(2026-08-09 피드백)
-                    .padding(.leading, 6)
-                Spacer()
-            }
-            // 상단 순서(시안 §1.3-6, 모던 전용 분기 — 2026-07-29 사용자 결정):
-            // 모던 = 계절 라인·기록 버튼이 상단 제자리, 거대 표제는 그 아래
-            if ThemeStore.chrome.seasonRowFirst {
-                seasonHeaderRow
-                monthHeader
+            if ThemeStore.chrome.ticketChrome {
+                // 티켓 = 화면 한 장이 발권물(시안 §3.4). 브랜드 표식은 스텁의 일련 조판이 대신한다.
+                ticketHeaderBlock
             } else {
-                monthHeader
-                seasonHeaderRow
+                // 좌상단 브랜드 표식(2026-08-09 사용자 지시) — 오늘 탭과 같은 자리·크기
+                HStack {
+                    BrandMark(diameter: 22, color: Ink.text.opacity(0.75))   // 오늘 탭과 동일 보정(2026-08-09 피드백)
+                        .padding(.leading, 6)
+                    Spacer()
+                }
+                // 상단 순서(시안 §1.3-6, 모던 전용 분기 — 2026-07-29 사용자 결정):
+                // 모던 = 계절 라인·기록 버튼이 상단 제자리, 거대 표제는 그 아래
+                if ThemeStore.chrome.seasonRowFirst {
+                    seasonHeaderRow
+                    monthHeader
+                } else {
+                    monthHeader
+                    seasonHeaderRow
+                }
             }
             weekdayRow
             // 월 표면이 손가락을 따라 움직인다(2026-07-27 사용자 지시 — 인식 후 전환에서 추종으로).
@@ -272,6 +279,35 @@ struct SeasonCalendarView: View {
         // 가로 드래그 = 월 이동(손가락 추종). 셀 기간 선택과의 분리는 종전과 동일 —
         // 롱프레스는 정지 0.4s 인식이라 먼저 움직이면 이 드래그가 이긴다. 선택 중엔 개입 안 함.
         .gesture(monthDragGesture)
+    }
+
+    // ── 티켓 전용 상단(시안 §3.4) ──
+    // 발권 정보 블록 150pt + 절취선. 절취선은 화면 폭을 가로질러야 해서 좌우 패딩을 되돌리고,
+    // 양 끝에 V홈 노치를 얹는다. 노치 안쪽은 다른 탭 지면색 고정값이다.
+    private var ticketHeaderBlock: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            TicketMonthHeader(
+                year: cal.component(.year, from: monthStart),
+                month: cal.component(.month, from: monthStart),
+                seasonLine: seasonLine,
+                phase: currentPhase,
+                onLogTap: { showLogSheet = true }
+            )
+            .coachAnchor(.calendarLog)
+            TicketPerforation()
+                .padding(.top, 15)
+                .padding(.bottom, 1)
+                .padding(.horizontal, -20)
+                .overlay(alignment: .leading) { ticketNotch(pointsLeft: false) }
+                .overlay(alignment: .trailing) { ticketNotch(pointsLeft: true) }
+        }
+    }
+
+    private func ticketNotch(pointsLeft: Bool) -> some View {
+        TicketNotch(pointsLeft: pointsLeft)
+            .fill(TicketSpec.notch)
+            .frame(width: 10, height: 18)
+            .offset(y: 8)
     }
 
     /// 계절 라인 + 생리 기록 버튼 — 상단 순서 분기용 추출(2026-07-29, 내용 무변화)
@@ -1052,6 +1088,16 @@ struct SeasonCalendarView: View {
                                           menstrualLength: menstrualLength) == .menstrual
     }
 
+    /// 티켓 도판 교체용 현재 계절 — `seasonLine`과 같은 계산이되 문자열이 아니라 단계만 꺼낸다.
+    /// 기록이 없으면 nil(콜드) → 겨울 그림으로 떨어진다(`TicketSpec.plateAsset`).
+    private var currentPhase: CyclePhase? {
+        guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
+            return nil
+        }
+        let m = effectiveM(on: today, projected: r.projected)
+        return CyclePredictor.phaseForDay(r.day, cycleLength: avgLength, menstrualLength: m)
+    }
+
     // ── 계절 라인 (S0/S1/S2/S4 — §5.6.2) ──
     private var seasonLine: String {
         guard let last = starts.max() else { return "첫 생리일을 기록하면 계절이 채워져요" }
@@ -1080,7 +1126,24 @@ struct SeasonCalendarView: View {
             Spacer()
             // 「기록」 스와치 폐기(2026-08-01 베타 피드백) — 상단 「생리 기록」 버튼과 중복 안내였다
         }
-        .padding(.top, 6)
+        .padding(.top, ThemeStore.chrome.ticketChrome ? 15 : 6)
+        // 티켓 = 격자 마감 점선 + 그 위 양 끝에 달 이동(시안 §3.4). 위쪽 절취선과 짝을 이룬다.
+        .overlay(alignment: .top) {
+            if ThemeStore.chrome.ticketChrome { ticketLegendRule }
+        }
+    }
+
+    private var ticketLegendRule: some View {
+        ZStack {
+            TicketPerforation()
+                .padding(.horizontal, -20)
+                .opacity(0.65)
+            TicketMonthNav(
+                onPrev: { lightFeedback += 1; shiftMonth(-1) },
+                onNext: { lightFeedback += 1; shiftMonth(1) }
+            )
+            .padding(.horizontal, -6)
+        }
     }
 
     private func legendItem(_ phase: CyclePhase) -> some View {

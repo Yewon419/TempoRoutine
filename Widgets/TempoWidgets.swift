@@ -27,7 +27,9 @@ enum WFont {
 
     static func almanac(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         switch WThemeStore.key {
-        case "modern":
+        // 티켓도 Pretendard 계열 — 시안은 IBM Plex Sans KR이지만 번들에 없다.
+        // 발권물 그로테스크에 가장 가까운 번들 서체가 Pretendard다(시안 §3.3-① 대체).
+        case "modern", "ticket":
             guard pretendardAvailable else {
                 return .system(size: size, weight: weight == .bold ? .semibold : .medium)
             }
@@ -140,6 +142,28 @@ struct WPalette {
         glowAutumn: dyn((0x54, 0x5A, 0x64), (0x70, 0x75, 0x7F)),
         accent: dyn((0x10, 0x10, 0x14), (0xF2, 0xF3, 0xF6))
     )
+
+    /// 티켓 — 시안 SSOT §3.2 (앱 ThemePalette.ticket 사본).
+    /// ⚠ 라이트/다크 동값이다. 발권물은 인쇄물이라 지면이 뒤집히지 않는다.
+    static let ticket = WPalette(
+        winter: flat((0xA9, 0x32, 0x26)),
+        spring: flat((0x3F, 0x7A, 0x44)),
+        summer: flat((0x1C, 0x7A, 0x94)),
+        autumn: flat((0xB8, 0x86, 0x1F)),
+        text: flat((0x22, 0x38, 0x4F)),
+        paper: flat((0x6E, 0x8A, 0xAC)),
+        coral: flat((0xA9, 0x32, 0x26)),
+        record: flat((0xA9, 0x32, 0x26)),
+        predictGray: flat((0x7E, 0x8F, 0xA0)),
+        holidayRed: flat((0xA9, 0x32, 0x26)),
+        saturday: flat((0x2E, 0x5C, 0x8A)),
+        frost: flat((0x6E, 0x8A, 0xAC)),
+        glowWinter: flat((0xA9, 0x32, 0x26)),
+        glowSpring: flat((0x3F, 0x7A, 0x44)),
+        glowSummer: flat((0x1C, 0x7A, 0x94)),
+        glowAutumn: flat((0xB8, 0x86, 0x1F)),
+        accent: flat((0x22, 0x38, 0x4F))
+    )
 }
 
 enum WThemeStore {
@@ -152,6 +176,7 @@ enum WThemeStore {
         switch key {
         case "modern":   .modern
         case "standard": .standard
+        case "ticket":   .ticket
         default:         .plain     // 저장값 없음 = 새 설치 = 기본
         }
     }

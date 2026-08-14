@@ -16,6 +16,8 @@ extension AppTheme {
         case .plain: nil
         case .standard: 7
         case .modern: 7
+        // 티켓 = 무료(2026-08-14 사용자 확정). 새 문법이라 문턱 없이 써보게 둔다.
+        case .ticket: nil
         }
     }
 
@@ -24,6 +26,7 @@ extension AppTheme {
         case .plain: "군더더기 없는 지면. 기록에만 집중해요."
         case .standard: "은필과 종이. 계절이 빛으로 스며드는 지면이에요."
         case .modern: "니어블랙 지면에 다홍 한 점. 밤의 얼굴이에요."
+        case .ticket: "색면 위에 놓인 한 장의 발권물. 오늘이 한 칸씩 찍혀요."
         }
     }
 }

@@ -6,6 +6,7 @@
 // 2026-07-29 사용자 결정 — IAP 설계 확정 시 §8.2.6 개정과 함께 재검토).
 
 import SwiftUI
+import TempoCore
 import UIKit
 
 enum AppTheme: String, CaseIterable, Identifiable {
@@ -16,6 +17,8 @@ enum AppTheme: String, CaseIterable, Identifiable {
     /// rawValue는 `standard` 그대로 둔다 — 바꾸면 기존 설치의 저장값이 깨진다.
     case standard
     case modern
+    /// 티켓(2026-08-14, 시안 SSOT §3) — 색면 위에 놓인 발권물. 경계를 선이 아니라 절단으로 쓴다.
+    case ticket
 
     var id: String { rawValue }
 
@@ -24,6 +27,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
         case .plain: "기본"
         case .standard: "은필"
         case .modern: "모던"
+        case .ticket: "티켓"
         }
     }
 }
@@ -122,6 +126,69 @@ extension ThemePalette {
         surface: Color(light: Color.white.opacity(0.72), dark: Color.white.opacity(0.05)),
         accent: Color(light: .rgb(0x10, 0x10, 0x14), dark: .rgb(0xF2, 0xF3, 0xF6))
     )
+
+    /// 티켓 (시안 SSOT §3.2) — 딥 네이비 잉크 · 블루그레이 색면 지면 · 웜 화이트 발권물.
+    /// ⚠ 라이트/다크 동값(`.flat`)이다. 발권물은 인쇄물이라 지면이 뒤집히지 않는다 —
+    /// 다크에서 흰 티켓을 검게 만들면 이 테마의 앵커가 통째로 사라진다.
+    /// ⚠ 계절 4색은 **흰 티켓 위에서 읽히는 값**이다. 유화 지면 위(설정·하루 상세)에서는
+    /// 성립하지 않으므로 그 자리 활자는 뷰에서 흰 계열로 덮는다(시안 §3.2 주석).
+    static let ticket = ThemePalette(
+        winter: .flat(0xA9, 0x32, 0x26),      // 검표 스탬프 레드 = 생리 시그널
+        spring: .flat(0x3F, 0x7A, 0x44),      // 잎 그린
+        summer: .flat(0x1C, 0x7A, 0x94),      // 시안
+        autumn: .flat(0xB8, 0x86, 0x1F),      // 골드
+        text: .flat(0x22, 0x38, 0x4F),        // 딥 네이비 잉크
+        paper: .flat(0x6E, 0x8A, 0xAC),       // 지면 = 블루그레이 색면
+        coral: .flat(0xA9, 0x32, 0x26),       // 은퇴 토큰
+        record: .flat(0xA9, 0x32, 0x26),
+        danger: .flat(0xA9, 0x32, 0x26),
+        dim: Color(red: 0x22 / 255, green: 0x38 / 255, blue: 0x4F / 255).opacity(0.55),
+        oxide: .flat(0x7E, 0x8F, 0xA0),       // 과거 = 바랜 블루그레이
+        holiday: .flat(0xA9, 0x32, 0x26),
+        saturday: .flat(0x2E, 0x5C, 0x8A),
+        frost: .flat(0x6E, 0x8A, 0xAC),
+        glowWinter: .flat(0xA9, 0x32, 0x26),
+        glowSpring: .flat(0x3F, 0x7A, 0x44),
+        glowSummer: .flat(0x1C, 0x7A, 0x94),
+        glowAutumn: .flat(0xB8, 0x86, 0x1F),
+        surface: .flat(0xFA, 0xFA, 0xF8),     // 발권물 = 웜 화이트
+        accent: .flat(0x22, 0x38, 0x4F)
+    )
+}
+
+/// 티켓 전용 상수 — 팔레트 토큰으로 표현되지 않는 값들(시안 §3.2·§3.4).
+enum TicketSpec {
+    /// 발권물 지면. `surface`와 동값이지만 의미가 달라 이름을 따로 둔다.
+    static let ticketPaper = Color.flatRGB(0xFA, 0xFA, 0xF8)
+    /// 극소 캡션 라벨 잉크
+    static let label = Color.flatRGB(0x7B, 0x8C, 0xA0)
+    /// 노치 안쪽 = 다른 탭 지면색 근사. **고정값** — 계절 유화가 교체돼도 흔들리면 안 된다.
+    static let notch = Color.flatRGB(0x45, 0x59, 0x6F)
+    /// 발권 정보 블록 높이. 이 값이 고정이라 절취선 y가 콘텐츠와 무관해지고,
+    /// 그래서 노치를 뚫을 수 있다(시안 §3.4 "노치가 왜 이제 가능한가").
+    static let headerHeight: CGFloat = 150
+    /// 도판
+    static let plateSize = CGSize(width: 94, height: 118)
+    /// 세로 스텁 폭
+    static let stubWidth: CGFloat = 50
+
+    /// 계절 유화 에셋 이름. 매핑은 `Almanac`의 모티프 규칙과 같다 —
+    /// 콜드(nil)는 겨울 그림으로 떨어진다.
+    static func plateAsset(for phase: CyclePhase?) -> String {
+        switch phase {
+        case .follicular: "TicketSpring"
+        case .ovulation:  "TicketSummer"
+        case .luteal:     "TicketAutumn"
+        default:          "TicketWinter"    // menstrual · 콜드(nil)
+        }
+    }
+}
+
+extension Color {
+    /// 라이트/다크 동값 RGB — TicketSpec처럼 팔레트 밖에서 쓰는 고정색용
+    static func flatRGB(_ r: Int, _ g: Int, _ b: Int) -> Color {
+        Color(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255)
+    }
 }
 
 // ── 팔레트 밖의 테마 결정 (2026-08-12) ──
@@ -156,6 +223,13 @@ struct ThemeChrome {
     let circlesRecordedDays: Bool
     /// 어두운 지면 대비 보정 — 진행 막대·부인공 텍스트 불투명도를 올린다
     let boostsContrast: Bool
+    /// 캘린더를 한 장의 발권물로 조판하는가(티켓, 시안 §3.4).
+    /// 표제·계절 라인·도판·스텁이 150pt 고정 블록으로 묶이고, 그 아래 절취선에 노치가 뚫린다.
+    /// 기존 축(seasonRowFirst 등)으로는 표현할 수 없어 신설했다.
+    let ticketChrome: Bool
+    /// 지면이 사진(계절 유화)인가. true면 지면 위 보조 활자를 흰 계열로 올린다 —
+    /// 기본 규칙(`Ink.text` 50~60%)은 사진 위에서 묻힌다(시안 §3.3-⑥).
+    let photographicGround: Bool
 }
 
 extension ThemeChrome {
@@ -165,7 +239,8 @@ extension ThemeChrome {
         showsSeasonLight: true, neutralSeasonLight: false,
         dimsInDarkMode: true, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: false,
-        circlesRecordedDays: false, boostsContrast: false
+        circlesRecordedDays: false, boostsContrast: false,
+        ticketChrome: false, photographicGround: false
     )
 
     /// 기본 — 장식을 전부 끈다(2026-08-12). 계절 정보(글리프·밴드 색)는 팔레트가 담당하므로
@@ -175,7 +250,8 @@ extension ThemeChrome {
         showsSeasonLight: false, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: false,
-        circlesRecordedDays: false, boostsContrast: false
+        circlesRecordedDays: false, boostsContrast: false,
+        ticketChrome: false, photographicGround: false
     )
 
     /// 모던 — 2026-08-12부터 시스템 라이트/다크를 따라간다(종전 다크 고정 해제).
@@ -185,7 +261,19 @@ extension ThemeChrome {
         showsSeasonLight: true, neutralSeasonLight: true,
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: true, todayCircleUsesAccent: true,
-        circlesRecordedDays: true, boostsContrast: true
+        circlesRecordedDays: true, boostsContrast: true,
+        ticketChrome: false, photographicGround: false
+    )
+
+    /// 티켓 — 지면이 계절 유화라 대비 보정을 켜고, 계절광은 얹지 않는다(레퍼런스 지면은 평면).
+    /// `seasonRowFirst`는 false: 티켓 조판에서는 표제가 위, 계절 라인이 아래다.
+    static let ticket = ThemeChrome(
+        typeFace: .pretendard, texture: .none, outlineDisplay: false,
+        showsSeasonLight: false, neutralSeasonLight: false,
+        dimsInDarkMode: false, forcesDarkAppearance: false,
+        seasonRowFirst: false, todayCircleUsesAccent: true,
+        circlesRecordedDays: false, boostsContrast: true,
+        ticketChrome: true, photographicGround: true
     )
 }
 
@@ -197,6 +285,7 @@ extension AppTheme {
         case .plain: .plain
         case .standard: .standard
         case .modern: .modern
+        case .ticket: .ticket
         }
     }
 
@@ -205,6 +294,7 @@ extension AppTheme {
         case .plain: .plain
         case .standard: .silverpoint
         case .modern: .modern
+        case .ticket: .ticket
         }
     }
 }
