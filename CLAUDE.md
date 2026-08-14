@@ -59,6 +59,14 @@
   생성은 개발 환경 전용 — 새 레코드 타입/필드를 코드로 추가하면 콘솔에서 Development에 만들고
   Deploy to Production까지 해야 실기기에서 저장된다. TestFlight 빌드가 안 뜰 땐 ASC API로
   builds(VALID)·buildBetaDetail(IN_BETA_TESTING) 확인 — 처리 지연이 20분+일 수 있다.
+- **위젯·Live Activity body에서 `Date.now` 금지**(2026-08-14 실측). 시스템이 미리 렌더해 둔 뷰를
+  나중에 다시 그리므로 body의 현재 시각은 박제되거나 어긋난다. `Text(timerInterval:)` 구간을
+  `Date.now`로 만들면 `now...now`로 무너져 **뷰가 통째로 렌더에 실패**하고, 배경 없는 배너는 그게
+  빈 지면으로 보인다(절전모드 "하얀 박스" 정체). 시각 의존 값은 ContentState에 실어 불변으로 둘 것.
+- 잠금화면·위젯 버튼이 앱 데이터를 바꿔야 하면 **`LiveActivityIntent`**(또는 `AudioPlaybackIntent`).
+  이것만 앱 프로세스 실행이 보장된다 — 일반 `AppIntent`는 위젯 익스텐션에서 돌아 SwiftData에
+  닿지 못한다. 인텐트 타입은 두 타깃 공용이어야 하므로 @Model을 참조하는 실행부는 앱 타깃에
+  두고 Shared에는 슬롯만(TimerIntentBridge 패턴).
 - Swift 6 strict(CI Xcode 26.5) 실측 2건(2026-07-29, 각 CI 한 바퀴 소진): ① 전역 가변
   `static var`는 그대로 두면 concurrency 에러 — 쓰기 경로가 메인 한정이면
   `nonisolated(unsafe)` + 근거 주석(ThemeStore 사례. @MainActor 격리는 정적 API 콜사이트
