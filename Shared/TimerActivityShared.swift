@@ -10,6 +10,11 @@ struct TimerActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         /// 카운트 기준점 — 타이머 = 종료 예정 시각(카운트다운), 스톱워치 = 누적을 뺀 과거 시각(카운트업)
         var anchor: Date
+        /// 카운트다운 구간의 시작(2026-08-14). ⚠ **위젯 body에서 Date.now를 쓰면 안 된다** —
+        /// Live Activity 뷰는 시스템이 미리 렌더해 두었다가 다시 그리는데, 그때 body의 Date.now가
+        /// 박제되거나 시작 > 끝이 되어 구간이 무너지면 뷰가 통째로 렌더에 실패한다(절전모드에서
+        /// 빈 지면만 남던 원인). 구간은 상태에 실어 불변으로 둔다.
+        var startedAt: Date = .now
         var countsDown: Bool
         /// 실행 중인가(2026-08-14 잠금화면 정지·재개). ⚠ 자생 설계는 **실행 중일 때만** 성립한다 —
         /// 멈춘 순간부터 anchor는 흘러가는 값이라, 정지 표시는 아래 `frozenSeconds`가 맡는다.

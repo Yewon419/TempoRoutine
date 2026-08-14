@@ -68,12 +68,18 @@ struct TimerActivityWidget: Widget {
 
     /// 실행 중 = 시스템이 초를 굴린다(타이머는 카운트다운, 스톱워치는 카운트업).
     /// 멈춤 = 굳은 값을 정적으로 — anchor는 멈춘 순간부터 흘러가는 값이라 쓸 수 없다(2026-08-14).
+    /// ⚠ **body에서 Date.now를 쓰지 않는다**(2026-08-14 절전모드 결함). 시스템이 미리 렌더해 둔
+    /// 뷰를 다시 그릴 때 그 값이 어긋나면 구간이 무너지고, 배경 없는 배너라 렌더 실패가 곧
+    /// 빈 지면으로 보인다. 구간은 상태에서만 만든다 — 언제 평가되든 결과가 같다.
     @ViewBuilder
     private func timerText(_ context: ActivityViewContext<TimerActivityAttributes>) -> some View {
         if !context.state.isRunning {
             Text(clockText(context.state.frozenSeconds))
         } else if context.state.countsDown {
-            Text(timerInterval: Date.now...max(Date.now, context.state.anchor), countsDown: true)
+            // 시작 == 끝인 빈 구간을 만들지 않는다(목표를 이미 채운 채 다시 시작한 경우)
+            let start = context.state.startedAt
+            let end = max(start.addingTimeInterval(1), context.state.anchor)
+            Text(timerInterval: start...end, countsDown: true)
         } else {
             Text(context.state.anchor, style: .timer)
         }

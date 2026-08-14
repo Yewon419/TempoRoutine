@@ -62,13 +62,15 @@ enum TimerLiveActivity {
         Task { await endActivities(itemID: itemID) }
     }
 
-    /// 실행 중 상태 — 타이머는 종료 예정 시각, 스톱워치는 누적을 뺀 과거 시각이 기준점
+    /// 실행 중 상태 — 타이머는 종료 예정 시각, 스톱워치는 누적을 뺀 과거 시각이 기준점.
+    /// startedAt은 카운트다운 구간의 시작 — 위젯이 Date.now 없이 구간을 그리게 하는 값이다.
     private static func runningState(countsDown: Bool, remaining: Double,
                                      elapsedAccum: Double) -> TimerActivityAttributes.ContentState {
-        countsDown
-            ? .init(anchor: Date.now.addingTimeInterval(remaining), countsDown: true,
+        let now = Date.now
+        return countsDown
+            ? .init(anchor: now.addingTimeInterval(remaining), startedAt: now, countsDown: true,
                     isRunning: true, frozenSeconds: remaining)
-            : .init(anchor: Date.now.addingTimeInterval(-elapsedAccum), countsDown: false,
+            : .init(anchor: now.addingTimeInterval(-elapsedAccum), startedAt: now, countsDown: false,
                     isRunning: true, frozenSeconds: elapsedAccum)
     }
 
