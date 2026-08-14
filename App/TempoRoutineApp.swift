@@ -44,6 +44,10 @@ struct TempoRoutineApp: App {
         // 수동 생성 컨테이너는 autosave 명시(repo CLAUDE.md 2026-07-23 실측)
         Self.container.mainContext.autosaveEnabled = true
         PlannerSync.shared.configure(container: Self.container)
+        // 잠금화면 타이머 버튼의 실행부 등록(2026-08-14). 인텐트는 앱 프로세스에서 도는데,
+        // 앱이 꺼져 있었다면 이 init과 perform()의 순서가 보장되지 않는다 — 먼저 도착한
+        // 명령은 브리지가 보류하고 있다가 등록 직후 흘려보낸다(Shared/TimerIntents).
+        TimerIntentBridge.register(TimerIntentHandler.shared)
         // 앱 밖에서 끝난 결제(승인 대기 통과·다른 기기)를 받아 finish 한다 — 안 걸어두면
         // 그 거래가 큐에 남아 실행마다 다시 전달된다(StoreKit 2 계약).
         TipStore.shared.startListening()

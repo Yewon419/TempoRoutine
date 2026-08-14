@@ -25,6 +25,8 @@ struct TimerProgressControl<Backing: TimerBacking>: View {
     let isTimer: Bool
     /// 타이머 목표(초). 스톱워치는 0
     let targetSeconds: Int
+    /// 값의 저장처 — 잠금화면 버튼이 Output(아이템)과 Input(그날 레코드) 중 어느 쪽을 열지 가른다
+    let isInput: Bool
     /// completed = 이번 정지로 목표를 채웠는가(타이머만 true 가능) — 햅틱 콜백
     var onEvent: (Bool) -> Void = { _ in }
 
@@ -89,13 +91,18 @@ struct TimerProgressControl<Backing: TimerBacking>: View {
             let wasReached = reachedByAccum
             backing.elapsedAccumSeconds = backing.elapsedSeconds(at: .now)
             backing.timerStartedAt = nil
-            TimerLiveActivity.end(itemID: activityID)
+            // 걷지 않고 멈춘 값으로 굳힌다 — 잠금화면에서 다시 시작하려면 남아 있어야 한다(2026-08-14)
+            TimerLiveActivity.pause(itemID: activityID,
+                                    frozenSeconds: isTimer
+                                        ? max(0, Double(target) - backing.elapsedAccumSeconds)
+                                        : backing.elapsedAccumSeconds)
             onEvent(!wasReached && reachedByAccum)
         } else {
             backing.timerStartedAt = .now
             TimerLiveActivity.start(itemID: activityID, title: activityTitle, countsDown: isTimer,
                                     remaining: max(0, Double(target) - backing.elapsedSeconds(at: .now)),
-                                    elapsedAccum: backing.elapsedAccumSeconds)
+                                    elapsedAccum: backing.elapsedAccumSeconds,
+                                    isInput: isInput, targetSeconds: target)
             onEvent(false)
         }
     }

@@ -51,7 +51,8 @@ struct InputProgressControl: View {
             if let record = progress {
                 TimerProgressControl(backing: record, activityID: itemID, activityTitle: itemTitle,
                                      isTimer: goal.kind == .timer,
-                                     targetSeconds: goal.targetSeconds ?? 0) { _ in
+                                     targetSeconds: goal.targetSeconds ?? 0,
+                                     isInput: true) { _ in
                     onChange(ProgressRule.isFulfilled(goal: goal, state: record.state()))
                 }
             }

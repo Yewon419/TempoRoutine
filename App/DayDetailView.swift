@@ -597,7 +597,8 @@ struct DayDetailView: View {
         case .timer, .stopwatch:
             TimerProgressControl(backing: item, activityID: item.id, activityTitle: item.title,
                                  isTimer: item.progressKind == .timer,
-                                 targetSeconds: item.targetSeconds ?? 0) { completed in
+                                 targetSeconds: item.targetSeconds ?? 0,
+                                 isInput: false) { completed in
                 if completed { confirmFeedback += 1 } else { lightFeedback += 1 }
             }
         }
