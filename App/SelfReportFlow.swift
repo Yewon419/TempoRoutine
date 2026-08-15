@@ -90,12 +90,12 @@ struct SelfReportFlow: View {
     private var content: some View {
         switch step {
         case 0: intro
-        case 1: questionGroup(title: "잠깐, 기준을 맞출게요.",
+        case 1: questionGroup(title: nil,
                               note: "이제 그때를 떠올리면서 답해주세요.",
                               questions: [SelfReportSurvey.calibration])
         case 2: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.phaseQuestions)
         case 3: questionGroup(title: SelfReportSurvey.symptomAnchorLine(p2: answers["P2"]),
-                              note: "딱히 없다고 하신 분은, 그나마 힘들었던 때를 떠올려주세요.",
+                              note: "꼭 생리 중이 아니라도 가장 힘들었던 때를 떠올려주세요.",
                               questions: symptomOrder)
         case 4: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.amplitudeQuestions)
         default: optionalGroup
@@ -108,7 +108,7 @@ struct SelfReportFlow: View {
             Text("이맘때 이야기를 하려면\n몇 가지 알아야 해요.")
                 .font(.almanac(size: 26, weight: .bold))
                 .foregroundStyle(Ink.text)
-            Text("리듬의 모양은 사람마다 달라요.\n17개 문항이고 2분쯤 걸려요.\n언제든 닫아도 괜찮아요.")
+            Text("리듬의 모양은 사람마다 달라요.\n2분 정도 소요돼요.")
                 .font(.system(.body, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.75))
             Text("답은 이 기기에만 저장돼요.")
@@ -136,10 +136,7 @@ struct SelfReportFlow: View {
     private var optionalGroup: some View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("여기서부터는 앱을 만드는 데 쓰이는 질문이에요.")
-                    .font(.almanac(size: 19, weight: .bold))
-                    .foregroundStyle(Ink.text)
-                Text("건너뛰셔도 괜찮아요.")
+                Text("이 페이지의 질문은 건너뛰셔도 괜찮아요.")
                     .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
             }
             ForEach(SelfReportSurvey.optionalQuestions, id: \.id) { question in

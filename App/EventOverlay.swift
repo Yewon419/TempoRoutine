@@ -179,12 +179,9 @@ struct CalendarConsentSheet: View {
                         .background(Ink.text, in: Capsule())
                 }
             } else {
-                Text("기존 캘린더의 약속과 생일을 가져올게요. 지금 가져올까요?")
+                Text("기존 캘린더의 약속과 생일을 가져올까요?")
                     .font(.body)
                     .foregroundStyle(Ink.text.opacity(0.75))
-                Text("읽기만 해요. 기록이 밖으로 나가지 않아요.")
-                    .font(.footnote)
-                    .foregroundStyle(Ink.text.opacity(0.5))
                 Button {
                     Task {
                         await overlay.requestAccess()

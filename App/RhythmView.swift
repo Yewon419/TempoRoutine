@@ -104,8 +104,8 @@ struct RhythmView: View {
                             isPresented: Binding(get: { addingSeason != nil && addKind == nil },
                                                  set: { if !$0 && addKind == nil { addingSeason = nil } }),
                             titleVisibility: .visible) {
-            Button("Input — 매일 챙길 것") { addKind = .input }
-            Button("Output — 만들어낼 것") { addKind = .output }
+            Button("Input") { addKind = .input }
+            Button("Output") { addKind = .output }
             Button("취소", role: .cancel) { addingSeason = nil }
         }
         .sheet(isPresented: $showSelfReport) { SelfReportFlow() }
@@ -142,7 +142,7 @@ struct RhythmView: View {
     private var selfReportPrompt: some View {
         if SelfReportStore.shouldPrompt(snapshot: snapshot, records: selfReports) {
             VStack(alignment: .leading, spacing: 10) {
-                Text("이맘때 이야기를 하려면 몇 가지 알아야 해요.")
+                Text("이맘때 이야기를 하려면 몇 가지를 알아야 해요.")
                     .font(.system(.subheadline, design: .serif))
                     .foregroundStyle(Ink.text)
                 HStack(spacing: 10) {
@@ -245,7 +245,7 @@ struct RhythmView: View {
                 Text("계절과 루틴")
                     .font(.almanacBody(.footnote, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.5))
-                Text("기록상 \(seasonMeta(for: top.key).name)에 계획한 걸 가장 많이 마쳤어요.")
+                Text("기록상 \(seasonMeta(for: top.key).name)에 계획한 걸 가장 많이 수행했어요.")
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
                     .fixedSize(horizontal: false, vertical: true)
@@ -402,7 +402,7 @@ struct RhythmView: View {
                     "\(curName) 기록 \(curCount) / \(goal)")
         }
         let names = unlocked.map { seasonMeta(for: $0).name }.joined(separator: "·")
-        var body = "\(names)의 패턴이 열렸어요. 네 계절이 모두 채워지면 리듬 전체가 이어져요."
+        var body = "\(names)의 패턴이 보이기 시작했어요. 네 계절이 모두 채워지면 리듬 전체가 이어질 거에요."
         if let phase = curPhase, profile.level(for: phase) == nil {
             body += " \(curName)은 \(curCount) / \(goal)회째예요."
         }
@@ -446,7 +446,7 @@ struct RhythmView: View {
             Text("그동안은")
                 .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(Ink.text)
-            Text("많은 사람이 겨울엔 에너지가 낮아진다고 느껴요. 당신의 리듬은 곧 여기에 쌓입니다.")
+            Text("많은 사람이 겨울엔 에너지가 낮아진다고 느껴요. 당신의 리듬도 금방 찾게 될 거에요.")
                 .font(.subheadline)
                 .foregroundStyle(Ink.text.opacity(0.75))
         }

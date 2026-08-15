@@ -44,18 +44,18 @@ struct EnergyProfile {
     // ── 개인화 무드라인 (계절 × 기록상 에너지 — 12종) ──
     static func moodline(for phase: CyclePhase, level: EnergyLevel) -> String {
         switch (phase, level) {
-        case (.menstrual, .low):   "겨울이에요. 기록상 이맘때는 에너지가 낮았어요. 마음껏 쉬어가도 좋아요."
+        case (.menstrual, .low):   "겨울이에요. 기록상 이맘때는 에너지가 낮았어요. 조금은 쉬어가도 좋아요."
         case (.menstrual, .mid):   "겨울이에요. 기록상 이맘때의 당신은 잔잔했어요. 천천히 가도 좋아요."
-        case (.menstrual, .high):  "겨울이에요. 기록상 이맘때도 에너지가 꽤 있었어요. 원하는 만큼 해도, 쉬어도 좋아요."
-        case (.follicular, .low):  "봄이에요. 기록상 이맘때는 아직 조용했어요. 서두르지 않아도 좋아요."
+        case (.menstrual, .high):  "겨울이에요. 기록상 이맘때도 에너지가 꽤 있었어요. 원하는 만큼 해보아도, 이번엔 쉬어가도 좋아요."
+        case (.follicular, .low):  "봄이에요. 기록상 이맘때는 아직 잔잔했어요. 서두르지 않아도 좋아요."
         case (.follicular, .mid):  "봄이에요. 기록상 조금씩 기지개를 켜던 때예요. 가볍게 시작해도 좋아요."
-        case (.follicular, .high): "봄이에요. 기록상 이맘때 에너지가 잘 올랐어요. 새 일을 벌여도 좋은 때예요."
-        case (.ovulation, .low):   "여름이에요. 기록상 이맘때는 오히려 쉼이 필요했어요. 쉬어가도 좋아요."
-        case (.ovulation, .mid):   "여름이에요. 기록상 이맘때의 당신은 고르게 밝았어요. 하고 싶은 만큼 하면 돼요."
-        case (.ovulation, .high):  "여름이에요. 기록상 이맘때 가장 빛났어요. 마음껏 몰입해도 좋아요."
-        case (.luteal, .low):      "가을이에요. 기록상 이맘때는 쉽게 지치곤 했어요. 짐을 덜어도 좋아요."
-        case (.luteal, .mid):      "가을이에요. 기록상 하나씩 정리하던 때예요. 매듭지어도 좋은 때예요."
-        case (.luteal, .high):     "가을이에요. 기록상 이맘때도 힘이 남아 있었어요. 마무리에 몰입해도 좋아요."
+        case (.follicular, .high): "봄이에요. 기록상 이맘때 에너지가 생긴대요. 슬슬 시동을 걸어볼까요!"
+        case (.ovulation, .low):   "여름이에요. 기록상 이맘때는 쉼이 필요했어요. 쉬어가도 좋아요."
+        case (.ovulation, .mid):   "여름이에요. 기록상 이맘때의 당신은 밝았어요. 하고 싶은 만큼 해봐요!"
+        case (.ovulation, .high):  "여름이에요. 기록상 이맘때 가장 빛났어요. 마음껏 몰입해도 좋아요!"
+        case (.luteal, .low):      "가을이에요. 기록상 이맘때는 쉽게 지치곤 했어요. 짐을 좀 덜어내도 괜찮아요."
+        case (.luteal, .mid):      "가을이에요. 기록상 하나씩 정리하던 때예요. 스스로를 돌아보는 시간을 가져봐요."
+        case (.luteal, .high):     "가을이에요. 기록상 이맘때 에너지가 충분했어요. 오늘은 어떤 것에 몰입해볼까요?"
         }
     }
 

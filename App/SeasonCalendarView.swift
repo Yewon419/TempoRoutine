@@ -1100,13 +1100,13 @@ struct SeasonCalendarView: View {
 
     // ── 계절 라인 (S0/S1/S2/S4 — §5.6.2) ──
     private var seasonLine: String {
-        guard let last = starts.max() else { return "첫 생리일을 기록하면 계절이 채워져요" }
+        guard let last = starts.max() else { return "첫 생리일을 기록하면 계절이 채워지기 시작할거예요" }
         let diff = cal.dateComponents([.day], from: last, to: today).day ?? 0
         if diff >= avgLength + TodayView.overdueGraceDays {
             return "겨울 예상 · 예정일 \(diff - avgLength)일 지남"
         }
         guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
-            return "첫 생리일을 기록하면 계절이 채워져요"
+            return "첫 생리일을 기록하면 계절이 채워지기 시작할거예요"
         }
         // 관측 우선 유효 M + 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소)
         let m = effectiveM(on: today, projected: r.projected)

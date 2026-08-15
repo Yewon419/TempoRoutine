@@ -532,12 +532,7 @@ struct InputAddSheet: View {
             }
             if progressKind == .timer {
                 Stepper("목표 \(targetMinutes)분", value: $targetMinutes, in: 1...240)
-                Text("시작하면 잠금화면에서도 남은 시간이 보여요.")
-                    .font(.footnote)
-                    .foregroundStyle(Ink.text.opacity(0.5))
-            }
-            if progressKind == .stopwatch {
-                Text("쓴 시간을 재요. 목표가 없어서 체크는 직접 눌러요.")
+                Text("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요.")
                     .font(.footnote)
                     .foregroundStyle(Ink.text.opacity(0.5))
             }
@@ -546,12 +541,6 @@ struct InputAddSheet: View {
             }
         } header: {
             Text("진행 방식")
-        } footer: {
-            if progressKind != nil {
-                Text("진행도는 날마다 새로 시작해요. 목표에 닿으면 그날 체크가 자동으로 돼요.")
-            } else {
-                Text("체크 한 번으로 끝내도 괜찮아요.")
-            }
         }
     }
 
@@ -647,11 +636,6 @@ struct InputAddSheet: View {
                         }
                         Stepper("계절 시작 +\(offset)일", value: $offset, in: 0...13)
                         Toggle("매 주기 반복", isOn: $everyCycle)
-                    }
-                    if !repeats && !cycleBased {
-                        Text("반복 없이, 체크할 때까지 계속 보여요.")
-                            .font(.footnote)
-                            .foregroundStyle(Ink.text.opacity(0.5))
                     }
                 }
                 progressSection
@@ -846,18 +830,13 @@ struct OutputAddSheet: View {
                         }
                         .pickerStyle(.segmented)
                         if wholePhase {
-                            Text("\(anchor.rawValue)인 날엔 매일 보여요. 계절 길이는 주기에 따라 달라져요.")
+                            Text("\(anchor.rawValue)인 날엔 매일 보여요.")
                                 .font(.footnote)
                                 .foregroundStyle(Ink.text.opacity(0.5))
                         } else {
                             Stepper("\(anchor.rawValue) \(offset + 1)일차", value: $offset, in: 0...13)
                         }
                         Toggle("매 주기 반복", isOn: $everyCycle)
-                    }
-                    if !repeats && !cycleBased {
-                        Text("반복 없이, 완료할 때까지 계속 보여요.")
-                            .font(.footnote)
-                            .foregroundStyle(Ink.text.opacity(0.5))
                     }
                 }
                 // 디데이(2026-08-01 베타 피드백) — 남은 날짜를 카드에 표시. 알림·마감 강제는 없다.
@@ -866,10 +845,6 @@ struct OutputAddSheet: View {
                         .tint(Ink.text)
                     if hasTargetDate {
                         DatePicker("목표일", selection: $targetDate, displayedComponents: [.date])
-                    }
-                } footer: {
-                    if hasTargetDate {
-                        Text("카드에 남은 날짜가 D-N으로 붙어요.")
                     }
                 }
                 Section("진행 방식") {
@@ -889,12 +864,12 @@ struct OutputAddSheet: View {
                     }
                     if kind == .timer {
                         Stepper("목표 \(targetMinutes)분", value: $targetMinutes, in: 5...240, step: 5)
-                        Text("시작하면 잠금화면에서도 남은 시간이 보여요.")
+                        Text("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요.")
                             .font(.footnote)
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
                     if kind == .stopwatch {
-                        Text("쓴 시간을 재요. 시작하면 잠금화면에서도 이어져요.")
+                        Text("시작하면 잠금화면에서도 현재 시간을 확인할 수 있어요.")
                             .font(.footnote)
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }

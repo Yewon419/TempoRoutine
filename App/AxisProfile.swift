@@ -46,18 +46,10 @@ struct AxisProfile {
 
     var type: RhythmType? { WindowStatsEngine.classify(cycles: cycles, menstrualLength: menstrualLength) }
 
-    /// A축 = 유형 이름. 표시는 §3.11 — 이름은 A축만 쓴다.
-    var typeName: String? { type?.displayName }
-
-    /// A축 한 줄 — 응답이 아니라 그 사람 로그의 관찰이라 "기록됐어요" 어투다(§7 관찰형 강제).
-    var amplitudeLine: String? {
-        switch type {
-        case .vivace:  "지난 주기들, 오르내림이 큰 편으로 기록됐어요."
-        case .andante: "지난 주기들, 잔잔한 편으로 기록됐어요."
-        case .rubato:  "아직은 주기마다 달라서, 조금 더 지켜보고 있어요."
-        case nil:      nil
-        }
-    }
+    // ⚠ `typeName`·`amplitudeLine` 삭제(2026-08-15 사용자 지시 "안 쓰는 건 다 삭제").
+    // 2026-08-09에 유형 카드를 UI에서 내리면서 소비처가 0이 된 채 카피만 남아 있었다.
+    // §3.11이 남기라고 한 것은 **엔진 산출**(위 `type`·WindowStats·내보내기)이지 문구가 아니다.
+    // 유형 서술을 되살릴 땐 그때의 톤으로 다시 쓴다(§7 관찰형 — "기록됐어요" 어투).
 
     /// ~~M축 한 줄 서술~~ — **폐기(2026-08-05 사용자 결정)**: 체크인 병합으로 몸(pain) 입력
     /// 행이 사라져 신체 계열이 더는 쌓이지 않는다. 분모 없는 M축을 계속 말하면

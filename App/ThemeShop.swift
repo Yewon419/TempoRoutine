@@ -23,10 +23,10 @@ extension AppTheme {
 
     var shopCaption: String {
         switch self {
-        case .plain: "군더더기 없는 지면. 기록에만 집중해요."
+        case .plain: "기본 테마."
         case .standard: "은필과 종이. 계절이 빛으로 스며드는 지면이에요."
-        case .modern: "니어블랙 지면에 다홍 한 점. 밤의 얼굴이에요."
-        case .ticket: "색면 위에 놓인 한 장의 발권물. 오늘이 한 칸씩 찍혀요."
+        case .modern: "니어블랙 지면에 다홍 한 점."
+        case .ticket: "색면 위에 놓인 한 장의 티켓. 일상을 여행처럼."
         }
     }
 }
@@ -100,8 +100,6 @@ struct ThemeShopView: View {
                 }
             }
             Button("취소", role: .cancel) { plantCandidate = nil }
-        } message: {
-            Text("구매한 테마는 사라지지 않아요. 적용은 언제든 할 수 있어요.")
         }
         // 성공 메시지(연출 한 박자 뒤) — 구매와 적용이 분리라 여기서 적용을 권한다
         .alert(plantedAlert.map { "「\($0.displayName)」을 구매했어요" } ?? "",
@@ -111,7 +109,7 @@ struct ThemeShopView: View {
             Button("지금 적용하기") { apply(theme) }
             Button("나중에") { plantedAlert = nil }
         } message: { theme in
-            Text("씨앗 \(theme.seedPrice ?? 0)개를 썼어요. 마음이 내킬 때 갈아입어 보세요.")
+            Text("씨앗 \(theme.seedPrice ?? 0)개를 썼어요.")
         }
         .onAppear {
             // 쓰고 있는 테마가 유료면 보유로 승계 — 쓰던 테마를 잠그지 않는다(신뢰).

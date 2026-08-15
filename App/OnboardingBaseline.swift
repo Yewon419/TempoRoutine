@@ -84,7 +84,7 @@ struct OnboardingCalendar: View {
             header
             weekdayRow
             grid
-            Text("대략이어도 괜찮아요. 기록할수록 맞춰져요.")
+            Text("대략이어도 괜찮아요.")
                 .font(.system(.caption, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.5))
                 .padding(.top, 4)

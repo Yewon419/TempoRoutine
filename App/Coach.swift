@@ -42,22 +42,22 @@ enum CoachSteps {
     /// 오늘 탭 — 일정·Input·Output 3구획(§3.6 카드 정의를 사용자 언어로)
     static let today: [CoachStep] = [
         CoachStep(anchor: .todaySchedule, title: "일정",
-                  body: "약속이나 생일처럼 못 옮기는 날들이에요. 하루의 닻이라, 계절과 상관없이 그대로 둬요."),
+                  body: "약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요."),
         CoachStep(anchor: .todayInput, title: "Input",
-                  body: "식단이나 운동처럼 나를 채우는 일들이에요. 가볍게 체크만 하면 되고, 주기 기준으로 반복시킬 수도 있어요."),
+                  body: "식단이나 운동처럼 나를 채우는 일들이에요. 각 계절에 맞는 인풋으로 당신을 채워봐요."),
         CoachStep(anchor: .todayOutput, title: "Output",
-                  body: "프로젝트나 공부처럼 내보내는 일들이에요. 진행도로 쌓이고, 계절에 맞춰 시동과 마무리를 보여드려요."),
+                  body: "프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?"),
     ]
     /// 캘린더 탭 — 생리 기록 입구 + 그리드 읽는 법
     static let calendar: [CoachStep] = [
         CoachStep(anchor: .calendarLog, title: "생리 기록은 여기서",
-                  body: "이 버튼이 기록의 입구예요. 날짜 칸을 탭해서 기록하고, 지난 기록도 같은 화면에서 고칠 수 있어요."),
+                  body: "이 버튼이 기록의 입구예요. 날짜 칸을 탭해서 기록하고, 지난 기록도 고칠 수 있어요."),
         // 2026-08-11 정정: 계절 문법 대개정(2026-07-28 3차)을 안 따라온 카피였다.
         // 숫자는 먹색이고 계절은 숫자 뒤 글로우(numberColor) · 예상 생리일은 시각 표시 없음
         // (render.predicted = a11y 전용) · 코랄은 겨울 띠와 어긋난 기록만이라 범례에도 없어
         // (2026-08-01 「기록」 스와치 폐기) 첫 안내에서 뺀다.
-        CoachStep(anchor: .calendarGrid, title: "날짜 뒤 빛이 계절이에요",
-                  body: "같은 계절이 이어지는 동안은 빛도 띠처럼 이어져요. 날짜를 탭하면 그날의 일정과 계획이 열리고, 길게 누르면 일정을 바로 적어요. 누른 채 끌면 여러 날로 잡을 수 있고요."),
+        CoachStep(anchor: .calendarGrid, title: "날짜 아래 선으로 계절을 알 수 있어요",
+                  body: "날짜를 탭하면 빠르게 일정을 추가할 수 있어요. 길게 누르고 드래그해 며칠에 걸친 일정도 추가할 수 있어요. \n길게 누르면 하루 상세 탭으로 넘어갑니다."),
     ]
     /// 씨앗 최초 획득 — 오늘 탭 우상단 배지에서 1회(2026-08-12 사용자 지시).
     /// 얻는 법·쓰는 곳을 한 번에 말한다. 재촉은 하지 않는다(§7) — 사실만.
@@ -70,9 +70,9 @@ enum CoachSteps {
     /// 테마 탭 첫 진입 — 잔액이 무엇인지, 구매와 적용이 왜 따로인지(§3.8.1 구매·적용 분리)
     static let themeShop: [CoachStep] = [
         CoachStep(anchor: .themeSeedBalance, title: "지금 가진 씨앗",
-                  body: "하루 체크인을 완성하면 씨앗이 하나씩 모여요. 여기 숫자가 지금 쓸 수 있는 만큼이에요."),
-        CoachStep(anchor: .themeCardAction, title: "구매와 적용은 따로예요",
-                  body: "구매한 테마는 사라지지 않아요. 갈아입는 건 그다음이라, 마음이 내킬 때 언제든 다시 바꿀 수 있어요."),
+                  body: "하루 체크인을 완성하면 씨앗이 하나씩 모여요."),
+        CoachStep(anchor: .themeCardAction, title: "테마의 적용도 이곳에서 할 수 있어요.",
+                  body: "새로운 테마, 새로운 기분으로 템포루틴을 즐겨보세요!"),
     ]
 }
 

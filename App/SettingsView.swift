@@ -134,7 +134,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
-                    Text("체크인으로 모은 씨앗으로 새 테마를 구매할 수 있어요. 모던에는 Pretendard 서체(SIL 오픈 폰트 라이선스)가 쓰여요.")
+                    Text("매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!")
                 }
 
                 // 알림(§5.11 계열) — 브리핑·예측 = 기본 켬(2026-08-05 사용자 결정),
@@ -144,7 +144,7 @@ struct SettingsView: View {
                         .tint(Ink.text)
                     Toggle("생리 예측 알림", isOn: noticeBinding($periodForecastOn))
                         .tint(Ink.text)
-                    Toggle("기록이 빈 시기 알려주기", isOn: coverageBinding)
+                    Toggle("기록이 부족한 시기 알려주기", isOn: coverageBinding)
                         .tint(Ink.text)
                     // ⚠ 임시 테스트 기능(2026-08-08 사용자 지시 — 검증 끝나면 이 버튼·상태·import 제거)
                     Button("테스트 알림 보내기") {
@@ -179,7 +179,7 @@ struct SettingsView: View {
                 } footer: {
                     Text(notificationDenied
                          ? "알림이 꺼져 있어요. 설정에서 알림을 켜면 다시 고를 수 있어요."
-                         : "브리핑은 일정이 있는 날 아침 8시에 한 번, 예측 알림은 예상 시작 전날과 당일에 한 번씩 와요. 빈 시기 알림은 한 주기를 네 구간으로 나눠 기록이 하나도 없는 구간에만 저녁에 한 번 알려요.")
+                         : "브리핑은 일정 당일 아침 8시에, 생리 예측 알림은 예상일 전날과 당일에 한 번씩 알림이 가요.")
                 }
 
                 // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)
@@ -226,7 +226,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 이어져요. 생리 기록은 iCloud로 보내지 않아요 — 기기 간 전달은 건강 앱 연동이 맡아요.")
+                        Text("일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 연동됩니다. 생리 기록은 iCloud로 보내지 않습니다.")
                         if !PlannerSync.shared.lastReport.isEmpty {
                             Text("마지막 동기화 · \(PlannerSync.shared.lastReport)")
                         }
@@ -257,8 +257,6 @@ struct SettingsView: View {
                     .foregroundStyle(Ink.text)
                 } header: {
                     Text("다시 보기")
-                } footer: {
-                    Text("사용법은 각 화면을 열 때 처음 안내가 다시 나와요. 온보딩은 첫 실행 화면을 처음부터 다시 봐요 — 기록은 지워지지 않아요.")
                 }
 
                 // 앱 내 자기보고 설문(v1.6 §4) — 언제든 재진입. 웹 응답과 연결하지 않는다.
@@ -271,8 +269,8 @@ struct SettingsView: View {
                     .foregroundStyle(Ink.text)
                 } footer: {
                     Text(selfReports.isEmpty
-                         ? "17개 문항, 2분쯤 걸려요. 답은 이 기기에만 저장돼요."
-                         : "마지막 응답 \(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 쌓여요.")
+                         ? "응답은 이 기기에만 저장돼요."
+                         : "마지막 응답 \(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.")
                 }
 
                 // 데이터 — 내보내기·가져오기·처리방침. 저빈도 액션이라 삭제 바로 위로 내렸다
@@ -429,7 +427,7 @@ struct SettingsView: View {
             return "생리 기록이 건강 앱에도 저장돼요. 이 앱이 쓴 기록만 건강 앱에서 고칠 수 있어요."
         }
         if mirror.linked {
-            return "가져올 기록이 없다면 읽기 권한이 꺼진 경우가 많아요. 아래 ‘건강 권한 설정 열기’를 눌러 템포루틴의 ‘생리’ 읽기를 켜주세요. (애플 정책상 앱이 이 권한 창을 다시 띄울 수 없어 설정에서만 켤 수 있어요.)"
+            return "가져올 기록이 없다면 읽기 권한이 꺼진 경우가 많아요. 아래 ‘건강 권한 설정 열기’를 눌러 템포루틴의 ‘생리’ 읽기를 켜주세요."
         }
         return "기록은 이 기기에만 저장돼요."   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
     }

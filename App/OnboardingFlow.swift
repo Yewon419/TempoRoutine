@@ -410,7 +410,7 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
             VStack(alignment: .leading, spacing: 2) {
-                Text("몰아치지 않아도 괜찮아요.")
+                Text("당신만의 속도를 찾아서.")
                     .staggerIn(sceneAppeared, delay: 0.30, duration: 0.48, reduceMotion: reduceMotion)
                 // "생리 주기 기반"을 첫 화면에 명시한다(v1.6 §9 3-6 — App Store 2.3 메타데이터 방어)
                 Text("생리 주기를 네 계절로 보고,")
@@ -505,9 +505,9 @@ struct OnboardingFlow: View {
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
             VStack(alignment: .leading, spacing: 2) {
-                Text("한 주기 안에서도 에너지와 컨디션은 오르내려요.")
-                Text("사이클 싱킹은 그 흐름을 거스르는 대신,")
-                Text("계획을 리듬에 맞추는 방법이에요.")
+                Text("한 주기 안에서도 에너지와 컨디션은 오르내립니다.")
+                Text("사이클 싱킹은 그 흐름을 계획에 맞추는 대신,")
+                Text("계획을 당신에게 맞추는 방법이에요.")
             }
             .font(.system(.subheadline, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.75))
@@ -517,8 +517,8 @@ struct OnboardingFlow: View {
                 .frame(maxWidth: .infinity)
             Spacer()
             VStack(alignment: .leading, spacing: 2) {
-                Text("사람마다 리듬은 달라요.")
-                Text("템포루틴은 당신의 기록에서 당신의 리듬을 찾아요.")
+                Text("사람마다 리듬은 모두 달라요.")
+                Text("템포루틴이 당신만의 리듬을 찾게 도와줄게요.")
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
@@ -558,7 +558,7 @@ struct OnboardingFlow: View {
 
     private var sceneSeasons: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("주기를 네 계절로\n볼게요.")
+            Text("한 달 안의 사계절")
                 .font(.almanac(size: 32, weight: .bold))
                 .foregroundStyle(Ink.text)
                 .lineSpacing(4)
@@ -571,8 +571,8 @@ struct OnboardingFlow: View {
             seasonRow(.menstrual, "스스로에게 휴식을 줘도 괜찮은 시간")
             Spacer()
             VStack(alignment: .leading, spacing: 2) {
-                Text("일반적인 경향이에요.")
-                Text("당신의 계절은 기록이 쌓이며 당신에게 맞춰져요.")
+                Text("상단의 설명은 일반적인 경향입니다.")
+                Text("당신의 계절은 기록이 쌓이며 맞춰집니다.")
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
@@ -616,8 +616,8 @@ struct OnboardingFlow: View {
         VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "기준일", title: "쓰던 기록이 있다면,\n그대로 이어져요.")
             VStack(alignment: .leading, spacing: 2) {
-                Text("건강 앱에 남은 생리 기록으로")
-                Text("계절을 바로 시작할 수 있어요.")
+                Text("건강 앱에 남은 생리 기록을 불러오면")
+                Text("보다 편한 시작을 할 수 있어요.")
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))
@@ -627,7 +627,7 @@ struct OnboardingFlow: View {
                         Text("건강 앱과 연동")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Ink.text)
-                        Text("쓰던 앱이 건강 앱에 기록을 남겼다면, 그대로 이어져요.")
+                        Text("쓰던 앱이 건강 앱에 기록을 남겼다면 불러올 수 있습니다.")
                             .font(.caption)
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
@@ -636,13 +636,13 @@ struct OnboardingFlow: View {
                 .disabled(!mirror.available)
                 .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
                 if !mirror.available {
-                    Text("이 기기에선 건강 앱을 사용할 수 없어요.")
+                    Text("이 기기에선 건강 앱을 사용할 수 없습니다.")
                         .font(.caption)
                         .foregroundStyle(Ink.text.opacity(0.55))
                 }
                 if mirror.available && mirror.linked {
                     // 읽기 권한은 애플이 재요청 못 하게 막음 — 안 불러와지면 설정 원탭 이동(2026-07-24)
-                    Button("가져와지지 않나요? 건강 권한 설정 열기") {
+                    Button("정상적으로 가져올 수 없나요? \n건강 권한 설정 열기") {
                         lightFeedback += 1
                         if let url = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(url)
@@ -666,7 +666,7 @@ struct OnboardingFlow: View {
                         guard await mirror.requestAccess() else {
                             // 거부 = 스위치 되돌아감 + 알럿 닫으면 직접 기록으로(프로토 확정 — 0에피소드 분기)
                             pendingLinkAdvance = true
-                            syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요. 직접 기록으로 이어갈게요."
+                            syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없습니다. 직접 기록으로 이어갈게요."
                             return
                         }
                         await mirror.sync(context: modelContext, periodDays: periodDays)
@@ -687,12 +687,6 @@ struct OnboardingFlow: View {
     private var durationPage: some View {
         VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "기준일", title: "생리는 보통\n며칠간 하나요?")
-            VStack(alignment: .leading, spacing: 2) {
-                Text("다음 화면에서 날짜를 고르면")
-                Text("이 일수만큼 채워 드려요.")
-            }
-            .font(.system(.footnote, design: .serif))
-            .foregroundStyle(Ink.text.opacity(0.55))
             Spacer(minLength: 0)
             DrumPicker(value: $periodLength, range: 1...10, unit: "일")
                 .onChange(of: periodLength) { _, _ in lightFeedback += 1 }
@@ -703,12 +697,11 @@ struct OnboardingFlow: View {
     // ②-3 월 캘린더 — 시작일 탭 = 자동 채움·개별 토글·지난달 이동(전용 뷰, 미결 3 사용자 확정)
     private var calendarPage: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "기준일", title: "마지막 생리는\n언제 시작했나요?")
+            stepHeader(eyebrow: "기준일", title: "마지막 생리는...")
             // 문장 단위 3줄 + fixedSize — 캘린더에 밀려 압축될 때 둘째 줄이 말줄임으로 잘리던
             // 결함 수정(2026-08-08 베타 피드백 "이전 생리도 기록할 수 있어요 하고 문장 마무리").
             VStack(alignment: .leading, spacing: 2) {
-                Text("시작한 날을 누르면 \(periodLength)일만큼 채워져요.")
-                Text("칸을 다시 누르면 지워져요.")
+                Text("마지막 생리 시작일을 선택해주세요.")
                 Text("지난달로 넘기면 이전 생리도 기록할 수 있어요.")
             }
             .font(.system(.footnote, design: .serif))
@@ -726,12 +719,9 @@ struct OnboardingFlow: View {
     private var cyclePage: some View {
         VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "기준일", title: "주기가 보통\n며칠쯤인가요?")
-            VStack(alignment: .leading, spacing: 2) {
-                Text("지난 생리에서 다음 생리까지의 간격이에요.")
-                Text("첫 예측의 출발점으로만 쓰이고, 기록이 쌓이면 자동으로 대체돼요.")
-            }
-            .font(.system(.footnote, design: .serif))
-            .foregroundStyle(Ink.text.opacity(0.55))
+            Text("지난 생리에서 다음 생리까지의 간격을 알려주세요.")
+                .font(.system(.footnote, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.55))
             Spacer(minLength: 0)
             DrumPicker(value: $cycleLengthAnswer, range: 21...35, unit: "일")
                 .onChange(of: cycleLengthAnswer) { _, _ in lightFeedback += 1 }
@@ -842,7 +832,7 @@ struct OnboardingFlow: View {
             .padding(.vertical, 8)
             .background(Ink.text.opacity(added ? 0.04 : 0.08), in: Capsule())
         }
-        .accessibilityValue(added ? "담김 — 다시 탭하면 빠져요" : "")
+        .accessibilityValue(added ? "담김" : "")
     }
 
     private func toggleExample(_ key: String) {
@@ -883,8 +873,7 @@ struct OnboardingFlow: View {
         VStack(alignment: .leading, spacing: 14) {
             stepHeader(eyebrow: "기록할 것", title: "무엇을 기록할까요?")
             VStack(alignment: .leading, spacing: 2) {
-                Text("에너지와 기분은 기본이에요.")
-                Text("나머지는 원하는 만큼만요.")
+                Text("절댓값보다는 오르내림과 편차를 알아보는 데 의미를 가집니다.")
                 Text("나중에 설정에서 바꿀 수 있어요.")
             }
             .font(.system(.footnote, design: .serif))
@@ -892,11 +881,11 @@ struct OnboardingFlow: View {
             // 항목 ⓘ 설명(2026-08-08 베타 피드백) — 체크인 행에서 걷어낸 설명의 새 자리.
             // 롱프레스 중간값 힌트도 여기서 알린다(체크인 ⓘ 제거로 사라진 발견 경로 승계).
             VStack(spacing: 0) {
-                baseRow("에너지", info: "하루를 지내는 힘이 얼마나 있었는지예요. 좋고 나쁨이 아니라 오르내림을 봐요. 기록할 때 칩을 길게 누르면 중간값이 돼요.")
-                baseRow("기분", info: "마음의 날씨예요. 맑음도 흐림도 그대로 적으면 돼요. 기록할 때 칩을 길게 누르면 중간값이 돼요.")
-                toggleRow("수면", $trackSleep, info: "지난밤 잠의 결이에요. 뒤척였는지, 푹 잤는지.")
-                toggleRow("식욕", $trackAppetite, info: "그날 입맛이 어땠는지예요.")
-                toggleRow("오늘 한 줄", $trackNote, info: "하루를 한 문장으로 남기는 자리예요. 나의 리듬 탭에서 모아 볼 수 있어요.")
+                baseRow("에너지", info: "몸의 에너지와 컨디션을 기록합니다.")
+                baseRow("기분", info: "감정과 기분을 기록합니다.")
+                toggleRow("수면", $trackSleep, info: "지난밤 수면의 질을 기록합니다.")
+                toggleRow("식욕", $trackAppetite, info: "입맛과 식사량 등 종합적인 식욕을 기록합니다.")
+                toggleRow("오늘 한 줄", $trackNote, info: "자유롭게 하루를 한 문장으로 남기는 특별한 기록입니다. 일기도 좋고, 메모도 좋습니다.")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
@@ -944,17 +933,17 @@ struct OnboardingFlow: View {
         let healthOn = mirror.linked && mirror.writeAuthorized
         let cloudOn = AppStores.cloudEnabled
         return VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "저장 위치", title: "기록은 여기에만\n저장돼요.")
+            stepHeader(eyebrow: "저장 위치", title: "기록의 저장은 \n오로지 이곳에만")
             VStack(alignment: .leading, spacing: 2) {
                 if healthOn {
                     Text("기록은 이 기기와 Apple 건강 앱에 저장돼요.")
                     Text("건강 앱 설정에 따라 동기화될 수 있어요.")
                 } else {
-                    Text(cloudOn ? "기록은 이 기기에 저장돼요." : "기록은 이 기기에만 저장돼요.")
+                    Text(cloudOn ? "기록은 이 기기에 저장됩니다." : "기록은 이 기기에만 저장됩니다.")
                 }
                 if cloudOn {
-                    Text("플래너와 체크인은 당신의 iCloud로 기기 간에 이어져요.")
-                    Text("생리 기록은 iCloud로 보내지 않아요.")
+                    Text("플래너와 체크인은 당신의 iCloud로 기기 간에 이어지고,")
+                    Text("별도의 서버나 데이터베이스에 저장되지 않습니다.")
                 }
             }
             .font(.system(.footnote, design: .serif))
@@ -971,7 +960,7 @@ struct OnboardingFlow: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
             .milkGlass()
-            Text("아무와도 공유하지 않아요. 언제든 내보내고 지울 수 있어요.")
+            Text("당신만이 언제든 내보내고 지울 수 있어요.")
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))
         }
@@ -983,11 +972,11 @@ struct OnboardingFlow: View {
     // 여기서 답하면 나의 리듬 탭의 설문 프롬프트는 다시 뜨지 않는다(레코드 존재로 판정).
     private var surveyStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "마지막으로", title: "당신의 리듬,\n조금만 알려주세요.")
+            stepHeader(eyebrow: "마지막으로", title: "당신의 리듬,\n조금 더 알려주실래요?")
             VStack(alignment: .leading, spacing: 2) {
-                Text("리듬의 모양은 사람마다 달라요.")
-                Text("17개 문항이고 2분쯤 걸려요.")
-                Text("답은 이 기기에만 저장돼요.")
+                Text("리듬의 모양은 사람마다 다르기에,")
+                Text("2분짜리 설문으로 초기 세팅을 빠르게 할 수 있어요.")
+                Text("응답은 이 기기에만 저장됩니다.")
             }
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.55))

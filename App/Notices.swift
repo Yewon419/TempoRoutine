@@ -131,7 +131,7 @@ struct NoticesView: View {
                     Circle().stroke(Ink.accent, lineWidth: 1.4).frame(width: 22, height: 22)
                     Circle().fill(Ink.winter).frame(width: 4, height: 4).offset(y: -11)
                 }
-                Text("템포루틴 만드는 사람")
+                Text("개발자")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Ink.text)
                 Spacer(minLength: 0)

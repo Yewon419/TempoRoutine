@@ -57,8 +57,8 @@ func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     switch phase {
     case .menstrual:
         SeasonMeta(name: "겨울", phaseName: "월경기", color: Ink.winter, glow: Ink.glowWinter,
-                   moodline: "이번 주는 겨울이에요. 쉬어가도 괜찮아요.",
-                   lever: "쉬어가는 주기예요. 이어가도, 미뤄도 좋아요.")
+                   moodline: "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요.",
+                   lever: "오늘은 천천히 이어가볼까요?")
     case .follicular:
         SeasonMeta(name: "봄", phaseName: "난포기", color: Ink.spring, glow: Ink.glowSpring,
                    moodline: "봄이에요. 가볍게 시작해보기 좋은 때예요.",
@@ -66,11 +66,11 @@ func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     case .ovulation:
         SeasonMeta(name: "여름", phaseName: "배란기", color: Ink.summer, glow: Ink.glowSummer,
                    moodline: "여름이에요. 하고 싶은 만큼 빛나도 좋아요.",
-                   lever: "흐름이 오르는 주기예요. 하고 싶은 만큼 몰입해도 좋아요.")
+                   lever: "마음껏 몰입해도 좋아요.")
     case .luteal:
         SeasonMeta(name: "가을", phaseName: "황체기", color: Ink.autumn, glow: Ink.glowAutumn,
-                   moodline: "가을이에요. 하나씩 매듭지어도 좋은 때예요.",
-                   lever: "매듭짓는 주기예요. 하나씩 마무리해도 좋아요.")
+                   moodline: "가을이에요. 스스로를 돌아보는 시간을 가져봐요.",
+                   lever: "조금 더 해볼 수 있나요? 무리하지는 말아요.")
     }
 }
 
@@ -211,7 +211,7 @@ struct TodayView: View {
     // 카드 탭이 §5.11의 "사용자 행동 순간". 어느 쪽을 골라도 다시 묻지 않는다(재촉 금지 §7).
     private var noticePermissionCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("일정 있는 날 아침 브리핑과\n겨울 예보를 알림으로 챙겨드릴 수 있어요.")
+            Text("일정 있는 날 아침 브리핑과\n생리 예정일을 알림으로 챙겨드릴 수 있어요.")
                 .font(.system(.subheadline, design: .serif))
                 .foregroundStyle(Ink.text)
             HStack(spacing: 10) {
@@ -237,7 +237,7 @@ struct TodayView: View {
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.55))
             }
-            Text("설정의 알림에서 언제든 바꿀 수 있어요.")
+            Text("설정의 알림에서 언제든 바꿀 수 있습니다.")
                 .font(.caption)
                 .foregroundStyle(Ink.text.opacity(0.45))
         }
@@ -376,7 +376,7 @@ struct TodayView: View {
             }
             .padding(.vertical, 12)
         } else if overdueDiff >= avgLength + Self.overdueGraceDays {
-            Text("예정일에서 \(overdueDiff - avgLength)일이 지났어요. 리듬은 늘 조금씩 다르니, 시작되면 캘린더에서 기록해 주세요.")
+            Text("예정일에서 \(overdueDiff - avgLength)일이 지났어요. 리듬은 늘 조금씩 다르니, 생리가 시작되면 캘린더에서 기록해 주세요.")
                 .font(.footnote)
                 .foregroundStyle(Ink.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
