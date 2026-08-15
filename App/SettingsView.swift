@@ -422,14 +422,14 @@ struct SettingsView: View {
     }
 
     private var healthCaption: String {
-        if !mirror.available { return "이 기기에선 건강 앱을 사용할 수 없어요." }
+        if !mirror.available { return "이 기기에선 건강 앱을 사용할 수 없습니다." }
         if mirror.linked && mirror.writeAuthorized {
             return "생리 기록이 건강 앱에도 저장돼요. 이 앱이 쓴 기록만 건강 앱에서 고칠 수 있어요."
         }
         if mirror.linked {
             return "가져올 기록이 없다면 읽기 권한이 꺼진 경우가 많아요. 아래 ‘건강 권한 설정 열기’를 눌러 템포루틴의 ‘생리’ 읽기를 켜주세요."
         }
-        return "기록은 이 기기에만 저장돼요."   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
+        return "기록은 이 기기에만 저장됩니다."   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
     }
 
     private func wipeAll(includeHealth: Bool) {

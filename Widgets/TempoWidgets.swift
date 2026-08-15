@@ -327,7 +327,7 @@ struct SeasonProvider: TimelineProvider {
 
     private var sampleDay: WidgetDay {
         WidgetDay(day: .now, season: "winter", title: "겨울", sub: "겨울 3일차",
-                  inline: "겨울 3일차", mood: "이번 주는 겨울이에요. 쉬어가도 괜찮아요.",
+                  inline: "겨울 3일차", mood: "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요.",
                   projected: false)
     }
 }

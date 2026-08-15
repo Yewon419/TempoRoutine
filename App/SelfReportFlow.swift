@@ -111,7 +111,7 @@ struct SelfReportFlow: View {
             Text("리듬의 모양은 사람마다 달라요.\n2분 정도 소요돼요.")
                 .font(.system(.body, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.75))
-            Text("답은 이 기기에만 저장돼요.")
+            Text("응답은 이 기기에만 저장됩니다.")
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.5))
         }
