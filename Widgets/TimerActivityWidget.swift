@@ -59,6 +59,16 @@ struct TimerActivityWidget: Widget {
         .padding(14)
         // 배경 틴트 없음(2026-08-09 베타 피드백 "기본 알림들이랑 같은 색으로") —
         // 시스템 기본 재질·라벨색을 그대로 쓴다(종이색 커스텀 폐기)
+        //
+        // ⚠ **절전모드 「하얀 박스」의 진짜 원인은 redaction이었다**(2026-08-16 정정).
+        // 잠금·AOD에서 시스템은 위젯·Live Activity 콘텐츠를 privacy redaction 처리하고,
+        // 그 placeholder가 **내용 없는 흰 덩어리**로 그려진다. 이 배너는 배경을 두지 않아
+        // 화면 전체가 빈 흰 사각형으로 보였다. 앞서 의심한 body의 Date.now는 원인이 아니었다
+        // (그 수정은 그대로 두는 게 맞다 — 미리 렌더된 뷰에서 현재 시각을 읽는 건 별개의 결함).
+        //
+        // 싣는 것이 Output 제목과 남은 시간뿐이라 가릴 이유가 없다(§8.2.8 — 주기 정보 0,
+        // 제목 노출은 2026-08-02 허용 범위). 잠금화면에서 이미 보이던 것을 AOD에서도 보이게 한다.
+        .unredacted()
     }
 
     private func subtitle(_ context: ActivityViewContext<TimerActivityAttributes>) -> String {

@@ -54,6 +54,11 @@ enum TimerIntentBridge {
 
 struct PauseTimerIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "타이머 멈추기"
+    /// ⚠ 잠금 상태에서도 실행(2026-08-16 사용자 보고 "암호를 눌러 잠금을 풀어야 재개된다").
+    /// 기본값 `.requiresAuthentication`이면 탭마다 인증을 요구하는데, 이 버튼의 존재 이유가
+    /// **잠금을 풀지 않고** 멈추는 것이라 정책이 기능을 무력화한다.
+    /// 이렇게 둬도 되는 근거: 이 인텐트는 타이머 상태만 토글한다 — 기록 열람·수정·삭제 경로가 없다.
+    static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
 
     // UUID는 인텐트 파라미터 기본 타입이 아니라 문자열로 싣는다
     @Parameter(title: "아이템") var itemID: String
@@ -76,6 +81,8 @@ struct PauseTimerIntent: LiveActivityIntent {
 
 struct ResumeTimerIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "타이머 다시 시작"
+    /// 위 PauseTimerIntent와 같은 이유 — 잠금 해제 없이 재개할 수 있어야 한다
+    static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
 
     @Parameter(title: "아이템") var itemID: String
     @Parameter(title: "Input 여부") var isInput: Bool
