@@ -3,6 +3,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit   // 하단바 지면·라벨색은 UITabBarAppearance로만 잡힌다(티켓, 2026-08-16)
 
 /// 루트 탭 식별자 — 리빌드를 건너 살아남아야 해서 문자열로 저장한다(§8.1 탭 순서).
 enum RootTab: String {
@@ -35,23 +36,26 @@ struct RootTabView: View {
     var body: some View {
         TabView(selection: $rootTab) {
             TodayView()
-                .tabItem { Label("오늘", systemImage: "circle.inset.filled") }
+                .tabItem { tabLabel("오늘", symbol: "circle.inset.filled", ticketAsset: "TicketIconSun") }
                 .tag(RootTab.today.rawValue)
             NavigationStack {
                 SeasonCalendarView()
             }
-            .tabItem { Label("캘린더", systemImage: "calendar") }
+            .tabItem { tabLabel("캘린더", symbol: "calendar", ticketAsset: "TicketIconMoon") }
             .tag(RootTab.calendar.rawValue)
             RhythmView()
-                .tabItem { Label("나의 리듬", systemImage: "chart.xyaxis.line") }
+                .tabItem { tabLabel("나의 리듬", symbol: "chart.xyaxis.line", ticketAsset: "TicketIconWave") }
                 .tag(RootTab.rhythm.rawValue)
             NavigationStack {
                 SettingsView()
             }
-            .tabItem { Label("설정", systemImage: "gearshape") }
+            .tabItem { tabLabel("설정", symbol: "gearshape", ticketAsset: "TicketIconStar") }
             .tag(RootTab.settings.rawValue)
         }
         .tint(Ink.text)
+        // 티켓 = 발권물 흰 지면 하단바(시안 §3.3-⑦, 2026-08-16). 배경·라벨색은 UIKit
+        // appearance로만 잡힌다 — 테마 변경 시 아래 `.id(appTheme)`가 탭바를 새로 만들어 반영된다.
+        .onAppear { Self.applyTabBarAppearance() }
         // 모던 = 항상 다크 단일 외관(시안 §1.1) — 시스템 라이트에서 탭바 유리·ultraThinMaterial·
         // 설정 insetGrouped가 라이트로 렌더되던 결함의 뿌리(베타 피드백 2026-07-29: 탭바 밝아짐·
         // 설정 순백 카드·카드 과명 3건 동일 원인). 기본 테마는 nil = 시스템 따름(기존 다크 대응 유지).
@@ -99,5 +103,45 @@ struct RootTabView: View {
             CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
             DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
         }
+    }
+
+    /// 탭 아이콘 — 티켓만 유화 스티커(에셋은 `template-rendering-intent: original`이라
+    /// 단색으로 물들지 않는다), 그 외 테마는 종전 SF Symbol.
+    /// ⚠ 시안은 미선택 아이콘을 무채로 내리지만 여기서는 원색 그대로다 —
+    /// `.tabItem`은 선택/미선택 이미지를 따로 줄 수 없다(UIKit `selectedImage` 상당 API 없음).
+    /// 선택 구분은 라벨 색(잉크 100% / 45%)이 담당한다.
+    @ViewBuilder
+    private func tabLabel(_ title: String, symbol: String, ticketAsset: String) -> some View {
+        if ThemeStore.chrome.ticketChrome {
+            Label(title, image: ticketAsset)
+        } else {
+            Label(title, systemImage: symbol)
+        }
+    }
+
+    /// 하단바 외형 — SwiftUI에 지면색·라벨색 API가 없어 UIKit appearance로 잡는다.
+    private static func applyTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        guard ThemeStore.chrome.ticketChrome else {
+            // 종전 테마는 시스템 기본(유리) 그대로 — 프록시가 남아 오염되지 않게 되돌린다
+            appearance.configureWithDefaultBackground()
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+            return
+        }
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(TicketSpec.ticketPaper)
+        // 캘린더 지면과 같은 웜 화이트라 경계가 사라진다 — 극세 괘선 한 줄로 나눈다
+        appearance.shadowColor = UIColor(Ink.text.opacity(0.12))
+        let normal = UIColor(Ink.text.opacity(0.45))
+        let selected = UIColor(Ink.text)
+        for layout in [appearance.stackedLayoutAppearance,
+                       appearance.inlineLayoutAppearance,
+                       appearance.compactInlineLayoutAppearance] {
+            layout.normal.titleTextAttributes = [.foregroundColor: normal]
+            layout.selected.titleTextAttributes = [.foregroundColor: selected]
+        }
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
