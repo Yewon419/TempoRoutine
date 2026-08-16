@@ -389,8 +389,14 @@ final class OutputItem {
         let target = cal.startOfDay(for: day)
         guard target >= start else { return false }
         switch schedule {
-        case .once:     // 반복 없음 — 완료까지 계속 표시(완료 후 미래 미표시는 렌더 규칙 §5.5.2)
-            return true
+        case .once:
+            // **적어 넣은 그날만**(2026-08-16 사용자 결정 — "매일매일 해야될 게 다르니까 아웃풋도
+            // 매일 새로 넣어야지"). 종전엔 완료 전까지 매일 따라와서 어제 Output이 오늘 목록에
+            // 그대로 남았다.
+            // ⚠ **목표일이 있으면 그날까지 이어진다** — 디데이를 걸었다는 건 여러 날에 걸친
+            //   과제라는 뜻이고, 사용자도 "디데이 제외하고는"이라고 선을 그었다.
+            if let targetDate { return target <= cal.startOfDay(for: targetDate) }
+            return target == start
         case .daily:
             return true
         case .weekly:
