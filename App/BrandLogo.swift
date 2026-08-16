@@ -26,11 +26,20 @@ struct BrandLogo: View {
 
     private var stroke: CGFloat { diameter * Self.strokeRatio }
 
+    /// ⚠ **워드마크는 테마를 따라가지 않는다**(2026-08-16 베타 피드백 "기본 테마 새로 바꾼 거에는
+    /// 폰트가 바뀌어서"). 종전엔 `.almanac`을 써서 테마의 typeFace를 탔고, 「기본」 테마가
+    /// system 산세리프라 로고 글씨만 광고·앱아이콘과 어긋났다. 로고는 브랜드 자산이라
+    /// 지면이 바뀌어도 같은 글자여야 한다 — 파일 상단 SSOT(build_final.py)도 Gowun Batang 고정이다.
+    private static func wordmarkFont(size: CGFloat) -> Font {
+        guard AlmanacFont.available else { return .system(size: size, design: .serif) }
+        return .custom("GowunBatang-Regular", size: size)
+    }
+
     var body: some View {
         VStack(spacing: diameter * Self.stackGap) {
             symbol
             Text("템포루틴")
-                .font(.almanac(size: diameter * Self.wordSizeRatio))
+                .font(Self.wordmarkFont(size: diameter * Self.wordSizeRatio))
                 .kerning(diameter * Self.kerningRatio)
                 .foregroundStyle(color)
                 .fixedSize()
