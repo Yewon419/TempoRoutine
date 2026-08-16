@@ -319,6 +319,10 @@ struct CheckInEditor: View {
     @State private var draftEnergy = 0
     @State private var draftMood = 0
     @State private var draftSleep = 0
+    /// 식욕(2026-08-16 베타 피드백 "컨디션 저거 구버전인것같다") — 체크인 카드는 2026-08-04에
+    /// 배선됐는데 이 시트만 안 따라왔다. ⚠ 단순 누락이 아니었다: 씨앗 도장은 «추적 켠 항목을
+    /// 전부 채웠는가»로 판정하므로, 식욕을 켠 사람은 이 시트로 기록해선 영영 씨앗을 못 받았다.
+    @State private var draftAppetite = 0
     @State private var draftNote = ""
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 신호 선택, 확정 아님)
     @State private var seedEarned = 0      // 씨앗 획득 연출 트리거(2026-08-09)
@@ -336,9 +340,15 @@ struct CheckInEditor: View {
                     .foregroundStyle(Ink.text)
                 Spacer()
             }
+            // 표시 항목은 체크인 카드와 같은 규칙 — 온보딩·설정에서 고른 추적 항목이 정한다(§3.10)
             signalRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
             signalRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
-            signalRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
+            if AppSettings.trackedSignals.sleep {
+                signalRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
+            }
+            if AppSettings.trackedSignals.appetite {
+                signalRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite)
+            }
             TextField("", text: $draftNote, axis: .vertical)   // placeholder 제거(2026-07-31 사용자 지시)
                 .font(.footnote)
                 .foregroundStyle(Ink.text)
@@ -387,6 +397,7 @@ struct CheckInEditor: View {
         draftEnergy = record?.energy ?? 0
         draftMood = record?.mood ?? 0
         draftSleep = record?.sleep ?? 0
+        draftAppetite = record?.appetite ?? 0
         draftNote = record?.note ?? ""
     }
 
@@ -401,6 +412,7 @@ struct CheckInEditor: View {
                 existing.energy = draftEnergy
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
+                existing.appetite = draftAppetite > 0 ? draftAppetite : nil
                 existing.note = hasNote ? draftNote : nil
                 if Seeds.stampCompletion(existing, signals: AppSettings.trackedSignals) { seedEarned += 1 }
             } else {
@@ -409,6 +421,7 @@ struct CheckInEditor: View {
         } else if hasSignals || hasNote {
             let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood)
             new.sleep = draftSleep > 0 ? draftSleep : nil
+            new.appetite = draftAppetite > 0 ? draftAppetite : nil
             new.note = hasNote ? draftNote : nil
             if Seeds.stampCompletion(new, signals: AppSettings.trackedSignals) { seedEarned += 1 }
             modelContext.insert(new)

@@ -558,6 +558,11 @@ struct OnboardingFlow: View {
 
     private var sceneSeasons: some View {
         VStack(alignment: .leading, spacing: 14) {
+            // eyebrow 추가(2026-08-16 베타 피드백) — 앞 장(sceneWave)과 같은 형식으로 맞춘다
+            Text("사이클 싱킹")
+                .font(.system(.footnote, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.5))
+                .kerning(2)
             Text("한 달 안의 사계절")
                 .font(.almanac(size: 32, weight: .bold))
                 .foregroundStyle(Ink.text)

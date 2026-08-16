@@ -19,7 +19,8 @@ enum CardKind: String, CaseIterable, Identifiable {
     var info: String {
         switch self {
         case .schedule: "약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요."
-        case .input: "식단이나 운동처럼 나를 채우는 일들이에요. 각 계절에 맞는 인풋으로 당신을 채워봐요."
+        // 「각」 앞에서 줄바꿈(2026-08-16 베타 피드백) — 온보딩 장에서 "각"만 첫 줄 끝에 걸렸다
+        case .input: "식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요."
         case .output: "프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?"
         }
     }

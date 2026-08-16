@@ -44,7 +44,7 @@ enum CoachSteps {
         CoachStep(anchor: .todaySchedule, title: "일정",
                   body: "약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요."),
         CoachStep(anchor: .todayInput, title: "Input",
-                  body: "식단이나 운동처럼 나를 채우는 일들이에요. 각 계절에 맞는 인풋으로 당신을 채워봐요."),
+                  body: "식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요."),
         CoachStep(anchor: .todayOutput, title: "Output",
                   body: "프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?"),
     ]

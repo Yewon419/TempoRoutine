@@ -402,7 +402,8 @@ struct RhythmView: View {
                     "\(curName) 기록 \(curCount) / \(goal)")
         }
         let names = unlocked.map { seasonMeta(for: $0).name }.joined(separator: "·")
-        var body = "\(names)의 패턴이 보이기 시작했어요. 네 계절이 모두 채워지면 리듬 전체가 이어질 거에요."
+        // 「채워지면」 뒤에서 줄바꿈(2026-08-16 베타 피드백) — "거에요"만 다음 줄로 넘어가던 것
+        var body = "\(names)의 패턴이 보이기 시작했어요. 네 계절이 모두 채워지면\n리듬 전체가 이어질 거에요."
         if let phase = curPhase, profile.level(for: phase) == nil {
             body += " \(curName)은 \(curCount) / \(goal)회째예요."
         }
