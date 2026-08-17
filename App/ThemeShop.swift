@@ -36,6 +36,8 @@ struct ThemeShopView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var checkIns: [DailyCheckIn]
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
+    /// 포인트컬러의 선택 색(2026-08-17) — 테마와 별개 키라 테마를 오갔다 돌아와도 남는다
+    @AppStorage(PointColor.storageKey) private var pointColor = PointColor.vermilion.rawValue
     /// 원장 방송 카운터 — 생 UserDefaults 읽기는 무효화가 안 걸려서, 이 키를 지켜봐야 구매 직후와
     /// 동기화로 내려온 다른 기기의 구매가 화면에 반영된다(2026-08-11).
     @AppStorage(Seeds.revisionKey) private var seedRevision = 0
@@ -186,7 +188,8 @@ struct ThemeShopView: View {
     private func themeCard(_ theme: AppTheme) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                ThemeEmblem(palette: theme.palette)
+                // 엠블럼·미리보기는 지금 고른 포인트색으로 그린다 — 카드가 실제 얼굴을 보여야 한다
+                ThemeEmblem(palette: theme.palette(point: PointColor(rawValue: pointColor) ?? .vermilion))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(theme.displayName)
                         .font(.almanac(size: 20, weight: .bold))
@@ -199,6 +202,12 @@ struct ThemeShopView: View {
                 Spacer(minLength: 0)
             }
             ThemePreview(theme: theme)
+            // 포인트컬러만 색 선택 행을 단다(2026-08-17) — 테마를 색마다 쪼개는 대신
+            // 테마 안의 선택지로 뒀다. 적용 중일 때만 노출한다: 안 쓰는 테마의 색을
+            // 미리 고르게 하면 「지금 무슨 색인지」가 화면에서 사라진다.
+            if theme == .modern && current == .modern {
+                pointColorRow
+            }
             if theme == coachTargetTheme {
                 actionRow(theme).coachAnchor(.themeCardAction)
             } else {
@@ -218,6 +227,44 @@ struct ThemeShopView: View {
                     .accessibilityHidden(true)
             }
         }
+    }
+
+    /// 포인트색 선택 — 색 원 7개. 라벨을 붙이면 줄이 길어져 스와치만 두고 이름은 접근성으로 넘긴다.
+    private var pointColorRow: some View {
+        HStack(spacing: 10) {
+            ForEach(PointColor.allCases) { color in
+                Button {
+                    lightFeedback += 1
+                    ThemeStore.apply(appTheme, pointRawValue: color.rawValue)   // 선 apply(테마 적용과 같은 경로)
+                    pointColor = color.rawValue
+                } label: {
+                    Circle()
+                        .fill(swatch(color))
+                        .frame(width: 22, height: 22)
+                        .overlay {
+                            // 선택 표시 = 지면색 링 + 바깥 테두리(체크 아이콘은 22pt에서 뭉갠다)
+                            if pointColor == color.rawValue {
+                                Circle().stroke(Ink.paper, lineWidth: 2)
+                                    .padding(2)
+                                Circle().stroke(Ink.text.opacity(0.55), lineWidth: 1.5)
+                            }
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(color.displayName)
+                .accessibilityAddTraits(pointColor == color.rawValue ? [.isSelected] : [])
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("포인트색 선택")
+    }
+
+    /// 스와치는 활성 테마와 무관하게 각 색의 리터럴로 그린다(미리보기 원칙 — 파일 머리말)
+    private func swatch(_ color: PointColor) -> Color {
+        let light = color.ink.light
+        return Color(red: Double(light.0) / 255, green: Double(light.1) / 255, blue: Double(light.2) / 255)
     }
 
     @ViewBuilder
@@ -325,6 +372,8 @@ struct ThemeEmblem: View {
 // ── 테마 미리보기 — 오늘 탭 축소 흉내(표제·계절 도트·카드 표면)를 그 테마의 색으로 ──
 struct ThemePreview: View {
     let theme: AppTheme
+    /// 포인트컬러 미리보기는 고른 색을 따라간다(다른 테마는 무시)
+    @AppStorage(PointColor.storageKey) private var pointColor = PointColor.vermilion.rawValue
 
     private var titleFont: Font {
         switch theme.chrome.typeFace {
@@ -340,7 +389,7 @@ struct ThemePreview: View {
     }
 
     var body: some View {
-        let p = theme.palette
+        let p = theme.palette(point: PointColor(rawValue: pointColor) ?? .vermilion)
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("8월")

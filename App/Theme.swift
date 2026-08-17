@@ -48,6 +48,58 @@ private extension Color {
     static func flat(_ r: Int, _ g: Int, _ b: Int) -> Color { .rgb(r, g, b) }
 }
 
+/// 포인트컬러 테마의 포인트색 — 테마가 아니라 **테마 안의 선택지**다(2026-08-17 사용자 결정).
+/// 색마다 테마를 쪼개면 테마 카드가 10장이 되고 씨앗 가격도 색 수만큼 정해야 한다.
+///
+/// ⚠ 이 색은 생리 시그널을 겸한다(`winter`·`record`·`glowWinter`·선택 탭). 계절 3색은 어느
+/// 포인트색에서도 무채 램프 그대로다 — 유채는 하나뿐이어야 포인트가 성립한다.
+enum PointColor: String, CaseIterable, Identifiable {
+    case vermilion, skyBlue, green, yellow, purple, cobalt, orange
+
+    static let storageKey = "pointColor"
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .vermilion: "다홍"
+        case .skyBlue: "스카이블루"
+        case .green: "그린"
+        case .yellow: "옐로"
+        case .purple: "퍼플"
+        case .cobalt: "코발트블루"
+        case .orange: "오렌지"
+        }
+    }
+
+    /// 라이트/다크 쌍. 다크는 검정 지면에서 채도가 죽지 않게 한 단 밝게 잡는다.
+    /// ⚠ 옐로는 예외적으로 라이트를 더 어둡게 간다 — 흰 지면(#F2F2F7) 위에서 노랑은
+    ///    명도가 붙어 대비가 무너진다(다른 색과 같은 밝기로 두면 숫자가 안 읽힌다).
+    var ink: (light: (Int, Int, Int), dark: (Int, Int, Int)) {
+        switch self {
+        case .vermilion: ((0xC9, 0x43, 0x2C), (0xE0, 0x70, 0x5C))
+        case .skyBlue:   ((0x2A, 0x8C, 0xC4), (0x62, 0xB8, 0xE8))
+        case .green:     ((0x2F, 0x8B, 0x57), (0x5C, 0xB8, 0x82))
+        case .yellow:    ((0xB0, 0x86, 0x11), (0xE8, 0xBE, 0x4E))
+        case .purple:    ((0x7B, 0x52, 0xC4), (0xA8, 0x8A, 0xE8))
+        case .cobalt:    ((0x2B, 0x52, 0xB8), (0x6D, 0x8F, 0xE8))
+        case .orange:    ((0xD1, 0x6A, 0x1E), (0xF0, 0x94, 0x4A))
+        }
+    }
+
+    /// 밑줄(glow)은 본색보다 한 단 물러선다 — 계절 밴드는 숫자를 이겨선 안 된다.
+    var glow: (light: (Int, Int, Int), dark: (Int, Int, Int)) {
+        switch self {
+        case .vermilion: ((0xD4, 0x55, 0x3E), (0xE2, 0x60, 0x4A))
+        case .skyBlue:   ((0x45, 0x9E, 0xD0), (0x52, 0xA8, 0xDC))
+        case .green:     ((0x45, 0x9B, 0x68), (0x4E, 0xA5, 0x72))
+        case .yellow:    ((0xC2, 0x98, 0x22), (0xD6, 0xAC, 0x3A))
+        case .purple:    ((0x8C, 0x66, 0xD0), (0x96, 0x74, 0xD8))
+        case .cobalt:    ((0x40, 0x66, 0xC6), (0x52, 0x78, 0xD4))
+        case .orange:    ((0xDD, 0x7B, 0x33), (0xE6, 0x86, 0x3E))
+        }
+    }
+}
+
 /// 색 토큰 세트 — Ink가 위임하는 전 항목. 이름·의미는 종전 Ink와 1:1.
 struct ThemePalette {
     let winter: Color
@@ -108,16 +160,24 @@ extension ThemePalette {
     ///    기준으로 잡았다(밝은 지면에선 어둡게 내리고, 검정 지면에선 밝게 올린다).
     /// ⚠ 공휴일은 다홍을 쓰지 않는다(로즈) — 같은 색이면 생리 시그널과 섞여 읽힌다.
     ///    토요일 파랑도 무채로 내렸다. 유채는 다홍 하나뿐이어야 포인트가 성립한다.
-    static let modern = ThemePalette(
-        winter: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),  // 생리 = 다홍(포인트)
+    /// 포인트색은 런타임 선택이라 정적 상수로 둘 수 없다 — `ThemeStore.apply`가 이걸 만든다.
+    /// 계절 3색·지면은 색 선택과 무관하게 고정이고, 갈리는 건 포인트 자리 4곳뿐이다:
+    /// `winter`(생리) · `record`(기록) · `coral`(은퇴 토큰) · `glowWinter`(생리 밑줄).
+    static func modern(point: PointColor) -> ThemePalette {
+        let ink = Color(light: .rgb(point.ink.light.0, point.ink.light.1, point.ink.light.2),
+                        dark: .rgb(point.ink.dark.0, point.ink.dark.1, point.ink.dark.2))
+        let glow = Color(light: .rgb(point.glow.light.0, point.glow.light.1, point.glow.light.2),
+                         dark: .rgb(point.glow.dark.0, point.glow.dark.1, point.glow.dark.2))
+        return ThemePalette(
+        winter: ink,   // 생리 = 포인트색
         spring: Color(light: .rgb(0x9A, 0xA0, 0xA8), dark: .rgb(0xC8, 0xCD, 0xD5)),
         summer: Color(light: .rgb(0x71, 0x77, 0x7F), dark: .rgb(0x9A, 0xA0, 0xA8)),
         autumn: Color(light: .rgb(0x4A, 0x4F, 0x56), dark: .rgb(0x70, 0x75, 0x7C)),
         // ↓ 여기부터는 plain과 동값 — 「기본에서 색만 덜어낸 판」이라 지면은 손대지 않는다
         text: Color(light: .rgb(0x1C, 0x1C, 0x1E), dark: .rgb(0xF2, 0xF2, 0xF7)),
         paper: Color(light: .rgb(0xF2, 0xF2, 0xF7), dark: .rgb(0x00, 0x00, 0x00)),
-        coral: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),   // 은퇴 토큰
-        record: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),  // 기록도 포인트색
+        coral: ink,     // 은퇴 토큰
+        record: ink,    // 기록도 포인트색
         danger: Color(light: .rgb(0xD6, 0x45, 0x3C), dark: .rgb(0xFF, 0x6B, 0x60)),
         dim: Color(light: .rgb(0xAE, 0xAE, 0xB2), dark: .rgb(0x8E, 0x8E, 0x93)),
         oxide: .flat(0x8E, 0x8E, 0x93),
@@ -127,13 +187,14 @@ extension ThemePalette {
         // 캘린더 계절 밑줄 — 계절색보다 한 단 물러서되, **무채라 지면과 붙으면 사라진다.**
         // 라이트(#F2F2F7 지면)는 계절색과 거의 같은 명도까지 내려야 띠로 읽히고(시안 실측),
         // 다크(검정 지면)는 반대로 올려야 한다.
-        glowWinter: Color(light: .rgb(0xD4, 0x55, 0x3E), dark: .rgb(0xE2, 0x60, 0x4A)),
+        glowWinter: glow,
         glowSpring: Color(light: .rgb(0xA3, 0xA9, 0xB1), dark: .rgb(0xA8, 0xAD, 0xB5)),
         glowSummer: Color(light: .rgb(0x7B, 0x81, 0x8A), dark: .rgb(0x84, 0x8A, 0x92)),
         glowAutumn: Color(light: .rgb(0x56, 0x5B, 0x62), dark: .rgb(0x62, 0x67, 0x6E)),
         surface: Color(light: .rgb(0xFF, 0xFF, 0xFF), dark: .rgb(0x1C, 0x1C, 0x1E)),
         accent: .flat(0x8E, 0x8E, 0x93)          // systemGray — 괘선·요일·테두리는 배경으로 물린다
-    )
+        )
+    }
 
     /// 티켓 (시안 SSOT §3.2) — 딥 네이비 잉크 · 블루그레이 색면 지면 · 웜 화이트 발권물.
     /// ⚠ 라이트/다크 동값(`.flat`)이다. 발권물은 인쇄물이라 지면이 뒤집히지 않는다 —
@@ -295,11 +356,12 @@ extension ThemeChrome {
 extension AppTheme {
     /// ⚠ 새 테마를 추가하면 여기와 `chrome` 양쪽에 케이스를 더해야 한다. switch라 빠뜨리면
     /// 컴파일이 막는다 — 종전 삼항 연산자(`== .modern ? :`)는 조용히 은필로 떨어뜨렸다.
-    var palette: ThemePalette {
+    /// 포인트컬러만 색 선택을 받는다 — 나머지는 인자를 무시한다.
+    func palette(point: PointColor = .vermilion) -> ThemePalette {
         switch self {
         case .plain: .plain
         case .standard: .standard
-        case .modern: .modern
+        case .modern: .modern(point: point)
         case .ticket: .ticket
         }
     }
@@ -359,11 +421,18 @@ enum ThemeStore {
     nonisolated(unsafe) private(set) static var current: AppTheme = .plain
     nonisolated(unsafe) private(set) static var palette: ThemePalette = .plain
     nonisolated(unsafe) private(set) static var chrome: ThemeChrome = .plain
+    /// 포인트컬러 테마의 선택 색(2026-08-17). 다른 테마에서는 읽히지 않지만 값은 보존된다 —
+    /// 테마를 오갔다 돌아와도 고르던 색이 남아야 한다.
+    nonisolated(unsafe) private(set) static var point: PointColor = .vermilion
 
-    static func apply(_ rawValue: String?) {
+    /// - Parameter pointRawValue: nil이면 현재 값을 유지한다(테마만 바꾸는 호출 경로 대비).
+    static func apply(_ rawValue: String?, pointRawValue: String? = nil) {
         let theme = rawValue.flatMap(AppTheme.init(rawValue:)) ?? .plain
+        if let pointRawValue, let picked = PointColor(rawValue: pointRawValue) {
+            point = picked
+        }
         current = theme
-        palette = theme.palette
+        palette = theme.palette(point: point)
         chrome = theme.chrome
     }
 }
