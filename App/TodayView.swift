@@ -185,7 +185,7 @@ struct TodayView: View {
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: today)
             case .input:    InputAddSheet(currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel)
-            case .output:   OutputAddSheet()
+            case .output:   OutputAddSheet(energyLevel: todayEnergyLevel)
             }
         }
         .sheet(item: $editingSchedule) { item in

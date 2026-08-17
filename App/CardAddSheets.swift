@@ -502,6 +502,13 @@ struct InputAddSheet: View {
         .other:    ["겨울": "철분 챙기기", "봄": "새 노트 펴기", "여름": "물 자주 마시기", "가을": "반신욕"],
     ]
 
+    /// 빠른 추가 목록 — 에너지 레벨이 있으면 그 기준, 없으면 계절 일반 경향(D5, QuickAdd 주석)
+    private var quickAddTitles: [String] {
+        if let level = energyLevel { return QuickAdd.inputs(category: category, level: level) }
+        guard let season = currentSeason?.name else { return [] }
+        return QuickAdd.inputs(category: category, season: season)
+    }
+
     private var placeholder: String {
         if let level = energyLevel {
             return "예: \(EnergyProfile.inputExample(category: category, level: level))"
@@ -608,6 +615,13 @@ struct InputAddSheet: View {
                     Text("운동").tag(InputCategory.exercise)
                     Text("미디어").tag(InputCategory.media)
                     Text("기타").tag(InputCategory.other)
+                }
+                // 빠른 추가(2026-08-16) — 카테고리 아래에 둔다. 카테고리가 정해져야 목록이 나온다.
+                if !quickAddTitles.isEmpty {
+                    QuickAddChips(titles: quickAddTitles) { picked in
+                        title = picked
+                        applyTitleTimeParse()
+                    }
                 }
                 Section {
                     // 상호 배타(둘 다 끔 = 단발 체크 — Output과 동일 문법, 2026-07-23)
@@ -717,10 +731,15 @@ struct OutputAddSheet: View {
     /// nil = 추가 / 값 = 수정(삭제 섹션 노출 — 일정 시트와 같은 문법, 2026-08-08 나의 사계 개선)
     var editing: OutputItem? = nil
 
+    /// 빠른 추가 목록의 기준(2026-08-16) — nil이면 「보통」 목록으로 간다(QuickAdd 주석 참조)
+    let energyLevel: EnergyLevel?
+
     /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
-    init(day: Date = .now, presetSeason: SeasonAnchor? = nil, editing: OutputItem? = nil) {
+    init(day: Date = .now, presetSeason: SeasonAnchor? = nil, editing: OutputItem? = nil,
+         energyLevel: EnergyLevel? = nil) {
         self.day = day
         self.editing = editing
+        self.energyLevel = energyLevel
         if let item = editing {
             _title = State(initialValue: item.title)
             switch item.schedule {
@@ -796,6 +815,19 @@ struct OutputAddSheet: View {
                     rejectedMatch = lastMatch
                     timeMinutes = nil
                     lastMatch = nil
+                }
+                // 빠른 추가(2026-08-16) — 제목만이 아니라 진행 방식·목표까지 채운다.
+                // 수정 모드에선 띄우지 않는다: 이미 값이 있는 카드를 덮어쓸 자리가 아니다.
+                if editing == nil {
+                    QuickAddChips(titles: QuickAdd.outputs(level: energyLevel).map(\.title)) { picked in
+                        guard let hit = QuickAdd.outputs(level: energyLevel)
+                            .first(where: { $0.title == picked }) else { return }
+                        title = hit.title
+                        applyTitleTimeParse()
+                        kind = hit.kind
+                        if hit.sessions > 0 { targetSessions = hit.sessions }
+                        if hit.seconds > 0 { targetMinutes = hit.seconds / 60 }
+                    }
                 }
                 Section {
                     // 표기 개편(2026-08-01 베타 피드백): 「반복」→「기간 반복」(달력 주기),
@@ -1031,4 +1063,34 @@ func anchorDate(for day: Date) -> Date {
     comps.minute = time.minute
     comps.second = time.second
     return cal.date(from: comps) ?? day
+}
+
+/// 빠른 추가 칩(2026-08-16 사용자 지시) — 온보딩 ③ 예시 칩과 같은 문법.
+/// ⚠ **탭해도 저장되지 않는다.** 입력칸을 채울 뿐이고 저장은 시트의 「저장」이 한다 —
+///   잘못 눌렀을 때 되돌릴 자리가 있어야 하고, 시트가 탭 한 번에 닫히면 수정할 기회가 없다.
+/// 세로로 쌓는 이유: 문구가 길어(「소화 편한 죽 한 그릇」) 가로 한 줄에 3개가 안 들어간다.
+struct QuickAddChips: View {
+    let titles: [String]
+    let onPick: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(titles, id: \.self) { title in
+                Button { onPick(title) } label: { chip(title) }
+                    .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func chip(_ title: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "plus").font(.caption2.weight(.semibold))
+            Text(title).font(.footnote)
+        }
+        .foregroundStyle(Ink.text.opacity(0.85))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Ink.text.opacity(0.07), in: Capsule())
+    }
 }

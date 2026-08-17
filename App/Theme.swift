@@ -238,6 +238,10 @@ struct ThemeChrome {
     /// 지면이 사진(계절 유화)인가. true면 지면 위 보조 활자를 흰 계열로 올린다 —
     /// 기본 규칙(`Ink.text` 50~60%)은 사진 위에서 묻힌다(시안 §3.3-⑥).
     let photographicGround: Bool
+    /// 하단바 선택 탭을 포인트색(`winter`)으로 세우는가. 기본은 먹색(`text`).
+    /// 포인트컬러 전용 — 겨울 구간이 아니면 오늘 탭에 유채가 한 점도 안 보이던 문제를
+    /// 여기서 푼다(시안 §1.2.1, 2026-08-17 사용자 지시).
+    let pointTabTint: Bool
 }
 
 extension ThemeChrome {
@@ -248,7 +252,7 @@ extension ThemeChrome {
         dimsInDarkMode: true, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
-        ticketChrome: false, photographicGround: false
+        ticketChrome: false, photographicGround: false, pointTabTint: false
     )
 
     /// 기본 — 장식을 전부 끈다(2026-08-12). 계절 정보(글리프·밴드 색)는 팔레트가 담당하므로
@@ -259,7 +263,7 @@ extension ThemeChrome {
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
-        ticketChrome: false, photographicGround: false
+        ticketChrome: false, photographicGround: false, pointTabTint: false
     )
 
     /// 포인트컬러 — 크롬은 **`plain`과 동값**이다(2026-08-16 개편).
@@ -271,7 +275,7 @@ extension ThemeChrome {
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
-        ticketChrome: false, photographicGround: false
+        ticketChrome: false, photographicGround: true == false, pointTabTint: true
     )
 
     /// 티켓 — 지면이 계절 유화라 대비 보정을 켜고, 계절광은 얹지 않는다(레퍼런스 지면은 평면).
@@ -282,7 +286,7 @@ extension ThemeChrome {
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: true,
         circlesRecordedDays: false, boostsContrast: true,
-        ticketChrome: true, photographicGround: true
+        ticketChrome: true, photographicGround: true, pointTabTint: false
     )
 }
 

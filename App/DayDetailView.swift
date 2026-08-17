@@ -135,7 +135,10 @@ struct DayDetailView: View {
                                           energyLevel: snapshot.phase(on: today).flatMap {
                                               EnergyProfile(checkIns: checkIns, snapshot: snapshot).level(for: $0)
                                           })
-            case .output:   OutputAddSheet(day: day)
+            case .output:   OutputAddSheet(day: day,
+                                          energyLevel: snapshot.phase(on: today).flatMap {
+                                              EnergyProfile(checkIns: checkIns, snapshot: snapshot).level(for: $0)
+                                          })
             }
         }
         .sheet(item: $editingSchedule) { item in
