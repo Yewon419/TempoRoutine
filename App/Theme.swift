@@ -16,6 +16,9 @@ enum AppTheme: String, CaseIterable, Identifiable {
     /// 은필 — 종전 기본. 2026-08-12부터 씨앗 구매 테마로 내려왔다(MASTER §3.8.1 트랙 분리).
     /// rawValue는 `standard` 그대로 둔다 — 바꾸면 기존 설치의 저장값이 깨진다.
     case standard
+    /// 포인트컬러(2026-08-16 개편, 구 「모던」) — 기본 테마에서 색만 덜어낸 판.
+    /// 지면·서체·조판은 기본과 동일하고, 계절 3색을 무채 램프로 내려 **다홍 하나만 남긴다.**
+    /// rawValue는 `modern` 그대로 둔다 — 바꾸면 기존 설치의 저장값·씨앗 원장이 깨진다(은필 전례).
     case modern
     /// 티켓(2026-08-14, 시안 SSOT §3) — 색면 위에 놓인 발권물. 경계를 선이 아니라 절단으로 쓴다.
     case ticket
@@ -26,7 +29,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
         switch self {
         case .plain: "기본"
         case .standard: "은필"
-        case .modern: "모던"
+        case .modern: "포인트컬러"
         case .ticket: "티켓"
         }
     }
@@ -97,34 +100,39 @@ extension ThemePalette {
         accent: Color(light: .rgb(0x55, 0x60, 0x6C), dark: .rgb(0x98, 0xA6, 0xB4))
     )
 
-    /// 모던 (시안 SSOT §1.2) — 도트 그리드 + 무채 램프 + 다홍 단일 시그널.
-    /// ⚠ **2026-08-12부터 시스템 라이트/다크를 따라간다**(사용자 지시). 종전 「항상 다크 단일
-    /// 외관」 확정을 뒤집는 것 — 라이트는 같은 문법을 밝은 지면으로 뒤집어 옮겼다.
-    /// ⚠ 여름·가을 명도차 확대(사용자 지적: 구분이 거의 안 됨). **다크에선 가을을 내리는 게
-    /// 아니라 여름을 올려서 벌린다** — 가을을 더 내리면 니어블랙 지면에 묻힌다(시안 실측).
-    /// 라이트는 반대로 가을을 내려서 벌린다(흰 지면).
+    /// 포인트컬러 (2026-08-16 개편, 구 「모던」) — **기본 테마에서 색만 덜어낸 판**.
+    /// 지면·카드·서체·조판은 `plain`과 같은 값이고, 다른 건 계절색뿐이다:
+    /// 봄·여름·가을을 무채 램프로 내려 **다홍(생리)이 화면의 유일한 유채색**이 되게 한다.
+    /// ⚠ 종전 「모던」의 니어블랙 지면·도트 그리드·아웃라인 표제·Pretendard는 전부 걷었다.
+    /// ⚠ 무채 3단은 명도로만 갈리므로 간격을 넉넉히 벌린다 — 라이트/다크 각각 지면 대비를
+    ///    기준으로 잡았다(밝은 지면에선 어둡게 내리고, 검정 지면에선 밝게 올린다).
+    /// ⚠ 공휴일은 다홍을 쓰지 않는다(로즈) — 같은 색이면 생리 시그널과 섞여 읽힌다.
+    ///    토요일 파랑도 무채로 내렸다. 유채는 다홍 하나뿐이어야 포인트가 성립한다.
     static let modern = ThemePalette(
-        winter: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),  // 생리 = 다홍
-        spring: Color(light: .rgb(0x9E, 0xA4, 0xAE), dark: .rgb(0xED, 0xEF, 0xF3)),
-        summer: Color(light: .rgb(0x6F, 0x76, 0x81), dark: .rgb(0xC2, 0xC8, 0xD2)),
-        autumn: Color(light: .rgb(0x3D, 0x43, 0x4D), dark: .rgb(0x7C, 0x81, 0x8C)),
-        text: Color(light: .rgb(0x10, 0x10, 0x14), dark: .rgb(0xE9, 0xE7, 0xF0)),
-        paper: Color(light: .rgb(0xFA, 0xFA, 0xFC), dark: .rgb(0x0A, 0x0A, 0x0C)),
-        coral: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),   // 은퇴 색
-        record: Color(light: .rgb(0x5B, 0x62, 0x70), dark: .rgb(0xA9, 0xAF, 0xC0)),
-        danger: Color(light: .rgb(0xC2, 0x45, 0x3C), dark: .rgb(0xE0, 0x6D, 0x62)),
-        dim: Color(light: Color(red: 0x10 / 255, green: 0x10 / 255, blue: 0x14 / 255).opacity(0.5),
-                   dark: Color(red: 0xE9 / 255, green: 0xE7 / 255, blue: 0xF0 / 255).opacity(0.5)),
-        oxide: Color(light: .rgb(0x8A, 0x90, 0x99), dark: .rgb(0x9A, 0xA0, 0xAA)),
-        holiday: Color(light: .rgb(0xC2, 0x45, 0x6A), dark: .rgb(0xEC, 0x8A, 0xA0)),  // 로즈
-        saturday: .flat(0x7F, 0xA4, 0xE8),
-        frost: Color(light: .rgb(0xF4, 0xF4, 0xF7), dark: .rgb(0x06, 0x06, 0x07)),
-        glowWinter: Color(light: .rgb(0xD4, 0x55, 0x3E), dark: .rgb(0xE2, 0x5B, 0x45)),
-        glowSpring: Color(light: .rgb(0xB4, 0xBA, 0xC4), dark: .rgb(0xF5, 0xF6, 0xF8)),
-        glowSummer: Color(light: .rgb(0x84, 0x8B, 0x96), dark: .rgb(0xC6, 0xCC, 0xD6)),
-        glowAutumn: Color(light: .rgb(0x54, 0x5A, 0x64), dark: .rgb(0x70, 0x75, 0x7F)),
-        surface: Color(light: Color.white.opacity(0.72), dark: Color.white.opacity(0.05)),
-        accent: Color(light: .rgb(0x10, 0x10, 0x14), dark: .rgb(0xF2, 0xF3, 0xF6))
+        winter: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),  // 생리 = 다홍(포인트)
+        spring: Color(light: .rgb(0x9A, 0xA0, 0xA8), dark: .rgb(0xC8, 0xCD, 0xD5)),
+        summer: Color(light: .rgb(0x71, 0x77, 0x7F), dark: .rgb(0x9A, 0xA0, 0xA8)),
+        autumn: Color(light: .rgb(0x4A, 0x4F, 0x56), dark: .rgb(0x70, 0x75, 0x7C)),
+        // ↓ 여기부터는 plain과 동값 — 「기본에서 색만 덜어낸 판」이라 지면은 손대지 않는다
+        text: Color(light: .rgb(0x1C, 0x1C, 0x1E), dark: .rgb(0xF2, 0xF2, 0xF7)),
+        paper: Color(light: .rgb(0xF2, 0xF2, 0xF7), dark: .rgb(0x00, 0x00, 0x00)),
+        coral: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),   // 은퇴 토큰
+        record: Color(light: .rgb(0xC9, 0x43, 0x2C), dark: .rgb(0xE0, 0x70, 0x5C)),  // 기록도 포인트색
+        danger: Color(light: .rgb(0xD6, 0x45, 0x3C), dark: .rgb(0xFF, 0x6B, 0x60)),
+        dim: Color(light: .rgb(0xAE, 0xAE, 0xB2), dark: .rgb(0x8E, 0x8E, 0x93)),
+        oxide: .flat(0x8E, 0x8E, 0x93),
+        holiday: Color(light: .rgb(0xC2, 0x45, 0x6A), dark: .rgb(0xEC, 0x8A, 0xA0)),  // 로즈 — 다홍과 분리
+        saturday: .flat(0x8E, 0x8E, 0x93),   // 무채로 내림(유채는 다홍 하나)
+        frost: Color(light: .rgb(0xF2, 0xF2, 0xF7), dark: .rgb(0x00, 0x00, 0x00)),
+        // 캘린더 계절 밑줄 — 계절색보다 한 단 물러서되, **무채라 지면과 붙으면 사라진다.**
+        // 라이트(#F2F2F7 지면)는 계절색과 거의 같은 명도까지 내려야 띠로 읽히고(시안 실측),
+        // 다크(검정 지면)는 반대로 올려야 한다.
+        glowWinter: Color(light: .rgb(0xD4, 0x55, 0x3E), dark: .rgb(0xE2, 0x60, 0x4A)),
+        glowSpring: Color(light: .rgb(0xA3, 0xA9, 0xB1), dark: .rgb(0xA8, 0xAD, 0xB5)),
+        glowSummer: Color(light: .rgb(0x7B, 0x81, 0x8A), dark: .rgb(0x84, 0x8A, 0x92)),
+        glowAutumn: Color(light: .rgb(0x56, 0x5B, 0x62), dark: .rgb(0x62, 0x67, 0x6E)),
+        surface: Color(light: .rgb(0xFF, 0xFF, 0xFF), dark: .rgb(0x1C, 0x1C, 0x1E)),
+        accent: .flat(0x8E, 0x8E, 0x93)          // systemGray — 괘선·요일·테두리는 배경으로 물린다
     )
 
     /// 티켓 (시안 SSOT §3.2) — 딥 네이비 잉크 · 블루그레이 색면 지면 · 웜 화이트 발권물.
@@ -254,14 +262,15 @@ extension ThemeChrome {
         ticketChrome: false, photographicGround: false
     )
 
-    /// 모던 — 2026-08-12부터 시스템 라이트/다크를 따라간다(종전 다크 고정 해제).
-    /// `dimsInDarkMode`는 계속 false — 계절광이 무채라 다크에서 감쇠할 이유가 없다.
+    /// 포인트컬러 — 크롬은 **`plain`과 동값**이다(2026-08-16 개편).
+    /// 「기본에서 색만 덜어낸 판」이라 장식 축이 하나라도 켜지면 그 전제가 깨진다:
+    /// 종전 모던의 도트 그리드·아웃라인 표제·Pretendard·계절광·기록 원을 전부 껐다.
     static let modern = ThemeChrome(
-        typeFace: .pretendard, texture: .dotGrid, outlineDisplay: true,
-        showsSeasonLight: true, neutralSeasonLight: true,
+        typeFace: .system, texture: .none, outlineDisplay: false,
+        showsSeasonLight: false, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
-        seasonRowFirst: true, todayCircleUsesAccent: true,
-        circlesRecordedDays: true, boostsContrast: true,
+        seasonRowFirst: false, todayCircleUsesAccent: false,
+        circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false
     )
 

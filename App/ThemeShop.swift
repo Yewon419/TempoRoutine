@@ -25,7 +25,7 @@ extension AppTheme {
         switch self {
         case .plain: "기본 테마."
         case .standard: "은필과 종이. 계절이 빛으로 스며드는 지면이에요."
-        case .modern: "니어블랙 지면에 다홍 한 점."
+        case .modern: "기본 지면에 다홍 한 점. 계절은 밝기로 갈려요."
         case .ticket: "색면 위에 놓인 한 장의 티켓. 일상을 여행처럼."
         }
     }
