@@ -305,7 +305,7 @@ struct DayDetailView: View {
         case .input:
             let rows = inputRows
             guard !rows.isEmpty else { return nil }
-            return "\(rows.filter { isChecked($0.item.id) }.count) / \(rows.count)"
+            return "\(rows.filter { isCompleted($0.item.id) }.count) / \(rows.count)"
         case .output:
             let rows = outputRows
             guard !rows.isEmpty else { return nil }
