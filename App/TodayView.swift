@@ -414,8 +414,28 @@ struct TodayView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .milkGlass()
+        .milkGlass(stub: ticketStub(for: kind))
         .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)
+    }
+
+    /// 티켓 스텁에 세울 «핵심 값 하나»(시안 §3.3-③). 티켓 테마가 아니면 쓰이지 않는다.
+    /// 비어 있는 구획은 nil — 세울 값이 없는 스텁은 빈 칸으로 남아 발권물처럼 안 읽힌다.
+    private func ticketStub(for kind: CardKind) -> String? {
+        switch kind {
+        case .schedule:
+            // 시각 있는 첫 일정. 종일뿐이면 세울 값이 없다(발권물의 시각 칸에 「종일」은 어색하다)
+            guard let first = todaySchedules.first(where: { !$0.isAllDay }) else { return nil }
+            return first.date.formatted(date: .omitted, time: .shortened)
+        case .input:
+            let items = todayInputs
+            guard !items.isEmpty else { return nil }
+            return "\(items.filter { isChecked($0.id) }.count) / \(items.count)"
+        case .output:
+            let items = todayOutputs
+            guard !items.isEmpty else { return nil }
+            let mean = items.map(\.percent).reduce(0, +) / Double(items.count)
+            return "\(Int((mean * 100).rounded()))%"
+        }
     }
 
     // ① 일정 (오늘) — 시각 있는 것 시간순, 종일(무시각)은 맨 뒤(2026-08-09 사용자 결정)

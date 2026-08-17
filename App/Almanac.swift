@@ -151,27 +151,42 @@ func almanacDisplay(_ text: String, size: CGFloat, color: Color) -> some View {
 // 콘텐츠 카드 = 밀크 글래스(반투명 지면 + 은필 실선), 배경 계절광이 비쳐 유리감이 성립.
 struct MilkGlass: ViewModifier {
     var radius: CGFloat = 16
+    /// 티켓 테마에서 스텁에 세울 «핵심 값 하나»(시각·진행률·일차). nil = 스텁 없는 카드.
+    /// 다른 테마에서는 무시된다 — 값을 넘겨도 렌더에 영향이 없다.
+    var stub: String?
 
+    @ViewBuilder
     func body(content: Content) -> some View {
-        content
-            .background {
+        if ThemeStore.chrome.ticketChrome, let stub {
+            // 발권물(시안 §3.3-②) — 스텁 자리를 본문에서 비우고, 윤곽을 V홈까지 도려낸다
+            content
+                .padding(.trailing, TicketSpec.stubWidth + 8)
+                .background(TicketSpec.ticketPaper)
+                .overlay(alignment: .trailing) { TicketStub(value: stub) }
+                .clipShape(TicketCardShape())
+        } else {
+            content.background { surface }
+        }
+    }
+
+    private var surface: some View {
+        RoundedRectangle(cornerRadius: radius)
+            .fill(.ultraThinMaterial)
+            .overlay {
+                RoundedRectangle(cornerRadius: radius).fill(Ink.surface)
+            }
+            .overlay {
                 RoundedRectangle(cornerRadius: radius)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: radius).fill(Ink.surface)
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: radius)
-                            .stroke(Ink.accent.opacity(0.18), lineWidth: 1)   // 구조색 테두리(기본=은필 동값)
-                    }
+                    .stroke(Ink.accent.opacity(0.18), lineWidth: 1)   // 구조색 테두리(기본=은필 동값)
             }
     }
 }
 
 extension View {
-    /// 콘텐츠 표면 — 카드류 전부 이 재질(§4 보강 I)
-    func milkGlass(radius: CGFloat = 16) -> some View {
-        modifier(MilkGlass(radius: radius))
+    /// 콘텐츠 표면 — 카드류 전부 이 재질(§4 보강 I).
+    /// `stub`을 주면 티켓 테마에서만 발권물 문법(우측 스텁·V홈)으로 갈아탄다(시안 §3.3-②).
+    func milkGlass(radius: CGFloat = 16, stub: String? = nil) -> some View {
+        modifier(MilkGlass(radius: radius, stub: stub))
     }
 
     /// 책력 괘선 — 항목 구분(§4 조판). 구조색(기본=은필 동값, 모던=흰색)

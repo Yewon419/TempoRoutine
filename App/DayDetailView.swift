@@ -293,7 +293,25 @@ struct DayDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .milkGlass()
+        .milkGlass(stub: ticketStub(kind))
+    }
+
+    /// 티켓 스텁에 세울 «핵심 값 하나»(시안 §3.3-③) — 오늘 탭 ticketStub(for:)과 같은 규칙.
+    private func ticketStub(_ kind: CardKind) -> String? {
+        switch kind {
+        case .schedule:
+            guard let first = scheduleRows.first(where: { !$0.isAllDay }) else { return nil }
+            return first.date.formatted(date: .omitted, time: .shortened)
+        case .input:
+            let rows = inputRows
+            guard !rows.isEmpty else { return nil }
+            return "\(rows.filter { isChecked($0.item.id) }.count) / \(rows.count)"
+        case .output:
+            let rows = outputRows
+            guard !rows.isEmpty else { return nil }
+            let mean = rows.map(\.item.percent).reduce(0, +) / Double(rows.count)
+            return "\(Int((mean * 100).rounded()))%"
+        }
     }
 
     // ① 일정 — 시각 있는 것 시간순, 종일(무시각)은 맨 뒤(2026-08-09 사용자 결정, 오늘 탭과 동형)
