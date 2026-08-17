@@ -52,7 +52,8 @@ struct RootTabView: View {
             .tabItem { tabLabel("설정", symbol: "gearshape", ticketAsset: "TicketIconStar") }
             .tag(RootTab.settings.rawValue)
         }
-        .tint(Ink.text)
+        // 선택 탭 색 — 포인트컬러만 다홍(2026-08-17 사용자 지시). tint는 아이콘·라벨을 함께 물들인다.
+        .tint(ThemeStore.chrome.pointTabTint ? Ink.winter : Ink.text)
         // 티켓 = 발권물 흰 지면 하단바(시안 §3.3-⑦, 2026-08-16). 배경·라벨색은 UIKit
         // appearance로만 잡힌다 — 테마 변경 시 아래 `.id(appTheme)`가 탭바를 새로 만들어 반영된다.
         .onAppear { Self.applyTabBarAppearance() }

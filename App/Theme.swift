@@ -275,7 +275,9 @@ extension ThemeChrome {
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
-        ticketChrome: false, photographicGround: true == false, pointTabTint: true
+        // 하단바 선택 탭만 포인트색으로 세운다(2026-08-17) — 겨울 구간이 아니면
+        // 오늘 탭에 유채가 한 점도 안 보이던 문제를 여기서 푼다(시안 §1.2.1)
+        ticketChrome: false, photographicGround: false, pointTabTint: true
     )
 
     /// 티켓 — 지면이 계절 유화라 대비 보정을 켜고, 계절광은 얹지 않는다(레퍼런스 지면은 평면).
