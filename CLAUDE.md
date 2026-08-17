@@ -74,6 +74,15 @@
   이것만 앱 프로세스 실행이 보장된다 — 일반 `AppIntent`는 위젯 익스텐션에서 돌아 SwiftData에
   닿지 못한다. 인텐트 타입은 두 타깃 공용이어야 하므로 @Model을 참조하는 실행부는 앱 타깃에
   두고 Shared에는 슬롯만(TimerIntentBridge 패턴).
+- **새 파일·이식 전 심볼 확인 3종**(2026-08-17 — 한 사이클에 CI를 세 번 깨뜨린 원인).
+  Windows라 컴파일이 안 돌아 전부 CI 한 바퀴씩 태우고서야 드러나는 유형이다.
+  ① **`import TempoCore`** — 카드·주기 계열 타입(`InputCategory`·`OutputProgressKind`·
+  `CyclePhase`…)은 TempoCore 소유다. 새 파일에 `import Foundation`만 넣으면 "cannot find type"이
+  뜨고, 멤버 타입을 못 찾아 `Hashable` 자동 합성까지 연쇄로 깨진다.
+  ② **이름 충돌** — 새 타입을 만들기 전에 `grep -rn "struct <이름>" App/ Widgets/ Shared/`.
+  `TicketStub`이 캘린더에 이미 있는 줄 모르고 카드용으로 또 만들어 redeclaration이 났다.
+  ③ **다른 화면 코드를 옮겨올 때 헬퍼 이름** — 같은 일을 화면마다 다른 이름으로 갖고 있다
+  (오늘 탭 `isChecked` ↔ 하루 상세 `isCompleted`). 붙여넣기 전에 그 파일에 그 이름이 있는지 볼 것.
 - Swift 6 strict(CI Xcode 26.5) 실측 2건(2026-07-29, 각 CI 한 바퀴 소진): ① 전역 가변
   `static var`는 그대로 두면 concurrency 에러 — 쓰기 경로가 메인 한정이면
   `nonisolated(unsafe)` + 근거 주석(ThemeStore 사례. @MainActor 격리는 정적 API 콜사이트
