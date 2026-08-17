@@ -37,8 +37,10 @@ struct TicketCardShape: Shape {
     }
 }
 
-/// 스텁 — 세로 모노 값 + 세로 바코드. 점선 경계는 스텁 왼쪽에 선다.
-struct TicketStub: View {
+/// 카드 스텁 — 세로 모노 값 + 세로 바코드. 점선 경계는 스텁 왼쪽에 선다.
+/// ⚠ 캘린더의 `TicketStub`과 별개다: 그쪽은 절취선 길이가 발권 정보 블록(150pt) 고정이라
+///   높이가 콘텐츠를 따라가는 카드에는 쓸 수 없다.
+struct TicketCardStub: View {
     let value: String
 
     var body: some View {

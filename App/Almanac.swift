@@ -162,7 +162,7 @@ struct MilkGlass: ViewModifier {
             content
                 .padding(.trailing, TicketSpec.stubWidth + 8)
                 .background(TicketSpec.ticketPaper)
-                .overlay(alignment: .trailing) { TicketStub(value: stub) }
+                .overlay(alignment: .trailing) { TicketCardStub(value: stub) }
                 .clipShape(TicketCardShape())
         } else {
             content.background { surface }
