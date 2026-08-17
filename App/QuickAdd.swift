@@ -8,6 +8,7 @@
 // ⚠ 낮은 에너지 칸에 재촉을 넣지 않는다(§7).
 
 import Foundation
+import TempoCore   // InputCategory·OutputProgressKind는 TempoCore 소유(CardTypes.swift)
 
 enum QuickAdd {
     // ── Input : 카테고리 × 에너지 ──
