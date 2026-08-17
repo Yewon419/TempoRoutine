@@ -39,7 +39,8 @@ enum WidgetBridge {
             days.append(entry)
         }
         let payload = WidgetSnapshot(generatedAt: .now, days: days,
-                                     theme: ThemeStore.current.rawValue)   // 위젯 테마 전달(Phase 5)
+                                     theme: ThemeStore.current.rawValue,   // 위젯 테마 전달(Phase 5)
+                                     pointColor: ThemeStore.point.rawValue)   // 포인트색(2026-08-17)
         guard let data = try? JSONEncoder().encode(payload) else { return }
         try? data.write(to: url, options: .atomic)
         WidgetCenter.shared.reloadAllTimelines()
