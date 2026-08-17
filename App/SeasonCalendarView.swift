@@ -294,12 +294,22 @@ struct SeasonCalendarView: View {
                 onLogTap: { showLogSheet = true }
             )
             .coachAnchor(.calendarLog)
-            TicketPerforation()
-                .padding(.top, 15)
-                .padding(.bottom, 1)
-                .padding(.horizontal, -20)
-                .overlay(alignment: .leading) { ticketNotch(pointsLeft: false) }
-                .overlay(alignment: .trailing) { ticketNotch(pointsLeft: true) }
+            // ⚠ 노치는 절취선과 **한 상자(ZStack)** 안에서 그린다(2026-08-17 베타 피드백 "노치 안맞고").
+            // 종전엔 음수 패딩 **바깥**에 overlay를 붙였는데, 음수 패딩은 그린 영역만 넓히고
+            // 보고 프레임은 그대로라 overlay가 좁은 상자 기준으로 붙었다 — 노치가 화면 끝이
+            // 아니라 20pt 안쪽에, 선보다 위에 떠 있었다. ZStack 안에서는 선(중앙)과 노치(양 끝
+            // 중앙)가 같은 좌표계를 쓰므로 어긋날 자리가 없다.
+            ZStack {
+                TicketPerforation()
+                HStack {
+                    ticketNotch(pointsLeft: false)
+                    Spacer()
+                    ticketNotch(pointsLeft: true)
+                }
+            }
+            .frame(height: 18)
+            .padding(.horizontal, -20)
+            .padding(.top, 7)
         }
     }
 
@@ -307,7 +317,6 @@ struct SeasonCalendarView: View {
         TicketNotch(pointsLeft: pointsLeft)
             .fill(TicketSpec.notch)
             .frame(width: 10, height: 18)
-            .offset(y: 8)
     }
 
     /// 계절 라인 + 생리 기록 버튼 — 상단 순서 분기용 추출(2026-07-29, 내용 무변화)
@@ -1127,6 +1136,9 @@ struct SeasonCalendarView: View {
             Spacer()
             // 「기록」 스와치 폐기(2026-08-01 베타 피드백) — 상단 「생리 기록」 버튼과 중복 안내였다
         }
+        // 티켓 = 달 이동 화살표가 같은 줄 양 끝에 얹힌다 — 항목이 화살표 자리까지 흐르면
+        // 「봄」이 ‹ 뒤에 가려진다(2026-08-17 베타 피드백). 좌우를 화살표 폭만큼 비운다.
+        .padding(.horizontal, ThemeStore.chrome.ticketChrome ? 34 : 0)
         .padding(.top, ThemeStore.chrome.ticketChrome ? 15 : 6)
         // 티켓 = 격자 마감 점선 + 그 위 양 끝에 달 이동(시안 §3.4). 위쪽 절취선과 짝을 이룬다.
         .overlay(alignment: .top) {

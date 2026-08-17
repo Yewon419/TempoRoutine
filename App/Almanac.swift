@@ -164,6 +164,14 @@ struct MilkGlass: ViewModifier {
                 .background(TicketSpec.ticketPaper)
                 .overlay(alignment: .trailing) { TicketCardStub(value: stub) }
                 .clipShape(TicketCardShape())
+        } else if ThemeStore.chrome.ticketChrome {
+            // 스텁 없는 카드도 발권 지면(시안 .card 기본 — radius 4·그림자·유리 재질 없음).
+            // 종전엔 둥근 유리 카드가 발권물과 섞여 지면이 두 문법으로 갈렸다(2026-08-17 피드백).
+            content.background {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(TicketSpec.ticketPaper)
+                    .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
+            }
         } else {
             content.background { surface }
         }

@@ -114,10 +114,26 @@ struct RootTabView: View {
     @ViewBuilder
     private func tabLabel(_ title: String, symbol: String, ticketAsset: String) -> some View {
         if ThemeStore.chrome.ticketChrome {
-            Label(title, image: ticketAsset)
+            Label { Text(title) } icon: { Image(uiImage: Self.ticketTabIcon(named: ticketAsset)) }
         } else {
             Label(title, systemImage: symbol)
         }
+    }
+
+    /// 유화 스티커를 탭 아이콘 크기로 다시 그린다(2026-08-17 베타 피드백 — 에셋이 256pt
+    /// 원본 그대로 들어가 그림이 하단바 전체를 덮고 라벨을 가렸다). `.tabItem`은 뷰 크기
+    /// 지정을 무시하므로 UIImage 자체를 25pt로 만들어야 한다. 원색 유지 = .alwaysOriginal.
+    @MainActor private static var ticketIconCache: [String: UIImage] = [:]
+
+    @MainActor
+    private static func ticketTabIcon(named name: String) -> UIImage {
+        if let hit = ticketIconCache[name] { return hit }
+        let side: CGFloat = 25
+        let rendered = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
+            UIImage(named: name)?.draw(in: CGRect(x: 0, y: 0, width: side, height: side))
+        }.withRenderingMode(.alwaysOriginal)
+        ticketIconCache[name] = rendered
+        return rendered
     }
 
     /// 하단바 외형 — SwiftUI에 지면색·라벨색 API가 없어 UIKit appearance로 잡는다.

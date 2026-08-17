@@ -135,6 +135,7 @@ struct SettingsView: View {
                 } footer: {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
                     Text("매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!")
+                        .foregroundStyle(Ink.groundSub)
                 }
 
                 // 알림(§5.11 계열) — 브리핑·예측 = 기본 켬(2026-08-05 사용자 결정),
@@ -176,10 +177,12 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("알림")
+                        .foregroundStyle(Ink.groundSub)
                 } footer: {
                     Text(notificationDenied
                          ? "알림이 꺼져 있어요. 설정에서 알림을 켜면 다시 고를 수 있어요."
                          : "브리핑은 일정 당일 아침 8시에, 생리 예측 알림은 예상일 전날과 당일에 한 번씩 알림이 가요.")
+                        .foregroundStyle(Ink.groundSub)
                 }
 
                 // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)
@@ -195,6 +198,7 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("건강 앱")
+                        .foregroundStyle(Ink.groundSub)
                 } footer: {
                     // 진단 내역은 알럿에서 내려 여기로(2026-08-01) — 0건의 "왜"는 남기되 안내 문구는 깨끗하게
                     VStack(alignment: .leading, spacing: 4) {
@@ -203,6 +207,7 @@ struct SettingsView: View {
                             Text("마지막 동기화 · \(mirror.lastSyncReport)")
                         }
                     }
+                    .foregroundStyle(Ink.groundSub)
                 }
 
                 // 기기 간 동기화(2026-08-10 재구현 — PlannerSync/CKSyncEngine, §5.2)
@@ -235,6 +240,7 @@ struct SettingsView: View {
                             Text("iCloud 연결 안 됨 — 기기 설정 > Apple 계정 > iCloud에서 템포루틴이 켜져 있는지, 폰과 같은 계정인지 확인해 주세요.")
                         }
                     }
+                    .foregroundStyle(Ink.groundSub)
                 }
 
                 // 기능 튜토리얼 리셋(2026-07-23 — JejuNow 「사용법 다시 보기」 동형)
@@ -257,6 +263,7 @@ struct SettingsView: View {
                     .foregroundStyle(Ink.text)
                 } header: {
                     Text("다시 보기")
+                        .foregroundStyle(Ink.groundSub)
                 }
 
                 // 앱 내 자기보고 설문(v1.6 §4) — 언제든 재진입. 웹 응답과 연결하지 않는다.
@@ -271,6 +278,7 @@ struct SettingsView: View {
                     Text(selfReports.isEmpty
                          ? "응답은 이 기기에만 저장돼요."
                          : "마지막 응답 \(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.")
+                        .foregroundStyle(Ink.groundSub)
                 }
 
                 // 데이터 — 내보내기·가져오기·처리방침. 저빈도 액션이라 삭제 바로 위로 내렸다
@@ -287,9 +295,11 @@ struct SettingsView: View {
                         .foregroundStyle(Ink.text)
                 } header: {
                     Text("데이터")
+                        .foregroundStyle(Ink.groundSub)
                 } footer: {
                     // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
                     Text("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \(periodDays.count)일 · 체크인 \(checkIns.count)건")
+                        .foregroundStyle(Ink.groundSub)
                 }
 
                 // 파괴적 액션 — 분리 배치(§8.2.6)

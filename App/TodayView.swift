@@ -42,6 +42,12 @@ enum Ink {
     static var surface: Color { ThemeStore.palette.surface }
     /// 구조 악센트(오늘 원·괘선·요일·테두리) — 기본 = winter 동값, 모던 = 흰색
     static var accent: Color { ThemeStore.palette.accent }
+    /// **지면 위** 보조 활자색(시안 §3.3-⑥, 2026-08-17 배선). 사진·색면 지면(티켓)에서는
+    /// `text` 저불투명 혼합이 묻혀 안 읽힌다 — 흰 계열로 올린다. 카드 **안** 활자는 해당 없음
+    /// (카드는 흰 지면이라 종전 규칙이 맞다).
+    static var groundSub: Color {
+        ThemeStore.chrome.photographicGround ? .white.opacity(0.8) : text.opacity(0.55)
+    }
 }
 
 struct SeasonMeta {
