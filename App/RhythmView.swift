@@ -71,9 +71,15 @@ struct RhythmView: View {
             SeasonLight(phase: snapshot.phase(on: today), motif: .open)
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    // 모던 = 아웃라인 표제(시안 §1.3-2 — 나의 리듬은 아웃라인 승격 이력)
-                    almanacDisplay("나의 리듬", size: 44, color: Ink.text)
-                        .padding(.top, 12)
+                    // 좌상단 브랜드 표식(2026-08-18 사용자 지시) — 오늘·캘린더 탭과 같은 자리·크기
+                    HStack {
+                        BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
+                            .padding(.leading, 6)
+                        Spacer()
+                    }
+                    // 모던 = 아웃라인 표제(시안 §1.3-2 — 표제는 아웃라인 승격 이력)
+                    // 「나의 리듬」→「나의 템포」(2026-08-18 사용자 지시 — 앱 이름과 같은 축)
+                    almanacDisplay("나의 템포", size: 44, color: Ink.text)
                     selfReportPrompt
                     sectionSwitcher
                     switch tab {

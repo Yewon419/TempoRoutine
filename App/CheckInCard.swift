@@ -36,7 +36,8 @@ struct CheckInCard: View {
     private var title: String { isToday ? "오늘의 체크인" : "이날의 체크인" }
     private var noteLabel: String { isToday ? "오늘 한 줄" : "그날 한 줄" }
     private var confirmLine: String {
-        isToday ? "오늘 기록이 나의 리듬에 담겼어요." : "이날 기록이 나의 리듬에 담겼어요."
+        // 탭 개명 추종(2026-08-18 「나의 리듬」→「나의 템포」) — 이 문구는 그 탭을 가리킨다
+        isToday ? "오늘 기록이 나의 템포에 담겼어요." : "이날 기록이 나의 템포에 담겼어요."
     }
 
     var body: some View {

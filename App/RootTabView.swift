@@ -48,7 +48,7 @@ struct RootTabView: View {
             .tabItem { tabLabel("캘린더", symbol: "calendar", ticketAsset: "TicketIconMoon") }
             .tag(RootTab.calendar.rawValue)
             RhythmView()
-                .tabItem { tabLabel("나의 리듬", symbol: "chart.xyaxis.line", ticketAsset: "TicketIconWave") }
+                .tabItem { tabLabel("나의 템포", symbol: "chart.xyaxis.line", ticketAsset: "TicketIconWave") }
                 .tag(RootTab.rhythm.rawValue)
             NavigationStack {
                 SettingsView()
