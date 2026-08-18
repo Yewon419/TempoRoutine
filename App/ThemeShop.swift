@@ -18,6 +18,8 @@ extension AppTheme {
         case .modern: 7
         // 티켓 = 무료(2026-08-14 사용자 확정). 새 문법이라 문턱 없이 써보게 둔다.
         case .ticket: nil
+        // 활판 = 무료(2026-08-18 이식 — 티켓과 같은 근거. 트랙 배치는 §3.8.1 미결로 유지)
+        case .letterpress: nil
         }
     }
 
@@ -27,6 +29,7 @@ extension AppTheme {
         case .standard: "은필과 종이. 계절이 빛으로 스며드는 지면이에요."
         case .modern: "기본 지면에 다홍 한 점. 계절은 밝기로 갈려요."
         case .ticket: "색면 위에 놓인 한 장의 티켓. 일상을 여행처럼."
+        case .letterpress: "종이에 눌러 새긴 하루. 잉크 없는 음각의 물성."
         }
     }
 }

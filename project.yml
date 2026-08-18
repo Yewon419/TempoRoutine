@@ -55,6 +55,9 @@ targets:
       - Widgets
       - Shared
       - path: App/Fonts   # Gowun Batang 번들(위젯 프로세스도 런타임 등록 필요, 2026-07-27)
+        excludes:         # 활판 서체는 앱 전용(2026-08-18) — 위젯은 활판 미대응이고 24MB라 이중 탑재 금지
+          - "NotoSerifKR-Variable.ttf"
+          - "BodoniModa-Variable.ttf"
     info:
       path: Widgets/Info.plist
       properties:

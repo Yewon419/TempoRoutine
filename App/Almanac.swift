@@ -25,6 +25,19 @@ enum AlmanacFont {
     }()
 }
 
+/// 활판 서체(시안 §2.3-2) — Bodoni Moda(라틴 숫자) + Noto Serif KR(한글), 둘 다 OFL variable ttf.
+/// variable 등록 시 named instance가 별도 PostScript 이름으로 노출되는 것에 기댄다
+/// (NotoSerifKR-Light 등). ⚠ 실기기에서 이름 매칭이 어긋나면 폴백(시스템 세리프)으로 떨어진다 —
+/// 그때는 정적 웨이트 ttf로 교체가 정석이다.
+enum LetterpressFont {
+    static let available: Bool = {
+        ["NotoSerifKR-Variable", "BodoniModa-Variable"].allSatisfy { name in
+            guard let url = Bundle.main.url(forResource: name, withExtension: "ttf") else { return false }
+            return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
+    }()
+}
+
 /// 모던 표제·숫자 서체 — Pretendard(SIL OFL, App/Fonts 번들) 3웨이트 런타임 등록
 enum ThemeFont {
     static let available: Bool = {
@@ -40,6 +53,13 @@ extension Font {
     /// 모던 = Pretendard(표제 600, 시안 §1.3-3 — Gowun 세리프 대체), 등록 실패 시 시스템 폴백
     static func almanac(size: CGFloat, weight: Font.Weight = .regular) -> Font {
         switch ThemeStore.chrome.typeFace {
+        case .notoSerif:
+            // 활판 표제(시안 §2.3-12): 한글 = Noto Serif KR 300(200은 음각 선이 계절광에 묻힌다).
+            // variable ttf의 named instance로 로드 — 실패 시 시스템 세리프 폴백.
+            guard LetterpressFont.available else {
+                return .system(size: size, weight: .light, design: .serif)
+            }
+            return .custom("NotoSerifKR-Light", size: size)
         case .pretendard:
             guard ThemeFont.available else {
                 return .system(size: size, weight: weight == .bold ? .semibold : .medium)
@@ -60,6 +80,13 @@ extension Font {
     /// 렌더돼 한 줄 안에서 결이 어긋난다(2026-08-01 베타 피드백: 계절 라벨·한 줄 일기).
     /// 그래서 한글이 섞이는 세리프 표기는 시스템 대신 번들 서체를 명시한다.
     static func almanacBody(_ style: Font.TextStyle, size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        if ThemeStore.chrome.typeFace == .notoSerif {
+            guard LetterpressFont.available else {
+                return .system(style, design: .serif).weight(weight)
+            }
+            return .custom(weight == .bold ? "NotoSerifKR-Medium" : "NotoSerifKR-Light",
+                           size: size, relativeTo: style)
+        }
         switch ThemeStore.chrome.typeFace {
         case .pretendard:
             guard ThemeFont.available else { return .system(style).weight(weight) }
@@ -138,7 +165,17 @@ struct OutlineText: View {
 /// 거대 표제 공용 진입점 — 모던 = 아웃라인, 그 외(및 폰트 미등록) = 솔리드 almanac
 @ViewBuilder
 func almanacDisplay(_ text: String, size: CGFloat, color: Color) -> some View {
-    if ThemeStore.chrome.outlineDisplay, ThemeFont.available {
+    if ThemeStore.chrome.debossDisplay {
+        // 활판 음각(시안 §2.3-1): 잉크 없는 종이색 활자 + 극세 그림자 2겹.
+        // 어두운 선은 상좌(그늘진 벽), 흰 선은 하우(빛 받는 벽) — 원본 실측이 음각이다.
+        // 한글은 어두운 광을 .52로 올린다(§2.3-12 — 획이 얇아 .44로는 밝은 구간에 잠긴다).
+        Text(text)
+            .font(.almanac(size: size, weight: .regular))
+            .foregroundStyle(Ink.paper)
+            .shadow(color: Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.52),
+                    radius: 0.7, x: -1, y: -1)
+            .shadow(color: .white, radius: 0.8, x: 1, y: 1.2)
+    } else if ThemeStore.chrome.outlineDisplay, ThemeFont.available {
         OutlineText(text: text, size: size)
     } else {
         Text(text)
@@ -174,6 +211,20 @@ struct MilkGlass: ViewModifier {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(TicketSpec.ticketPaper)
                     .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
+            }
+        } else if ThemeStore.chrome.engravedCards {
+            // 활판(시안 §2.3-7-1) — 배경 없음. **눌린 것은 카드가 아니라 선 하나**다:
+            // 어두운 윤곽선 위에 흰 윤곽선을 (1, 1.2) 어긋나게 얹는다(표제 음각과 같은 기법).
+            // ⚠ inset 그림자 방식은 기각 이력 — 면 전체가 눌린 것처럼 보인다(§2.6).
+            content.background {
+                ZStack {
+                    RoundedRectangle(cornerRadius: radius)
+                        .stroke(Color.white, lineWidth: 1)
+                        .offset(x: 1, y: 1.2)
+                    RoundedRectangle(cornerRadius: radius)
+                        .stroke(Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.34),
+                                lineWidth: 1)
+                }
             }
         } else {
             content.background { surface }
@@ -376,6 +427,7 @@ struct SeasonLight: View {
             switch ThemeStore.chrome.texture {
             case .dotGrid: DotGrid()   // 모던 질감 = 도트 그리드(시안 §1.3-1, 은필 선화 대체)
             case .motif:   motifLayer
+            case .grain:   grainLayer  // 활판 = 종이 그레인 타일(시안 §2.3-7)
             case .none:    EmptyView()
             }
         }
@@ -403,6 +455,13 @@ struct SeasonLight: View {
         // 잉크가 옅은 판이 밝은 계절광(베이지) 위 multiply에서 안 읽히던 것. 코드 회귀 아님.
         .opacity(motif == .onboarding ? 0.14 : 0.46)
         .mask(motifMask)
+    }
+
+    /// 활판 종이 그레인(시안 §2.2 --grain) — 120px 노이즈 타일 반복. feTurbulence 근사 에셋.
+    private var grainLayer: some View {
+        Image("GrainTile")
+            .resizable(resizingMode: .tile)
+            .accessibilityHidden(true)
     }
 
     private func motifTile(scale: CGFloat, alignment: Alignment) -> some View {

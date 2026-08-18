@@ -483,10 +483,22 @@ struct SeasonCalendarView: View {
     private var monthHeader: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v6 확정 58px)
-            almanacDisplay("\(cal.component(.month, from: monthStart))월", size: 58, color: Ink.text)
-            Text(String(cal.component(.year, from: monthStart)))
-                .font(.system(.footnote, design: .serif))
-                .foregroundStyle(Ink.text.opacity(0.5))
+            if ThemeStore.chrome.latinCalendarHeader {
+                // 활판(§2.3-3) — 라틴 숫자 표제 + 위에 얹는 빨강 이탤릭 월 라벨.
+                // 시안은 세로 배치(라벨이 위)라 VStack으로 묶는다.
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(Self.latinMonthLabel(monthStart))
+                        .font(.system(size: 13, design: .serif).italic())
+                        .foregroundStyle(Ink.autumn)   // 버밀리언
+                    almanacDisplay(String(format: "%02d", cal.component(.month, from: monthStart)),
+                                   size: 58, color: Ink.text)
+                }
+            } else {
+                almanacDisplay("\(cal.component(.month, from: monthStart))월", size: 58, color: Ink.text)
+                Text(String(cal.component(.year, from: monthStart)))
+                    .font(.system(.footnote, design: .serif))
+                    .foregroundStyle(Ink.text.opacity(0.5))
+            }
             Spacer()
             Button {
                 lightFeedback += 1
@@ -545,7 +557,25 @@ struct SeasonCalendarView: View {
         }
     }
 
+    /// 활판 월 라벨(§2.3-3) — 로케일 무관 라틴 「July 2026」. 시안 원본 문법이 영문이다.
+    private static let latinMonthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter
+    }()
+
+    private static func latinMonthLabel(_ date: Date) -> String {
+        latinMonthFormatter.string(from: date)
+    }
+
     private var weekdaySymbols: [String] {
+        // 활판(§2.3-4) — 소문자 라틴(원본 문법). 색은 요일 행 렌더에서 전행 빨강.
+        if ThemeStore.chrome.latinCalendarHeader {
+            let latin = ["s", "m", "t", "w", "t", "f", "s"]
+            let shift = cal.firstWeekday - 1
+            return Array(latin[shift...] + latin[..<shift])
+        }
         let symbols = cal.veryShortWeekdaySymbols
         let shift = cal.firstWeekday - 1
         return Array(symbols[shift...] + symbols[..<shift])
@@ -578,9 +608,11 @@ struct SeasonCalendarView: View {
         let roundRight = !next || col == 6
         // 밑줄형 — 직각 사각(2026-07-28 5차: 라운드 제거, 사용자 지시). 숫자 영역(상단 3+27pt)
         // 바로 밑 y 25.5~29.5. 일정 띠·박스는 3.5pt 간격을 두고 33.5부터(시안 결정).
+        // 활판 = 헤어라인 1.5pt + 불투명 .9/.35(§2.3-8 — 얇아진 만큼 진하게 눌러야 띠로 읽힌다)
+        let hairline = ThemeStore.chrome.hairlineSeasonBand
         return Rectangle()
-            .fill(meta.glow.opacity(projected ? 0.25 : 0.5))
-            .frame(height: 4)
+            .fill(meta.glow.opacity(hairline ? (projected ? 0.35 : 0.9) : (projected ? 0.25 : 0.5)))
+            .frame(height: hairline ? 1.5 : 4)
             .padding(.leading, roundLeft ? 3 : 0)
             .padding(.trailing, roundRight ? 3 : 0)
             .frame(maxHeight: .infinity, alignment: .top)
@@ -593,8 +625,11 @@ struct SeasonCalendarView: View {
             ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { index, s in
                 let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
                 Text(s)
-                    .font(.system(size: 11))
-                    .foregroundStyle(weekday == 1 ? Ink.holiday
+                    .font(ThemeStore.chrome.latinCalendarHeader
+                          ? .system(size: 11, design: .serif) : .system(size: 11))
+                    // 활판(§2.3-4) = 전행 빨강 세리프(원본 문법 — 날짜 숫자는 토=파랑 유지)
+                    .foregroundStyle(ThemeStore.chrome.latinCalendarHeader ? Ink.autumn
+                                     : weekday == 1 ? Ink.holiday
                                      : weekday == 7 ? Ink.saturday : Ink.accent)   // 구조색(기본=winter 동값)
                     .frame(maxWidth: .infinity)
             }
@@ -1051,7 +1086,7 @@ struct SeasonCalendarView: View {
             bottomTrailingRadius: roundRight ? 9 : 0,
             topTrailingRadius: roundRight ? 9 : 0
         )
-        .fill(Ink.record.opacity(0.22))   // 기록 = 진한 회색(2026-07-28, 예측 회색은 폐기됨)
+        .fill(Ink.record.opacity(ThemeStore.chrome.hidesRecordDot ? 0 : 0.22))   // 활판 = 숨김(§2.3-9), 그 외 진한 회색
         .frame(height: 20)
         .padding(.leading, roundLeft ? 4 : 0)
         .padding(.trailing, roundRight ? 4 : 0)

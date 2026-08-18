@@ -22,6 +22,9 @@ enum AppTheme: String, CaseIterable, Identifiable {
     case modern
     /// 티켓(2026-08-14, 시안 SSOT §3) — 색면 위에 놓인 발권물. 경계를 선이 아니라 절단으로 쓴다.
     case ticket
+    /// 활판(2026-08-18 이식, 시안 SSOT §2 v2) — 웜 화이트 종이 + 잉크 없는 음각 표제 +
+    /// 인쇄 잉크 4색 + 선과 활자만. 눌린 것은 면이 아니라 선이다(§2.1 재설계 축).
+    case letterpress
 
     var id: String { rawValue }
 
@@ -31,6 +34,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
         case .standard: "은필"
         case .modern: "포인트컬러"
         case .ticket: "티켓"
+        case .letterpress: "활판"
         }
     }
 }
@@ -223,6 +227,34 @@ extension ThemePalette {
         surface: .flat(0xFA, 0xFA, 0xF8),     // 발권물 = 웜 화이트
         accent: .flat(0x22, 0x38, 0x4F)
     )
+
+    /// 활판 v2 (시안 §2.2 확정값) — 라이트/다크 동값. 인쇄물은 지면이 뒤집히지 않는다(티켓 전례).
+    /// ⚠ 계절은 명도가 아니라 **색조**로 가른다(v1 명도 램프는 헤어라인에서 뭉갬 — §2.6).
+    /// ⚠ 겨울 = 블랙(2026-08-12 사용자 지시) — 생리 구간은 블랙 밑줄이 담당하고,
+    ///    가을이 버밀리언을 승계한다. 「다홍 = 생리 전용」 원칙은 이 테마에서 폐기.
+    /// 버밀리언 3중 사용(가을·공휴일·record)은 형태가 갈려 실사용 혼동 없음 판정(§2.2).
+    static let letterpress = ThemePalette(
+        winter: .flat(0x14, 0x12, 0x0F),      // 블랙 = 생리 구간
+        spring: .flat(0x6B, 0x8F, 0x2E),      // 올리브 그린
+        summer: .flat(0x1B, 0x6B, 0x70),      // 딥 틸
+        autumn: .flat(0xB8, 0x42, 0x2F),      // 버밀리언
+        text: .flat(0x35, 0x32, 0x2E),
+        paper: .flat(0xEF, 0xED, 0xE6),       // 웜 화이트 종이
+        coral: .flat(0xB8, 0x42, 0x2F),       // 은퇴 토큰
+        record: .flat(0xB8, 0x42, 0x2F),
+        danger: .flat(0xB2, 0x3A, 0x30),
+        dim: Color(red: 0x35 / 255, green: 0x32 / 255, blue: 0x2E / 255).opacity(0.55),
+        oxide: .flat(0x8C, 0x84, 0x74),
+        holiday: .flat(0xB8, 0x42, 0x2F),
+        saturday: .flat(0x3D, 0x5F, 0x9E),
+        frost: .flat(0xEF, 0xED, 0xE6),
+        glowWinter: .flat(0x14, 0x12, 0x0F),  // glow-* = 본색 동값(§2.2 — 밑줄이 곧 계절색)
+        glowSpring: .flat(0x6B, 0x8F, 0x2E),
+        glowSummer: .flat(0x1B, 0x6B, 0x70),
+        glowAutumn: .flat(0xB8, 0x42, 0x2F),
+        surface: .flat(0xF5, 0xF3, 0xED),
+        accent: .flat(0x35, 0x32, 0x2E)
+    )
 }
 
 /// 티켓 전용 상수 — 팔레트 토큰으로 표현되지 않는 값들(시안 §3.2·§3.4).
@@ -268,9 +300,9 @@ extension Color {
 // 뒤집어 각 테마가 스스로 답하게 한다.
 struct ThemeChrome {
     /// 표제·책력 표기 서체 계열. `.system`은 번들 서체를 쓰지 않는다.
-    enum TypeFace { case gowun, pretendard, system }
+    enum TypeFace { case gowun, pretendard, system, notoSerif /* 활판 = Noto Serif KR(한글) + Bodoni Moda(라틴 숫자) */ }
     /// 지면 질감. `.none`은 아무것도 얹지 않는다.
-    enum Texture { case motif, dotGrid, none }
+    enum Texture { case motif, dotGrid, none, grain /* 활판 = 종이 그레인 타일 */ }
 
     let typeFace: TypeFace
     let texture: Texture
@@ -303,6 +335,20 @@ struct ThemeChrome {
     /// 포인트컬러 전용 — 겨울 구간이 아니면 오늘 탭에 유채가 한 점도 안 보이던 문제를
     /// 여기서 푼다(시안 §1.2.1, 2026-08-17 사용자 지시).
     let pointTabTint: Bool
+
+    // ── 활판 전용 축(2026-08-18 이식, 시안 §2.3) — `var + 기본값 false`라 기존 4테마 정의 무수정 ──
+    /// 거대 표제 = 음각(deboss): 잉크 없이 종이색 활자 + 극세 그림자 2겹(음 상좌 / 광 하우)
+    var debossDisplay = false
+    /// 계절 밑줄 = 1.5pt 헤어라인(기본 4pt). 색조 램프라 얇아도 갈린다
+    var hairlineSeasonBand = false
+    /// 캘린더 월 표제 = 라틴 숫자 「07」 + 빨강 이탤릭 「July 2026」, 요일 행 = 소문자 라틴 빨강
+    var latinCalendarHeader = false
+    /// 하단바 = 활자만(아이콘 은퇴 — §2.3-7-2. 활판 문법은 선과 활자)
+    var textOnlyTabBar = false
+    /// 카드 = 배경 없이 **윤곽선만 음각**(§2.3-7-1 — 어두운 선 위에 흰 선을 1px 어긋나게)
+    var engravedCards = false
+    /// 생리 기록 점 숨김(§2.3-9 — 겨울 밑줄이 곧 생리 표시라 별도 표시는 이중)
+    var hidesRecordDot = false
 }
 
 extension ThemeChrome {
@@ -351,6 +397,18 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: true,
         ticketChrome: true, photographicGround: true, pointTabTint: false
     )
+
+    /// 활판 v2 (시안 §2.3) — 선과 활자만. 음각 표제·헤어라인 밑줄·라틴 표기·활자 하단바.
+    static let letterpress = ThemeChrome(
+        typeFace: .notoSerif, texture: .grain, outlineDisplay: false,
+        showsSeasonLight: true, neutralSeasonLight: true,   // 계절광 = 무채 종이 음영(§2.2)
+        dimsInDarkMode: false, forcesDarkAppearance: false,
+        seasonRowFirst: false, todayCircleUsesAccent: false,
+        circlesRecordedDays: false, boostsContrast: false,
+        ticketChrome: false, photographicGround: false, pointTabTint: false,
+        debossDisplay: true, hairlineSeasonBand: true, latinCalendarHeader: true,
+        textOnlyTabBar: true, engravedCards: true, hidesRecordDot: true
+    )
 }
 
 extension AppTheme {
@@ -363,6 +421,7 @@ extension AppTheme {
         case .standard: .standard
         case .modern: .modern(point: point)
         case .ticket: .ticket
+        case .letterpress: .letterpress
         }
     }
 
@@ -372,6 +431,7 @@ extension AppTheme {
         case .standard: .silverpoint
         case .modern: .modern
         case .ticket: .ticket
+        case .letterpress: .letterpress
         }
     }
 }

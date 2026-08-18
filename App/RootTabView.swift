@@ -123,7 +123,10 @@ struct RootTabView: View {
     /// 선택 구분은 라벨 색(잉크 100% / 45%)이 담당한다.
     @ViewBuilder
     private func tabLabel(_ title: String, symbol: String, ticketAsset: String) -> some View {
-        if ThemeStore.chrome.ticketChrome {
+        if ThemeStore.chrome.textOnlyTabBar {
+            // 활판(§2.3-7-2) — 아이콘 은퇴, 활자만. 활판 문법은 선과 활자다.
+            Label { Text(title) } icon: { EmptyView() }
+        } else if ThemeStore.chrome.ticketChrome {
             Label { Text(title) } icon: { Image(uiImage: Self.ticketTabIcon(named: ticketAsset)) }
         } else {
             Label(title, systemImage: symbol)
@@ -149,6 +152,29 @@ struct RootTabView: View {
     /// 하단바 외형 — SwiftUI에 지면색·라벨색 API가 없어 UIKit appearance로 잡는다.
     private static func applyTabBarAppearance() {
         let appearance = UITabBarAppearance()
+        if ThemeStore.chrome.textOnlyTabBar {
+            // 활판(§2.3-7-2) — 종이 지면 + 상단 1pt 잉크 16% 룰, 라벨 = Gowun Batang 11
+            // (시안 명시 서체 — 활판 본문 서체가 아니라 하단바 전용이다), 선택 100% / 42%.
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(Ink.paper)
+            appearance.shadowColor = UIColor(Ink.text.opacity(0.16))
+            let labelFont = UIFont(name: "GowunBatang-Regular", size: 11)
+                ?? UIFont.systemFont(ofSize: 11)
+            for layout in [appearance.stackedLayoutAppearance,
+                           appearance.inlineLayoutAppearance,
+                           appearance.compactInlineLayoutAppearance] {
+                layout.normal.titleTextAttributes = [
+                    .foregroundColor: UIColor(Ink.text.opacity(0.42)), .font: labelFont]
+                layout.selected.titleTextAttributes = [
+                    .foregroundColor: UIColor(Ink.text), .font: labelFont]
+                // 아이콘이 빠진 만큼 라벨을 세로 중앙으로 — 기본 오프셋은 아이콘 아래 기준이다
+                layout.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -14)
+                layout.selected.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -14)
+            }
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+            return
+        }
         guard ThemeStore.chrome.ticketChrome else {
             // 종전 테마는 시스템 기본(유리) 그대로 — 프록시가 남아 오염되지 않게 되돌린다
             appearance.configureWithDefaultBackground()
