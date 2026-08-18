@@ -525,6 +525,30 @@ struct RhythmView: View {
             case .output(let item): .output(item)
             }
         }
+
+        /// 주기 반복 정의 — 일차 정렬·뱃지의 근거(2026-08-18 타임라인 개편)
+        var recurrence: CycleRecurrence? {
+            switch self {
+            case .input(let item):
+                if case .cycleAnchored(let r) = item.schedule { return r }
+            case .output(let item):
+                if case .cycleAnchored(let r) = item.schedule { return r }
+            }
+            return nil
+        }
+
+        /// 정렬 키 — 계절 전체(매일)가 맨 앞, 그 뒤 일차 오름차순
+        var sortDay: Int {
+            guard let r = recurrence else { return .max }
+            return r.spansWholePhase ? -1 : r.dayOffset
+        }
+
+        /// 일차 뱃지 — 「매일」(계절 전체) / 「N일차」. 앵커 일차는 **계획의 속성**이라
+        /// 낱장 렌더 허용(§3.5.1 개정 2026-08-18 — 개인 계절 길이·오늘 위치는 여전히 금지).
+        var dayBadge: String {
+            guard let r = recurrence else { return "" }
+            return r.spansWholePhase ? "매일" : "\(r.dayOffset + 1)일차"
+        }
     }
 
     private var routinesBySeason: [CyclePhase: [SeasonRoutine]] {
@@ -539,7 +563,9 @@ struct RhythmView: View {
                 map[anchorPhase(r), default: []].append(.output(item))
             }
         }
-        return map
+        // 일차 순 정렬(2026-08-18 타임라인 개편) — 계절 안에서 며칠차에 뭘 하는지가
+        // 계획의 축이라, 등록 순이 아니라 시간 순으로 세운다. 매일(계절 전체)이 맨 앞.
+        return map.mapValues { $0.sorted { ($0.sortDay, $0.title) < ($1.sortDay, $1.title) } }
     }
 
     private func anchorPhase(_ r: CycleRecurrence) -> CyclePhase {
@@ -677,6 +703,13 @@ struct RhythmView: View {
             }
         } label: {
             HStack(spacing: 8) {
+                // 일차 뱃지(2026-08-18 타임라인 개편) — 고정 폭 왼쪽 컬럼이라 세로로 훑으면
+                // 그 계절의 계획표로 읽힌다. 「매일」 = 계절 전체 모드.
+                Text(routine.dayBadge)
+                    .font(.almanacBody(.caption, size: 11))
+                    .monospacedDigit()
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                    .frame(width: 46, alignment: .trailing)
                 Text(routine.title)
                     .font(.subheadline)
                     .foregroundStyle(Ink.text)
@@ -685,7 +718,6 @@ struct RhythmView: View {
                     .font(.caption2)
                     .foregroundStyle(Ink.text.opacity(0.4))
             }
-            .padding(.leading, 24)   // 계절명 텍스트에 맞춘 들여쓰기 — 낱장 위계(2026-08-08 조판)
             .padding(.vertical, 5)
             .contentShape(Rectangle())
         }
