@@ -158,8 +158,7 @@ struct TodayView: View {
                         CheckInCard(day: today)
                     }
                 }
-                .padding(20)
-                .padding(.top, 4)
+                .padding(20)   // 상단 추가 여백 없음 — 캘린더 탭과 로고 높이 통일(2026-08-18 베타 피드백)
                 .centeredColumn(1000)
                 .background {
                     GeometryReader { geo in
@@ -306,7 +305,8 @@ struct TodayView: View {
                     .foregroundStyle(Ink.text)
             }
         }
-        .padding(.top, 24)
+        // 상단 24pt 제거(2026-08-18 베타 피드백 "로고 위치 캘린더 탭과 같은 위치로") —
+        // 캘린더는 20pt(컨테이너)뿐인데 여기만 24pt를 더 얹어 로고가 한 층 낮게 앉았다
     }
 
     /// 오늘 날짜 도장 — 하루 상세(§8.2.3)와 같은 문법, 계절명에 눌리지 않게 44px
