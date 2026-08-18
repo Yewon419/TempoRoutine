@@ -188,10 +188,10 @@ struct DayDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v6 확정 56px)
-                almanacDisplay("\(cal.component(.day, from: day))", size: 56, color: Ink.text)
+                almanacDisplay("\(cal.component(.day, from: day))", size: 56, color: Ink.onGround(Ink.text, white: 1.0))
                 Text(day.formatted(.dateTime.month().weekday(.wide)))
                     .font(.system(.subheadline, design: .serif))
-                    .foregroundStyle(Ink.text.opacity(0.6))
+                    .foregroundStyle(Ink.onGround(Ink.text.opacity(0.6), white: 0.66))
             }
             // 공휴일·기념일 표기(2026-07-28) — 소스는 캘린더 셀과 동일(애플 캘린더 우선, 내장 폴백)
             let holidays = dayHolidays()
@@ -206,7 +206,7 @@ struct DayDetailView: View {
                     if info.projected { Text("· 예상") }
                 }
                 .font(.system(.footnote, design: .serif))
-                .foregroundStyle(info.meta.color.opacity(info.projected ? 0.7 : 1.0))
+                .foregroundStyle(Ink.onGround(info.meta.color.opacity(info.projected ? 0.7 : 1.0), white: 0.82))
                 if let line = selfCareLine {
                     Text(line)
                         .font(.system(.footnote, design: .serif))
@@ -269,6 +269,7 @@ struct DayDetailView: View {
     private func cardShell(_ kind: CardKind, empty: Bool, emptyMessage: String = "아직 없어요",
                             @ViewBuilder rows: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 10) {
+            TicketFieldLabel(text: ticketFieldName(kind))   // 발권 필드명(시안 §3.3-④, 티켓만)
             HStack {
                 Text(kind.rawValue)
                     .font(.almanac(size: 17, weight: .bold))

@@ -178,13 +178,13 @@ struct SeedBadge: View {
     var body: some View {
         HStack(spacing: 5) {
             SeedGlyph()
-                .fill(Ink.text.opacity(0.75))
+                .fill(Ink.onGround(Ink.text.opacity(0.75), white: 0.9))   // 지면 위 배지(시안 흰 덮기)
                 .frame(width: 9, height: 12)
                 .rotationEffect(.degrees(16))
             Text("\(count)")
                 .font(.almanacBody(.footnote, size: 13))
                 .monospacedDigit()
-                .foregroundStyle(Ink.text.opacity(0.8))
+                .foregroundStyle(Ink.onGround(Ink.text.opacity(0.8), white: 0.9))
                 .contentTransition(.numericText(value: Double(count)))
         }
         .padding(.horizontal, 10)

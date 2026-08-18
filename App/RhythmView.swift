@@ -77,13 +77,13 @@ struct RhythmView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     // 좌상단 브랜드 표식(2026-08-18 사용자 지시) — 오늘·캘린더 탭과 같은 자리·크기
                     HStack {
-                        BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
+                        BrandMark(diameter: 22, color: Ink.onGround(Ink.text.opacity(0.75), white: 0.8))
                             .padding(.leading, 6)
                         Spacer()
                     }
                     // 모던 = 아웃라인 표제(시안 §1.3-2 — 표제는 아웃라인 승격 이력)
                     // 「나의 리듬」→「나의 템포」(2026-08-18 사용자 지시 — 앱 이름과 같은 축)
-                    almanacDisplay("나의 템포", size: 44, color: Ink.text)
+                    almanacDisplay("나의 템포", size: 44, color: Ink.onGround(Ink.text, white: 1.0))
                     selfReportPrompt
                     sectionSwitcher
                     switch tab {
@@ -379,17 +379,39 @@ struct RhythmView: View {
     }
 
     /// 칩 공용 렌더 — v68 칩 시각 그대로(2026-08-09 단일 행 병합 후에도 유지).
+    @ViewBuilder
     private func chip(label: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(selected ? AnyShapeStyle(Ink.text)
-                                     : AnyShapeStyle(Ink.text.opacity(0.08)), in: Capsule())
+        if ThemeStore.chrome.photographicGround {
+            // 티켓 = 지면 위 칩(시안 흰 덮기 목록): 미선택 흰 윤곽 + 직각 R3(발권물),
+            // 선택 = 잉크 솔리드에 발권지 글자. Ink.paper는 이 테마에서 블루그레이 지면색이라 못 쓴다.
+            Button(action: action) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(selected ? TicketSpec.ticketPaper : .white.opacity(0.78))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(.clear),
+                                in: RoundedRectangle(cornerRadius: 3))
+                    .overlay {
+                        if !selected {
+                            RoundedRectangle(cornerRadius: 3)
+                                .stroke(Color.white.opacity(0.38), lineWidth: 1)
+                        }
+                    }
+            }
+            .accessibilityAddTraits(selected ? [.isSelected] : [])
+        } else {
+            Button(action: action) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(selected ? AnyShapeStyle(Ink.text)
+                                         : AnyShapeStyle(Ink.text.opacity(0.08)), in: Capsule())
+            }
+            .accessibilityAddTraits(selected ? [.isSelected] : [])
         }
-        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     // ── 콜드스타트 카드 (§8.2.5 개정 2026-07-23 — "약 41일" 폐기) ──

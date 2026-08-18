@@ -37,6 +37,57 @@ struct TicketGround: View {
     }
 }
 
+/// 발권 필드명 — 시안 프로토 마크업의 tk-label 문구(schedule/input/output, CSS가 대문자화).
+/// CardKind는 rawValue가 사용자 표기(「일정」)라 별도 매핑으로 둔다.
+func ticketFieldName(_ kind: CardKind) -> String {
+    switch kind {
+    case .schedule: "schedule"
+    case .input: "input"
+    case .output: "output"
+    }
+}
+
+/// 카드 제목 위 극소 대문자 모노 라벨(시안 §3.3-④ `.tk-label`) — 발권물의 필드명.
+/// 티켓 테마가 아니면 아무것도 그리지 않는다.
+struct TicketFieldLabel: View {
+    let text: String
+
+    var body: some View {
+        if ThemeStore.chrome.ticketChrome {
+            Text(text)
+                .font(.system(size: 8, weight: .regular, design: .monospaced))
+                .kerning(1.8)
+                .textCase(.uppercase)
+                .foregroundStyle(TicketSpec.label)
+                .accessibilityHidden(true)   // 제목이 이미 같은 말을 한다
+        }
+    }
+}
+
+/// 일련번호 스트립(시안 §3.3-⑤ `.tk-serial`) — 오늘 탭 상단, 발권물의 발권 번호.
+/// 형식 = TR-YYYYMMDD-NNNN(NNNN = 그해 몇 번째 날). 장식이되 매일 바뀌는 진짜 값이다.
+struct TicketSerial: View {
+    let date: Date
+
+    var body: some View {
+        if ThemeStore.chrome.ticketChrome {
+            Text(serial)
+                .font(.system(size: 10, weight: .regular, design: .monospaced))
+                .kerning(1.6)
+                .foregroundStyle(.white.opacity(0.62))
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var serial: String {
+        let cal = Calendar.current
+        let ymd = date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
+            .filter(\.isNumber)
+        let ordinal = cal.ordinality(of: .day, in: .year, for: date) ?? 0
+        return "TR-\(ymd)-\(String(format: "%04d", ordinal))"
+    }
+}
+
 /// 우측 스텁 경계선 위·아래에 V홈이 파인 카드 윤곽.
 struct TicketCardShape: Shape {
     var stubWidth: CGFloat = TicketSpec.stubWidth

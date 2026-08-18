@@ -48,6 +48,11 @@ enum Ink {
     static var groundSub: Color {
         ThemeStore.chrome.photographicGround ? .white.opacity(0.8) : text.opacity(0.55)
     }
+    /// 지면 위 활자 일반형(시안 티켓 흰 덮기 목록 2026-08-15 — 표제·일차·무드라인·날짜 도장 등).
+    /// base = 다른 테마의 원래 색 / white = 사진 지면에서의 흰 불투명도(시안 color-mix 비율).
+    static func onGround(_ base: Color, white: Double) -> Color {
+        ThemeStore.chrome.photographicGround ? Color.white.opacity(white) : base
+    }
 }
 
 struct SeasonMeta {
@@ -262,7 +267,7 @@ struct TodayView: View {
             // 씨앗 탭 = 테마 탭 진입 / 표시값 = 소비 차감 후 available(심기 도입).
             HStack {
                 // 22pt + leading 6(2026-08-09 베타 피드백 "살짝 오른쪽으로 그리고 좀 더 크게")
-                BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
+                BrandMark(diameter: 22, color: Ink.onGround(Ink.text.opacity(0.75), white: 0.8))
                     .padding(.leading, 6)
                 Spacer()
                 Button {
@@ -281,7 +286,8 @@ struct TodayView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
                     almanacDisplay(info.meta.name, size: 58,
-                                   color: info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0))
+                                   color: Ink.onGround(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0),
+                                                       white: snapshot.isSingleRecord ? 0.6 : 1.0))
                     Spacer(minLength: 0)
                     todayDateStamp
                 }
@@ -290,19 +296,20 @@ struct TodayView: View {
                     // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
                     // 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소, 전 표면 통일)
                     Text("\(info.dayInPhase)일차")
-                        .foregroundStyle(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85))
-                    if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.text.opacity(0.45)) }
-                    else if info.projected { Text("예상").foregroundStyle(Ink.text.opacity(0.45)) }
+                        .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
+                    if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
+                    else if info.projected { Text("예상").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
                 }
                 .font(.almanacBody(.footnote, size: 13))
                 Text(moodlineText ?? info.meta.moodline)
                     .font(.system(.body, design: .serif))
-                    .foregroundStyle(Ink.text.opacity(0.85))
+                    .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.88))
                     .padding(.top, 2)
                 // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백). 2026-08-02 교정: 캡슐 버튼+시트가
                 // 아니라 하루 상세와 같은 인라인 토글이다("이 스위치야") — 그 자리에서 켜고 끈다.
                 periodToggle
                     .padding(.top, 8)
+                TicketSerial(date: today)   // 발권 번호(시안 §3.3-⑤, 티켓만)
             } else {
                 Text("계절 기록 전")
                     .font(.almanac(size: 44, weight: .bold))
@@ -318,10 +325,10 @@ struct TodayView: View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
             Text("\(Calendar.current.component(.day, from: today))")
                 .font(.almanac(size: 44, weight: .bold))
-                .foregroundStyle(Ink.text.opacity(0.85))
+                .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.92))
             Text(today.formatted(.dateTime.month().weekday(.abbreviated)))
                 .font(.almanacBody(.caption, size: 12))
-                .foregroundStyle(Ink.text.opacity(0.55))
+                .foregroundStyle(Ink.onGround(Ink.text.opacity(0.55), white: 0.62))
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(today.formatted(.dateTime.month().day().weekday(.wide)))
@@ -360,7 +367,7 @@ struct TodayView: View {
         )) {
             Text("생리 기록")
                 .font(.system(.subheadline, design: .serif))
-                .foregroundStyle(Ink.text)
+                .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
         }
         .tint(Ink.text)
     }
@@ -404,6 +411,7 @@ struct TodayView: View {
     // ── 3구획 공통 셸 ──
     private func section(kind: CardKind, @ViewBuilder rows: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 10) {
+            TicketFieldLabel(text: ticketFieldName(kind))   // 발권 필드명(시안 §3.3-④, 티켓만)
             HStack {
                 Text(kind.rawValue)
                     .font(.almanac(size: 17, weight: .bold))
