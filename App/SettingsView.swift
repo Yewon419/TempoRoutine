@@ -316,15 +316,12 @@ struct SettingsView: View {
             }
         }
         .background {
-            if ThemeStore.chrome.photographicGround {
-                TicketGround(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)))
-            } else {
-                ZStack {
-                    Ink.paper
-                    SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)
-                }
-                .ignoresSafeArea()
+            // 티켓 = 흰 지면(2026-08-18 2차 — 유화는 오늘·나의 템포만)
+            ZStack {
+                Ink.paper
+                SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)
             }
+            .ignoresSafeArea()
         }
         .navigationTitle("설정")
         .sheet(item: Binding(

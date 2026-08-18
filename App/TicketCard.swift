@@ -81,7 +81,7 @@ struct TicketSerial: View {
             Text(serial)
                 .font(.system(size: 10, weight: .regular, design: .monospaced))
                 .kerning(1.6)
-                .foregroundStyle(TicketSpec.label)   // 흰 지면 전환(2026-08-18) — 흰 62%는 안 보인다
+                .foregroundStyle(.white.opacity(0.62))   // 오늘 탭 유화 위(2026-08-18 2차 복원)
                 .accessibilityHidden(true)
         }
     }

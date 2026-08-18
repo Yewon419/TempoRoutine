@@ -83,7 +83,7 @@ struct RhythmView: View {
                     }
                     // 모던 = 아웃라인 표제(시안 §1.3-2 — 표제는 아웃라인 승격 이력)
                     // 「나의 리듬」→「나의 템포」(2026-08-18 사용자 지시 — 앱 이름과 같은 축)
-                    almanacDisplay("나의 템포", size: ThemeStore.chrome.debossDisplay ? 68 : 44,
+                    almanacDisplay("나의 템포", size: ThemeStore.chrome.debossDisplay ? 54 : 44,   // 68은 과함(2026-08-18 베타)
                                    color: Ink.onGround(Ink.text, white: 1.0))
                     selfReportPrompt
                     sectionSwitcher
@@ -342,17 +342,40 @@ struct RhythmView: View {
 
     /// 신호 하위 칩 행 — 사계 안에서만 도는 2단 스위처
     private var signalSwitcher: some View {
-        HStack(spacing: 8) {
+        // 하위 스위처는 상위(캡슐 칩)와 모양을 가른다(2026-08-18 베타 "같은 준위같아") —
+        // 텍스트 + 선택 밑줄. 캡슐이 두 줄이면 층위가 안 읽혔다.
+        HStack(spacing: 18) {
             ForEach(visibleSignals, id: \.self) { signal in
-                chip(label: signalLabel(signal), selected: selectedSignal == signal) {
+                signalTab(label: signalLabel(signal), selected: selectedSignal == signal) {
                     lightFeedback += 1
                     lastSignalRaw = signal.rawValue
                 }
             }
             Spacer(minLength: 0)
         }
+        .padding(.leading, 4)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("신호 선택")
+    }
+
+    /// 하위 탭 — 텍스트 + 2pt 밑줄(선택). 캡슐(상위 섹션 칩)보다 한 층 아래로 읽힌다.
+    /// 티켓 유화 지면 위에서는 잉크가 묻혀 흰 계열(§3.3-⑥ 연장).
+    private func signalTab(label: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        let base: Color = ThemeStore.chrome.photographicGround ? .white : Ink.text
+        return Button(action: action) {
+            VStack(spacing: 3) {
+                Text(label)
+                    .font(.caption.weight(selected ? .semibold : .regular))
+                    .foregroundStyle(base.opacity(selected ? 1 : 0.45))
+                Rectangle()
+                    .fill(selected ? base : .clear)
+                    .frame(height: 2)
+            }
+            .fixedSize()
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     private func signalLabel(_ signal: SignalKind) -> String {

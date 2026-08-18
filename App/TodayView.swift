@@ -45,9 +45,8 @@ enum Ink {
     /// **지면 위** 보조 활자색(시안 §3.3-⑥, 2026-08-17 배선). 사진·색면 지면(티켓)에서는
     /// `text` 저불투명 혼합이 묻혀 안 읽힌다 — 흰 계열로 올린다. 카드 **안** 활자는 해당 없음
     /// (카드는 흰 지면이라 종전 규칙이 맞다).
-    static var groundSub: Color {
-        ThemeStore.chrome.photographicGround ? .white.opacity(0.8) : text.opacity(0.55)
-    }
+    /// 2026-08-18 2차: 설정은 티켓에서도 흰 지면이라 원복 — 소비처가 설정 헤더·풋터뿐이다.
+    static var groundSub: Color { text.opacity(0.55) }
     /// 지면 위 활자 일반형(시안 티켓 흰 덮기 목록 2026-08-15 — 표제·일차·무드라인·날짜 도장 등).
     /// base = 다른 테마의 원래 색 / white = 사진 지면에서의 흰 불투명도(시안 color-mix 비율).
     static func onGround(_ base: Color, white: Double) -> Color {

@@ -479,7 +479,7 @@ struct InputAddSheet: View {
     @State private var timeMinutes: Int?
     @State private var lastMatch: String?
     @State private var rejectedMatch: String?
-    @State private var repeats = true      // 기본 = 매일(체크리스트가 본질). 반복+주기 둘 다 끔 = .once(2026-07-23)
+    @State private var repeats = false     // 기본 = 반복 없음(2026-08-18 베타 "기본값이 왜 반복이 켜진걸까" — 종전 매일 기본 폐기)
     @State private var cycleBased = false
     @State private var calendarFreq: ScheduleRepeat = .daily   // 반복(달력 기준) 칩 선택 — daily/weekly/monthly만 사용
     @State private var anchor: SeasonAnchor = .winter
@@ -883,7 +883,8 @@ struct OutputAddSheet: View {
                     // 체크만 추가(2026-08-18 사용자 지시) — 저장은 percent 0↔1(파생 완료 유지)
                     Picker("진행 방식", selection: $kind) {
                         // 라벨만 개명(2026-08-01 베타 피드백) — rawValue "subtasks"는 저장 호환 때문에 불변
-                        Text("체크만").tag(OutputProgressKind.checkOnly)
+                        // 「체크만」은 하루 만에 철회(2026-08-18 베타 "체크리스트가 이미 있네") —
+                        // enum 케이스·렌더 경로는 유지한다(빌드 385로 만든 저장분 호환).
                         Text("체크리스트").tag(OutputProgressKind.subtasks)
                         Text("세션").tag(OutputProgressKind.sessions)
                         Text("퍼센트").tag(OutputProgressKind.percent)

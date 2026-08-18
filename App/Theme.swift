@@ -266,7 +266,7 @@ enum TicketSpec {
     /// 극소 캡션 라벨 잉크
     static let label = Color.flatRGB(0x7B, 0x8C, 0xA0)
     /// 노치 안쪽 = 다른 탭 지면색 근사. **고정값** — 계절 유화가 교체돼도 흔들리면 안 된다.
-    static let notch = Color.flatRGB(0xFA, 0xFA, 0xF8)   // = 새 지면색(2026-08-18 흰 지면 전환)
+    static let notch = Color.flatRGB(0x45, 0x59, 0x6F)   // 유화 스크림 근사(2026-08-18 2차 — "노치 다시 뚫어줘")
     /// 발권 정보 블록 높이. 이 값이 고정이라 절취선 y가 콘텐츠와 무관해지고,
     /// 그래서 노치를 뚫을 수 있다(시안 §3.4 "노치가 왜 이제 가능한가").
     static let headerHeight: CGFloat = 150
@@ -397,8 +397,9 @@ extension ThemeChrome {
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: true,
         circlesRecordedDays: false, boostsContrast: true,
-        // photographicGround = false(2026-08-18) — 유화 지면 폐기로 흰 덮기 활자도 잉크로 복귀
-        ticketChrome: true, photographicGround: false, pointTabTint: false
+        // photographicGround = 오늘·나의 템포만 유화(2026-08-18 2차 — "오늘 탭과 나의템포 탭
+        // 배경에만 어둡게 처리한 유화 다시 넣어줘"). 설정·하루 상세는 흰 지면(뷰 분기 제거).
+        ticketChrome: true, photographicGround: true, pointTabTint: false
     )
 
     /// 활판 v2 (시안 §2.3) — 선과 활자만. 음각 표제·헤어라인 밑줄·라틴 표기·활자 하단바.

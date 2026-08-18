@@ -90,12 +90,9 @@ struct DayDetailView: View {
 
     var body: some View {
         ZStack {
-            if ThemeStore.chrome.photographicGround {
-                TicketGround(phase: snapshot.phase(on: day))   // 계절 유화 + 스크림(시안 §3)
-            } else {
-                Ink.paper.ignoresSafeArea()
-                SeasonLight(phase: snapshot.phase(on: day))
-            }
+            // 티켓 = 흰 지면(2026-08-18 2차 — 유화는 오늘·나의 템포만)
+            Ink.paper.ignoresSafeArea()
+            SeasonLight(phase: snapshot.phase(on: day))
             ScrollView {
                 // 오늘 탭과 같은 조판 — 3구획을 쌓는다(프로토 data-view="day" 문법, 2026-07-26 정정:
                 // 세그먼트 전환은 MASTER §8.2.4 구문장을 따른 것이었고 시안과 어긋나 있었다)
@@ -190,10 +187,10 @@ struct DayDetailView: View {
                 // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v6 확정 56px)
                 almanacDisplay("\(cal.component(.day, from: day))",
                                size: ThemeStore.chrome.debossDisplay ? 80 : 56,
-                               color: Ink.onGround(Ink.text, white: 1.0))
+                               color: Ink.text)
                 Text(day.formatted(.dateTime.month().weekday(.wide)))
                     .font(.system(.subheadline, design: .serif))
-                    .foregroundStyle(Ink.onGround(Ink.text.opacity(0.6), white: 0.66))
+                    .foregroundStyle(Ink.text.opacity(0.6))
             }
             // 공휴일·기념일 표기(2026-07-28) — 소스는 캘린더 셀과 동일(애플 캘린더 우선, 내장 폴백)
             let holidays = dayHolidays()
@@ -208,7 +205,7 @@ struct DayDetailView: View {
                     if info.projected { Text("· 예상") }
                 }
                 .font(.system(.footnote, design: .serif))
-                .foregroundStyle(Ink.onGround(info.meta.color.opacity(info.projected ? 0.7 : 1.0), white: 0.82))
+                .foregroundStyle(info.meta.color.opacity(info.projected ? 0.7 : 1.0))
                 if let line = selfCareLine {
                     Text(line)
                         .font(.system(.footnote, design: .serif))

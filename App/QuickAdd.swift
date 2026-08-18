@@ -92,12 +92,11 @@ enum QuickAdd {
     }
 
     // ── Output : 에너지별 (2026-08-18 사용자 수정 표 전사) ──
-    /// 「오늘 할 일 적어두기」는 체크만으로 복원 — 원래 체크만 취지였는데 Output에 체크만이
-    /// 없어 퍼센트로 두었던 것(대본 각주). 이번에 체크만이 생겨 제자리로.
+    /// 「오늘 할 일 적어두기」 = 퍼센트(2026-08-18 — 체크만은 하루 만에 철회, 대본 각주 참조).
     static func outputs(level: EnergyLevel?) -> [Suggestion] {
         switch level ?? .mid {
         case .low:
-            [Suggestion(title: "오늘 할 일 적어두기", kind: .checkOnly),
+            [Suggestion(title: "오늘 할 일 적어두기", kind: .percent),
              Suggestion(title: "자료 한 편 읽기", kind: .timer, seconds: 20 * 60),
              Suggestion(title: "메일함 체크", kind: .timer, seconds: 15 * 60),
              Suggestion(title: "자격증 공부", kind: .timer, seconds: 30 * 60),
