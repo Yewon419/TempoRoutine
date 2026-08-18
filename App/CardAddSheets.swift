@@ -1072,15 +1072,21 @@ func anchorDate(for day: Date) -> Date {
 struct QuickAddChips: View {
     let titles: [String]
     let onPick: (String) -> Void
+    /// 작은 햅틱(§4 — 입력칸을 채울 뿐 저장 확정이 아니라 light. 2026-08-18 사용자 지시)
+    @State private var lightFeedback = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(titles, id: \.self) { title in
-                Button { onPick(title) } label: { chip(title) }
+                Button {
+                    lightFeedback += 1
+                    onPick(title)
+                } label: { chip(title) }
                     .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
     }
 
     private func chip(_ title: String) -> some View {
