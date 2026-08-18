@@ -1,4 +1,4 @@
-// 템포루틴 — CyclePredictor 테스트 (MASTER §5.6.1, T1~T16 = 25 assertions)
+// 템포루틴 — CyclePredictor 테스트 (MASTER §5.6.1, T1~T16 = 25 assertions + T17~T18 백테스트)
 // Playground Step1(아이폰 검증 25/25) 하니스의 XCTest 이식본 — 케이스·기대값 무변경.
 
 import XCTest
@@ -40,6 +40,32 @@ final class CyclePredictorTests: XCTestCase {
         XCTAssertEqual(CyclePredictor.averageLength(startDates: [], priorLength: 40), 35, "T1b prior 클램프 상한")
         XCTAssertEqual(CyclePredictor.averageLength(startDates: [], priorLength: 10), 21, "T1b prior 클램프 하한")
         XCTAssertEqual(CyclePredictor.averageLength(startDates: []), 28, "T1b prior 없음 → 28 불변")
+    }
+
+    // T17 predictionErrors — 백테스트(2026-08-18 예측 오차 자가 표시). 산식 = analyze_export.py §2.
+    func testT17PredictionErrors() {
+        // [28, 29, 27] gap: k=2 예측 28 vs 실제 29 → +1 / k=3 예측 29(28.5 반올림) vs 27 → −2
+        XCTAssertEqual(CyclePredictor.predictionErrors(startDates: [d(0), d(28), d(57), d(84)]),
+                       [1, -2], "T17 기본 백테스트")
+        // 무효 gap(60)은 표본 제외 — 예측은 하되 실제가 [21,35] 밖이면 안 센다
+        XCTAssertEqual(CyclePredictor.predictionErrors(startDates: [d(0), d(28), d(88), d(116)]),
+                       [0], "T17 무효 gap 배제")
+        // 표본 부족 — 시작일 <3이면 빈 배열
+        XCTAssertEqual(CyclePredictor.predictionErrors(startDates: [d(0), d(28)]), [], "T17 표본 부족")
+        XCTAssertEqual(CyclePredictor.predictionErrors(startDates: []), [], "T17 기록 0")
+        // 최근 5개 윈도 — 유효 오차 8개 [0,0,0,+7,+6,+4,+3,+1] → 뒤 5개만
+        XCTAssertEqual(CyclePredictor.predictionErrors(
+            startDates: [d(0), d(21), d(42), d(63), d(84), d(112), d(140), d(168), d(196), d(224)]),
+                       [7, 6, 4, 3, 1], "T17 최근 5개 윈도")
+    }
+
+    // T18 predictionErrors + prior — 유효 gap 0 구간의 예측은 prior를 쓴다(T1b 경로 동일)
+    func testT18PredictionErrorsPrior() {
+        // history [0,60] = 유효 gap 0 → prior 30으로 예측 vs 실제 28 → −2
+        XCTAssertEqual(CyclePredictor.predictionErrors(startDates: [d(0), d(60), d(88)], priorLength: 30),
+                       [-2], "T18 prior 예측")
+        XCTAssertEqual(CyclePredictor.predictionErrors(startDates: [d(0), d(60), d(88)]),
+                       [0], "T18 prior 없음 → 28")
     }
 
     // T2 phaseSpans(28)

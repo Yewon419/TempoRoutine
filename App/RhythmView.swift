@@ -104,6 +104,7 @@ struct RhythmView: View {
                             preWindowNote     // 생리 전 저컨디션 윈도우 서술(§5.3 P 소비처)
                             routineNote       // 계절별 루틴 수행(2026-08-13)
                             cycleLengthNote   // 주기 길이(2026-08-13)
+                            predictionErrorNote   // 예측 오차 자가 표시(2026-08-18)
                         }
                     case .routines:
                         routinesSheet
@@ -302,6 +303,39 @@ struct RhythmView: View {
                     .foregroundStyle(Ink.text)
                 Text(lo == hi ? "기록된 \(lengths.count)주기 모두 \(lo)일"
                               : "기록된 \(lengths.count)주기 \(lo)~\(hi)일")
+                    .font(.caption)
+                    .foregroundStyle(Ink.text.opacity(0.45))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .milkGlass()
+        }
+    }
+
+    // ── 예측 오차 자가 표시 (2026-08-18) ──
+    // ⚠ 미래 단정 아님 — 과거 예측이 실제와 얼마나 어긋났는지의 기록 서술(§7 의료 레인).
+    //   산식 = TempoCore predictionErrors(analyze_export.py 백테스트와 동일) — 유효 오차 최근 5개.
+    private var recentPredictionErrors: [Int] {
+        CyclePredictor.predictionErrors(startDates: snapshot.starts,
+                                        priorLength: AppSettings.cycleLengthPrior)
+    }
+
+    @ViewBuilder
+    private var predictionErrorNote: some View {
+        let errors = recentPredictionErrors
+        if errors.count >= 2 {   // 표본 1개는 우연 — 주기 길이 카드(≥2)와 같은 임계
+            let mae = Double(errors.map(abs).reduce(0, +)) / Double(errors.count)
+            let m = Int(mae.rounded())
+            VStack(alignment: .leading, spacing: 6) {
+                Text("예측 정확도")
+                    .font(.almanacBody(.footnote, size: 12))
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                Text(m == 0 ? "지난 \(errors.count)번, 예측한 날에 시작했어요."
+                            : "지난 \(errors.count)번, 예측과 실제가 평균 \(m)일 차이였어요.")
+                    .font(.almanacBody(.subheadline, size: 15))
+                    .foregroundStyle(Ink.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("기록된 시작일과 그때까지의 예측을 비교한 값")
                     .font(.caption)
                     .foregroundStyle(Ink.text.opacity(0.45))
             }

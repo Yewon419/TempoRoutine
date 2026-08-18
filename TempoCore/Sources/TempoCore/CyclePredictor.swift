@@ -23,6 +23,24 @@ public enum CyclePredictor {
         return max(21, min(35, Int(avg.rounded())))
     }
 
+    /// 예측 백테스트 오차 (2026-08-18 — 예측 오차 자가 표시, §8.2.5).
+    /// k번째 시작일까지의 기록으로 k+1번째 gap을 예측해 실제와 비교 — tools/analyze_export.py
+    /// 「2. 예측 백테스트」와 동일 산식. 실제 gap이 [21,35] 밖이면 기록 공백/스포팅으로 보고
+    /// 표본에서 제외(averageLength v1.1 ①과 같은 기준), 유효 오차 중 최근 5개만 반환(v1.1 ②와
+    /// 정합 — 오래된 불규칙 기록이 현재 성능을 과소평가하는 걸 막는다). 값 = 실제 − 예측.
+    public static func predictionErrors(startDates: [Date], priorLength: Int? = nil) -> [Int] {
+        let sorted = startDates.sorted()
+        guard sorted.count >= 3 else { return [] }
+        var errors: [Int] = []
+        for k in 2..<sorted.count {
+            let predicted = averageLength(startDates: Array(sorted[0..<k]), priorLength: priorLength)
+            let actual = Calendar.current.dateComponents([.day], from: sorted[k - 1], to: sorted[k]).day ?? 0
+            guard (21...35).contains(actual) else { continue }
+            errors.append(actual - predicted)
+        }
+        return Array(errors.suffix(5))
+    }
+
     /// §5.3 LOCKED v2 경계(황체기 고정·양방향 앵커). 합은 항상 n. B=14/O=3 고정,
     /// M = 층 2 사용자값(개정 M — 온보딩 보고값 → 실측 중앙값. 제공자는 앱 CycleParams, 디폴트 5).
     public static func phaseSpans(cycleLength n: Int, menstrualLength: Int = 5) -> [PhaseSpan] {
