@@ -380,6 +380,9 @@ struct ThemePreview: View {
 
     private var titleFont: Font {
         switch theme.chrome.typeFace {
+        case .notoSerif:
+            return LetterpressFont.available ? .custom("NotoSerifKR-Light", size: 22)
+                                             : .system(size: 22, weight: .light, design: .serif)
         case .pretendard:
             return ThemeFont.available ? .custom("Pretendard-SemiBold", size: 22)
                                        : .system(size: 22, weight: .semibold)

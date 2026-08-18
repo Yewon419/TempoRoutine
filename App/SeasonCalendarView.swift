@@ -1038,6 +1038,12 @@ struct SeasonCalendarView: View {
     /// 기본 = 표제와 같은 번들 서체(2026-08-09 베타 피드백 "8월 폰트랑 같게" — 시스템 산세리프 폐기)
     private func numberFont(isToday: Bool) -> Font {
         switch ThemeStore.chrome.typeFace {
+        case .notoSerif:
+            // 활판 소형 숫자(§2.3-11) = Bodoni Moda 400, 오늘만 500. named instance 실패 시 세리프 폴백
+            guard LetterpressFont.available else {
+                return .system(size: 14, weight: isToday ? .medium : .regular, design: .serif)
+            }
+            return .custom(isToday ? "BodoniModa-Medium" : "BodoniModa-Regular", size: 14)
         case .pretendard:
             guard ThemeFont.available else {
                 return .system(size: 14, weight: isToday ? .semibold : .medium)
