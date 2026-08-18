@@ -24,6 +24,10 @@ struct RootTabView: View {
     @Query private var completions: [ItemCompletion]
     @AppStorage("onboardingDone") private var onboardingDone = false
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
+    /// 포인트색(2026-08-17) — 아래 `.id`에 함께 태운다. 테마 키만 보면 포인트색 변경이
+    /// 리빌드를 못 일으켜, 이미 그려진 화면이 옛 색으로 남았다("되었다 안 되었다" 베타 보고 —
+    /// 색을 바꾼 직후엔 그대로였다가 테마 왕복·재실행 등 다른 이유로 리빌드될 때만 반영됐다).
+    @AppStorage(PointColor.storageKey) private var pointColor = PointColor.vermilion.rawValue
     /// 선택 탭을 뷰 밖(UserDefaults)에 둔다 — 아래 `.id(appTheme)` 리빌드가 TabView의 내부
     /// 선택 상태를 통째로 버려서, 테마를 갈아입을 때마다 첫 탭으로 튕기던 결함(2026-08-11).
     /// 실행 간 이월은 안 한다(TempoRoutineApp.init에서 「오늘」로 되돌린다) — 이번 수정 범위는
@@ -63,10 +67,16 @@ struct RootTabView: View {
         .preferredColorScheme((AppTheme(rawValue: appTheme) ?? .plain).chrome.forcesDarkAppearance ? .dark : nil)
         // 테마 변경 = 전체 트리 리빌드(정적 팔레트 캐시 갱신 반영 — Theme.swift 반응성 설계).
         // 변경 진입점은 설정뿐이라 스택·스크롤 초기화는 허용 범위(2026-07-29 계획 리스크 ①).
-        .id(appTheme)
+        .id(appTheme + "·" + pointColor)   // 포인트색 변경도 같은 리빌드 경로(2026-08-17)
         .onChange(of: appTheme) { _, newValue in
             ThemeStore.apply(newValue)   // 설정의 선(先)apply 보완 벨트 — 외부 변경(백업 복원 등) 대비
             // 위젯도 즉시 테마 추종(Phase 5) — 스냅샷 재발행 + reloadAllTimelines(publish 내장)
+            WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
+                                 inputs: inputs, outputs: outputs, completions: completions)
+        }
+        .onChange(of: pointColor) { _, newValue in
+            // 시트의 선 apply와 같은 경로의 보완 벨트(외부 변경 대비) — apply는 멱등이라 무해
+            ThemeStore.apply(appTheme, pointRawValue: newValue)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)
         }
