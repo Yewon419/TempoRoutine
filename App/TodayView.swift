@@ -689,6 +689,22 @@ struct TodayView: View {
     @ViewBuilder
     private func outputProgress(_ item: OutputItem) -> some View {
         switch item.progressKind {
+        case .checkOnly:
+            // 체크만(2026-08-18) — 저장은 percent 0↔1. 완료는 종전대로 파생(isComplete).
+            Button {
+                item.percent = item.percent >= 1 ? 0 : 1
+                if item.percent >= 1 { confirmFeedback += 1 } else { lightFeedback += 1 }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: item.percent >= 1 ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(item.percent >= 1 ? Ink.text : Ink.text.opacity(0.35))
+                    Text(item.percent >= 1 ? "완료" : "체크")
+                        .font(.footnote)
+                        .foregroundStyle(Ink.text.opacity(item.percent >= 1 ? 1 : 0.6))
+                    Spacer()
+                }
+            }
+            .accessibilityValue(item.percent >= 1 ? "완료" : "미완료")
         case .subtasks:
             let list = (item.subtasks ?? []).sorted { $0.order < $1.order }
             ForEach(list) { sub in

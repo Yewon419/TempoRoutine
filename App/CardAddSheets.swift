@@ -502,11 +502,11 @@ struct InputAddSheet: View {
         .other:    ["겨울": "철분 챙기기", "봄": "새 노트 펴기", "여름": "물 자주 마시기", "가을": "반신욕"],
     ]
 
-    /// 빠른 추가 목록 — 에너지 레벨이 있으면 그 기준, 없으면 계절 일반 경향(D5, QuickAdd 주석)
-    private var quickAddTitles: [String] {
-        if let level = energyLevel { return QuickAdd.inputs(category: category, level: level) }
-        guard let season = currentSeason?.name else { return [] }
-        return QuickAdd.inputs(category: category, season: season)
+    /// 빠른 추가 목록 — 에너지 레벨이 있으면 그 기준, 없으면 계절→에너지 초기 매핑
+    /// (2026-08-18 사용자 지시: 겨울=낮음, 봄·가을=보통, 여름=높음. 별도 계절 표 폐기).
+    private var quickAddSuggestions: [QuickAdd.Suggestion] {
+        QuickAdd.inputs(category: category,
+                        level: energyLevel ?? QuickAdd.level(forSeason: currentSeason?.name))
     }
 
     private var placeholder: String {
@@ -617,11 +617,12 @@ struct InputAddSheet: View {
                     Text("기타").tag(InputCategory.other)
                 }
                 // 빠른 추가(2026-08-16) — 카테고리 아래에 둔다. 카테고리가 정해져야 목록이 나온다.
-                if !quickAddTitles.isEmpty {
-                    QuickAddChips(titles: quickAddTitles) { picked in
-                        title = picked
-                        applyTitleTimeParse()
-                    }
+                // 진행 방식까지 세팅(2026-08-18 사용자 지시) — 「N분」 문구면 타이머, 그 외 체크만.
+                QuickAddChips(suggestions: quickAddSuggestions) { picked in
+                    title = picked.title
+                    applyTitleTimeParse()
+                    progressKind = picked.kind
+                    if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
                 }
                 Section {
                     // 상호 배타(둘 다 끔 = 단발 체크 — Output과 동일 문법, 2026-07-23)
@@ -819,14 +820,12 @@ struct OutputAddSheet: View {
                 // 빠른 추가(2026-08-16) — 제목만이 아니라 진행 방식·목표까지 채운다.
                 // 수정 모드에선 띄우지 않는다: 이미 값이 있는 카드를 덮어쓸 자리가 아니다.
                 if editing == nil {
-                    QuickAddChips(titles: QuickAdd.outputs(level: energyLevel).map(\.title)) { picked in
-                        guard let hit = QuickAdd.outputs(level: energyLevel)
-                            .first(where: { $0.title == picked }) else { return }
-                        title = hit.title
+                    QuickAddChips(suggestions: QuickAdd.outputs(level: energyLevel)) { picked in
+                        title = picked.title
                         applyTitleTimeParse()
-                        kind = hit.kind
-                        if hit.sessions > 0 { targetSessions = hit.sessions }
-                        if hit.seconds > 0 { targetMinutes = hit.seconds / 60 }
+                        kind = picked.kind ?? .checkOnly
+                        if picked.sessions > 0 { targetSessions = picked.sessions }
+                        if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
                     }
                 }
                 Section {
@@ -881,8 +880,10 @@ struct OutputAddSheet: View {
                 }
                 Section("진행 방식") {
                     // 5종이 되며 segmented가 좁아져 menu로 전환(2026-08-09 타이머·스톱워치 추가)
+                    // 체크만 추가(2026-08-18 사용자 지시) — 저장은 percent 0↔1(파생 완료 유지)
                     Picker("진행 방식", selection: $kind) {
                         // 라벨만 개명(2026-08-01 베타 피드백) — rawValue "subtasks"는 저장 호환 때문에 불변
+                        Text("체크만").tag(OutputProgressKind.checkOnly)
                         Text("체크리스트").tag(OutputProgressKind.subtasks)
                         Text("세션").tag(OutputProgressKind.sessions)
                         Text("퍼센트").tag(OutputProgressKind.percent)
@@ -1070,23 +1071,32 @@ func anchorDate(for day: Date) -> Date {
 ///   잘못 눌렀을 때 되돌릴 자리가 있어야 하고, 시트가 탭 한 번에 닫히면 수정할 기회가 없다.
 /// 세로로 쌓는 이유: 문구가 길어(「소화 편한 죽 한 그릇」) 가로 한 줄에 3개가 안 들어간다.
 struct QuickAddChips: View {
-    let titles: [String]
-    let onPick: (String) -> Void
+    let suggestions: [QuickAdd.Suggestion]
+    let onPick: (QuickAdd.Suggestion) -> Void
     /// 작은 햅틱(§4 — 입력칸을 채울 뿐 저장 확정이 아니라 light. 2026-08-18 사용자 지시)
     @State private var lightFeedback = 0
+    /// 풀에서 2개 무작위(2026-08-18 사용자 지시 — 열 때마다 달라 "컨텐츠가 많아 보이게").
+    /// 시트가 떠 있는 동안은 고정 — 그리는 중에 바뀌면 잘못 누른다.
+    @State private var drawn: [QuickAdd.Suggestion] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ForEach(titles, id: \.self) { title in
+            ForEach(drawn, id: \.self) { suggestion in
                 Button {
                     lightFeedback += 1
-                    onPick(title)
-                } label: { chip(title) }
+                    onPick(suggestion)
+                } label: { chip(suggestion.title) }
                     .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .onAppear { redraw() }
+        .onChange(of: suggestions) { _, _ in redraw() }   // Input 카테고리 전환 = 새 풀
+    }
+
+    private func redraw() {
+        drawn = Array(suggestions.shuffled().prefix(2))
     }
 
     private func chip(_ title: String) -> some View {

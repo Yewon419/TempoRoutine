@@ -58,6 +58,9 @@ public enum ProgressRule {
     /// 앱이 대신 내릴 수 없다). 그 둘은 종전처럼 사용자가 직접 체크한다.
     public static func isFulfilled(goal: ProgressGoal, state: ProgressState) -> Bool {
         switch goal.kind {
+        case .checkOnly:
+            // 체크만(2026-08-18) — 저장을 percent 0↔1로 빌린다. 체크 = 1, 해제 = 0.
+            return state.percent >= 1
         case .subtasks:
             return goal.subtaskCount > 0 && state.doneSubtasks >= goal.subtaskCount
         case .sessions:
@@ -76,6 +79,8 @@ public enum ProgressRule {
     /// 스톱워치는 끝이 없어 비율이 성립하지 않는다.
     public static func fraction(goal: ProgressGoal, state: ProgressState) -> Double? {
         switch goal.kind {
+        case .checkOnly:
+            return nil   // 이진 상태 — 게이지가 성립하지 않는다
         case .subtasks:
             guard goal.subtaskCount > 0 else { return nil }
             return clamp(Double(state.doneSubtasks) / Double(goal.subtaskCount))

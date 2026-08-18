@@ -54,7 +54,9 @@ extension InputSchedule {
 // timer·stopwatch 추가(2026-08-09 사용자 결정): 시간도 수명 누적이다 — 타이머 = 목표 시간을
 // 채우면 완료(파생), 스톱워치 = 측정 전용(완료 개념 없음 — 파생 완료의 명시적 예외).
 // ⚠ 구 빌드는 새 rawValue를 디코딩 못 한다(전방 호환 한계 — 백업 파일 공유 시 주의).
-public enum OutputProgressKind: String, Codable, Sendable { case subtasks, sessions, percent, timer, stopwatch }
+// checkOnly 추가(2026-08-18 사용자 지시 "아웃풋에도 체크만") — 저장은 percent 0↔1을 빌려
+// 파생 완료 계약(§5.5.2)을 그대로 유지한다(모델 필드 추가 없음).
+public enum OutputProgressKind: String, Codable, Sendable { case checkOnly, subtasks, sessions, percent, timer, stopwatch }
 
 /// Output 반복 — InputSchedule과 동형(2026-07-22 확장, 주기 데이터 없어도 daily/weekly/monthly는 동작해야 함).
 /// .once = 반복 없음(2026-07-22 2차 확장): 케이던스 없는 단발 목표 — 생성일부터 완료까지 계속 표시.

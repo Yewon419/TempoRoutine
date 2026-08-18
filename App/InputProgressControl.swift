@@ -39,6 +39,8 @@ struct InputProgressControl: View {
     @ViewBuilder
     private var content: some View {
         switch goal.kind {
+        case .checkOnly:
+            EmptyView()   // Input의 「체크만」은 progressKind nil로 표현된다 — 이 케이스는 도달 불가
         case .subtasks:
             subtaskRows
         case .sessions:

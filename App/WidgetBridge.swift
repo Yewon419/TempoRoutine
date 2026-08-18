@@ -115,6 +115,11 @@ enum WidgetBridge {
         let lines = ordered.prefix(6).map { item -> WidgetProgressLine in
             let dday = ddayLabel(target: item.targetDate, from: day)
             switch item.progressKind {
+            case .checkOnly:
+                return WidgetProgressLine(title: item.title,
+                                          label: item.percent >= 1 ? "완료" : "",
+                                          fraction: item.percent >= 1 ? 1 : 0,
+                                          id: item.id, kind: item.progressKind.rawValue, dday: dday)
             case .percent:
                 return WidgetProgressLine(title: item.title,
                                           label: item.percent.formatted(.percent.precision(.fractionLength(0))),
