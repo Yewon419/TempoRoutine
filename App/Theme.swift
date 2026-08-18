@@ -211,7 +211,9 @@ extension ThemePalette {
         summer: .flat(0x1C, 0x7A, 0x94),      // 시안
         autumn: .flat(0xB8, 0x86, 0x1F),      // 골드
         text: .flat(0x22, 0x38, 0x4F),        // 딥 네이비 잉크
-        paper: .flat(0x6E, 0x8A, 0xAC),       // 지면 = 블루그레이 색면
+        // 지면 = 웜 화이트(2026-08-18 사용자 지시 "배경컬러 걍 흰색" — 블루그레이 색면·유화 폐기.
+        // 발권지(surface)와 동값이라 카드 구분은 그림자·클립 윤곽이 담당한다, 시안 탭바 전례)
+        paper: .flat(0xFA, 0xFA, 0xF8),
         coral: .flat(0xA9, 0x32, 0x26),       // 은퇴 토큰
         record: .flat(0xA9, 0x32, 0x26),
         danger: .flat(0xA9, 0x32, 0x26),
@@ -219,7 +221,7 @@ extension ThemePalette {
         oxide: .flat(0x7E, 0x8F, 0xA0),       // 과거 = 바랜 블루그레이
         holiday: .flat(0xA9, 0x32, 0x26),
         saturday: .flat(0x2E, 0x5C, 0x8A),
-        frost: .flat(0x6E, 0x8A, 0xAC),
+        frost: .flat(0xFA, 0xFA, 0xF8),
         glowWinter: .flat(0xA9, 0x32, 0x26),
         glowSpring: .flat(0x3F, 0x7A, 0x44),
         glowSummer: .flat(0x1C, 0x7A, 0x94),
@@ -264,7 +266,7 @@ enum TicketSpec {
     /// 극소 캡션 라벨 잉크
     static let label = Color.flatRGB(0x7B, 0x8C, 0xA0)
     /// 노치 안쪽 = 다른 탭 지면색 근사. **고정값** — 계절 유화가 교체돼도 흔들리면 안 된다.
-    static let notch = Color.flatRGB(0x45, 0x59, 0x6F)
+    static let notch = Color.flatRGB(0xFA, 0xFA, 0xF8)   // = 새 지면색(2026-08-18 흰 지면 전환)
     /// 발권 정보 블록 높이. 이 값이 고정이라 절취선 y가 콘텐츠와 무관해지고,
     /// 그래서 노치를 뚫을 수 있다(시안 §3.4 "노치가 왜 이제 가능한가").
     static let headerHeight: CGFloat = 150
@@ -395,7 +397,8 @@ extension ThemeChrome {
         dimsInDarkMode: false, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: true,
         circlesRecordedDays: false, boostsContrast: true,
-        ticketChrome: true, photographicGround: true, pointTabTint: false
+        // photographicGround = false(2026-08-18) — 유화 지면 폐기로 흰 덮기 활자도 잉크로 복귀
+        ticketChrome: true, photographicGround: false, pointTabTint: false
     )
 
     /// 활판 v2 (시안 §2.3) — 선과 활자만. 음각 표제·헤어라인 밑줄·라틴 표기·활자 하단바.

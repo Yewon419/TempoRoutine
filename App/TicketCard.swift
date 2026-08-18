@@ -20,17 +20,24 @@ struct TicketGround: View {
     let phase: CyclePhase?
 
     var body: some View {
-        ZStack {
-            Ink.paper   // 이미지 로드 실패 폴백 = 종전 색면
-            Image(TicketSpec.plateAsset(for: phase))
-                .resizable()
-                .scaledToFill()
-            LinearGradient(
-                colors: [Color(red: 74 / 255, green: 96 / 255, blue: 124 / 255).opacity(0.62),
-                         Color(red: 46 / 255, green: 64 / 255, blue: 90 / 255).opacity(0.82)],
-                startPoint: .top, endPoint: .bottom)
-        }
-        .clipped()   // scaledToFill 넘침이 이웃 뷰를 침범하지 않게
+        // ⚠ scaledToFill을 ZStack에 직접 두면 **레이아웃 프레임까지 커진다** — 2026-08-18 빌드
+        // 380에서 티켓 전 화면이 확대된 사고의 뿌리(clipped는 그리기만 자를 뿐 프레임은 그대로).
+        // Color.clear가 제안 크기를 정확히 차지하고, 이미지는 overlay로만 얹는다(레이아웃 무영향).
+        // 현재 티켓은 흰 지면 전환으로 이 뷰를 쓰지 않지만, 결함은 고쳐 둔다(재사용 대비).
+        Color.clear
+            .overlay {
+                ZStack {
+                    Ink.paper   // 이미지 로드 실패 폴백 = 종전 색면
+                    Image(TicketSpec.plateAsset(for: phase))
+                        .resizable()
+                        .scaledToFill()
+                    LinearGradient(
+                        colors: [Color(red: 74 / 255, green: 96 / 255, blue: 124 / 255).opacity(0.62),
+                                 Color(red: 46 / 255, green: 64 / 255, blue: 90 / 255).opacity(0.82)],
+                        startPoint: .top, endPoint: .bottom)
+                }
+            }
+        .clipped()
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -74,7 +81,7 @@ struct TicketSerial: View {
             Text(serial)
                 .font(.system(size: 10, weight: .regular, design: .monospaced))
                 .kerning(1.6)
-                .foregroundStyle(.white.opacity(0.62))
+                .foregroundStyle(TicketSpec.label)   // 흰 지면 전환(2026-08-18) — 흰 62%는 안 보인다
                 .accessibilityHidden(true)
         }
     }

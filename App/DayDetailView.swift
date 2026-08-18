@@ -188,7 +188,9 @@ struct DayDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v6 확정 56px)
-                almanacDisplay("\(cal.component(.day, from: day))", size: 56, color: Ink.onGround(Ink.text, white: 1.0))
+                almanacDisplay("\(cal.component(.day, from: day))",
+                               size: ThemeStore.chrome.debossDisplay ? 80 : 56,
+                               color: Ink.onGround(Ink.text, white: 1.0))
                 Text(day.formatted(.dateTime.month().weekday(.wide)))
                     .font(.system(.subheadline, design: .serif))
                     .foregroundStyle(Ink.onGround(Ink.text.opacity(0.6), white: 0.66))

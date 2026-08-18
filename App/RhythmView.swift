@@ -83,13 +83,18 @@ struct RhythmView: View {
                     }
                     // 모던 = 아웃라인 표제(시안 §1.3-2 — 표제는 아웃라인 승격 이력)
                     // 「나의 리듬」→「나의 템포」(2026-08-18 사용자 지시 — 앱 이름과 같은 축)
-                    almanacDisplay("나의 템포", size: 44, color: Ink.onGround(Ink.text, white: 1.0))
+                    almanacDisplay("나의 템포", size: ThemeStore.chrome.debossDisplay ? 68 : 44,
+                                   color: Ink.onGround(Ink.text, white: 1.0))
                     selfReportPrompt
                     sectionSwitcher
                     switch tab {
                     case .seasons:
-                        // 관측 패턴 — 콜드 문법 승계: 서술 가능한 신호가 없으면 진행 카드만
-                        coldCard
+                        // 관측 패턴 — 콜드 문법 승계: 서술 가능한 신호가 없으면 진행 카드만.
+                        // 네 계절이 다 열리면 진행 카드는 할 일을 끝낸 것 — 내린다(2026-08-18 베타
+                        // 피드백 "다 채웠는데 안 없어지나").
+                        if unlockedPhases.count < Self.allPhases.count {
+                            coldCard
+                        }
                         if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
                             meanwhileCard
                         }

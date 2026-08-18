@@ -490,8 +490,11 @@ struct SeasonCalendarView: View {
                     Text(Self.latinMonthLabel(monthStart))
                         .font(.system(size: 13, design: .serif).italic())
                         .foregroundStyle(Ink.autumn)   // 버밀리언
+                    // §2.3-12: 월 150. 6주 달은 112(§2.3-10 — 조정 없이 48pt 넘친다)
                     almanacDisplay(String(format: "%02d", cal.component(.month, from: monthStart)),
-                                   size: 58, color: Ink.text)
+                                   size: (cal.range(of: .weekOfMonth, in: .month, for: monthStart)?.count ?? 5) >= 6
+                                         ? 112 : 150,
+                                   color: Ink.text)
                 }
             } else {
                 almanacDisplay("\(cal.component(.month, from: monthStart))월", size: 58, color: Ink.text)
@@ -1188,10 +1191,9 @@ struct SeasonCalendarView: View {
     }
 
     private var ticketLegendRule: some View {
+        // 마감 점선 제거(2026-08-18 베타 피드백 "하단 점선좀 없애주고") — 범례를 관통해 읽혔다.
+        // 달 이동 화살표는 유지.
         ZStack {
-            TicketPerforation()
-                .padding(.horizontal, -20)
-                .opacity(0.65)
             TicketMonthNav(
                 onPrev: { lightFeedback += 1; shiftMonth(-1) },
                 onNext: { lightFeedback += 1; shiftMonth(1) }

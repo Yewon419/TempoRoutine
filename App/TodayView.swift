@@ -285,7 +285,8 @@ struct TodayView: View {
                 // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
-                    almanacDisplay(info.meta.name, size: 58,
+                    almanacDisplay(info.meta.name,
+                                   size: ThemeStore.chrome.debossDisplay ? 84 : 58,
                                    color: Ink.onGround(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0),
                                                        white: snapshot.isSingleRecord ? 0.6 : 1.0))
                     Spacer(minLength: 0)
