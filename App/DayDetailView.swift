@@ -57,10 +57,14 @@ struct DayDetailView: View {
     /// 진입한 날짜 — 화면 안에서 전날·다음날로 옮기면 offset만 움직인다(2026-08-01 베타 피드백).
     /// 화면을 새로 push하지 않으므로 뒤로가기 스택이 쌓이지 않는다.
     private let anchorDay: Date
+    /// 주기 지도 경유(2026-08-18) — 이 화면에서 추가하는 Input·Output에 그날의 계절·일차를
+    /// 주기 반복 프리셋으로 얹는다("이 탭에서 추가되는 건 기본 주기 반복" — 사용자 지시).
+    private let presetsCycleAnchor: Bool
     @State private var dayOffset = 0
 
-    init(day: Date) {
+    init(day: Date, presetsCycleAnchor: Bool = false) {
         self.anchorDay = day
+        self.presetsCycleAnchor = presetsCycleAnchor
     }
 
     /// 지금 보고 있는 날짜 — 내부 전 계산의 기준(종전 `day` 저장 프로퍼티 자리)
@@ -135,8 +139,12 @@ struct DayDetailView: View {
                                           currentSeason: snapshot.phaseInfo(on: today)?.meta,
                                           energyLevel: snapshot.phase(on: today).flatMap {
                                               EnergyProfile(checkIns: checkIns, snapshot: snapshot).level(for: $0)
-                                          })
+                                          },
+                                          presetSeason: cycleAnchorPreset?.season,
+                                          presetDayOffset: cycleAnchorPreset?.dayOffset)
             case .output:   OutputAddSheet(day: day,
+                                          presetSeason: cycleAnchorPreset?.season,
+                                          presetDayOffset: cycleAnchorPreset?.dayOffset,
                                           energyLevel: snapshot.phase(on: today).flatMap {
                                               EnergyProfile(checkIns: checkIns, snapshot: snapshot).level(for: $0)
                                           })
@@ -173,6 +181,15 @@ struct DayDetailView: View {
                 .contentShape(Rectangle())
         }
         .accessibilityLabel(label)
+    }
+
+    /// 주기 지도 경유일 때만 — 보고 있는 날의 (계절, 계절 내 일차-1)을 추가 시트 프리셋으로.
+    /// 날짜를 옮기면 옮긴 날 기준으로 따라간다.
+    private var cycleAnchorPreset: (season: SeasonAnchor, dayOffset: Int)? {
+        guard presetsCycleAnchor, let info = snapshot.phaseInfo(on: day),
+              let season = SeasonAnchor.allCases.first(where: { seasonMeta(for: $0.phase).name == info.meta.name })
+        else { return nil }
+        return (season, info.dayInPhase - 1)
     }
 
     private func move(by days: Int) {

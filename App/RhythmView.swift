@@ -769,7 +769,7 @@ struct RhythmView: View {
         .sheet(item: $gridDestination) { destination in
             // 칸 = 그 위상이 **다음으로 오는 날** — 하루 상세를 그대로 연다(헤더가 「봄 n일차」
             // 문법이고 Input·Output 추가가 이미 그 안에 있다. 2026-08-18 2차 사용자 지시).
-            NavigationStack { DayDetailView(day: destination.day) }
+            NavigationStack { DayDetailView(day: destination.day, presetsCycleAnchor: true) }
         }
     }
 

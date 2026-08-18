@@ -424,7 +424,8 @@ struct InputAddSheet: View {
     /// 오늘·미래는 종전대로 매일 기본(체크리스트가 본질). 2026-07-27 사용자 결정.
     /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
     init(day: Date = .now, currentSeason: SeasonMeta?, energyLevel: EnergyLevel? = nil,
-         presetSeason: SeasonAnchor? = nil, editing: InputItem? = nil) {
+         presetSeason: SeasonAnchor? = nil, presetDayOffset: Int? = nil,
+         editing: InputItem? = nil) {
         self.day = day
         self.currentSeason = currentSeason
         self.energyLevel = energyLevel
@@ -466,6 +467,8 @@ struct InputAddSheet: View {
             _repeats = State(initialValue: false)
             _cycleBased = State(initialValue: true)
             _anchor = State(initialValue: presetSeason)
+            // 주기 지도 칸 경유(2026-08-18) — 그 칸의 일차까지 미리 맞춘다
+            if let presetDayOffset { _offset = State(initialValue: presetDayOffset) }
         } else {
             _repeats = State(initialValue: cal.startOfDay(for: day) >= cal.startOfDay(for: .now))
         }
@@ -736,7 +739,8 @@ struct OutputAddSheet: View {
     let energyLevel: EnergyLevel?
 
     /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
-    init(day: Date = .now, presetSeason: SeasonAnchor? = nil, editing: OutputItem? = nil,
+    init(day: Date = .now, presetSeason: SeasonAnchor? = nil, presetDayOffset: Int? = nil,
+         editing: OutputItem? = nil,
          energyLevel: EnergyLevel? = nil) {
         self.day = day
         self.editing = editing
@@ -778,6 +782,11 @@ struct OutputAddSheet: View {
         } else if let presetSeason {
             _cycleBased = State(initialValue: true)
             _anchor = State(initialValue: presetSeason)
+            // 주기 지도 칸 경유(2026-08-18) — 그 칸의 일차까지 미리 맞춘다(범위 = 며칠째)
+            if let presetDayOffset {
+                _wholePhase = State(initialValue: false)
+                _offset = State(initialValue: presetDayOffset)
+            }
         }
     }
 
