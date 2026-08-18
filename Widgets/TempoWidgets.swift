@@ -205,6 +205,20 @@ enum WThemeStore {
 }
 
 enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀) — 정적 API 유지, 백킹만 위임
+    /// 위젯 지면(2026-08-18 사용자 지시) — **티켓만 발권물 흰색**으로 뒤집는다.
+    /// 앱에서 티켓 지면은 블루그레이 색면이지만, 위젯은 남의 홈 화면 배경 위에 놓이는
+    /// 작은 카드라 색면이면 혼자 무겁고 배경과 싸운다. 흰 발권물이 그대로 얹힌 모양이 맞다.
+    /// `paper` 계열 자리에 쓴다.
+    static var widgetGround: Color {
+        WThemeStore.key == "ticket" ? Self.ticketPaper : WThemeStore.palette.paper
+    }
+    /// 위와 같은 규칙의 `frost` 계열 자리(격자 위젯 — 이번 주·이번 달)
+    static var widgetGridGround: Color {
+        WThemeStore.key == "ticket" ? Self.ticketPaper : WThemeStore.palette.frost
+    }
+    /// 발권물 웜 화이트 — 앱 `TicketSpec.ticketPaper`와 동값 사본(위젯 타깃은 앱 소스를 못 본다)
+    private static let ticketPaper = Color(red: 0xFA / 255, green: 0xFA / 255, blue: 0xF8 / 255)
+
     static var winter: Color { WThemeStore.palette.winter }
     static var spring: Color { WThemeStore.palette.spring }
     static var summer: Color { WThemeStore.palette.summer }
@@ -359,7 +373,7 @@ struct SeasonTodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "SeasonToday", provider: SeasonProvider()) { entry in
             SeasonWidgetView(entry: entry)
-                .containerBackground(WInk.paper, for: .widget)
+                .containerBackground(WInk.widgetGround, for: .widget)
         }
         .configurationDisplayName("오늘의 계절")
         .description("지금 계절과 일차를 보여줘요.")

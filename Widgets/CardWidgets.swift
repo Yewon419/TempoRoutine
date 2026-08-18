@@ -74,7 +74,7 @@ struct InputTodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "InputToday", provider: ScheduleProvider()) { entry in
             InputTodayView(entry: entry)
-                .containerBackground(WInk.paper, for: .widget)
+                .containerBackground(WInk.widgetGround, for: .widget)
         }
         .configurationDisplayName("오늘의 Input")
         .description("오늘 챙길 Input을 목록으로 보여줘요.")
@@ -144,7 +144,7 @@ struct OutputTodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "OutputToday", provider: ScheduleProvider()) { entry in
             OutputTodayView(entry: entry)
-                .containerBackground(WInk.paper, for: .widget)
+                .containerBackground(WInk.widgetGround, for: .widget)
         }
         .configurationDisplayName("오늘의 Output")
         .description("진행 중인 Output과 남은 날짜를 보여줘요.")
