@@ -610,6 +610,7 @@ struct RhythmView: View {
                     .font(.almanac(size: 28, weight: .bold))
                     .foregroundStyle(Ink.text)
             }
+            cycleGrid   // 주기 한 바퀴 지도(2026-08-18 사용자 지시 — "봄 몇 칸, 여름 몇 칸")
             ForEach(CyclePhase.displayOrder, id: \.self) { phase in
                 seasonRow(phase: phase, routines: routines[phase] ?? [])
             }
@@ -715,6 +716,71 @@ struct RhythmView: View {
         }
         .padding(.vertical, routines.isEmpty ? 12 : 8)
         .almanacRule()
+    }
+
+    // ── 주기 한 바퀴 지도 (2026-08-18 사용자 지시 — "한 달 주기를 볼 수 있는 표") ──
+    // 평균 주기를 1일차부터 7열 그리드로 펼친다. 칸 색 = 그 일차의 계절(§5.3 경계),
+    // 점 = 그 일차에 걸린 루틴. 주기 순서(겨울 시작)가 시간 축 — 나열 UI의 봄 우선 규칙(§8.1)은
+    // 범례·패널용이고 이 표는 타임라인이라 엔진 순서를 따른다.
+    // ⚠ §3.5.1 재개정: 이 표는 개인 계절 길이를 드러낸다 — 사용자 결정으로 공유 안전 성격을
+    //   일부 양보(2026-08-18. 오늘이 며칠차인지는 여전히 렌더하지 않는다).
+    private var cycleGrid: some View {
+        let spans = CyclePredictor.phaseSpans(cycleLength: snapshot.averageLength,
+                                              menstrualLength: snapshot.menstrualLength)
+        let routineDays = routineDayMap(spans: spans)
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 3), count: 7)
+        return VStack(alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: columns, spacing: 3) {
+                ForEach(1...max(1, snapshot.averageLength), id: \.self) { day in
+                    cycleGridCell(day: day, spans: spans, hasRoutine: routineDays.contains(day))
+                }
+            }
+            // 계절별 일수 캡션 — "봄 몇 칸"을 숫자로도 읽게. 값은 §5.3 경계 그대로.
+            Text(spans.map { "\(seasonMeta(for: $0.phase).name) \($0.length)일" }
+                    .joined(separator: " · ") + " · 평균 주기 \(snapshot.averageLength)일 기준")
+                .font(.caption2)
+                .foregroundStyle(Ink.text.opacity(0.45))
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .milkGlass(radius: 14)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("주기 지도. " + spans.map { "\(seasonMeta(for: $0.phase).name) \($0.length)일" }
+                                                .joined(separator: ", "))
+    }
+
+    private func cycleGridCell(day: Int, spans: [PhaseSpan], hasRoutine: Bool) -> some View {
+        let phase = spans.first { day >= $0.startDay && day < $0.startDay + $0.length }?.phase
+        let meta = phase.map(seasonMeta(for:))
+        return VStack(spacing: 1) {
+            Text("\(day)")
+                .font(.system(size: 10))
+                .monospacedDigit()
+                .foregroundStyle(Ink.text.opacity(0.65))
+            Circle()
+                .fill(hasRoutine ? Ink.text.opacity(0.75) : .clear)
+                .frame(width: 4, height: 4)
+        }
+        .frame(maxWidth: .infinity, minHeight: 30)
+        .background((meta?.glow ?? Ink.text).opacity(0.32), in: RoundedRectangle(cornerRadius: 5))
+    }
+
+    /// 루틴이 걸린 절대 일차 집합 — 앵커 계절 시작일 + dayOffset(§5.5.3 기본 clamp).
+    /// 계절 전체(매일) 루틴은 특정일 점이 아니라 계절 색 자체가 대변하므로 제외한다.
+    private func routineDayMap(spans: [PhaseSpan]) -> Set<Int> {
+        var days = Set<Int>()
+        for routine in routinesBySeason.values.joined() {
+            guard let r = routine.recurrence, !r.spansWholePhase else { continue }
+            let anchorPhase: CyclePhase = {
+                switch r.anchor {
+                case .cycleStart: .menstrual
+                case .phase(let p): p
+                }
+            }()
+            guard let span = spans.first(where: { $0.phase == anchorPhase }) else { continue }
+            days.insert(min(span.startDay + r.dayOffset, span.startDay + span.length - 1))
+        }
+        return days
     }
 
     /// 루틴 행(2026-08-08 행 살리기) — 탭=수정 시트, 길게=빠른 삭제. 오늘 탭 행과 같은 문법.
