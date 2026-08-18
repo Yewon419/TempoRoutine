@@ -47,10 +47,10 @@ enum WFont {
 @main
 struct TempoWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        SeasonTodayWidget()
-        SeasonLockWidget()     // 잠금화면 직사각형(2026-07-27 개편)
+        SeasonTodayWidget()    // 홈 소형만(잠금 원형·인라인은 2026-08-18 은퇴)
         WeekStripWidget()      // Phase 2 (2026-07-27)
         TodayScheduleWidget()  // Phase 2 (2026-07-27) → 오늘 카드(일정·Input·Output)
+        TwoDayScheduleWidget() // 오늘·내일 2열 일정(2026-08-18 사용자 지시)
         MonthGridWidget()      // 월 캘린더(2026-07-27 개편)
         InputTodayWidget()     // A단계 (2026-08-02) — Input 전폭
         OutputTodayWidget()    // A단계 (2026-08-02) — Output 전폭 + D-day
@@ -363,7 +363,8 @@ struct SeasonTodayWidget: Widget {
         }
         .configurationDisplayName("오늘의 계절")
         .description("지금 계절과 일차를 보여줘요.")
-        .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryInline])
+        // 잠금화면 패밀리(원형·인라인) 은퇴(2026-08-18 사용자 지시) — 홈 소형만 남긴다.
+        .supportedFamilies([.systemSmall])
     }
 }
 
@@ -439,42 +440,5 @@ struct SeasonWidgetView: View {
     }
 }
 
-// ── 잠금화면 직사각형 — 계절 한 줄 (2026-07-27 사용자 지시: "예쁘장한" 잠금 위젯) ──
-// 글리프 + 계절·일차 + 무드라인. 잠금화면은 시스템이 모노크롬 틴트 — widgetAccentable로 강조 위계만.
-
-struct SeasonLockWidget: Widget {
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "SeasonLock", provider: SeasonProvider()) { entry in
-            SeasonLockView(entry: entry)
-                .containerBackground(.clear, for: .widget)
-        }
-        .configurationDisplayName("계절 한 줄")
-        .description("잠금화면에서 계절과 오늘의 결을 보여줘요.")
-        .supportedFamilies([.accessoryRectangular])
-    }
-}
-
-struct SeasonLockView: View {
-    let entry: SeasonEntry
-
-    var body: some View {
-        HStack(spacing: 8) {
-            GlyphShape(season: entry.day?.season ?? "winter")
-                .stroke(.primary, style: StrokeStyle(lineWidth: 1.7, lineCap: .round))
-                .frame(width: 20, height: 20)
-                .widgetAccentable()
-                .opacity(entry.day?.season == nil ? 0.4 : 1)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(entry.day?.inline ?? "템포루틴")
-                    .font(WFont.almanac(15, weight: .bold))
-                    .widgetAccentable()
-                Text(entry.day?.mood ?? entry.day?.sub ?? "앱을 한 번 열면 채워져요")
-                    .font(.system(size: 11))
-                    .opacity(0.8)
-                    .lineLimit(2)
-            }
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .combine)
-    }
-}
+// 잠금화면 「계절 한 줄」(SeasonLockWidget)은 2026-08-18 사용자 지시로 은퇴.
+// 잠금화면에 남는 주기 표면은 「오늘의 카드」 하나뿐이다 — 거기서도 계절명 + 일정만 보인다.

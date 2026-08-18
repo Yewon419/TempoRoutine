@@ -212,9 +212,10 @@ struct OutputTodayView: View {
     }
 }
 
-// ══ 잠금화면 — Input 요약 + Output 1건 (accessoryRectangular) ══
-// 프라이버시(§8.2.8 개정 2026-08-02): 주기 정보만 은유로 가린다. Input·Output은 사용자가 직접
-// 적은 할 일이라 잠금화면 노출을 허용 — 다만 Input은 개수 요약으로 둔다(줄 수 예산 + 제목 다중 노출 회피).
+// ══ 잠금화면 — 계절명 + 오늘 일정 (accessoryRectangular) ══
+// 2026-08-18 사용자 지시로 개편: Input 요약 + Output 1건 → **계절명 한 줄 + 그 아래 일정**.
+// 잠금화면에 남은 유일한 주기 표면이라(「계절 한 줄」 위젯 은퇴) 계절은 여기서만 보인다.
+// 프라이버시(§8.2.8): 계절은 은유 그 자체라 노출해도 주기가 드러나지 않는다.
 
 struct CardLockWidget: Widget {
     var body: some WidgetConfiguration {
@@ -223,7 +224,7 @@ struct CardLockWidget: Widget {
                 .containerBackground(.clear, for: .widget)
         }
         .configurationDisplayName("오늘의 카드")
-        .description("잠금화면에서 Input 진행과 Output 한 건을 보여줘요.")
+        .description("잠금화면에서 오늘의 계절과 일정을 보여줘요.")
         .supportedFamilies([.accessoryRectangular])
     }
 }
@@ -231,48 +232,52 @@ struct CardLockWidget: Widget {
 struct CardLockView: View {
     let entry: ScheduleEntry
 
-    private var inputs: [WidgetCheckLine] { entry.day?.inputs ?? [] }
-    private var topOutput: WidgetProgressLine? { entry.day?.outputs?.first }
+    private var schedules: [WidgetScheduleLine] { entry.day?.schedules ?? [] }
 
-    /// 잘린 배열이 아니라 총계로 판정 — 상위 몇 개만 완료인 날 "다 챙겼어요"가 거짓이 된다
-    private var inputSummary: String {
-        let total: Int = entry.day?.inputTotal ?? inputs.count
-        guard total > 0 else { return "Input 없음" }
-        let done: Int = entry.day?.inputDone ?? inputs.filter(\.done).count
-        let remain: Int = max(0, total - done)
-        return remain == 0 ? "Input 다 챙겼어요" : "Input \(remain)개 남음"
+    /// 계절명만 — 일차·단계는 뺀다(잠금화면은 남이 보는 면이다).
+    /// `inline`은 "겨울 3일차" 형태라 여기 쓰지 않는다.
+    private var seasonName: String {
+        switch entry.day?.season {
+        case "spring": "봄"
+        case "summer": "여름"
+        case "autumn": "가을"
+        case "winter": "겨울"
+        default: "템포루틴"
+        }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
                 GlyphShape(season: entry.day?.season ?? "winter")
                     .stroke(.primary, style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
                     .frame(width: 14, height: 14)
                     .widgetAccentable()
                     .opacity(entry.day?.season == nil ? 0.4 : 1)
-                Text(inputSummary)
-                    .font(WFont.almanac(14, weight: .bold))
+                Text(seasonName)
+                    .font(WFont.almanac(15, weight: .bold))
+                    .widgetAccentable()
                     .lineLimit(1)
+                if schedules.count > 1 {
+                    Spacer(minLength: 2)
+                    Text("+\(schedules.count - 1)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
             }
-            if let output = topOutput {
-                HStack(spacing: 4) {
-                    Text(output.title)
-                        .font(.system(size: 12))
-                        .lineLimit(1)
-                    Text(output.label)
+            if let first = schedules.first {
+                HStack(spacing: 5) {
+                    Text(first.time)
                         .font(.system(size: 11))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
-                    if let dday = output.dday {
-                        Text(dday)
-                            .font(.system(size: 11, weight: .semibold))
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(first.title)
+                        .font(.system(size: 12))
+                        .lineLimit(1)
                 }
             } else {
-                Text(entry.day?.inline ?? "템포루틴")
+                Text("오늘 일정이 없어요")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
