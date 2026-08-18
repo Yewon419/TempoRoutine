@@ -10,6 +10,32 @@
 //   타입 체커가 터진다(repo CLAUDE.md 2026-07-25) — 각진 발권물로 둔다.
 
 import SwiftUI
+import TempoCore   // CyclePhase — 계절 유화 매핑(repo CLAUDE.md 심볼 확인 3종)
+
+/// 사진 지면(시안 `.season-ground`) — 계절 유화 + 블루그레이 스크림.
+/// 오늘·나의 템포·설정·하루 상세의 지면이다(캘린더는 흰 티켓 풀블리드라 제외).
+/// 스크림 없이는 흰 표제가 그림에 묻힌다(시안 주석 그대로). 시안은 가을 고정이지만
+/// 구현은 현재 계절을 따른다 — 에셋 매핑은 캘린더 도판과 같은 `TicketSpec.plateAsset`.
+struct TicketGround: View {
+    let phase: CyclePhase?
+
+    var body: some View {
+        ZStack {
+            Ink.paper   // 이미지 로드 실패 폴백 = 종전 색면
+            Image(TicketSpec.plateAsset(for: phase))
+                .resizable()
+                .scaledToFill()
+            LinearGradient(
+                colors: [Color(red: 74 / 255, green: 96 / 255, blue: 124 / 255).opacity(0.62),
+                         Color(red: 46 / 255, green: 64 / 255, blue: 90 / 255).opacity(0.82)],
+                startPoint: .top, endPoint: .bottom)
+        }
+        .clipped()   // scaledToFill 넘침이 이웃 뷰를 침범하지 않게
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
 
 /// 우측 스텁 경계선 위·아래에 V홈이 파인 카드 윤곽.
 struct TicketCardShape: Shape {

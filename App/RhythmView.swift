@@ -67,8 +67,12 @@ struct RhythmView: View {
 
     var body: some View {
         ZStack {
-            Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: snapshot.phase(on: today), motif: .open)
+            if ThemeStore.chrome.photographicGround {
+                TicketGround(phase: snapshot.phase(on: today))   // 계절 유화 + 스크림(시안 §3)
+            } else {
+                Ink.paper.ignoresSafeArea()
+                SeasonLight(phase: snapshot.phase(on: today), motif: .open)
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     // 좌상단 브랜드 표식(2026-08-18 사용자 지시) — 오늘·캘린더 탭과 같은 자리·크기

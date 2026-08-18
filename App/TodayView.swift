@@ -131,8 +131,12 @@ struct TodayView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: snapshot.phase(on: today))   // 계절광(§4) — 지면 위 고정 빛
+            if ThemeStore.chrome.photographicGround {
+                TicketGround(phase: snapshot.phase(on: today))   // 계절 유화 + 스크림(시안 §3)
+            } else {
+                Ink.paper.ignoresSafeArea()
+                SeasonLight(phase: snapshot.phase(on: today))   // 계절광(§4) — 지면 위 고정 빛
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     largeHeader

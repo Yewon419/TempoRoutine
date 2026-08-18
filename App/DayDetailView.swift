@@ -90,8 +90,12 @@ struct DayDetailView: View {
 
     var body: some View {
         ZStack {
-            Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: snapshot.phase(on: day))
+            if ThemeStore.chrome.photographicGround {
+                TicketGround(phase: snapshot.phase(on: day))   // 계절 유화 + 스크림(시안 §3)
+            } else {
+                Ink.paper.ignoresSafeArea()
+                SeasonLight(phase: snapshot.phase(on: day))
+            }
             ScrollView {
                 // 오늘 탭과 같은 조판 — 3구획을 쌓는다(프로토 data-view="day" 문법, 2026-07-26 정정:
                 // 세그먼트 전환은 MASTER §8.2.4 구문장을 따른 것이었고 시안과 어긋나 있었다)
