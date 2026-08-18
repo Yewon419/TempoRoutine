@@ -53,6 +53,8 @@ struct ThemeShopView: View {
     // 커피 한 잔(2026-08-11) — 우상단 캐릭터 + 말풍선. 씨앗 트랙 밖의 팁이다(§3.8).
     private var tips = TipStore.shared
     @State private var showTip = false
+    /// 미리보기 시트(2026-08-18 사용자 지시) — 하드코딩 목업 화면
+    @State private var previewing: AppTheme?
 
     private var current: AppTheme { AppTheme(rawValue: appTheme) ?? .plain }
     private var available: Int { Seeds.available(checkIns) }
@@ -115,6 +117,9 @@ struct ThemeShopView: View {
             Button("나중에") { plantedAlert = nil }
         } message: { theme in
             Text("씨앗 \(theme.seedPrice ?? 0)개를 썼어요.")
+        }
+        .sheet(item: $previewing) { theme in
+            ThemePreviewScreen(theme: theme)
         }
         .onAppear {
             // 쓰고 있는 테마가 유료면 보유로 승계 — 쓰던 테마를 잠그지 않는다(신뢰).
@@ -205,6 +210,19 @@ struct ThemeShopView: View {
                 Spacer(minLength: 0)
             }
             ThemePreview(theme: theme)
+            Button {
+                lightFeedback += 1
+                previewing = theme
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: "eye")
+                        .font(.caption2)
+                    Text("미리보기")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Ink.text.opacity(0.65))
+            }
+            .buttonStyle(.plain)
             // 포인트컬러만 색 선택 행을 단다(2026-08-17) — 테마를 색마다 쪼개는 대신
             // 테마 안의 선택지로 뒀다. 적용 중일 때만 노출한다: 안 쓰는 테마의 색을
             // 미리 고르게 하면 「지금 무슨 색인지」가 화면에서 사라진다.
@@ -346,6 +364,185 @@ struct ThemeShopView: View {
             withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
                 sprout = nil
             }
+        }
+    }
+}
+
+// ── 테마 미리보기 화면(2026-08-18 사용자 지시) — 오늘 탭을 하드코딩 표본으로 실물 재현 ──
+// ⚠ 실제 뷰(TodayView)를 재사용하지 않는 이유: Ink·ThemeStore가 전역 정적이라 적용 없이는
+//   다른 테마로 못 그린다. 미니어처(ThemePreview)와 같은 원칙 — 전부 팔레트 파라미터로.
+struct ThemePreviewScreen: View {
+    let theme: AppTheme
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage(PointColor.storageKey) private var pointColor = PointColor.vermilion.rawValue
+
+    private var p: ThemePalette { theme.palette(point: PointColor(rawValue: pointColor) ?? .vermilion) }
+    private var chrome: ThemeChrome { theme.chrome }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            ground
+            VStack(alignment: .leading, spacing: 16) {
+                header
+                sampleCard(title: "일정", rows: [("저녁 산책", "19:00")])
+                sampleCard(title: "Input", rows: [("아침명상 5분", "체크"), ("물 자주 마시기", "체크")])
+                sampleCard(title: "Output", rows: [("자격증 공부", "30:00 타이머")])
+                Spacer(minLength: 0)
+                tabBarMock
+            }
+            .padding(20)
+            // 닫기 — 목업 위 우상단(시트 기본 내림 제스처도 살아 있다)
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(groundInk.opacity(0.5))
+                }
+                .padding(.top, 14)
+                .padding(.trailing, 16)
+                .accessibilityLabel("미리보기 닫기")
+            }
+        }
+        .presentationDragIndicator(.visible)
+    }
+
+    /// 지면 — 티켓은 유화+스크림(오늘 탭과 동일 문법), 그 외는 팔레트 지면색
+    @ViewBuilder
+    private var ground: some View {
+        if chrome.photographicGround {
+            Color.clear
+                .overlay {
+                    ZStack {
+                        p.paper
+                        Image(TicketSpec.plateAsset(for: .ovulation))
+                            .resizable()
+                            .scaledToFill()
+                        LinearGradient(
+                            colors: [Color(red: 74 / 255, green: 96 / 255, blue: 124 / 255).opacity(0.62),
+                                     Color(red: 46 / 255, green: 64 / 255, blue: 90 / 255).opacity(0.82)],
+                            startPoint: .top, endPoint: .bottom)
+                    }
+                }
+                .clipped()
+                .ignoresSafeArea()
+        } else {
+            p.paper.ignoresSafeArea()
+        }
+    }
+
+    /// 지면 위 활자색 — 사진 지면(티켓)은 흰 계열
+    private var groundInk: Color { chrome.photographicGround ? .white : p.text }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                headline
+                Spacer(minLength: 0)
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("18")
+                        .font(displayFont(size: 34))
+                        .foregroundStyle(groundInk.opacity(0.85))
+                    Text("Aug Tue")
+                        .font(.caption2)
+                        .foregroundStyle(groundInk.opacity(0.55))
+                }
+            }
+            Text("여름이에요. 하고 싶은 만큼 빛나도 좋아요.")
+                .font(.system(.subheadline, design: .serif))
+                .foregroundStyle(groundInk.opacity(0.85))
+        }
+        .padding(.top, 34)
+    }
+
+    /// 표제 「여름」 — 활판 = 음각(종이색 + 그림자 2겹), 그 외 = 계절색 솔리드(티켓 = 흰)
+    @ViewBuilder
+    private var headline: some View {
+        if chrome.debossDisplay {
+            Text("여름")
+                .font(displayFont(size: 64))
+                .foregroundStyle(p.paper)
+                .shadow(color: Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.52),
+                        radius: 0.7, x: -1, y: -1)
+                .shadow(color: .white, radius: 0.8, x: 1, y: 1.2)
+        } else {
+            Text("여름")
+                .font(displayFont(size: 54))
+                .foregroundStyle(chrome.photographicGround ? .white : p.summer)
+        }
+    }
+
+    /// 카드 — 활판 = 음각 윤곽선 / 티켓 = 발권지 / 그 외 = 팔레트 표면
+    private func sampleCard(title: String, rows: [(String, String)]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(displayFont(size: 15))
+                .foregroundStyle(p.text)
+            ForEach(rows, id: \.0) { row in
+                HStack {
+                    Text(row.0)
+                        .font(.footnote)
+                        .foregroundStyle(p.text)
+                    Spacer()
+                    Text(row.1)
+                        .font(.caption2)
+                        .foregroundStyle(p.text.opacity(0.45))
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            if chrome.engravedCards {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white, lineWidth: 1)
+                        .offset(x: 1, y: 1.2)
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.34),
+                                lineWidth: 1)
+                }
+            } else if chrome.ticketChrome {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(TicketSpec.ticketPaper)
+                    .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
+            } else {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(p.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(p.accent.opacity(0.18), lineWidth: 1))
+            }
+        }
+    }
+
+    private var tabBarMock: some View {
+        HStack {
+            ForEach(["오늘", "캘린더", "나의 템포", "설정"], id: \.self) { name in
+                Text(name)
+                    .font(.caption2)
+                    .foregroundStyle(p.text.opacity(name == "오늘" ? 1 : 0.45))
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.vertical, 12)
+        .background((chrome.ticketChrome ? TicketSpec.ticketPaper : p.surface),
+                    in: Capsule())
+    }
+
+    /// 표제 서체 — 테마 서체 분기(전역 폰트 함수는 활성 테마를 보므로 여기서 직접 고른다)
+    private func displayFont(size: CGFloat) -> Font {
+        switch chrome.typeFace {
+        case .notoSerif:
+            return LetterpressFont.available ? .custom("NotoSerifKR-Light", size: size)
+                                             : .system(size: size, weight: .light, design: .serif)
+        case .pretendard:
+            return ThemeFont.available ? .custom("Pretendard-SemiBold", size: size)
+                                       : .system(size: size, weight: .semibold)
+        case .gowun:
+            return AlmanacFont.available ? .custom("GowunBatang-Bold", size: size)
+                                         : .system(size: size, weight: .bold, design: .serif)
+        case .system:
+            return .system(size: size, weight: .semibold)
         }
     }
 }
