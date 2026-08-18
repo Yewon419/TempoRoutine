@@ -80,14 +80,13 @@ extension Font {
     /// 렌더돼 한 줄 안에서 결이 어긋난다(2026-08-01 베타 피드백: 계절 라벨·한 줄 일기).
     /// 그래서 한글이 섞이는 세리프 표기는 시스템 대신 번들 서체를 명시한다.
     static func almanacBody(_ style: Font.TextStyle, size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        if ThemeStore.chrome.typeFace == .notoSerif {
+        switch ThemeStore.chrome.typeFace {
+        case .notoSerif:
             guard LetterpressFont.available else {
                 return .system(style, design: .serif).weight(weight)
             }
             return .custom(weight == .bold ? "NotoSerifKR-Medium" : "NotoSerifKR-Light",
                            size: size, relativeTo: style)
-        }
-        switch ThemeStore.chrome.typeFace {
         case .pretendard:
             guard ThemeFont.available else { return .system(style).weight(weight) }
             return .custom(weight == .bold ? "Pretendard-SemiBold" : "Pretendard-Regular",
