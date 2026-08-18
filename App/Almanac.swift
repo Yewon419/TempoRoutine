@@ -158,12 +158,15 @@ struct MilkGlass: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
         if ThemeStore.chrome.ticketChrome, let stub {
-            // 발권물(시안 §3.3-②) — 스텁 자리를 본문에서 비우고, 윤곽을 V홈까지 도려낸다
+            // 발권물(시안 §3.3-②) — 스텁 자리를 본문에서 비우고, 윤곽을 V홈까지 도려낸다.
+            // 하단 18pt = 카드 간격을 시안 34로(컨테이너 spacing 16과 합산, 2026-08-14 실측 —
+            // 16 간격에서는 위 카드의 아래 V홈과 아래 카드의 위 V홈이 마주 봐 하나로 뭉친다).
             content
                 .padding(.trailing, TicketSpec.stubWidth + 8)
                 .background(TicketSpec.ticketPaper)
                 .overlay(alignment: .trailing) { TicketCardStub(value: stub) }
                 .clipShape(TicketCardShape())
+                .padding(.bottom, 18)
         } else if ThemeStore.chrome.ticketChrome {
             // 스텁 없는 카드도 발권 지면(시안 .card 기본 — radius 4·그림자·유리 재질 없음).
             // 종전엔 둥근 유리 카드가 발권물과 섞여 지면이 두 문법으로 갈렸다(2026-08-17 피드백).
