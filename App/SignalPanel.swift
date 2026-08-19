@@ -197,6 +197,7 @@ struct SignalPanel: View {
 
     // 막대 → 원형 링 게이지(2026-08-05 베타 피드백 "원 모양으로 차게" — 배경 원·계절 원 문법과 통일).
     // 종전 캡슐 막대는 열 폭이 넓어 원형 덩어리로 오독됐다(실기기 스크린샷).
+    // 트랙·채움은 테마 분기(2026-08-20 시안 — 티켓 절취 천공·활판 음각 홈·플레이리스트 레코드판).
     private func chartColumn(phase: CyclePhase) -> some View {
         let meta = seasonMeta(for: phase)
         let value = summary(for: phase).map { scaled($0.mean) }
@@ -204,18 +205,14 @@ struct SignalPanel: View {
         return VStack(spacing: 8) {
             ZStack {
                 // 표본 없는 단계 = 트랙만 옅게(§5.6.3 미표시 원칙)
-                Circle().stroke(Ink.text.opacity(0.08), lineWidth: 5)
+                ringTrack(seasonColor: meta.color)
                 if let value {
-                    Circle()
-                        .trim(from: 0, to: max(0.02, Double(value) / 100))   // 0이어도 씨앗만큼은 보이게
-                        .stroke(meta.color.opacity(0.8),
-                                style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                        .rotationEffect(.degrees(-90))   // 12시부터 차오른다
+                    ringFill(color: meta.color, progress: Double(value) / 100)
                 }
                 Text(value.map(String.init) ?? "—")
                     .font(.caption)
                     .monospacedDigit()
-                    .foregroundStyle(Ink.text.opacity(value == nil ? 0.35 : 0.7))
+                    .foregroundStyle(ringValueInk(hasValue: value != nil))
             }
             .frame(width: 54, height: 54)
             HStack(spacing: 3) {
@@ -231,6 +228,68 @@ struct SignalPanel: View {
                 .opacity(isNow ? 1 : 0)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // ── 링 트랙·채움 테마 분기(시안: 티켓 §3.3-⑧ / 활판 §2.3-14 / 플레이리스트 §4.4-⑩,
+    //    치수는 시안 링 지름 38 → 앱 54 비례 환산) ──
+    @ViewBuilder
+    private func ringTrack(seasonColor: Color) -> some View {
+        switch ThemeStore.chrome.signalRing {
+        case .plain:
+            Circle().stroke(Ink.text.opacity(0.08), lineWidth: 5)
+        case .perforated:
+            // 절취 천공 24개 균등 배치(round cap 점). 납작 대시는 기각 — 주기가 원주에
+            // 정수로 안 떨어져 시작점이 어긋나고 파편이 채움 호와 섞여 보풀로 읽힌다(시안).
+            let gap: CGFloat = .pi * 54 / 24 - 0.1
+            Circle().stroke(Ink.text.opacity(0.26),
+                            style: StrokeStyle(lineWidth: 2.5, lineCap: .round, dash: [0.1, gap]))
+        case .engraved:
+            // 카드 윤곽과 같은 음각 2겹 — 어두운 선 1px + 흰 광 우하 (1, 1.2)(시안 §2.3-14)
+            Circle().stroke(Color.flatRGB(0x5A, 0x54, 0x48).opacity(0.34), lineWidth: 1)
+                .shadow(color: .white, radius: 0, x: 1, y: 1.2)
+        case .vinyl:
+            // 레코드판 — 어두운 원판 + 동심 그루브 2줄 + 계절색 스핀들, 진행 링은 바깥 테
+            let groove: Color = Color.white.opacity(0.16)
+            ZStack {
+                Circle().fill(Color.flatRGB(0x24, 0x31, 0x3D)).frame(width: 45, height: 45)
+                Circle().stroke(groove, lineWidth: 1.1).frame(width: 35, height: 35)
+                Circle().stroke(groove, lineWidth: 1.1).frame(width: 25, height: 25)
+                Circle().fill(seasonColor).frame(width: 6, height: 6)
+                Circle().stroke(Ink.text.opacity(0.14), lineWidth: 4)
+            }
+        }
+    }
+
+    private func ringFill(color: Color, progress: Double) -> some View {
+        // 채움 굵기·끝맺음도 트랙과 짝(활판 = 계절 잉크 헤어라인·butt, 티켓·레코드판 = 실선 4)
+        let style: StrokeStyle
+        let opacity: Double
+        switch ThemeStore.chrome.signalRing {
+        case .plain:
+            style = StrokeStyle(lineWidth: 5, lineCap: .round)
+            opacity = 0.8
+        case .perforated:
+            style = StrokeStyle(lineWidth: 4, lineCap: .round)
+            opacity = 0.9
+        case .engraved:
+            style = StrokeStyle(lineWidth: 1.5, lineCap: .butt)
+            opacity = 0.95
+        case .vinyl:
+            style = StrokeStyle(lineWidth: 4, lineCap: .round)
+            opacity = 0.8
+        }
+        return Circle()
+            .trim(from: 0, to: max(0.02, progress))   // 0이어도 씨앗만큼은 보이게
+            .stroke(color.opacity(opacity), style: style)
+            .rotationEffect(.degrees(-90))   // 12시부터 차오른다
+    }
+
+    /// 링 중앙 숫자 잉크 — 레코드판은 어두운 원판 위라 흰 계열로 뒤집는다
+    private func ringValueInk(hasValue: Bool) -> Color {
+        if case .vinyl = ThemeStore.chrome.signalRing {
+            return Color.white.opacity(hasValue ? 0.9 : 0.5)
+        }
+        return Ink.text.opacity(hasValue ? 0.7 : 0.35)
     }
 
     // ── ④ 하이라이트 스탯 2행 ──

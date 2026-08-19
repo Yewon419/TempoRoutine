@@ -458,6 +458,20 @@ struct ThemeChrome {
     /// 지면 = 오늘의 하늘: 화면 지면을 SkySpec 그라데이션(ZStack 최하층)으로 교체.
     /// 캘린더만 얇은 다크 베일 14%를 덧깐다(격자 흰 숫자 대비 — §5.3-1)
     var skyGround = false
+
+    // ── 신호 링 문법(2026-08-20 시안 — 리듬 탭 신호 패널 링 게이지 테마 분기) ──
+    /// 링 트랙 재질. `.plain` = 종전 원형(기본·은필·포인트컬러·날씨 — 포인트컬러는
+    /// §1.3 문법 원칙상 분기 제외).
+    enum SignalRing {
+        case plain
+        /// 티켓 §3.3-⑧ — 절취 천공 24개 균등 배치. 경계는 선이 아니라 절단(§3.1 축)
+        case perforated
+        /// 활판 §2.3-14 — 음각 홈 원. 트랙은 카드 윤곽과 같은 음각 2겹, 채움은 헤어라인
+        case engraved
+        /// 플레이리스트 §4.4-⑩ — 레코드판. 「계절 = 재생 중인 트랙」 은유의 원형 버전
+        case vinyl
+    }
+    var signalRing: SignalRing = .plain
 }
 
 extension ThemeChrome {
@@ -507,7 +521,7 @@ extension ThemeChrome {
         // photographicGround = 오늘·나의 템포만 유화(2026-08-18 2차 — "오늘 탭과 나의템포 탭
         // 배경에만 어둡게 처리한 유화 다시 넣어줘"). 설정·하루 상세는 흰 지면(뷰 분기 제거).
         ticketChrome: true, photographicGround: true, pointTabTint: false,
-        forcesLightAppearance: true
+        forcesLightAppearance: true, signalRing: .perforated
     )
 
     /// 활판 v2 (시안 §2.3) — 선과 활자만. 음각 표제·헤어라인 밑줄·라틴 표기·활자 하단바.
@@ -520,7 +534,7 @@ extension ThemeChrome {
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         debossDisplay: true, hairlineSeasonBand: true, latinCalendarHeader: true,
         textOnlyTabBar: true, engravedCards: true, hidesRecordDot: true,
-        forcesLightAppearance: true
+        forcesLightAppearance: true, signalRing: .engraved
     )
 
     /// 플레이리스트 (시안 §4.4) — 계절광은 켜되 진한 파스텔로, 카드는 리퀴드 글래스로.
@@ -533,7 +547,7 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true,
-        forcesLightAppearance: true
+        forcesLightAppearance: true, signalRing: .vinyl
     )
 
     /// 날씨 (시안 §5.3) — 지면 = 하늘, 계절광 없음(하늘이 빛 담당). 밤 하늘이 곧 다크라
