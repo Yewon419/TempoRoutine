@@ -180,6 +180,10 @@ func almanacDisplay(_ text: String, size: CGFloat, color: Color) -> some View {
         Text(text)
             .font(.almanac(size: size, weight: .bold))
             .foregroundStyle(color)
+            // 날씨 = 하늘 위 가독 그림자(시안 §5.3-4, 애플 날씨 문법). 다른 테마는 무그림자
+            .shadow(color: ThemeStore.chrome.skyGround
+                    ? Color(red: 4 / 255, green: 14 / 255, blue: 28 / 255).opacity(0.35) : .clear,
+                    radius: 7, y: 1)
     }
 }
 

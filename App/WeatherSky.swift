@@ -96,8 +96,14 @@ struct WeatherSky: View {
     var veil: Double = 0
 
     var body: some View {
-        let s = SkySpec.stops(WxState.condition, WxState.daypart)
+        let condition = WxState.condition
+        let daypart = WxState.daypart
+        let s = SkySpec.stops(condition, daypart)
         LinearGradient(colors: [s.a, s.b, s.c], startPoint: .top, endPoint: .bottom)
+            // 이펙트 순서 = 시안 DOM(§5.4): 글로우 → 구름 → 파티클, 베일은 맨 위(콘텐츠 아래)
+            .overlay { WeatherGlow(condition: condition, daypart: daypart) }
+            .overlay { WeatherClouds(condition: condition, daypart: daypart) }
+            .overlay { WeatherParticles(condition: condition, daypart: daypart) }
             .overlay(Color.black.opacity(veil))
             .ignoresSafeArea()
             .allowsHitTesting(false)
