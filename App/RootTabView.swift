@@ -66,7 +66,13 @@ struct RootTabView: View {
         // 모던 = 항상 다크 단일 외관(시안 §1.1) — 시스템 라이트에서 탭바 유리·ultraThinMaterial·
         // 설정 insetGrouped가 라이트로 렌더되던 결함의 뿌리(베타 피드백 2026-07-29: 탭바 밝아짐·
         // 설정 순백 카드·카드 과명 3건 동일 원인). 기본 테마는 nil = 시스템 따름(기존 다크 대응 유지).
-        .preferredColorScheme((AppTheme(rawValue: appTheme) ?? .plain).chrome.forcesDarkAppearance ? .dark : nil)
+        // 같은 뿌리가 반대 방향으로도 난다(베타 피드백 2026-08-19) — 인쇄물·유리 문법 테마
+        // (티켓·활판·플레이리스트)는 팔레트가 라이트 고정인데, 시스템이 다크면 List 행 배경·
+        // glassEffect 재질처럼 내 팔레트를 안 보는 시스템 컴포넌트만 검게 떨어진다.
+        .preferredColorScheme({
+            let chrome = (AppTheme(rawValue: appTheme) ?? .plain).chrome
+            return chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil
+        }())
         // 테마 변경 = 전체 트리 리빌드(정적 팔레트 캐시 갱신 반영 — Theme.swift 반응성 설계).
         // 변경 진입점은 설정뿐이라 스택·스크롤 초기화는 허용 범위(2026-07-29 계획 리스크 ①).
         .id(appTheme + "·" + pointColor)   // 포인트색 변경도 같은 리빌드 경로(2026-08-17)

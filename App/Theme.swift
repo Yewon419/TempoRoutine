@@ -446,6 +446,13 @@ struct ThemeChrome {
     var liquidGlassCards = false
     /// 계절광 = 진한 파스텔 4세트(시안 §4.4 ⑨ — 글래스는 뒤로 색이 지나갈 때만 유리로 읽힌다)
     var saturatedSeasonLight = false
+    /// 항상 라이트 외관으로 고정하는가(2026-08-19 실기기 실측). 인쇄물·유리 문법 테마
+    /// (티켓·활판·플레이리스트)는 팔레트가 `.flat`(라이트/다크 동값)이라 커스텀 뷰는
+    /// 시스템 다크와 무관하게 항상 밝게 뜨지만, **시스템 컴포넌트**(List 행 배경·
+    /// `glassEffect` 재질)는 내 팔레트를 모르고 `colorScheme` 환경값만 본다 — 기기가
+    /// 다크 모드면 그 부분만 검게 떨어져 "리퀴드글래스 검정"·"설정 화면 검정 줄" 둘 다
+    /// 이 틈에서 난다(베타 피드백 2026-08-19, tint만으로는 재질 자체를 못 밝힌다).
+    var forcesLightAppearance = false
 
     // ── 날씨 전용 축(2026-08-19 이식, 시안 §5.3) ──
     /// 지면 = 오늘의 하늘: 화면 지면을 SkySpec 그라데이션(ZStack 최하층)으로 교체.
@@ -499,7 +506,8 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: true,
         // photographicGround = 오늘·나의 템포만 유화(2026-08-18 2차 — "오늘 탭과 나의템포 탭
         // 배경에만 어둡게 처리한 유화 다시 넣어줘"). 설정·하루 상세는 흰 지면(뷰 분기 제거).
-        ticketChrome: true, photographicGround: true, pointTabTint: false
+        ticketChrome: true, photographicGround: true, pointTabTint: false,
+        forcesLightAppearance: true
     )
 
     /// 활판 v2 (시안 §2.3) — 선과 활자만. 음각 표제·헤어라인 밑줄·라틴 표기·활자 하단바.
@@ -511,7 +519,8 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         debossDisplay: true, hairlineSeasonBand: true, latinCalendarHeader: true,
-        textOnlyTabBar: true, engravedCards: true, hidesRecordDot: true
+        textOnlyTabBar: true, engravedCards: true, hidesRecordDot: true,
+        forcesLightAppearance: true
     )
 
     /// 플레이리스트 (시안 §4.4) — 계절광은 켜되 진한 파스텔로, 카드는 리퀴드 글래스로.
@@ -523,7 +532,8 @@ extension ThemeChrome {
         seasonRowFirst: false, todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
-        playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true
+        playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true,
+        forcesLightAppearance: true
     )
 
     /// 날씨 (시안 §5.3) — 지면 = 하늘, 계절광 없음(하늘이 빛 담당). 밤 하늘이 곧 다크라

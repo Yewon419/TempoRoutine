@@ -471,6 +471,10 @@ struct ThemePreviewScreen: View {
             }
         }
         .presentationDragIndicator(.visible)
+        // 미리보는 테마의 colorScheme — 활성 테마(RootTabView 루트 값)가 아니라 이 시트가
+        // 보여주는 테마 기준이어야 한다(2026-08-19 베타 피드백 — 시스템 다크에서 라이트
+        // 고정 테마를 미리볼 때 List·glassEffect 같은 시스템 컴포넌트만 검게 떨어졌다).
+        .preferredColorScheme(chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil)
     }
 
     /// 지면 — 티켓은 유화+스크림(오늘 탭과 동일 문법), 그 외는 팔레트 지면색
@@ -791,6 +795,9 @@ struct ThemePreview: View {
         .background { ground(p) }
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(groundInk(p).opacity(0.12), lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        // 이 미니 카드가 보여주는 테마 기준 colorScheme — ThemePreviewScreen과 같은 이유
+        // (활성 테마가 다크를 안 켜는 상태에서 이 카드만 라이트 고정 테마일 수 있다)
+        .preferredColorScheme(chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(theme.displayName) 테마 미리보기")
     }
