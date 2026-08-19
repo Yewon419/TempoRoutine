@@ -182,6 +182,28 @@ struct WPalette {
         accent: flat((0x22, 0x38, 0x4F))
     )
 
+    /// 날씨 — 시안 §5.2 (앱 ThemePalette.weather 사본). 잉크 화이트 · 계절 = 발광 파스텔,
+    /// glow* = 본색 동값. 지면 색은 폴백 — 실제 지면은 WWidgetGround의 하늘 그라데이션.
+    static let weather = WPalette(
+        winter: flat((0xA9, 0xC6, 0xE8)),
+        spring: flat((0xE8, 0xD0, 0x84)),
+        summer: flat((0xBF, 0xE0, 0x8E)),
+        autumn: flat((0xF2, 0xA9, 0x8E)),
+        text: flat((0xF4, 0xF7, 0xFA)),
+        paper: flat((0x3E, 0x5A, 0x78)),
+        coral: flat((0xF6, 0xB6, 0xAC)),
+        record: flat((0xF6, 0xB6, 0xAC)),
+        predictGray: flat((0x9F, 0xB0, 0xC2)),
+        holidayRed: flat((0xFF, 0xAB, 0x9E)),
+        saturday: flat((0xA8, 0xCB, 0xF4)),
+        frost: flat((0x3E, 0x5A, 0x78)),
+        glowWinter: flat((0xA9, 0xC6, 0xE8)),
+        glowSpring: flat((0xE8, 0xD0, 0x84)),
+        glowSummer: flat((0xBF, 0xE0, 0x8E)),
+        glowAutumn: flat((0xF2, 0xA9, 0x8E)),
+        accent: flat((0xE9, 0xF0, 0xF6))
+    )
+
     /// 플레이리스트 — 시안 §4.3 (앱 ThemePalette.playlist 사본). 라이트/다크 동값.
     /// ⚠ 겨울 무채·record 레드 — 겨울 밑줄과 기록 점이 서로 갈린다.
     static let playlist = WPalette(
@@ -215,6 +237,8 @@ enum WThemeStore {
     nonisolated(unsafe) static let key: String = snapshot?.theme ?? "plain"
     /// 포인트컬러의 선택 색(2026-08-17). nil = 다홍(기존 설치의 스냅샷엔 이 필드가 없다).
     nonisolated(unsafe) static let point: String? = snapshot?.pointColor
+    /// 날씨 테마의 현재 조건(2026-08-19). 시간대는 엔트리 시각으로 계산(WSky.daypart).
+    nonisolated(unsafe) static let wx: String? = snapshot?.wxCondition
 
     static var palette: WPalette {
         switch key {
@@ -222,7 +246,59 @@ enum WThemeStore {
         case "standard": .standard
         case "ticket":   .ticket
         case "playlist": .playlist
+        case "weather":  .weather
         default:         .plain     // 저장값 없음 = 새 설치 = 기본
+        }
+    }
+}
+
+// ── 날씨 미니 하늘(시안 §5.3-7) — 같은 12상태 그라데이션, 파티클 없음(정지 표면).
+// 앱 SkySpec 동값 사본(위젯 타깃은 앱 소스를 못 본다). 시간대는 엔트리 시각 기준 —
+// body의 Date.now는 금지(repo CLAUDE.md — 미리 렌더된 뷰에서 박제된다).
+enum WSky {
+    static func daypart(_ date: Date) -> String {
+        switch Calendar.current.component(.hour, from: date) {
+        case 7..<17: "day"
+        case 17..<20: "dusk"
+        default: "night"
+        }
+    }
+
+    static func stops(_ condition: String, _ daypart: String) -> (Color, Color, Color)? {
+        func rgb(_ v: (Int, Int, Int)) -> Color {
+            Color(red: Double(v.0) / 255, green: Double(v.1) / 255, blue: Double(v.2) / 255)
+        }
+        let hex: ((Int, Int, Int), (Int, Int, Int), (Int, Int, Int))
+        switch (condition, daypart) {
+        case ("clear", "day"):   hex = ((0x3D, 0x7B, 0xBF), (0x6F, 0xA8, 0xDC), (0x8F, 0xBC, 0xE0))
+        case ("clear", "dusk"):  hex = ((0x2E, 0x48, 0x78), (0x7A, 0x62, 0x88), (0xDE, 0x85, 0x58))
+        case ("clear", "night"): hex = ((0x0B, 0x12, 0x20), (0x1C, 0x2A, 0x44), (0x2E, 0x42, 0x60))
+        case ("cloud", "day"):   hex = ((0x5C, 0x6E, 0x80), (0x82, 0x96, 0xA8), (0x9D, 0xB0, 0xBE))
+        case ("cloud", "dusk"):  hex = ((0x3E, 0x44, 0x58), (0x5E, 0x5A, 0x70), (0x8A, 0x6E, 0x72))
+        case ("cloud", "night"): hex = ((0x10, 0x14, 0x1C), (0x22, 0x2A, 0x36), (0x32, 0x3C, 0x4A))
+        case ("rain", "day"):    hex = ((0x46, 0x58, 0x6A), (0x64, 0x76, 0x86), (0x7E, 0x90, 0x9E))
+        case ("rain", "dusk"):   hex = ((0x33, 0x38, 0x50), (0x4E, 0x4A, 0x62), (0x6A, 0x5A, 0x68))
+        case ("rain", "night"):  hex = ((0x0C, 0x11, 0x1A), (0x1C, 0x24, 0x2F), (0x2A, 0x34, 0x40))
+        case ("snow", "day"):    hex = ((0x6E, 0x82, 0x96), (0x93, 0xA6, 0xB6), (0xAE, 0xBE, 0xC9))
+        case ("snow", "dusk"):   hex = ((0x4A, 0x54, 0x68), (0x6E, 0x72, 0x84), (0x8E, 0x84, 0x94))
+        case ("snow", "night"):  hex = ((0x13, 0x1A, 0x26), (0x26, 0x30, 0x3E), (0x38, 0x44, 0x4F))
+        default: return nil
+        }
+        return (rgb(hex.0), rgb(hex.1), rgb(hex.2))
+    }
+}
+
+/// 위젯 지면 — 날씨 = 미니 하늘, 그 외 = 종전 색 지면. containerBackground 자리 공용.
+struct WWidgetGround: View {
+    let date: Date
+    var grid = false
+
+    var body: some View {
+        if WThemeStore.key == "weather", let wx = WThemeStore.wx,
+           let s = WSky.stops(wx, WSky.daypart(date)) {
+            LinearGradient(colors: [s.0, s.1, s.2], startPoint: .top, endPoint: .bottom)
+        } else {
+            grid ? WInk.widgetGridGround : WInk.widgetGround
         }
     }
 }
@@ -424,7 +500,7 @@ struct SeasonTodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "SeasonToday", provider: SeasonProvider()) { entry in
             SeasonWidgetView(entry: entry)
-                .containerBackground(WInk.widgetGround, for: .widget)
+                .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
         }
         .configurationDisplayName("오늘의 계절")
         .description("지금 계절과 일차를 보여줘요.")

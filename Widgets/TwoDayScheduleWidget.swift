@@ -51,7 +51,7 @@ struct TwoDayScheduleWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "TwoDaySchedule", provider: TwoDayProvider()) { entry in
             TwoDayScheduleView(entry: entry)
-                .containerBackground(WInk.widgetGround, for: .widget)
+                .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
         }
         .configurationDisplayName("오늘·내일")
         .description("이틀치 일정을 나란히 보여줘요.")

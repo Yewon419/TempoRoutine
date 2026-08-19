@@ -40,6 +40,8 @@ enum WidgetBridge {
         }
         let payload = WidgetSnapshot(generatedAt: .now, days: days,
                                      theme: ThemeStore.current.rawValue,   // 위젯 테마 전달(Phase 5)
+                                     // 날씨 조건(2026-08-19) — 하늘 지면일 때만 의미가 있다
+                                     wxCondition: ThemeStore.chrome.skyGround ? WxState.condition.rawValue : nil,
                                      pointColor: ThemeStore.point.rawValue)   // 포인트색(2026-08-17)
         guard let data = try? JSONEncoder().encode(payload) else { return }
         try? data.write(to: url, options: .atomic)

@@ -75,6 +75,9 @@ struct WidgetSnapshot: Codable {
     let days: [WidgetDay]
     /// 테마 키(2026-07-29 테마 시스템 Phase 5) — "standard"/"modern". optional 추가만(계약 규칙)
     var theme: String? = nil
+    /// 날씨 테마의 현재 조건(2026-08-19) — "clear"/"cloud"/"rain"/"snow". 발행 시점 값이고
+    /// 시간대는 위젯이 엔트리 시각으로 계산한다. optional 추가만 — 계약 규칙.
+    var wxCondition: String? = nil
     /// 포인트컬러의 선택 색(2026-08-17) — "vermilion"/"skyBlue"/… . 다른 테마에서는 안 읽힌다.
     /// 테마 키와 따로 싣는 이유: 색은 테마 안의 선택지라 theme 문자열에 섞으면
     /// 기존 설치의 스냅샷("modern")을 못 읽게 된다. optional 추가만 — 계약 규칙.

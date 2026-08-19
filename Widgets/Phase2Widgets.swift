@@ -52,7 +52,7 @@ struct WeekStripWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "WeekStrip", provider: WeekProvider()) { entry in
             WeekStripView(entry: entry)
-                .containerBackground(WInk.widgetGridGround, for: .widget)
+                .containerBackground(for: .widget) { WWidgetGround(date: entry.date, grid: true) }
         }
         .configurationDisplayName("이번 주")
         .description("일주일의 계절과 기록을 한 줄로 보여줘요.")
@@ -162,7 +162,7 @@ struct TodayScheduleWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "TodaySchedule", provider: ScheduleProvider()) { entry in
             TodayScheduleView(entry: entry)
-                .containerBackground(WInk.widgetGround, for: .widget)
+                .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
         }
         .configurationDisplayName("오늘")
         .description("오늘의 일정·Input·Output을 한눈에 보여줘요.")

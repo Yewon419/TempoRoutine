@@ -36,7 +36,7 @@ struct MonthGridWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "MonthGrid", provider: MonthProvider()) { entry in
             MonthGridView(entry: entry)
-                .containerBackground(WInk.widgetGridGround, for: .widget)
+                .containerBackground(for: .widget) { WWidgetGround(date: entry.date, grid: true) }
         }
         .configurationDisplayName("이번 달")
         .description("한 달의 계절과 기록을 보여줘요.")
