@@ -6,9 +6,9 @@
 계정이 없고, 데이터는 기기와 사용자 개인 iCloud 밖으로 나가지 않는다. 현재 TestFlight 비공개 베타 운영 중.
 
 <p align="center">
-  <img src="docs/screenshots/today.png" width="32%" alt="오늘 탭 — 계절 헤더·일정·Input/Output">
-  <img src="docs/screenshots/calendar.png" width="32%" alt="캘린더 탭 — 계절 밑줄 띠·일정">
-  <img src="docs/screenshots/tempo.png" width="32%" alt="나의 템포 탭 — 계절별 에너지 링·주기 길이">
+  <img src="docs/screenshots/today.png" width="32%" alt="오늘 탭: 계절 헤더·일정·Input/Output">
+  <img src="docs/screenshots/calendar.png" width="32%" alt="캘린더 탭: 계절 밑줄 띠·일정">
+  <img src="docs/screenshots/tempo.png" width="32%" alt="나의 템포 탭: 계절별 에너지 링·주기 길이">
 </p>
 <p align="center"><sub>오늘 · 캘린더 · 나의 템포</sub></p>
 
