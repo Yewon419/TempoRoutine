@@ -211,6 +211,11 @@ struct MilkGlass: ViewModifier {
                     .fill(TicketSpec.ticketPaper)
                     .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
             }
+        } else if ThemeStore.chrome.liquidGlassCards {
+            // 플레이리스트(시안 §4.4 ⑥) — iOS 26 시스템 리퀴드 글래스. 시안의 커스텀 공식
+            // (사선 그라데이션 + 4방 림 스펙큘러)은 이 재질의 근사였다 — 본물을 쓴다.
+            // 라운드는 시안 20(기본 16만 승격, 명시 radius는 존중).
+            content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: radius == 16 ? 20 : radius))
         } else if ThemeStore.chrome.engravedCards {
             // 활판(시안 §2.3-7-1) — 배경 없음. **눌린 것은 카드가 아니라 선 하나**다:
             // 어두운 윤곽선 위에 흰 윤곽선을 (1, 1.2) 어긋나게 얹는다(표제 음각과 같은 기법).
@@ -364,6 +369,28 @@ struct SeasonLight: View {
     /// 계절광 3겹 색 — 캘린더 상단 글로우(2026-07-28 시안 결정)도 같은 원색을 쓴다.
     /// 모던 = 계절 불문 무채 3단(시안 §1.3-5 — 하루 상세 포함, 유채 계절광으로 덮지 않는다)
     static func lightColors(for phase: CyclePhase?) -> (a: Color, b: Color, c: Color) {
+        if ThemeStore.chrome.saturatedSeasonLight {
+            // 플레이리스트(시안 §4.4 ⑨) — 커버 계절을 잇는 진한 파스텔. 다른 테마보다
+            // 진하게(α .68까지) 잡는다: 글래스는 뒤로 색이 지나갈 때만 유리로 읽힌다.
+            return switch phase {
+            case .follicular:
+                (Color(red: 232 / 255, green: 168 / 255, blue: 184 / 255).opacity(0.68),
+                 Color(red: 186 / 255, green: 218 / 255, blue: 178 / 255).opacity(0.50),
+                 Color(red: 236 / 255, green: 198 / 255, blue: 208 / 255).opacity(0.52))
+            case .ovulation:
+                (Color(red: 126 / 255, green: 190 / 255, blue: 224 / 255).opacity(0.68),
+                 Color(red: 158 / 255, green: 214 / 255, blue: 212 / 255).opacity(0.50),
+                 Color(red: 146 / 255, green: 198 / 255, blue: 228 / 255).opacity(0.52))
+            case .luteal:
+                (Color(red: 216 / 255, green: 158 / 255, blue: 100 / 255).opacity(0.68),
+                 Color(red: 198 / 255, green: 170 / 255, blue: 134 / 255).opacity(0.48),
+                 Color(red: 222 / 255, green: 182 / 255, blue: 132 / 255).opacity(0.52))
+            default:   // menstrual·콜드 = 겨울(라벤더·블루)
+                (Color(red: 170 / 255, green: 186 / 255, blue: 224 / 255).opacity(0.68),
+                 Color(red: 198 / 255, green: 208 / 255, blue: 232 / 255).opacity(0.48),
+                 Color(red: 184 / 255, green: 198 / 255, blue: 226 / 255).opacity(0.52))
+            }
+        }
         if ThemeStore.chrome.neutralSeasonLight {
             // 시안 수치(.12/.07/.09)가 실기기 OLED에선 거의 안 보임(베타 피드백 2026-07-29
             // "뒤쪽에 은은한 빛 깔린 것처럼") — 50% 상향. 실기기 재확인 항목.

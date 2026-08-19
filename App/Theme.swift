@@ -25,6 +25,9 @@ enum AppTheme: String, CaseIterable, Identifiable {
     /// 활판(2026-08-18 이식, 시안 SSOT §2 v2) — 웜 화이트 종이 + 잉크 없는 음각 표제 +
     /// 인쇄 잉크 4색 + 선과 활자만. 눌린 것은 면이 아니라 선이다(§2.1 재설계 축).
     case letterpress
+    /// 플레이리스트(2026-08-19 이식, 시안 SSOT §4) — 밝은 블루그레이 지면 + 계절광 위에
+    /// 뜬 리퀴드 글래스 플레이어. 계절 = 지금 재생 중인 트랙, 주기 일차 = 재생 위치.
+    case playlist
 
     var id: String { rawValue }
 
@@ -35,6 +38,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
         case .modern: "포인트컬러"
         case .ticket: "티켓"
         case .letterpress: "활판"
+        case .playlist: "플레이리스트"
         }
     }
 }
@@ -257,6 +261,32 @@ extension ThemePalette {
         surface: .flat(0xF5, 0xF3, 0xED),
         accent: .flat(0x35, 0x32, 0x2E)
     )
+
+    /// 플레이리스트 (시안 §4.3 확정값) — 라이트/다크 동값. 지면 = 밝은 블루그레이 단일 외관.
+    /// ⚠ 계절색은 **절제**(커버 사진이 색을 담당) · 겨울만 무채(2026-08-18 사용자 지시 —
+    ///    색이 빠진 계절). 생리 시그널(`record`)은 레드 유지 — 겨울 밑줄과 기록 점이 갈린다.
+    static let playlist = ThemePalette(
+        winter: .flat(0x5D, 0x68, 0x74),      // 무채 — 색이 빠진 계절
+        spring: .flat(0x4C, 0x8A, 0x56),
+        summer: .flat(0x2C, 0x7C, 0x96),
+        autumn: .flat(0xB0, 0x70, 0x3A),
+        text: .flat(0x24, 0x31, 0x3D),        // 블루그레이 지면 위 잉크
+        paper: .flat(0xE6, 0xEA, 0xEE),
+        coral: .flat(0xBE, 0x51, 0x4B),       // 은퇴 토큰
+        record: .flat(0xBE, 0x51, 0x4B),      // 레드 유지
+        danger: .flat(0xC0, 0x55, 0x4E),
+        dim: Color(red: 0x24 / 255, green: 0x31 / 255, blue: 0x3D / 255).opacity(0.55),
+        oxide: .flat(0x93, 0xA2, 0xB0),
+        holiday: .flat(0xBE, 0x51, 0x4B),
+        saturday: .flat(0x4E, 0x6C, 0x8A),
+        frost: .flat(0xEA, 0xED, 0xF1),
+        glowWinter: .flat(0x6E, 0x7A, 0x87),
+        glowSpring: .flat(0x5E, 0x9C, 0x68),
+        glowSummer: .flat(0x3E, 0x8D, 0xA6),
+        glowAutumn: .flat(0xC0, 0x82, 0x4A),
+        surface: Color.white.opacity(0.34),   // 글래스 면 — 카드 재질은 liquidGlassCards가 담당
+        accent: .flat(0x24, 0x31, 0x3D)       // 시크바·컨트롤·구조선 = 잉크
+    )
 }
 
 /// 티켓 전용 상수 — 팔레트 토큰으로 표현되지 않는 값들(시안 §3.2·§3.4).
@@ -284,6 +314,30 @@ enum TicketSpec {
         case .luteal:     "TicketAutumn"
         default:          "TicketWinter"    // menstrual · 콜드(nil)
         }
+    }
+}
+
+/// 플레이리스트 전용 상수 — 팔레트 토큰으로 표현되지 않는 값들(시안 §4.4·§4.5).
+enum PlaylistSpec {
+    /// 오늘 탭 플레이어 커버 한 변
+    static let coverSize: CGFloat = 112
+    /// 캘린더 앨범 헤더 커버 한 변
+    static let albumCoverSize: CGFloat = 96
+    /// 계절당 커버 장수(§4.5 파일명 계약)
+    static let coverCount: UInt32 = 2
+
+    /// 커버 에셋 이름 — **날짜 시드 랜덤**(§4.5). 매 렌더 랜덤이면 스크롤할 때마다 커버가
+    /// 바뀌어 어지럽다. 같은 날엔 같은 장, 날이 바뀌면 다시 뽑힌다.
+    /// 해시는 시안과 동일 — JS `(day * 2654435761) >>> 0`은 mod 2^32 곱이라 `UInt32 &*`.
+    static func coverAsset(for phase: CyclePhase?, day: Int) -> String {
+        let season = switch phase {
+        case .follicular: "Spring"
+        case .ovulation:  "Summer"
+        case .luteal:     "Autumn"
+        default:          "Winter"    // menstrual · 콜드(nil)
+        }
+        let pick = UInt32(truncatingIfNeeded: day) &* 2_654_435_761 % coverCount + 1
+        return "PlaylistCover\(season)\(pick)"
     }
 }
 
@@ -351,6 +405,16 @@ struct ThemeChrome {
     var engravedCards = false
     /// 생리 기록 점 숨김(§2.3-9 — 겨울 밑줄이 곧 생리 표시라 별도 표시는 이중)
     var hidesRecordDot = false
+
+    // ── 플레이리스트 전용 축(2026-08-19 이식, 시안 §4.4) ──
+    /// 플레이어 조판 문법: 오늘 탭 헤더 = 플레이어 카드, 캘린더 상단 = 앨범 헤더,
+    /// 일정·Input·Output 카드 헤더 = 트랙 행(곡수 메타)
+    var playlistChrome = false
+    /// 카드 = iOS 26 시스템 리퀴드 글래스(시안 §4.4 ⑥ — 프로스트 개정. 커스텀 공식은
+    /// 이 재질의 근사였다). 재질 축이라 조판 축(playlistChrome)과 분리해 둔다.
+    var liquidGlassCards = false
+    /// 계절광 = 진한 파스텔 4세트(시안 §4.4 ⑨ — 글래스는 뒤로 색이 지나갈 때만 유리로 읽힌다)
+    var saturatedSeasonLight = false
 }
 
 extension ThemeChrome {
@@ -413,6 +477,18 @@ extension ThemeChrome {
         debossDisplay: true, hairlineSeasonBand: true, latinCalendarHeader: true,
         textOnlyTabBar: true, engravedCards: true, hidesRecordDot: true
     )
+
+    /// 플레이리스트 (시안 §4.4) — 계절광은 켜되 진한 파스텔로, 카드는 리퀴드 글래스로.
+    /// 표제 활자는 시스템 산세리프(시안 트랙명 문법 — weight 600 계열).
+    static let playlist = ThemeChrome(
+        typeFace: .system, texture: .none, outlineDisplay: false,
+        showsSeasonLight: true, neutralSeasonLight: false,
+        dimsInDarkMode: false, forcesDarkAppearance: false,
+        seasonRowFirst: false, todayCircleUsesAccent: false,
+        circlesRecordedDays: false, boostsContrast: false,
+        ticketChrome: false, photographicGround: false, pointTabTint: false,
+        playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true
+    )
 }
 
 extension AppTheme {
@@ -426,6 +502,7 @@ extension AppTheme {
         case .modern: .modern(point: point)
         case .ticket: .ticket
         case .letterpress: .letterpress
+        case .playlist: .playlist
         }
     }
 
@@ -436,6 +513,7 @@ extension AppTheme {
         case .modern: .modern
         case .ticket: .ticket
         case .letterpress: .letterpress
+        case .playlist: .playlist
         }
     }
 }

@@ -20,6 +20,8 @@ extension AppTheme {
         case .ticket: nil
         // 활판 = 무료(2026-08-18 이식 — 티켓과 같은 근거. 트랙 배치는 §3.8.1 미결로 유지)
         case .letterpress: nil
+        // 플레이리스트 = 무료(2026-08-19 사용자 확정 — 티켓·활판과 같은 근거)
+        case .playlist: nil
         }
     }
 
@@ -30,6 +32,7 @@ extension AppTheme {
         case .modern: "기본 지면에 다홍 한 점. 계절은 밝기로 갈려요."
         case .ticket: "색면 위에 놓인 한 장의 티켓. 일상을 여행처럼."
         case .letterpress: "종이에 눌러 새긴 하루. 잉크 없는 음각의 물성."
+        case .playlist: "지금 재생 중인 계절. 하루가 트랙처럼 흘러요."
         }
     }
 }
@@ -507,12 +510,14 @@ struct ThemePreviewScreen: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(TicketSpec.ticketPaper)
                     .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
-            } else {
+            } else if !chrome.liquidGlassCards {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(p.surface)
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(p.accent.opacity(0.18), lineWidth: 1))
             }
         }
+        // 플레이리스트 — 시스템 리퀴드 글래스. 재질이라 활성 테마와 무관하게 제 모습으로 뜬다
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20), isEnabled: chrome.liquidGlassCards)
     }
 
     private var tabBarMock: some View {
