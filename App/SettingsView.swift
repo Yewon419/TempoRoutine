@@ -297,9 +297,13 @@ struct SettingsView: View {
                     Text("데이터")
                         .foregroundStyle(Ink.groundSub)
                 } footer: {
-                    // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
-                    Text("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \(periodDays.count)일 · 체크인 \(checkIns.count)건")
-                        .foregroundStyle(Ink.groundSub)
+                    VStack(alignment: .leading, spacing: 4) {
+                        // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
+                        Text("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \(periodDays.count)일 · 체크인 \(checkIns.count)건")
+                        // 기기 이전 경로 노출(2026-08-19, 개정 P 후속) — 경로는 종전부터 동작, 카피만 신설
+                        Text("기기를 바꾸시나요? 내보내기 파일을 새 기기로 보내고 「백업 가져오기」로 열면 기록이 이어져요.")
+                    }
+                    .foregroundStyle(Ink.groundSub)
                 }
 
                 // 파괴적 액션 — 분리 배치(§8.2.6)
