@@ -83,6 +83,13 @@
   `TicketStub`이 캘린더에 이미 있는 줄 모르고 카드용으로 또 만들어 redeclaration이 났다.
   ③ **다른 화면 코드를 옮겨올 때 헬퍼 이름** — 같은 일을 화면마다 다른 이름으로 갖고 있다
   (오늘 탭 `isChecked` ↔ 하루 상세 `isCompleted`). 붙여넣기 전에 그 파일에 그 이름이 있는지 볼 것.
+- **iOS 신규 OS API는 서드파티 레퍼런스 교차 확인으로도 확장 파라미터를 확신하지 않는다**
+  (2026-08-19 실측: `glassEffect`의 `isEnabled:`가 레퍼런스 3곳에 있었지만 SDK엔 없음 —
+  CI 한 바퀴 소진). 기본 파라미터 최소 형태로만 쓰고, 확장 파라미터는 CI 컴파일로 검증.
+- **병렬 세션 활동 중엔 편집 즉시 커밋(더티 구간 최소화)** — 커밋 경합으로 내 변경이 상대
+  커밋에 쓸려 들어간 사고 실측(2026-08-19, 677dd20). 같은 파일에 두 세션 변경이 혼재하면
+  파일 단위 add 대신 **hunk 스테이징**(`git diff > p.patch` → 내 hunk만 필터 →
+  `git apply --cached`)으로 분리한다.
 - Swift 6 strict(CI Xcode 26.5) 실측 2건(2026-07-29, 각 CI 한 바퀴 소진): ① 전역 가변
   `static var`는 그대로 두면 concurrency 에러 — 쓰기 경로가 메인 한정이면
   `nonisolated(unsafe)` + 근거 주석(ThemeStore 사례. @MainActor 격리는 정적 API 콜사이트
