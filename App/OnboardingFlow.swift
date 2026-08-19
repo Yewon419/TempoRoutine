@@ -42,6 +42,9 @@ struct OnboardingFlow: View {
     @State private var sceneAppeared = false    // 씬A 전용 스태거 트리거(Phase 1 — 씬B·C는 기존 drawProgress 유지, Phase 2에서 정합)
     @State private var orbitAngle: Double = 0   // 궤도 도는 잉크 점 회전각(3.1s 후 26s 무한 선형 회전)
     @State private var introEntered = false     // "시작/다음" 버튼 1000ms 지연 노출 — 스텝1 (재)진입마다 리셋
+    /// ①.5 테마 선택(2026-08-19) — 기본 선택 = 은필(사용자: "우리 정체성"). 저장은 case 2,
+    /// 적용은 finishOnboarding(진행 중 적용 = 루트 `.id` 리빌드가 step을 날린다).
+    @State private var themeChoice: AppTheme = .standard
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 단계 진행·토글, 확정 아님)
 
     // 브랜드 스플래시 — 온보딩 최초 1회. 로고 + 시그니처 사운드(2026-07-28)
@@ -90,10 +93,11 @@ struct OnboardingFlow: View {
                 Group {
                     switch step {
                     case 1: intro
-                    case 2: baselineStep
-                    case 3: cardsStep
-                    case 4: signalsStep
-                    case 5: storageStep
+                    case 2: themeStep     // ①.5 테마 선택(2026-08-19 — 7일 체험 고지 포함)
+                    case 3: baselineStep
+                    case 4: cardsStep
+                    case 5: signalsStep
+                    case 6: storageStep
                     default: surveyStep
                     }
                 }
@@ -173,7 +177,7 @@ struct OnboardingFlow: View {
     private var bottomBar: some View {
         VStack(spacing: 10) {
             // ② 연동 페이지의 주 행동은 콘텐츠의 스위치 카드 — 하단은 secondary만(프로토 확정 위계)
-            if step == 2 && baselinePage == 0 {
+            if step == 3 && baselinePage == 0 {
                 ghostButton("직접 기록할게요") { pushBaseline(1) }
             } else {
                 primaryButton(primaryLabel, action: primaryAction)
@@ -181,15 +185,15 @@ struct OnboardingFlow: View {
                     .allowsHitTesting((step != 1 || introEntered || reduceMotion) && primaryEnabled)
                     .opacity(primaryEnabled ? 1 : 0.35)
             }
-            if step == 2 && baselinePage == 2 {
-                ghostButton("나중에 기록할게요") { step = 3 }   // 구 "기억 안 나요" 승계 — S0 처리
+            if step == 3 && baselinePage == 2 {
+                ghostButton("나중에 기록할게요") { step = 4 }   // 구 "기억 안 나요" 승계 — S0 처리
             }
-            if step == 2 && baselinePage == 3 {
-                ghostButton("잘 모르겠어요") { AppSettings.cycleLengthPrior = nil; step = 3 }
+            if step == 3 && baselinePage == 3 {
+                ghostButton("잘 모르겠어요") { AppSettings.cycleLengthPrior = nil; step = 4 }
             }
             // ⑥ 설문 건너뛰기(2026-08-09 사용자 결정) — 설문은 primary로 승격하되 강요는 안 한다.
             // ② 생리주기 질문의 secondary와 별개다(그쪽은 넘어가기가 있어도 필수 성격).
-            if step == 6 && selfReports.isEmpty {
+            if step == 7 && selfReports.isEmpty {
                 ghostButton("지금은 넘어가기") { finishOnboarding() }
                 Text("언제든 설정에서 다시 답변할 수 있어요.")
                     .font(.caption)
@@ -205,7 +209,7 @@ struct OnboardingFlow: View {
 
     /// ② 캘린더 페이지의 「다음」은 에피소드 1개 이상일 때만 — 스킵은 secondary가 담당
     private var primaryEnabled: Bool {
-        if step == 2 && baselinePage == 2 { return episodeCount >= 1 }
+        if step == 3 && baselinePage == 2 { return episodeCount >= 1 }
         return true
     }
 
@@ -230,10 +234,10 @@ struct OnboardingFlow: View {
 
     /// 연동 알럿이 닫힌 뒤 1회 — 분기 = 병합 결과 에피소드 수(프로토 확정)
     private func consumeLinkAdvance() {
-        guard pendingLinkAdvance, step == 2 else { return }
+        guard pendingLinkAdvance, step == 3 else { return }
         pendingLinkAdvance = false
         let n = episodeCount
-        if n >= 2 { step = 3 }              // 실측 gap 확보 → ②-2~④ 전부 스킵
+        if n >= 2 { step = 4 }              // 실측 gap 확보 → ②-2~④ 전부 스킵
         else if n == 1 { pushBaseline(3) }  // 주기 질문만
         else { pushBaseline(1) }            // 거부·빈 건강앱 → 직접 기록
     }
@@ -241,7 +245,7 @@ struct OnboardingFlow: View {
     private var primaryLabel: String {
         switch step {
         case 1: introScene == 0 ? "시작" : "다음"
-        case 2, 3, 4, 5: "다음"
+        case 2, 3, 4, 5, 6: "다음"
         // ⑥ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
         default: selfReports.isEmpty ? "시작하기" : "오늘 화면으로"
         }
@@ -251,27 +255,33 @@ struct OnboardingFlow: View {
         switch step {
         case 1: advanceIntro()
         case 2:
+            // 테마 선택 저장(2026-08-19) — 종료 시트의 기본 선택값으로도 쓴다("이전 거랑 연결").
+            // 적용은 여기서 하지 않는다 — 테마 변경 = 루트 `.id` 리빌드가 이 플로우의 step을
+            // 날린다(2026-08-11 결함과 같은 경로). finishOnboarding에서 적용.
+            UserDefaults.standard.set(themeChoice.rawValue, forKey: ThemeTrial.choiceKey)
+            step = 3
+        case 3:
             switch baselinePage {
             case 1:
                 AppSettings.periodLengthPrior = periodLength   // §5.3 층 2 M 초기값(개정 M)
                 pushBaseline(2)
             case 2:
                 if episodeCount == 1 { pushBaseline(3) }   // 실측 gap 없음 → 주기 질문
-                else { step = 3 }                          // ≥2 = 실측 gap 있음 → 안 묻는다
+                else { step = 4 }                          // ≥2 = 실측 gap 있음 → 안 묻는다
             case 3:
                 AppSettings.cycleLengthPrior = cycleLengthAnswer
-                step = 3
+                step = 4
             default: break
             }
-        case 3: advanceCardPage()   // ③ 세 가지 카드 — 장 안에서 진행, 마지막 장이면 ④로
-        case 4:
+        case 4: advanceCardPage()   // ③ 세 가지 카드 — 장 안에서 진행, 마지막 장이면 ④로
+        case 5:
             // pain·irritability = false 고정(2026-08-05 병합) — 입력 행이 없는데 켜두면
             // 설정 복원·백업 경로에서 유령 행이 부활한다. 스키마 필드는 저장 호환 위해 유지.
             AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: false,
                                                         appetite: trackAppetite, note: trackNote,
                                                         irritability: false)
-            step = 5
-        case 5: step = 6   // ⑥ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
+            step = 6
+        case 6: step = 7   // ⑥ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
         default:
             if selfReports.isEmpty { showSurvey = true }   // 「시작하기」 — 제출·닫힘 처리는 sheet onDismiss
             else { finishOnboarding() }
@@ -280,6 +290,12 @@ struct OnboardingFlow: View {
 
     /// 온보딩 종료 한 창구 — 재진입 표식도 여기서 내린다(다음 첫 실행과 혼동 방지)
     private func finishOnboarding() {
+        // 테마 적용(2026-08-19) — 신규 온보딩만. 닫히는 순간이라 루트 `.id` 리빌드가 무해하다.
+        // 재진입은 테마 단계를 안 거치지만, 남아 있는 옛 choiceKey로 덮지 않게 이중 가드.
+        if !isRevisit, let raw = UserDefaults.standard.string(forKey: ThemeTrial.choiceKey) {
+            ThemeStore.apply(raw)
+            UserDefaults.standard.set(raw, forKey: ThemeStore.storageKey)
+        }
         isRevisit = false
         onboardingDone = true
     }
@@ -304,14 +320,15 @@ struct OnboardingFlow: View {
                     lightFeedback += 1
                     if step == 1 {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { introScene -= 1 }
-                    } else if step == 2, let prev = baselineStack.popLast() {
+                    } else if step == 3, let prev = baselineStack.popLast() {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { baselinePage = prev }
-                    } else if step == 3 && cardPage > 0 {
+                    } else if step == 4 && cardPage > 0 {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.4)) { cardPage -= 1 }
                     } else {
                         step -= 1
+                        if isRevisit && step == 2 { step = 1 }   // 재진입은 테마 단계를 안 거친다
                         if step == 1 { introScene = 2 }
-                        if step == 3 { cardPage = 2 }   // ④에서 돌아오면 마지막 장부터(인트로와 동형)
+                        if step == 4 { cardPage = 2 }   // ④에서 돌아오면 마지막 장부터(인트로와 동형)
                     }
                 } label: {
                     Image(systemName: "chevron.left")
@@ -327,7 +344,7 @@ struct OnboardingFlow: View {
     // ── 진행 점 (인트로 숨김) — 지난·현재 스텝 채움 + 현재 스텝만 알약형(시안 .ob-dot 이식) ──
     private var dots: some View {
         HStack(spacing: 8) {
-            ForEach(1...6, id: \.self) { i in
+            ForEach(1...7, id: \.self) { i in
                 Capsule()
                     .fill(i <= step ? Ink.text : Ink.text.opacity(0.22))
                     .frame(width: i == step ? 16 : 6, height: 6)
@@ -386,7 +403,9 @@ struct OnboardingFlow: View {
         if introScene < 2 {
             withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { introScene += 1 }
         } else {
-            step = 2
+            // 재진입(다시 보기)은 테마 단계 스킵(2026-08-19) — 이미 쓰는 테마가 있는데
+            // 여기서 고르게 하면 닫는 순간 그 선택으로 갈아타 버린다.
+            step = isRevisit ? 3 : 2
         }
     }
 
@@ -802,7 +821,7 @@ struct OnboardingFlow: View {
         if cardPage < 2 {
             withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.4)) { cardPage += 1 }
         } else {
-            step = 4
+            step = 5
         }
     }
 
@@ -929,6 +948,48 @@ struct OnboardingFlow: View {
         .tint(Ink.text)
         .padding(.vertical, 7)
         .onChange(of: value.wrappedValue) { _, _ in lightFeedback += 1 }
+    }
+
+    // ══ ①.5 테마 선택 (2026-08-19 사용자 결정 — 기본·은필 택1 + 7일 체험 고지) ══
+    // 재진입(다시 보기)은 이 단계를 건너뛴다(advanceIntro) — 쓰는 테마를 여기서 덮으면 안 된다.
+    private var themeStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(eyebrow: "당신의 테마", title: "어떤 지면으로\n시작할까요?")
+            ForEach([AppTheme.standard, AppTheme.plain]) { theme in
+                themeChoiceCard(theme)
+            }
+            Text("앞으로 7일간 모든 테마를 자유롭게 바꿔볼 수 있어요.")
+                .font(.system(.footnote, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.55))
+        }
+    }
+
+    private func themeChoiceCard(_ theme: AppTheme) -> some View {
+        let selected = themeChoice == theme
+        return Button {
+            lightFeedback += 1
+            themeChoice = theme
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                ThemePreview(theme: theme)
+                HStack(spacing: 8) {
+                    Text(theme.displayName)
+                        .font(.almanac(size: 17, weight: .bold))
+                        .foregroundStyle(Ink.text)
+                    Spacer(minLength: 0)
+                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(Ink.text.opacity(selected ? 0.9 : 0.3))
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .milkGlass()
+            .overlay(RoundedRectangle(cornerRadius: 16)
+                .stroke(Ink.text.opacity(selected ? 0.8 : 0), lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(theme.displayName) 테마")
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     // ══ ⑤ 저장 위치 ══
