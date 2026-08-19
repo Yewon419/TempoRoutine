@@ -36,6 +36,8 @@ struct RootTabView: View {
     /// 테마 탭 시트 — 진입점은 둘(오늘 탭 씨앗 배지·설정 테마 행)이지만 표시는 여기 한 곳이다.
     /// 각 화면에서 띄우면 같은 플래그를 보는 시트가 두 개가 된다.
     @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
+    /// 체험 종료 선택 시트(2026-08-19) — 리빌드에 날아가도 .task 재판정이 다시 띄운다(@State로 충분)
+    @State private var showTrialEnd = false
 
     var body: some View {
         TabView(selection: $rootTab) {
@@ -81,6 +83,8 @@ struct RootTabView: View {
                                  inputs: inputs, outputs: outputs, completions: completions)
         }
         .sheet(isPresented: $showThemeShop) { ThemeShopView() }
+        // 체험 종료 선택 시트(2026-08-19) — 선택 전 닫기 불가(TrialEndSheet 쪽 interactiveDismissDisabled)
+        .sheet(isPresented: $showTrialEnd) { TrialEndSheet { showTrialEnd = false } }
         // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow()
@@ -89,6 +93,17 @@ struct RootTabView: View {
             // 테마 7일 체험 시작(2026-08-19) — 기존 설치는 업데이트 후 첫 실행이 곧 시작.
             // 신규는 온보딩이 덮여 있는 동안 기록하지 않는다(완료 시 아래 onChange가 잡는다).
             if onboardingDone { ThemeTrial.beginIfNeeded() }
+            // 체험 종료 판정 — 시트는 고를 게 있을 때만: 은필 미보유이거나, 미보유 테마를
+            // 적용 중일 때. 은필 기보유 + 보유 테마 사용 중이면 조용히 종결(고를 게 없다).
+            if onboardingDone, ThemeTrial.needsResolution {
+                let current = AppTheme(rawValue: appTheme) ?? .plain
+                let currentOwned = current.seedPrice == nil || Seeds.owned.contains(current.rawValue)
+                if !Seeds.owned.contains(AppTheme.standard.rawValue) || !currentOwned {
+                    showTrialEnd = true
+                } else {
+                    ThemeTrial.resolve()
+                }
+            }
             await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)   // 위젯 스냅샷

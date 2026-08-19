@@ -710,3 +710,91 @@ struct ThemePreview: View {
         .accessibilityLabel("\(theme.displayName) 테마 미리보기")
     }
 }
+
+// ── 체험 종료 선택 시트(2026-08-19 사용자 결정) — 기본·은필 중 하나를 골라 영구 보유 ──
+// 표시는 RootTabView 한 곳(2026-08-12 시트 원칙). 선택 전 닫기 불가 — 닫아버리면 미보유
+// 테마가 적용된 채 남는다. 은필 선택 = grandfather(0원 원장 기재, 병합이 유료로 안 센다).
+struct TrialEndSheet: View {
+    @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
+    @State private var choice: AppTheme
+    @State private var lightFeedback = 0
+    let onResolved: () -> Void
+
+    init(onResolved: @escaping () -> Void) {
+        self.onResolved = onResolved
+        // 기본 선택 = 온보딩에서 골랐던 테마("이전 거랑 연결"). 기록 없으면 은필.
+        let saved = UserDefaults.standard.string(forKey: ThemeTrial.choiceKey)
+        _choice = State(initialValue: saved.flatMap(AppTheme.init(rawValue:)) ?? .standard)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("무료 체험이 끝났어요")
+                .font(.almanac(size: 24, weight: .bold))
+                .foregroundStyle(Ink.text)
+                .padding(.top, 28)
+            Text("기본과 은필 중 당신의 테마를 골라 가지세요. 고른 테마는 계속 쓸 수 있어요.")
+                .font(.subheadline)
+                .foregroundStyle(Ink.text.opacity(0.6))
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach([AppTheme.standard, AppTheme.plain]) { theme in
+                choiceCard(theme)
+            }
+            Spacer(minLength: 0)
+            Button {
+                confirm()
+            } label: {
+                Text("「\(choice.displayName)」으로 시작하기")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Ink.paper)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(Ink.text, in: Capsule())
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Ink.paper.ignoresSafeArea())
+        .interactiveDismissDisabled(true)
+        .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+    }
+
+    private func choiceCard(_ theme: AppTheme) -> some View {
+        let selected = choice == theme
+        return Button {
+            lightFeedback += 1
+            choice = theme
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                ThemePreview(theme: theme)
+                HStack(spacing: 8) {
+                    Text(theme.displayName)
+                        .font(.almanac(size: 17, weight: .bold))
+                        .foregroundStyle(Ink.text)
+                    Spacer(minLength: 0)
+                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(Ink.text.opacity(selected ? 0.9 : 0.3))
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .milkGlass()
+            .overlay(RoundedRectangle(cornerRadius: 16)
+                .stroke(Ink.text.opacity(selected ? 0.8 : 0), lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(theme.displayName) 테마")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func confirm() {
+        if choice.seedPrice != nil { Seeds.grandfather(choice) }   // 은필 = 0원 기재(멱등)
+        // resolve를 appTheme 변경(= 루트 `.id` 리빌드) 앞에 — 리빌드 직후 .task 재판정이
+        // 아직 미해결 상태를 보고 시트를 다시 띄우는 레이스를 막는다.
+        ThemeTrial.resolve()
+        ThemeStore.apply(choice.rawValue)
+        appTheme = choice.rawValue
+        onResolved()
+    }
+}
