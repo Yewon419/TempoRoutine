@@ -149,8 +149,13 @@ struct SeasonCalendarView: View {
             // 캘린더 자체 지면(2026-07-28 시안 결정) — frost 바탕 + 계절광은 상단에만 걸리고
             // 사그라든다(그리드 영역은 깨끗하게 — 글로우 밑줄 가독 담보)
             // ⚠ 티켓만 예외: 캘린더 지면이 흰 발권물이다(frost = 블루그레이 색면이라 여기선 안 쓴다).
-            (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
-                .ignoresSafeArea()
+            // ⚠ 날씨 = 하늘 + 다크 베일 14%(시안 §5.3-1 — 낮 하늘 위 격자 흰 숫자 대비).
+            if ThemeStore.chrome.skyGround {
+                WeatherSky(veil: 0.14)
+            } else {
+                (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
+                    .ignoresSafeArea()
+            }
             if ThemeStore.chrome.texture == .dotGrid {
                 DotGrid().ignoresSafeArea()   // 모던 전용 질감(시안 §1.3-1)
             }

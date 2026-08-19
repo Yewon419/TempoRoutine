@@ -70,8 +70,12 @@ struct RhythmView: View {
             if ThemeStore.chrome.photographicGround {
                 TicketGround(phase: snapshot.phase(on: today))   // 계절 유화 + 스크림(시안 §3)
             } else {
-                Ink.paper.ignoresSafeArea()
-                SeasonLight(phase: snapshot.phase(on: today), motif: .open)
+                if ThemeStore.chrome.skyGround {
+                    WeatherSky()   // 날씨 = 오늘의 하늘(시안 §5.3-1)
+                } else {
+                    Ink.paper.ignoresSafeArea()
+                    SeasonLight(phase: snapshot.phase(on: today), motif: .open)
+                }
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {

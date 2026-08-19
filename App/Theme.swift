@@ -28,6 +28,9 @@ enum AppTheme: String, CaseIterable, Identifiable {
     /// 플레이리스트(2026-08-19 이식, 시안 SSOT §4) — 밝은 블루그레이 지면 + 계절광 위에
     /// 뜬 리퀴드 글래스 플레이어. 계절 = 지금 재생 중인 트랙, 주기 일차 = 재생 위치.
     case playlist
+    /// 날씨(2026-08-19 이식, 시안 SSOT §5) — 지면 = 오늘의 하늘(조건 4 × 시간대 3 = 12상태).
+    /// 화이트 잉크 + 다크 글래스(애플 날씨 문법). 시간대가 모드 역할 — 시스템 라이트/다크 무시.
+    case weather
 
     var id: String { rawValue }
 
@@ -39,6 +42,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
         case .ticket: "티켓"
         case .letterpress: "활판"
         case .playlist: "플레이리스트"
+        case .weather: "날씨"
         }
     }
 }
@@ -287,6 +291,33 @@ extension ThemePalette {
         surface: Color.white.opacity(0.34),   // 글래스 면 — 카드 재질은 liquidGlassCards가 담당
         accent: .flat(0x24, 0x31, 0x3D)       // 시크바·컨트롤·구조선 = 잉크
     )
+
+    /// 날씨 (시안 §5.2 확정값) — 잉크 = 화이트, 지면 = 하늘(§5.3, `paper`는 폴백).
+    /// 계절 4색은 하늘 위에서 발광하는 파스텔(색상 계열은 기본 승계 — 봄 금·여름 초록·
+    /// 가을 코랄·겨울 청회). glow* = 본색 동값 — 계절 밴드도 발광 파스텔 그대로.
+    /// 시간대가 모드 역할이라 라이트/다크 동값(`.flat`).
+    static let weather = ThemePalette(
+        winter: .flat(0xA9, 0xC6, 0xE8),
+        spring: .flat(0xE8, 0xD0, 0x84),
+        summer: .flat(0xBF, 0xE0, 0x8E),
+        autumn: .flat(0xF2, 0xA9, 0x8E),
+        text: .flat(0xF4, 0xF7, 0xFA),
+        paper: .flat(0x3E, 0x5A, 0x78),       // 폴백 — 실제 지면은 SkySpec 그라데이션
+        coral: .flat(0xF6, 0xB6, 0xAC),       // 은퇴 토큰
+        record: .flat(0xF6, 0xB6, 0xAC),      // 하늘 위 라이트 틴트
+        danger: .flat(0xF5, 0x8B, 0x7E),
+        dim: Color(red: 0xC6 / 255, green: 0xD3 / 255, blue: 0xDF / 255).opacity(0.8),
+        oxide: .flat(0x9F, 0xB0, 0xC2),
+        holiday: .flat(0xFF, 0xAB, 0x9E),
+        saturday: .flat(0xA8, 0xCB, 0xF4),
+        frost: .flat(0x3E, 0x5A, 0x78),
+        glowWinter: .flat(0xA9, 0xC6, 0xE8),  // glow-* = 본색 동값(발광 파스텔이 곧 밴드)
+        glowSpring: .flat(0xE8, 0xD0, 0x84),
+        glowSummer: .flat(0xBF, 0xE0, 0x8E),
+        glowAutumn: .flat(0xF2, 0xA9, 0x8E),
+        surface: Color(red: 14 / 255, green: 26 / 255, blue: 40 / 255).opacity(0.32),   // 다크 글래스
+        accent: .flat(0xE9, 0xF0, 0xF6)
+    )
 }
 
 /// 티켓 전용 상수 — 팔레트 토큰으로 표현되지 않는 값들(시안 §3.2·§3.4).
@@ -415,6 +446,11 @@ struct ThemeChrome {
     var liquidGlassCards = false
     /// 계절광 = 진한 파스텔 4세트(시안 §4.4 ⑨ — 글래스는 뒤로 색이 지나갈 때만 유리로 읽힌다)
     var saturatedSeasonLight = false
+
+    // ── 날씨 전용 축(2026-08-19 이식, 시안 §5.3) ──
+    /// 지면 = 오늘의 하늘: 화면 지면을 SkySpec 그라데이션(ZStack 최하층)으로 교체.
+    /// 캘린더만 얇은 다크 베일 14%를 덧깐다(격자 흰 숫자 대비 — §5.3-1)
+    var skyGround = false
 }
 
 extension ThemeChrome {
@@ -489,6 +525,18 @@ extension ThemeChrome {
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true
     )
+
+    /// 날씨 (시안 §5.3) — 지면 = 하늘, 계절광 없음(하늘이 빛 담당). 밤 하늘이 곧 다크라
+    /// 항상 다크 외관 고정(모던 `preferredColorScheme` 전례). 하늘 위 대비 보정을 켠다.
+    static let weather = ThemeChrome(
+        typeFace: .system, texture: .none, outlineDisplay: false,
+        showsSeasonLight: false, neutralSeasonLight: false,
+        dimsInDarkMode: false, forcesDarkAppearance: true,
+        seasonRowFirst: false, todayCircleUsesAccent: false,
+        circlesRecordedDays: false, boostsContrast: true,
+        ticketChrome: false, photographicGround: false, pointTabTint: false,
+        skyGround: true
+    )
 }
 
 extension AppTheme {
@@ -503,6 +551,7 @@ extension AppTheme {
         case .ticket: .ticket
         case .letterpress: .letterpress
         case .playlist: .playlist
+        case .weather: .weather
         }
     }
 
@@ -514,6 +563,7 @@ extension AppTheme {
         case .ticket: .ticket
         case .letterpress: .letterpress
         case .playlist: .playlist
+        case .weather: .weather
         }
     }
 }

@@ -22,6 +22,8 @@ extension AppTheme {
         case .letterpress: nil
         // 플레이리스트 = 무료(2026-08-19 사용자 확정 — 티켓·활판과 같은 근거)
         case .playlist: nil
+        // 날씨 = 무료(2026-08-18 사용자 확정)
+        case .weather: nil
         }
     }
 
@@ -33,6 +35,7 @@ extension AppTheme {
         case .ticket: "색면 위에 놓인 한 장의 티켓. 일상을 여행처럼."
         case .letterpress: "종이에 눌러 새긴 하루. 잉크 없는 음각의 물성."
         case .playlist: "지금 재생 중인 계절. 하루가 트랙처럼 흘러요."
+        case .weather: "지면이 곧 오늘의 하늘. 시간과 날씨가 화면을 물들여요."
         }
     }
 }
@@ -460,13 +463,20 @@ struct ThemePreviewScreen: View {
                 }
                 .clipped()
                 .ignoresSafeArea()
+        } else if chrome.skyGround {
+            // 날씨 — 미리보기 표본은 맑음×낮 고정(시안 §5의 기본 상태)
+            let s = SkySpec.stops(.clear, .day)
+            LinearGradient(colors: [s.a, s.b, s.c], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
         } else {
             p.paper.ignoresSafeArea()
         }
     }
 
-    /// 지면 위 활자색 — 사진 지면(티켓)은 흰 계열
-    private var groundInk: Color { chrome.photographicGround ? .white : p.text }
+    /// 지면 위 활자색 — 사진 지면(티켓)·하늘 지면(날씨)은 흰 계열
+    private var groundInk: Color {
+        chrome.photographicGround || chrome.skyGround ? .white : p.text
+    }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {

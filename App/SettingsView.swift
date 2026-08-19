@@ -47,6 +47,13 @@ struct SettingsView: View {
     /// 테마 진입 = 테마 탭 시트(2026-08-09 — 구 인라인 Picker 폐기, 심기·적용은 ThemeShopView 담당).
     /// 오늘 탭 진입과 같은 키를 공유한다 — 테마 리빌드에서 살아남아야 해서 뷰 밖에 둔다(RootTab 주석).
     @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
+    // 하늘 상태 스위처(날씨 테마 확인용, 2026-08-19 — Phase ②에서 WeatherKit로 대체)
+    @AppStorage(WxState.conditionKey) private var wxCondition = WxCondition.clear.rawValue
+    @AppStorage(WxState.daypartKey) private var wxDaypart = ""
+
+    private func applyWxState() {
+        WxState.apply(conditionRaw: wxCondition, daypartRaw: wxDaypart.isEmpty ? nil : wxDaypart)
+    }
     /// 기기 간 동기화 토글 상태(2026-08-10) — 원장은 PlannerSync, 여기는 렌더 트리거용 미러
     @State private var syncOn = PlannerSync.isEnabled
 
@@ -311,6 +318,34 @@ struct SettingsView: View {
                     Button("모든 기록 삭제", role: .destructive) { showWipeConfirm = true }
                         .foregroundStyle(Ink.danger)
                 }
+
+                // ── 하늘 상태 스위처(날씨 테마 전용, 2026-08-19) — WeatherKit 연결(Phase ②)
+                // 전까지의 확인용. 시간대 고정까지 합쳐 12상태를 시각과 무관하게 확인한다.
+                if ThemeStore.chrome.skyGround {
+                    Section {
+                        Picker("하늘", selection: $wxCondition) {
+                            ForEach(WxCondition.allCases) { c in
+                                Text(c.displayName).tag(c.rawValue)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        Picker("시간대", selection: $wxDaypart) {
+                            Text("시계 따름").tag("")
+                            Text("낮").tag(Daypart.day.rawValue)
+                            Text("노을").tag(Daypart.dusk.rawValue)
+                            Text("밤").tag(Daypart.night.rawValue)
+                        }
+                        .pickerStyle(.segmented)
+                    } header: {
+                        Text("하늘 (확인용)")
+                            .foregroundStyle(Ink.groundSub)
+                    } footer: {
+                        Text("날씨 연동 전 임시 스위치예요. 「시계 따름」이면 시간대가 기기 시계를 따라요.")
+                            .foregroundStyle(Ink.groundSub)
+                    }
+                    .onChange(of: wxCondition) { _, _ in applyWxState() }
+                    .onChange(of: wxDaypart) { _, _ in applyWxState() }
+                }
             }
             .scrollContentBackground(.hidden)
             .centeredColumn(680)   // 아이패드 중앙 조판(2026-07-23) — 배경은 루트로 이동
@@ -322,8 +357,12 @@ struct SettingsView: View {
         .background {
             // 티켓 = 흰 지면(2026-08-18 2차 — 유화는 오늘·나의 템포만)
             ZStack {
-                Ink.paper
-                SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)
+                if ThemeStore.chrome.skyGround {
+                    WeatherSky()   // 날씨 = 오늘의 하늘(시안 §5.3-1)
+                } else {
+                    Ink.paper
+                    SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)
+                }
             }
             .ignoresSafeArea()
         }

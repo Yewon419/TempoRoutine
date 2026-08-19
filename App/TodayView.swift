@@ -137,6 +137,8 @@ struct TodayView: View {
         ZStack(alignment: .top) {
             if ThemeStore.chrome.photographicGround {
                 TicketGround(phase: snapshot.phase(on: today))   // 계절 유화 + 스크림(시안 §3)
+            } else if ThemeStore.chrome.skyGround {
+                WeatherSky()   // 날씨 = 오늘의 하늘(시안 §5.3-1)
             } else {
                 Ink.paper.ignoresSafeArea()
                 SeasonLight(phase: snapshot.phase(on: today))   // 계절광(§4) — 지면 위 고정 빛

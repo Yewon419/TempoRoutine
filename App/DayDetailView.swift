@@ -95,8 +95,12 @@ struct DayDetailView: View {
     var body: some View {
         ZStack {
             // 티켓 = 흰 지면(2026-08-18 2차 — 유화는 오늘·나의 템포만)
-            Ink.paper.ignoresSafeArea()
-            SeasonLight(phase: snapshot.phase(on: day))
+            if ThemeStore.chrome.skyGround {
+                WeatherSky()   // 날씨 = 오늘의 하늘(시안 §5.3-1 — 하루 상세도 하늘 지면)
+            } else {
+                Ink.paper.ignoresSafeArea()
+                SeasonLight(phase: snapshot.phase(on: day))
+            }
             ScrollView {
                 // 오늘 탭과 같은 조판 — 3구획을 쌓는다(프로토 data-view="day" 문법, 2026-07-26 정정:
                 // 세그먼트 전환은 MASTER §8.2.4 구문장을 따른 것이었고 시안과 어긋나 있었다)

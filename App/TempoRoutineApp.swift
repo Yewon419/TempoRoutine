@@ -36,6 +36,10 @@ struct TempoRoutineApp: App {
         let savedTheme = UserDefaults.standard.string(forKey: ThemeStore.storageKey)
         ThemeStore.apply(savedTheme,
                          pointRawValue: UserDefaults.standard.string(forKey: PointColor.storageKey))
+        // 하늘 상태 복원(날씨 테마, 2026-08-19) — 설정 스위처가 저장한 확인용 값.
+        // Phase ②에서 WeatherKit이 이 자리를 대체한다.
+        WxState.apply(conditionRaw: UserDefaults.standard.string(forKey: WxState.conditionKey),
+                      daypartRaw: UserDefaults.standard.string(forKey: WxState.daypartKey))
         // 기본 테마 교체 승계(2026-08-12): 은필이 씨앗 테마로 내려가면서, 종전에 은필·모던을
         // 쓰던 설치는 쓰던 지면이 갑자기 잠긴다. **저장값이 있다 = 기존 설치**이므로 그 테마를
         // 낸 값 0으로 보유 처리한다. 새 설치는 키가 없어 승계가 돌지 않는다.
