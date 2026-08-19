@@ -567,7 +567,8 @@ struct ThemePreviewScreen: View {
                 .frame(width: 56, height: 56)
         }
         .padding(16)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        // 무틴트 실기기 검정 폴백 실측(2026-08-19) — Almanac.MilkGlass와 같은 틴트 고정
+        .glassEffect(.regular.tint(.white.opacity(0.55)), in: RoundedRectangle(cornerRadius: 20))
         .padding(.top, 20)
     }
 
@@ -656,7 +657,8 @@ struct ThemePreviewScreen: View {
         if chrome.liquidGlassCards {
             // 플레이리스트 — 시스템 리퀴드 글래스. 재질이라 활성 테마와 무관하게 제 모습으로 뜬다.
             // ⚠ `isEnabled:` 파라미터는 SDK에 없다(CI 실측 2026-08-19) — 분기로 켠다.
-            card.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+            // 무틴트 실기기 검정 폴백 실측(2026-08-19) — Almanac.MilkGlass와 같은 틴트 고정
+            card.glassEffect(.regular.tint(.white.opacity(0.55)), in: RoundedRectangle(cornerRadius: 20))
         } else {
             card.background {
                 if chrome.engravedCards {
@@ -757,16 +759,22 @@ struct ThemePreview: View {
         }
     }
 
+    private var chrome: ThemeChrome { theme.chrome }
+    /// 지면 위 활자색 — 사진 지면(티켓)·하늘 지면(날씨)은 흰 계열(ThemePreviewScreen과 동일 규칙)
+    private func groundInk(_ p: ThemePalette) -> Color {
+        chrome.photographicGround || chrome.skyGround ? .white : p.text
+    }
+
     var body: some View {
         let p = theme.palette(point: PointColor(rawValue: pointColor) ?? .vermilion)
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("8월")
                     .font(titleFont)
-                    .foregroundStyle(p.text)
+                    .foregroundStyle(groundInk(p))
                 Text("2026")
                     .font(.caption)
-                    .foregroundStyle(p.text.opacity(0.5))
+                    .foregroundStyle(groundInk(p).opacity(0.5))
                 Spacer(minLength: 0)
                 // 계절 도트 — 표시 순서(봄→여름→가을→겨울, §8.1)
                 HStack(spacing: 5) {
@@ -776,26 +784,57 @@ struct ThemePreview: View {
                     Circle().fill(p.winter).frame(width: 7, height: 7)
                 }
             }
-            RoundedRectangle(cornerRadius: 9)
-                .fill(p.surface)
-                .overlay(RoundedRectangle(cornerRadius: 9).stroke(p.accent.opacity(0.18), lineWidth: 1))
-                .overlay(alignment: .leading) {
-                    HStack(spacing: 8) {
-                        Circle().fill(p.accent).frame(width: 9, height: 9)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Capsule().fill(p.text.opacity(0.55)).frame(width: 64, height: 5)
-                            Capsule().fill(p.text.opacity(0.25)).frame(width: 96, height: 5)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                }
+            innerCard(p)
                 .frame(height: 46)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(p.paper))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(p.text.opacity(0.12), lineWidth: 1))
+        .background { ground(p) }
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(groundInk(p).opacity(0.12), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(theme.displayName) 테마 미리보기")
+    }
+
+    /// 카드 지면 — 티켓은 유화, 날씨는 하늘, 그 외는 팔레트 지면색(ThemePreviewScreen과 동형,
+    /// 2026-08-19 베타 피드백 대응 — 이 미니 카드가 자기 테마의 얼굴을 안 보여주고 있었다)
+    @ViewBuilder
+    private func ground(_ p: ThemePalette) -> some View {
+        if chrome.photographicGround {
+            Image(TicketSpec.plateAsset(for: .ovulation))
+                .resizable()
+                .scaledToFill()
+                .overlay(Color.black.opacity(0.28))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+        } else if chrome.skyGround {
+            let s = SkySpec.stops(.clear, .day)
+            LinearGradient(colors: [s.a, s.b, s.c], startPoint: .top, endPoint: .bottom)
+        } else {
+            RoundedRectangle(cornerRadius: 12).fill(p.paper)
+        }
+    }
+
+    /// 안쪽 표본 행 — 플레이리스트만 리퀴드 글래스, 그 외는 팔레트 표면
+    @ViewBuilder
+    private func innerCard(_ p: ThemePalette) -> some View {
+        let row = HStack(spacing: 8) {
+            Circle().fill(p.accent).frame(width: 9, height: 9)
+            VStack(alignment: .leading, spacing: 4) {
+                Capsule().fill(groundInk(p).opacity(0.55)).frame(width: 64, height: 5)
+                Capsule().fill(groundInk(p).opacity(0.25)).frame(width: 96, height: 5)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        if chrome.liquidGlassCards {
+            row.glassEffect(.regular.tint(.white.opacity(0.55)), in: RoundedRectangle(cornerRadius: 9))
+        } else {
+            row.background {
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(p.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 9).stroke(p.accent.opacity(0.18), lineWidth: 1))
+            }
+        }
     }
 }
 
