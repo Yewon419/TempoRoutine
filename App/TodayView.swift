@@ -280,27 +280,35 @@ struct TodayView: View {
                 .coachAnchor(.todaySeed)   // 최초 획득 안내 대상(2026-08-12)
             }
             if let info = todayInfo {
-                // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
-                // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
-                    almanacDisplay(info.meta.name,
-                                   size: ThemeStore.chrome.debossDisplay ? 84 : 58,
-                                   color: Ink.onGround(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0),
-                                                       white: snapshot.isSingleRecord ? 0.6 : 1.0))
-                    Spacer(minLength: 0)
-                    todayDateStamp
+                if ThemeStore.chrome.playlistChrome {
+                    // 플레이리스트(시안 §4.4 ②) — 계절명·날짜·일차가 플레이어 카드에 이미 있어
+                    // 기본 헤더 조판은 통째로 중복이다. 무드라인·생리 토글은 아래 그대로 흐른다.
+                    PlaylistPlayerCard(meta: info.meta, dayInCycle: info.dayInCycle,
+                                       cycleLength: snapshot.averageLength,
+                                       phase: snapshot.phase(on: today), date: today)
+                } else {
+                    // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
+                    // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
+                        almanacDisplay(info.meta.name,
+                                       size: ThemeStore.chrome.debossDisplay ? 84 : 58,
+                                       color: Ink.onGround(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0),
+                                                           white: snapshot.isSingleRecord ? 0.6 : 1.0))
+                        Spacer(minLength: 0)
+                        todayDateStamp
+                    }
+                    HStack(spacing: 6) {
+                        // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
+                        // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
+                        // 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소, 전 표면 통일)
+                        Text("\(info.dayInPhase)일차")
+                            .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
+                        if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
+                        else if info.projected { Text("예상").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
+                    }
+                    .font(.almanacBody(.footnote, size: 13))
                 }
-                HStack(spacing: 6) {
-                    // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
-                    // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
-                    // 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소, 전 표면 통일)
-                    Text("\(info.dayInPhase)일차")
-                        .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
-                    if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
-                    else if info.projected { Text("예상").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
-                }
-                .font(.almanacBody(.footnote, size: 13))
                 Text(moodlineText ?? info.meta.moodline)
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.88))
