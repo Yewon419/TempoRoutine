@@ -69,6 +69,13 @@ struct ThemeShopView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         header
+                        // 7일 무료 체험 안내(2026-08-19) — 기간은 사실만, 재촉 문구 금지(§7)
+                        if ThemeTrial.isActive {
+                            Text("지금은 무료 체험 기간이에요. \(ThemeTrial.daysLeft)일 동안 모든 테마를 자유롭게 바꿔볼 수 있어요.")
+                                .font(.footnote)
+                                .foregroundStyle(Ink.text.opacity(0.6))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                         ForEach(AppTheme.allCases) { theme in
                             themeCard(theme)
                         }
@@ -307,6 +314,29 @@ struct ThemeShopView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 9)
                     .background(Ink.text, in: Capsule())
+            }
+        } else if ThemeTrial.isActive {
+            // 7일 무료 체험(2026-08-19 사용자 결정) — 씨앗 테마도 적용 개방. 소장(구매)은
+            // 체험 중에도 가능해야 해서(원장 로직 불변) 보조 텍스트 버튼으로 남긴다.
+            HStack(spacing: 14) {
+                Button {
+                    apply(theme)
+                } label: {
+                    Text("적용하기")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Ink.paper)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 9)
+                        .background(Ink.text, in: Capsule())
+                }
+                if let price = theme.seedPrice, available >= price {
+                    Button("씨앗 \(price)개로 소장") {
+                        lightFeedback += 1
+                        plantCandidate = theme
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.55))
+                }
             }
         } else if let price = theme.seedPrice {
             if available >= price {

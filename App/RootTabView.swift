@@ -86,12 +86,18 @@ struct RootTabView: View {
             OnboardingFlow()
         }
         .task {
+            // 테마 7일 체험 시작(2026-08-19) — 기존 설치는 업데이트 후 첫 실행이 곧 시작.
+            // 신규는 온보딩이 덮여 있는 동안 기록하지 않는다(완료 시 아래 onChange가 잡는다).
+            if onboardingDone { ThemeTrial.beginIfNeeded() }
             await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)   // 위젯 스냅샷
             CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
             DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
             PlannerSync.shared.kick()   // 기기 간 동기화(2026-08-10) — 실행 시 왕복
+        }
+        .onChange(of: onboardingDone) { _, done in
+            if done { ThemeTrial.beginIfNeeded() }   // 신규 = 온보딩 완료 시각부터 7일
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {

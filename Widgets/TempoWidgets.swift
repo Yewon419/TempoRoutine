@@ -181,6 +181,28 @@ struct WPalette {
         glowAutumn: flat((0xB8, 0x86, 0x1F)),
         accent: flat((0x22, 0x38, 0x4F))
     )
+
+    /// 플레이리스트 — 시안 §4.3 (앱 ThemePalette.playlist 사본). 라이트/다크 동값.
+    /// ⚠ 겨울 무채·record 레드 — 겨울 밑줄과 기록 점이 서로 갈린다.
+    static let playlist = WPalette(
+        winter: flat((0x5D, 0x68, 0x74)),
+        spring: flat((0x4C, 0x8A, 0x56)),
+        summer: flat((0x2C, 0x7C, 0x96)),
+        autumn: flat((0xB0, 0x70, 0x3A)),
+        text: flat((0x24, 0x31, 0x3D)),
+        paper: flat((0xE6, 0xEA, 0xEE)),
+        coral: flat((0xBE, 0x51, 0x4B)),
+        record: flat((0xBE, 0x51, 0x4B)),
+        predictGray: flat((0x93, 0xA2, 0xB0)),
+        holidayRed: flat((0xBE, 0x51, 0x4B)),
+        saturday: flat((0x4E, 0x6C, 0x8A)),
+        frost: flat((0xEA, 0xED, 0xF1)),
+        glowWinter: flat((0x6E, 0x7A, 0x87)),
+        glowSpring: flat((0x5E, 0x9C, 0x68)),
+        glowSummer: flat((0x3E, 0x8D, 0xA6)),
+        glowAutumn: flat((0xC0, 0x82, 0x4A)),
+        accent: flat((0x24, 0x31, 0x3D))
+    )
 }
 
 enum WThemeStore {
@@ -199,22 +221,31 @@ enum WThemeStore {
         case "modern":   .modern(point: point)
         case "standard": .standard
         case "ticket":   .ticket
+        case "playlist": .playlist
         default:         .plain     // 저장값 없음 = 새 설치 = 기본
         }
     }
 }
 
 enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀) — 정적 API 유지, 백킹만 위임
-    /// 위젯 지면(2026-08-18 사용자 지시) — **티켓만 발권물 흰색**으로 뒤집는다.
-    /// 앱에서 티켓 지면은 블루그레이 색면이지만, 위젯은 남의 홈 화면 배경 위에 놓이는
-    /// 작은 카드라 색면이면 혼자 무겁고 배경과 싸운다. 흰 발권물이 그대로 얹힌 모양이 맞다.
-    /// `paper` 계열 자리에 쓴다.
+    /// 위젯 지면(2026-08-18 사용자 지시) — **티켓 = 발권물 흰색, 플레이리스트 = 순백**으로
+    /// 뒤집는다(시안 §4.3 — 홈 배경이 무엇이든 카드가 선다. 앱 지면의 계절광은 위젯으로
+    /// 넘기지 않는다). 위젯은 남의 홈 화면 배경 위에 놓이는 작은 카드라 색면이면 혼자
+    /// 무겁고 배경과 싸운다. `paper` 계열 자리에 쓴다.
     static var widgetGround: Color {
-        WThemeStore.key == "ticket" ? Self.ticketPaper : WThemeStore.palette.paper
+        switch WThemeStore.key {
+        case "ticket":   Self.ticketPaper
+        case "playlist": .white
+        default:         WThemeStore.palette.paper
+        }
     }
     /// 위와 같은 규칙의 `frost` 계열 자리(격자 위젯 — 이번 주·이번 달)
     static var widgetGridGround: Color {
-        WThemeStore.key == "ticket" ? Self.ticketPaper : WThemeStore.palette.frost
+        switch WThemeStore.key {
+        case "ticket":   Self.ticketPaper
+        case "playlist": .white
+        default:         WThemeStore.palette.frost
+        }
     }
     /// 발권물 웜 화이트 — 앱 `TicketSpec.ticketPaper`와 동값 사본(위젯 타깃은 앱 소스를 못 본다)
     private static let ticketPaper = Color(red: 0xFA / 255, green: 0xFA / 255, blue: 0xF8 / 255)
@@ -328,6 +359,26 @@ struct SeasonGlowBand: View {
     }
 }
 
+// ── 미니 시크바 (플레이리스트 §4.4 ⑧ — 앱 PlaylistSeekBar 동형 사본. 재생 위치 = 주기 진행) ──
+struct WSeekBar: View {
+    let progress: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            let x: CGFloat = geo.size.width * CGFloat(min(max(progress, 0), 1))
+            ZStack(alignment: .leading) {
+                Capsule().fill(WInk.text.opacity(0.2)).frame(height: 2)
+                Capsule().fill(WInk.text).frame(width: max(x, 2), height: 2)
+                Circle().fill(WInk.text).frame(width: 7, height: 7)
+                    .offset(x: x - 3.5)
+            }
+        }
+        .frame(height: 7)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)   // 값은 일차 텍스트가 담당
+    }
+}
+
 // ── 타임라인 ──
 struct SeasonEntry: TimelineEntry {
     let date: Date
@@ -410,6 +461,12 @@ struct SeasonWidgetView: View {
             Text(entry.day?.sub ?? "앱을 한 번 열면 채워져요")
                 .font(.footnote)
                 .foregroundStyle(WInk.text.opacity(entry.day?.projected == true ? 0.55 : 0.75))
+            // 플레이리스트 = 미니 플레이어(시안 §4.4 ⑧) — 시크바 하나가 시그니처를 잇는다.
+            // 커버·컨트롤은 위젯 밀도에 과함(기각). 구 스냅샷엔 cycleProgress가 없어 자연 생략.
+            if WThemeStore.key == "playlist", let progress = entry.day?.cycleProgress {
+                WSeekBar(progress: progress)
+                    .padding(.top, 2)
+            }
             Spacer(minLength: 0)
             // 오늘 일정 2줄(2026-07-27 사용자 지시) — 없으면 무드라인 폴백
             if let lines = entry.day?.schedules, !lines.isEmpty {

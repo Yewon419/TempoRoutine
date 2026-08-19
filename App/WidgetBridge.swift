@@ -178,10 +178,13 @@ enum WidgetBridge {
             }
             let hedge = info.projected ? " · 예상" : ""
             // 일차 = 계절 내 일차(2026-08-09 — 앱 표면과 통일)
-            return WidgetDay(day: day, season: key, title: info.meta.name,
-                             sub: "\(info.meta.name) \(info.dayInPhase)일차\(hedge)",
-                             inline: "\(info.meta.name) \(info.dayInPhase)일차",
-                             mood: info.meta.moodline, projected: info.projected)
+            var entry = WidgetDay(day: day, season: key, title: info.meta.name,
+                                  sub: "\(info.meta.name) \(info.dayInPhase)일차\(hedge)",
+                                  inline: "\(info.meta.name) \(info.dayInPhase)일차",
+                                  mood: info.meta.moodline, projected: info.projected)
+            // 주기 진행(플레이리스트 미니 시크바, 시안 §4.4 ⑧) — 재생 위치 = 주기 일차
+            entry.cycleProgress = min(1, Double(info.dayInCycle) / Double(max(snapshot.averageLength, 1)))
+            return entry
         }
         // S0(기록 전)·투영 지평 밖 공통 — 중립(§3: 임신·질환 추론 금지, 단정 없는 카피)
         return WidgetDay(day: day, season: nil, title: "템포루틴",

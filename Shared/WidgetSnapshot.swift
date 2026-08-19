@@ -66,6 +66,8 @@ struct WidgetDay: Codable {
     var inputTotal: Int?
     var inputDone: Int?
     var outputTotal: Int?
+    /// 주기 진행 0...1(플레이리스트 미니 시크바, 2026-08-19). optional 추가만 — 계약 규칙.
+    var cycleProgress: Double?
 }
 
 struct WidgetSnapshot: Codable {

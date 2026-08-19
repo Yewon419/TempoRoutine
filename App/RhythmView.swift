@@ -514,16 +514,23 @@ struct RhythmView: View {
             Text(info.body)
                 .font(.subheadline)
                 .foregroundStyle(Ink.text.opacity(0.75))
-            GeometryReader { geo in
-                // 모던 = 니어블랙 대비 상향(시안 §1.3-7): 트랙 12%·채움 75%
-                let modern = ThemeStore.chrome.boostsContrast
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Ink.text.opacity(modern ? 0.12 : 0.08))
-                    Capsule().fill(Ink.text.opacity(modern ? 0.75 : 0.55))
-                        .frame(width: max(6, geo.size.width * info.progress))
+            Group {
+                if ThemeStore.chrome.playlistChrome {
+                    // 플레이리스트 = 시크바 문법(시안 §4.4 ⑧ — 두툼한 바는 이 테마에서 이질적)
+                    PlaylistSeekBar(progress: info.progress)
+                } else {
+                    GeometryReader { geo in
+                        // 모던 = 니어블랙 대비 상향(시안 §1.3-7): 트랙 12%·채움 75%
+                        let modern = ThemeStore.chrome.boostsContrast
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Ink.text.opacity(modern ? 0.12 : 0.08))
+                            Capsule().fill(Ink.text.opacity(modern ? 0.75 : 0.55))
+                                .frame(width: max(6, geo.size.width * info.progress))
+                        }
+                    }
+                    .frame(height: 6)
                 }
             }
-            .frame(height: 6)
             .accessibilityLabel("패턴 수집 진행")
             .accessibilityValue(info.progress.formatted(.percent.precision(.fractionLength(0))))
             Text(info.label)
