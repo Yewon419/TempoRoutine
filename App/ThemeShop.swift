@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit   // openSettingsURLString(날씨 위치 게이트)
 
 extension AppTheme {
     /// 씨앗 가격 — nil = 기본(무료 상시 보유). §3.8.1 미결 ① 확정값.
@@ -61,6 +62,9 @@ struct ThemeShopView: View {
     @State private var showTip = false
     /// 미리보기 시트(2026-08-18 사용자 지시) — 하드코딩 목업 화면
     @State private var previewing: AppTheme?
+    /// 날씨 위치 게이트(2026-08-19) — 거부 시 적용 차단 + 설정 안내
+    @State private var showWeatherLocationAlert = false
+    @Environment(\.openURL) private var openURL
 
     private var current: AppTheme { AppTheme(rawValue: appTheme) ?? .plain }
     private var available: Int { Seeds.available(checkIns) }
@@ -133,6 +137,15 @@ struct ThemeShopView: View {
         }
         .sheet(item: $previewing) { theme in
             ThemePreviewScreen(theme: theme)
+        }
+        // 날씨 위치 게이트(2026-08-19) — 시스템 설정의 위치 허가로 보낸다
+        .alert("위치 허가가 필요해요", isPresented: $showWeatherLocationAlert) {
+            Button("설정 열기") {
+                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("날씨 테마는 지금 계신 곳의 하늘을 그려요. 설정 > 위치에서 접근을 허용하면 쓸 수 있어요.")
         }
         .onAppear {
             // 쓰고 있는 테마가 유료면 보유로 승계 — 쓰던 테마를 잠그지 않는다(신뢰).
@@ -379,6 +392,21 @@ struct ThemeShopView: View {
     /// ~~리빌드로 이 시트도 함께 닫힌다~~ **폐기(2026-08-11 사용자: "계속 테마 탭에 머물게")** —
     /// 탭·시트 플래그를 뷰 밖에 둬서 리빌드를 건너 살아남는다. 갈아입은 뒤에도 이 화면에 머문다.
     private func apply(_ theme: AppTheme) {
+        // 날씨 = 위치 게이트(2026-08-19 사용자 확정 — 체험 중에도 동일): 미결정이면 시스템
+        // 시트를 기다리고, 거부면 적용을 막고 설정 안내를 띄운다. 하늘은 위치 없이 못 그린다.
+        if theme == .weather {
+            Task { @MainActor in
+                switch await WxProvider.shared.requestAuthorization() {
+                case .authorizedWhenInUse, .authorizedAlways:
+                    confirmHaptic()
+                    ThemeStore.apply(theme.rawValue)
+                    appTheme = theme.rawValue
+                default:
+                    showWeatherLocationAlert = true
+                }
+            }
+            return
+        }
         confirmHaptic()
         ThemeStore.apply(theme.rawValue)
         appTheme = theme.rawValue

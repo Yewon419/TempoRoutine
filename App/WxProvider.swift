@@ -9,13 +9,32 @@ import CoreLocation
 import WeatherKit
 
 @MainActor
-final class WxProvider {
+final class WxProvider: NSObject {
     static let shared = WxProvider()
 
     private let manager = CLLocationManager()
     private var lastFetch: Date?
+    /// 적용 게이트의 권한 대기(ThemeShop) — 시스템 시트 응답까지 suspend
+    private var authContinuation: CheckedContinuation<CLAuthorizationStatus, Never>?
 
-    private init() {}
+    override private init() {
+        super.init()
+        manager.delegate = self
+    }
+
+    /// 현재 권한 — 적용 게이트(ThemeShop)가 읽는다
+    var authorizationStatus: CLAuthorizationStatus { manager.authorizationStatus }
+
+    /// 날씨 테마 적용 게이트(2026-08-19 사용자 확정 — 체험 포함): 미결정이면 시스템 시트를
+    /// 띄우고 응답을 기다린다. 이미 결정된 상태면 그 값을 바로 돌려준다.
+    func requestAuthorization() async -> CLAuthorizationStatus {
+        let status = manager.authorizationStatus
+        guard status == .notDetermined else { return status }
+        return await withCheckedContinuation { continuation in
+            authContinuation = continuation
+            manager.requestWhenInUseAuthorization()
+        }
+    }
 
     /// 30분 스로틀 — 화면 등장마다 불리는 진입점이라 여기서 막는다
     func refreshIfNeeded() async {
@@ -61,6 +80,19 @@ final class WxProvider {
             .snow
         default:
             .cloud   // cloudy·partlyCloudy·foggy·haze·smoky·windy 등 구름 계열
+        }
+    }
+}
+
+extension WxProvider: CLLocationManagerDelegate {
+    /// 권한 변경 — 적용 게이트의 대기(continuation)를 깨운다.
+    /// ⚠ 델리게이트 설정 직후에도 한 번 불린다(.notDetermined) — 그건 응답이 아니다.
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+        guard status != .notDetermined else { return }
+        Task { @MainActor in
+            self.authContinuation?.resume(returning: status)
+            self.authContinuation = nil
         }
     }
 }
