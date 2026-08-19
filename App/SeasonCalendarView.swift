@@ -250,6 +250,27 @@ struct SeasonCalendarView: View {
             if ThemeStore.chrome.ticketChrome {
                 // 티켓 = 화면 한 장이 발권물(시안 §3.4). 브랜드 표식은 스텁의 일련 조판이 대신한다.
                 ticketHeaderBlock
+            } else if ThemeStore.chrome.playlistChrome {
+                // 플레이리스트 = 앨범 헤더(시안 §4.4 ③). 브랜드 표식·소식란은 상단 행 유지.
+                HStack {
+                    BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
+                        .padding(.leading, 6)
+                    Spacer()
+                    noticeButton
+                }
+                PlaylistAlbumHeader(
+                    year: cal.component(.year, from: monthStart),
+                    month: cal.component(.month, from: monthStart),
+                    monthProgress: playlistMonthProgress,
+                    seasonLine: seasonLine,
+                    phase: currentPhase,
+                    date: today,
+                    onPrev: { lightFeedback += 1; shiftMonth(-1) },
+                    onStop: { lightFeedback += 1; returnToTodayMonth() },
+                    onNext: { lightFeedback += 1; shiftMonth(1) },
+                    onLogTap: { showLogSheet = true }
+                )
+                .coachAnchor(.calendarLog)
             } else {
                 // 좌상단 브랜드 표식(2026-08-09 사용자 지시) — 오늘 탭과 같은 자리·크기
                 HStack {
@@ -515,25 +536,50 @@ struct SeasonCalendarView: View {
             } label: {
                 Image(systemName: "chevron.right").frame(width: 44, height: 44)
             }
-            // 소식란(2026-08-09 사용자 지시 — 우상단 확성기, 미읽음 점)
-            Button {
-                lightFeedback += 1
-                showNotices = true
-            } label: {
-                Image(systemName: "megaphone")
-                    .font(.system(size: 15, weight: .medium))
-                    .frame(width: 40, height: 44)
-                    .overlay(alignment: .topTrailing) {
-                        if noticeFeed.hasUnread {
-                            Circle().fill(Ink.holiday)
-                                .frame(width: 6, height: 6)
-                                .offset(x: -5, y: 12)
-                        }
-                    }
-            }
-            .accessibilityLabel(noticeFeed.hasUnread ? "소식, 새 글 있음" : "소식")
+            noticeButton
         }
         .foregroundStyle(Ink.text)
+    }
+
+    /// 소식란(2026-08-09 사용자 지시 — 우상단 확성기, 미읽음 점).
+    /// 표제 줄(기본)과 상단 행(플레이리스트) 두 자리에서 쓰여 추출(2026-08-19).
+    private var noticeButton: some View {
+        Button {
+            lightFeedback += 1
+            showNotices = true
+        } label: {
+            Image(systemName: "megaphone")
+                .font(.system(size: 15, weight: .medium))
+                .frame(width: 40, height: 44)
+                .overlay(alignment: .topTrailing) {
+                    if noticeFeed.hasUnread {
+                        Circle().fill(Ink.holiday)
+                            .frame(width: 6, height: 6)
+                            .offset(x: -5, y: 12)
+                    }
+                }
+        }
+        .foregroundStyle(Ink.text)
+        .accessibilityLabel(noticeFeed.hasUnread ? "소식, 새 글 있음" : "소식")
+    }
+
+    /// 이 달 트랙의 재생 위치(시안 §4.4 ③ 월 진행 바) — 지난 달 1, 미래 달 0, 이 달은 일/일수
+    private var playlistMonthProgress: Double {
+        let layout = currentLayout
+        guard let monthEnd = cal.date(byAdding: .day, value: layout.daysInMonth, to: layout.start) else {
+            return 0
+        }
+        if today >= monthEnd { return 1 }
+        if today < layout.start { return 0 }
+        return Double(cal.component(.day, from: today)) / Double(layout.daysInMonth)
+    }
+
+    /// 정지 = 오늘 달로 되돌아오기(시안 §4.4 ③ 계약). 이미 오늘 달이면 아무 일 없음.
+    private func returnToTodayMonth() {
+        guard dragX == 0, !monthAnimating else { return }
+        let now = cal.startOfDay(for: .now)
+        guard !cal.isDate(now, equalTo: monthStart, toGranularity: .month) else { return }
+        monthAnchor = now
     }
 
     /// 버튼도 같은 캐러셀 슬라이드(HIG Familiarity). Reduce Motion·폭 미확정이면 즉시 전환.

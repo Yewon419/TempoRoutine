@@ -421,9 +421,18 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 10) {
             TicketFieldLabel(text: ticketFieldName(kind))   // 발권 필드명(시안 §3.3-④, 티켓만)
             HStack {
-                Text(kind.rawValue)
-                    .font(.almanac(size: 17, weight: .bold))
-                    .foregroundStyle(Ink.text)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(kind.rawValue)
+                        .font(.almanac(size: 17, weight: .bold))
+                        .foregroundStyle(Ink.text)
+                    // 플레이리스트 = 곡수 메타(시안 §4.4 ⑦ — 유형 라벨은 제목과 중복이라 기각)
+                    if let meta = playlistTrackMeta(kind) {
+                        Text(meta)
+                            .font(.system(size: 10, weight: .medium))
+                            .kerning(1.8)
+                            .foregroundStyle(Ink.dim)
+                    }
+                }
                 InfoBadge(title: kind.rawValue, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
                 Spacer()
                 Button {
@@ -442,6 +451,18 @@ struct TodayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass(stub: ticketStub(for: kind))
         .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)
+    }
+
+    /// 플레이리스트 곡수 메타(시안 §4.4 ⑦) — 트랙 리스트의 `N tracks`. 체크인 카드는 트랙이
+    /// 아니라 이 셸(section)을 안 쓰므로 자연히 제외된다. 다른 테마에서는 nil.
+    private func playlistTrackMeta(_ kind: CardKind) -> String? {
+        guard ThemeStore.chrome.playlistChrome else { return nil }
+        let count = switch kind {
+        case .schedule: todaySchedules.count + EventOverlay.shared.events(on: today).count
+        case .input: todayInputs.count
+        case .output: todayOutputs.count
+        }
+        return "\(count) \(count == 1 ? "TRACK" : "TRACKS")"
     }
 
     /// 티켓 스텁에 세울 «핵심 값 하나»(시안 §3.3-③). 티켓 테마가 아니면 쓰이지 않는다.

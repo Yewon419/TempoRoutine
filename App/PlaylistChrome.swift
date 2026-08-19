@@ -139,6 +139,113 @@ struct PlaylistPlayerCard: View {
     }
 }
 
+/// 앨범 헤더 — 캘린더 상단(시안 §4.4 ③). 좌측 조판(연도 극소 라벨 → 월 38 + 이전·정지·다음 →
+/// 월 진행 바 → 계절 라인 → 「생리 기록」) + 우측 커버 96pt. 월 = 앨범, 오늘 = 재생 위치.
+/// 정지 = **오늘 달로 되돌아오기**(계약). 히트 영역 44pt, 글리프만 작게 그린다(§4.7).
+struct PlaylistAlbumHeader: View {
+    let year: Int
+    let month: Int
+    /// 이 달 트랙의 재생 위치 — 오늘 이전 달 1, 미래 달 0, 이 달은 일/일수
+    let monthProgress: Double
+    let seasonLine: String
+    let phase: CyclePhase?
+    let date: Date
+    let onPrev: () -> Void
+    let onStop: () -> Void
+    let onNext: () -> Void
+    let onLogTap: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            main
+            cover
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .milkGlass()
+    }
+
+    private var main: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(String(year))
+                .font(.system(size: 10, weight: .medium))
+                .kerning(1.8)
+                .foregroundStyle(Ink.dim)
+            HStack(alignment: .center, spacing: 2) {
+                Text("\(month)월")
+                    .font(.system(size: 38, weight: .semibold))
+                    .foregroundStyle(Ink.text)
+                Spacer(minLength: 0)
+                navButton(action: onPrev, label: "이전 달") {
+                    PlaylistTriangle(pointsRight: false).fill(Ink.text)
+                        .frame(width: 9, height: 12)
+                }
+                navButton(action: onStop, label: "오늘 달로") {
+                    ZStack {
+                        Circle().stroke(Ink.text, lineWidth: 1.4)
+                        RoundedRectangle(cornerRadius: 1.5).fill(Ink.text)
+                            .frame(width: 9, height: 9)
+                    }
+                    .frame(width: 28, height: 28)
+                }
+                navButton(action: onNext, label: "다음 달") {
+                    PlaylistTriangle(pointsRight: true).fill(Ink.text)
+                        .frame(width: 9, height: 12)
+                }
+            }
+            PlaylistSeekBar(progress: monthProgress, barHeight: 2, knobSize: 7)
+                .padding(.top, 8)
+            Text(seasonLine)
+                .font(.caption)
+                .foregroundStyle(Ink.dim)
+                .padding(.top, 8)
+            logButton
+                .padding(.top, 8)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func navButton(action: @escaping () -> Void, label: String,
+                           @ViewBuilder glyph: () -> some View) -> some View {
+        Button(action: action) {
+            glyph().frame(width: 44, height: 44)
+        }
+        .accessibilityLabel(label)
+    }
+
+    private var logButton: some View {
+        Button(action: onLogTap) {
+            HStack(spacing: 5) {
+                Circle().fill(Ink.record).frame(width: 7, height: 7)
+                Text("생리 기록")
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Ink.text)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+        }
+    }
+
+    private var cover: some View {
+        let day: Int = Calendar.current.component(.day, from: date)
+        return RoundedRectangle(cornerRadius: 10)
+            .fill(phase.map { seasonMeta(for: $0).glow } ?? Ink.glowWinter)   // 콜드 = 겨울(티켓 전례)
+            .overlay {
+                Image(PlaylistSpec.coverAsset(for: phase, day: day))
+                    .resizable()
+                    .scaledToFill()
+            }
+            .frame(width: PlaylistSpec.albumCoverSize, height: PlaylistSpec.albumCoverSize)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay {
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            }
+            .accessibilityHidden(true)
+    }
+}
+
 /// 단일 삼각 글리프 — SF Symbols의 이중 삼각(backward.fill)과 다른 시안 문법(§4.4 ①·③).
 struct PlaylistTriangle: Shape {
     let pointsRight: Bool
