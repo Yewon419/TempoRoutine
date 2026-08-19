@@ -4,6 +4,12 @@
 
 설계 SSOT는 로컬 `MASTER.md`(repo 외부), UI 시안 SSOT는 `ui-mockup/DESIGN.md`(repo 외부).
 
+<p align="center">
+  <img src="docs/screenshots/today.png" width="32%" alt="오늘 탭 — 계절 헤더·일정·Input/Output">
+  <img src="docs/screenshots/calendar.png" width="32%" alt="캘린더 탭 — 계절 밑줄 띠·형광펜 긋기">
+</p>
+<p align="center"><sub>오늘 탭 · 캘린더 탭 (UI 디자인 프로토타입 캡처)</sub></p>
+
 ## 구조
 
 ```
