@@ -42,6 +42,10 @@ targets:
         # HealthKit read-write 미러(§5.7) — 로컬이 단일 출처, Health는 미러
         CODE_SIGN_ENTITLEMENTS: TempoRoutine.entitlements
         INFOPLIST_KEY_NSHealthShareUsageDescription: 건강 앱에 기록된 생리 기록을 불러와 계절 계산에 반영해요. 기록이 밖으로 나가지 않아요.
+        # 날씨 테마(§5.5) — 대략적 위치만: 하늘 지면에 쓸 동네 날씨를 가져오는 용도
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: 날씨 테마의 하늘을 지금 계신 곳의 날씨로 맞추기 위해서만 써요. 대략적인 위치면 충분하고, 위치가 밖으로 나가지 않아요.
+        # 기본을 대략적 정확도로 — 날씨엔 시 단위면 충분(프라이버시 최소 수집)
+        INFOPLIST_KEY_NSLocationDefaultAccuracyReduced: YES
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: 이 앱에서 남긴 생리 기록을 건강 앱에도 저장해요. 원할 때 끌 수 있어요.
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 4VD7XCCBQN

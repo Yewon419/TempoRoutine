@@ -80,6 +80,14 @@ enum WxState {
         condition = conditionRaw.flatMap(WxCondition.init(rawValue:)) ?? .clear
         daypartOverride = daypartRaw.flatMap(Daypart.init(rawValue:))
     }
+
+    /// WeatherKit 실측이 조건만 갱신하는 경로(Phase ②) — 시간대 고정은 건드리지 않는다.
+    /// 저장까지 해서 다음 실행의 「마지막 값」 폴백(§5.7)이 된다. 설정 스위처와 같은 키라
+    /// 스위처에도 실측값이 비친다 — 마지막에 쓴 쪽이 이기는 단일 값.
+    static func applyCondition(_ new: WxCondition) {
+        condition = new
+        UserDefaults.standard.set(new.rawValue, forKey: conditionKey)
+    }
 }
 
 /// 하늘 지면 — 전 화면 ZStack 최하층(§5.3-1). 스크롤과 무관하게 고정.
@@ -94,5 +102,8 @@ struct WeatherSky: View {
             .ignoresSafeArea()
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+            // 실날씨 갱신(Phase ②) — 하늘이 필요할 때만 위치·네트워크를 쓴다.
+            // 갱신값은 다음 등장(탭 전환)부터 반영 — 지면이 눈앞에서 바뀌지 않는 게 오히려 낫다.
+            .task { await WxProvider.shared.refreshIfNeeded() }
     }
 }
