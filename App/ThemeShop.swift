@@ -446,11 +446,12 @@ struct ThemePreviewScreen: View {
     var body: some View {
         ZStack(alignment: .top) {
             ground
+            if chrome.skyGround { weatherGlow }
             VStack(alignment: .leading, spacing: 16) {
                 header
-                sampleCard(title: "일정", rows: [("저녁 산책", "19:00")])
-                sampleCard(title: "Input", rows: [("아침명상 5분", "체크"), ("물 자주 마시기", "체크")])
-                sampleCard(title: "Output", rows: [("자격증 공부", "30:00 타이머")])
+                sampleCard(title: "일정", rows: [("저녁 산책", "19:00")], trackCount: 1)
+                sampleCard(title: "Input", rows: [("아침명상 5분", "체크"), ("물 자주 마시기", "체크")], trackCount: 2)
+                sampleCard(title: "Output", rows: [("자격증 공부", "30:00 타이머")], trackCount: 1)
                 Spacer(minLength: 0)
                 tabBarMock
             }
@@ -506,7 +507,85 @@ struct ThemePreviewScreen: View {
         chrome.photographicGround || chrome.skyGround ? .white : p.text
     }
 
+    /// 날씨 정적 글로우(시안 §5.3-5 맑음×낮 동값) — 표본은 항상 이 상태라 파티클 없이
+    /// 우상단 웜 글로우만으로도 진짜 날씨 지면처럼 읽힌다.
+    private var weatherGlow: some View {
+        Rectangle().fill(RadialGradient(
+            stops: [
+                .init(color: Color(red: 1, green: 246 / 255, blue: 216 / 255).opacity(0.85), location: 0),
+                .init(color: Color(red: 1, green: 238 / 255, blue: 190 / 255).opacity(0.22), location: 0.42),
+                .init(color: .clear, location: 0.7),
+            ],
+            center: UnitPoint(x: 0.82, y: 0.04), startRadius: 0, endRadius: 300))
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    /// 헤더 — 플레이리스트는 플레이어 카드가 헤더를 대신한다(시안 §4.4 ②, 실제 오늘 탭과 동형).
+    /// 미리보기의 존재 이유가 "그 테마의 얼굴을 보여주는 것"이라 이 분기가 핵심이다.
+    @ViewBuilder
     private var header: some View {
+        if chrome.playlistChrome {
+            playlistHeader
+        } else {
+            standardHeader
+        }
+    }
+
+    private var playlistHeader: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 8) {
+                    Text("NOW PLAYING")
+                        .font(.system(size: 9, weight: .medium))
+                        .kerning(1.6)
+                        .foregroundStyle(p.dim)
+                    Rectangle().fill(p.text.opacity(0.22)).frame(height: 1)
+                }
+                Text("여름")
+                    .font(displayFont(size: 28))
+                    .foregroundStyle(p.text)
+                    .padding(.top, 5)
+                Text("배란기 · 8월 18일 화요일")
+                    .font(.caption2)
+                    .foregroundStyle(p.dim)
+                    .padding(.top, 1)
+                previewSeekBar(progress: 0.62)
+                    .padding(.top, 10)
+                HStack {
+                    Text("18일차")
+                    Spacer(minLength: 0)
+                    Text("29일")
+                }
+                .font(.system(size: 9))
+                .monospacedDigit()
+                .foregroundStyle(p.dim)
+                .padding(.top, 5)
+            }
+            RoundedRectangle(cornerRadius: 10)
+                .fill(p.summer)
+                .frame(width: 56, height: 56)
+        }
+        .padding(16)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        .padding(.top, 20)
+    }
+
+    /// 시크바 — 실제 `PlaylistSeekBar`와 같은 문법이되 전역 `Ink` 대신 팔레트 파라미터로
+    /// (미리보기 전체 원칙 — 활성 테마와 무관하게 제 색으로 뜬다).
+    private func previewSeekBar(progress: Double) -> some View {
+        GeometryReader { geo in
+            let x = geo.size.width * CGFloat(min(max(progress, 0), 1))
+            ZStack(alignment: .leading) {
+                Capsule().fill(p.text.opacity(0.22)).frame(height: 3)
+                Capsule().fill(p.accent).frame(width: max(x, 3), height: 3)
+                Circle().fill(p.accent).frame(width: 9, height: 9).offset(x: x - 4.5)
+            }
+        }
+        .frame(height: 9)
+    }
+
+    private var standardHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 headline
@@ -546,11 +625,20 @@ struct ThemePreviewScreen: View {
 
     /// 카드 — 플레이리스트 = 리퀴드 글래스 / 활판 = 음각 윤곽선 / 티켓 = 발권지 / 그 외 = 팔레트 표면
     @ViewBuilder
-    private func sampleCard(title: String, rows: [(String, String)]) -> some View {
+    private func sampleCard(title: String, rows: [(String, String)], trackCount: Int? = nil) -> some View {
         let card = VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(displayFont(size: 15))
-                .foregroundStyle(p.text)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(displayFont(size: 15))
+                    .foregroundStyle(p.text)
+                // 플레이리스트 = 곡수 메타(시안 §4.4 ⑦ 실제 TodayView 동형 — "N TRACKS")
+                if chrome.playlistChrome, let trackCount {
+                    Text("\(trackCount) \(trackCount == 1 ? "TRACK" : "TRACKS")")
+                        .font(.system(size: 9, weight: .medium))
+                        .kerning(1.6)
+                        .foregroundStyle(p.dim)
+                }
+            }
             ForEach(rows, id: \.0) { row in
                 HStack {
                     Text(row.0)
