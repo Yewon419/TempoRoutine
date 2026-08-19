@@ -476,9 +476,10 @@ struct ThemePreviewScreen: View {
         }
     }
 
-    /// 카드 — 활판 = 음각 윤곽선 / 티켓 = 발권지 / 그 외 = 팔레트 표면
+    /// 카드 — 플레이리스트 = 리퀴드 글래스 / 활판 = 음각 윤곽선 / 티켓 = 발권지 / 그 외 = 팔레트 표면
+    @ViewBuilder
     private func sampleCard(title: String, rows: [(String, String)]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let card = VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(displayFont(size: 15))
                 .foregroundStyle(p.text)
@@ -496,28 +497,32 @@ struct ThemePreviewScreen: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            if chrome.engravedCards {
-                ZStack {
+        if chrome.liquidGlassCards {
+            // 플레이리스트 — 시스템 리퀴드 글래스. 재질이라 활성 테마와 무관하게 제 모습으로 뜬다.
+            // ⚠ `isEnabled:` 파라미터는 SDK에 없다(CI 실측 2026-08-19) — 분기로 켠다.
+            card.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        } else {
+            card.background {
+                if chrome.engravedCards {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white, lineWidth: 1)
+                            .offset(x: 1, y: 1.2)
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.34),
+                                    lineWidth: 1)
+                    }
+                } else if chrome.ticketChrome {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(TicketSpec.ticketPaper)
+                        .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
+                } else {
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white, lineWidth: 1)
-                        .offset(x: 1, y: 1.2)
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.34),
-                                lineWidth: 1)
+                        .fill(p.surface)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(p.accent.opacity(0.18), lineWidth: 1))
                 }
-            } else if chrome.ticketChrome {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(TicketSpec.ticketPaper)
-                    .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
-            } else if !chrome.liquidGlassCards {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(p.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(p.accent.opacity(0.18), lineWidth: 1))
             }
         }
-        // 플레이리스트 — 시스템 리퀴드 글래스. 재질이라 활성 테마와 무관하게 제 모습으로 뜬다
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20), isEnabled: chrome.liquidGlassCards)
     }
 
     private var tabBarMock: some View {
