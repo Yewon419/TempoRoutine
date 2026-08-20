@@ -91,12 +91,13 @@ struct RootTabView: View {
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)
         }
-        .sheet(isPresented: $showThemeShop) { ThemeShopView() }
+        // 시트는 자기 presentation — 위 preferredColorScheme이 닿지 않아 루트마다 강제(2026-08-20)
+        .sheet(isPresented: $showThemeShop) { ThemeShopView().themeColorScheme() }
         // 체험 종료 선택 시트(2026-08-19) — 선택 전 닫기 불가(TrialEndSheet 쪽 interactiveDismissDisabled)
-        .sheet(isPresented: $showTrialEnd) { TrialEndSheet { showTrialEnd = false } }
+        .sheet(isPresented: $showTrialEnd) { TrialEndSheet { showTrialEnd = false }.themeColorScheme() }
         // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
-            OnboardingFlow()
+            OnboardingFlow().themeColorScheme()
         }
         .task {
             // 테마 7일 체험 시작(2026-08-19) — 기존 설치는 업데이트 후 첫 실행이 곧 시작.

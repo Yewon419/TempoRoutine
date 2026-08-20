@@ -379,6 +379,20 @@ extension Color {
     }
 }
 
+extension View {
+    /// 시트·풀스크린 커버 루트용 외관 강제(2026-08-20 전수 점검). 시트는 자기 presentation이라
+    /// 루트(RootTabView)의 preferredColorScheme이 닿지 않는다 — ThemePreviewScreen이 자체
+    /// 강제를 두게 된 것과 같은 구조. 강제 외관 테마(날씨 다크 / 티켓·활판·플레이리스트
+    /// 라이트)에서 시트 안 Form·List·글래스 같은 시스템 컴포넌트가 기기 스킴을 타고 반대
+    /// 외관으로 떨어지던 구멍을 막는다. 시스템 추종 테마는 nil = 무영향.
+    /// ⚠ 새 .sheet/.fullScreenCover를 만들면 콘텐츠 루트에 이걸 달 것(내부 미리보기처럼
+    /// 자체 스킴을 관리하는 시트만 예외).
+    func themeColorScheme() -> some View {
+        preferredColorScheme(ThemeStore.chrome.forcesDarkAppearance ? .dark
+                             : ThemeStore.chrome.forcesLightAppearance ? .light : nil)
+    }
+}
+
 // ── 팔레트 밖의 테마 결정 (2026-08-12) ──
 // 색으로 표현되지 않는 것들: 서체·질감·계절광 유무·조판 순서 같은 판단.
 // **왜 생겼나**: 종전엔 `ThemeStore.current == .modern` 분기가 19곳에 흩어져 있었고, 전부

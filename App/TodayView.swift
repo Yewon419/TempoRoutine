@@ -193,18 +193,21 @@ struct TodayView: View {
             .scrollDismissesKeyboard(.interactively)   // 스크롤로도 키보드 닫힘
             compactBar
         }
-        .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet() }
+        .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet().themeColorScheme() }
         // 테마 탭 시트 표시는 RootTabView 한 곳 — 진입점이 둘(여기·설정)이라 각자 띄우면
         // 같은 플래그를 보는 시트가 두 개가 된다(2026-08-11). 여기선 플래그만 세운다.
         .sheet(item: $addSheet) { kind in
-            switch kind {
-            case .schedule: ScheduleAddSheet(defaultDate: today)
-            case .input:    InputAddSheet(currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel)
-            case .output:   OutputAddSheet(energyLevel: todayEnergyLevel)
+            Group {
+                switch kind {
+                case .schedule: ScheduleAddSheet(defaultDate: today)
+                case .input:    InputAddSheet(currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel)
+                case .output:   OutputAddSheet(energyLevel: todayEnergyLevel)
+                }
             }
+            .themeColorScheme()
         }
         .sheet(item: $editingSchedule) { item in
-            ScheduleAddSheet(defaultDate: today, editing: item)
+            ScheduleAddSheet(defaultDate: today, editing: item).themeColorScheme()
         }
         .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)

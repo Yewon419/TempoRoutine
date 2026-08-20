@@ -128,25 +128,28 @@ struct RhythmView: View {
             Button("Output") { addKind = .output }
             Button("취소", role: .cancel) { addingSeason = nil }
         }
-        .sheet(isPresented: $showSelfReport) { SelfReportFlow() }
+        .sheet(isPresented: $showSelfReport) { SelfReportFlow().themeColorScheme() }
         .sheet(item: $addKind, onDismiss: { addingSeason = nil }) { kind in
-            switch kind {
-            case .input:
-                InputAddSheet(currentSeason: addingSeason.map { seasonMeta(for: $0.phase) },
-                              energyLevel: addingSeason.flatMap { profile.level(for: $0.phase) },
-                              presetSeason: addingSeason)
-            case .output:
-                OutputAddSheet(presetSeason: addingSeason)
-            case .schedule:
-                EmptyView()   // 사계는 루틴(Input·Output)만 다룬다 — 일정은 캘린더 몫
+            Group {
+                switch kind {
+                case .input:
+                    InputAddSheet(currentSeason: addingSeason.map { seasonMeta(for: $0.phase) },
+                                  energyLevel: addingSeason.flatMap { profile.level(for: $0.phase) },
+                                  presetSeason: addingSeason)
+                case .output:
+                    OutputAddSheet(presetSeason: addingSeason)
+                case .schedule:
+                    EmptyView()   // 사계는 루틴(Input·Output)만 다룬다 — 일정은 캘린더 몫
+                }
             }
+            .themeColorScheme()
         }
         // 루틴 행 탭 = 수정 시트(2026-08-08) — 오늘 탭 일정 행과 같은 문법
         .sheet(item: $editingInput) { item in
-            InputAddSheet(currentSeason: nil, editing: item)
+            InputAddSheet(currentSeason: nil, editing: item).themeColorScheme()
         }
         .sheet(item: $editingOutput) { item in
-            OutputAddSheet(editing: item)
+            OutputAddSheet(editing: item).themeColorScheme()
         }
         .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
@@ -815,6 +818,7 @@ struct RhythmView: View {
             // 칸 = 그 위상이 **다음으로 오는 날** — 하루 상세를 그대로 연다(헤더가 「봄 n일차」
             // 문법이고 Input·Output 추가가 이미 그 안에 있다. 2026-08-18 2차 사용자 지시).
             NavigationStack { DayDetailView(day: destination.day, presetsCycleAnchor: true) }
+                .themeColorScheme()
         }
     }
 

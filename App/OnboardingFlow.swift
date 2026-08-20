@@ -112,7 +112,7 @@ struct OnboardingFlow: View {
         // 설문을 제출하고 닫혔으면 온보딩도 끝낸다 — "오늘 화면으로"를 한 번 더 누르게 하지 않는다.
         .sheet(isPresented: $showSurvey, onDismiss: {
             if !selfReports.isEmpty { finishOnboarding() }
-        }) { SelfReportFlow() }
+        }) { SelfReportFlow().themeColorScheme() }
         .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil },
                                               set: { if !$0 { syncMessage = nil; syncOffersPermission = false; consumeLinkAdvance() } })) {
             if syncOffersPermission {

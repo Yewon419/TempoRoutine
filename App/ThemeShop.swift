@@ -798,8 +798,14 @@ struct ThemePreview: View {
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(groundInk(p).opacity(0.12), lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         // 이 미니 카드가 보여주는 테마 기준 colorScheme — ThemePreviewScreen과 같은 이유
-        // (활성 테마가 다크를 안 켜는 상태에서 이 카드만 라이트 고정 테마일 수 있다)
-        .preferredColorScheme(chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil)
+        // (활성 테마가 다크를 안 켜는 상태에서 이 카드만 라이트 고정 테마일 수 있다).
+        // ⚠ preferredColorScheme 금지(2026-08-20 결함 수정) — 그건 프리퍼런스라 카드가 아니라
+        // **테마 탭 시트 전체**에 버블돼, 카드 7장이 시트 외관을 서로 뒤집었다(마지막 평가
+        // 카드가 승자 — "레전드 일관성없음" 베타 피드백의 유력 뿌리). 환경값은 서브트리 한정.
+        .transformEnvironment(\.colorScheme) { scheme in
+            if chrome.forcesDarkAppearance { scheme = .dark }
+            else if chrome.forcesLightAppearance { scheme = .light }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(theme.displayName) 테마 미리보기")
     }

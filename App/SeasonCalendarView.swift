@@ -116,9 +116,9 @@ struct SeasonCalendarView: View {
         }
         .animation(.easeOut(duration: 0.22), value: quickAddDay)
         .sheet(isPresented: $showLogSheet) {
-            PeriodTrackerSheet()
+            PeriodTrackerSheet().themeColorScheme()
         }
-        .sheet(isPresented: $showNotices) { NoticesView() }
+        .sheet(isPresented: $showNotices) { NoticesView().themeColorScheme() }
         .task { await noticeFeed.refresh() }   // 캘린더 진입 시 미읽음 점 갱신(1시간 캐시)
         .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)

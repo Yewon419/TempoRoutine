@@ -137,6 +137,7 @@ struct DayDetailView: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sheet(item: $addSheet) { kind in
+            Group {
             switch kind {
             case .schedule: ScheduleAddSheet(defaultDate: day)
             case .input:    InputAddSheet(day: day,
@@ -153,9 +154,11 @@ struct DayDetailView: View {
                                               EnergyProfile(checkIns: checkIns, snapshot: snapshot).level(for: $0)
                                           })
             }
+            }
+            .themeColorScheme()
         }
         .sheet(item: $editingSchedule) { item in
-            ScheduleAddSheet(defaultDate: day, editing: item)
+            ScheduleAddSheet(defaultDate: day, editing: item).themeColorScheme()
         }
         .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
     }

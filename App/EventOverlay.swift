@@ -146,6 +146,7 @@ struct CalendarConnectRow: View {
             .sheet(isPresented: $showConsent) {
                 CalendarConsentSheet()
                     .presentationDetents([.medium])
+                    .themeColorScheme()
             }
         }
     }

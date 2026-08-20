@@ -388,7 +388,7 @@ struct SettingsView: View {
         )) { file in
             ActivityShareSheet(url: file.url)
         }
-        .sheet(isPresented: $showSelfReport) { SelfReportFlow() }
+        .sheet(isPresented: $showSelfReport) { SelfReportFlow().themeColorScheme() }
         // 테마 탭 시트 표시는 RootTabView 한 곳(2026-08-11) — 여기선 플래그만 세운다
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)
