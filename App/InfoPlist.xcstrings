@@ -1,0 +1,126 @@
+{
+  "sourceLanguage": "ko",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "Info.plist 문자열 — 기본값은 project.yml의 INFOPLIST_KEY_*",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テンポルーティン"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "템포루틴"
+          }
+        }
+      }
+    },
+    "NSCalendarsFullAccessUsageDescription": {
+      "comment": "Info.plist 문자열 — 기본값은 project.yml의 INFOPLIST_KEY_*",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read only to show your existing events and birthdays on screen. Nothing leaves your device."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既存のカレンダーの予定や誕生日を画面に映すためだけに読み取ります。記録が外に出ることはありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기존 캘린더의 약속과 생일을 화면에 비추기 위해서만 읽어요. 기록이 밖으로 나가지 않아요."
+          }
+        }
+      }
+    },
+    "NSHealthShareUsageDescription": {
+      "comment": "Info.plist 문자열 — 기본값은 project.yml의 INFOPLIST_KEY_*",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reads period records from the Health app to work out your seasons. Nothing leaves your device."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアAppに記録された生理データを読み込み、季節の計算に反映します。記録が外に出ることはありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "건강 앱에 기록된 생리 기록을 불러와 계절 계산에 반영해요. 기록이 밖으로 나가지 않아요."
+          }
+        }
+      }
+    },
+    "NSHealthUpdateUsageDescription": {
+      "comment": "Info.plist 문자열 — 기본값은 project.yml의 INFOPLIST_KEY_*",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saves the period records you log here to the Health app too. You can turn this off anytime."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このAppで残した生理の記録をヘルスケアAppにも保存します。いつでもオフにできます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 앱에서 남긴 생리 기록을 건강 앱에도 저장해요. 원할 때 끌 수 있어요."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "comment": "Info.plist 문자열 — 기본값은 project.yml의 INFOPLIST_KEY_*",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used only to match the Weather theme's sky to the weather where you are. An approximate location is enough, and it never leaves your device."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「天気」テーマの空を、今いる場所の天気に合わせるためだけに使います。おおよその位置で十分で、位置情報が外に出ることはありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "날씨 테마의 하늘을 지금 계신 곳의 날씨로 맞추기 위해서만 써요. 대략적인 위치면 충분하고, 위치가 밖으로 나가지 않아요."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

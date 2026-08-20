@@ -161,7 +161,9 @@ struct RootTabView: View {
     /// `.tabItem`은 선택/미선택 이미지를 따로 줄 수 없다(UIKit `selectedImage` 상당 API 없음).
     /// 선택 구분은 라벨 색(잉크 100% / 45%)이 담당한다.
     @ViewBuilder
-    private func tabLabel(_ title: String, symbol: String, ticketAsset: String) -> some View {
+    // 로컬라이제이션(2026-08-20): String이면 Text(변수) 경로라 번역이 안 붙는다 —
+    // LocalizedStringKey로 받아야 호출부 리터럴이 카탈로그 키가 된다
+    private func tabLabel(_ title: LocalizedStringKey, symbol: String, ticketAsset: String) -> some View {
         if ThemeStore.chrome.textOnlyTabBar {
             // 활판(§2.3-7-2) — 아이콘 은퇴, 활자만. 활판 문법은 선과 활자다.
             Label { Text(title) } icon: { EmptyView() }

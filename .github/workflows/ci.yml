@@ -44,7 +44,35 @@ jobs:
             -project TempoRoutine.xcodeproj \
             -scheme TempoRoutine \
             -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/dd \
             CODE_SIGNING_ALLOWED=NO
+
+      # ── 로컬라이제이션 실측 (2026-08-20, en·ja 이관) ────────────────────────────
+      # ① 번들에 언어가 실제로 들어갔는지: String Catalog는 컴파일돼 <lang>.lproj로 떨어진다.
+      #    빠져도 빌드는 그린이라(그냥 한국어로 뜬다) 여기서 세지 않으면 실기기 전까지 안 드러난다.
+      - name: 실측 — 번들 로컬라이제이션
+        run: |
+          APP=$(find build/dd/Build/Products -maxdepth 3 -name "TempoRoutine.app" | head -1)
+          echo "APP=$APP"
+          find "$APP" -maxdepth 2 -name "*.lproj" -exec basename {} \; | sort
+      # ② Xcode 공식 추출로 **런타임 키**를 뽑는다. Windows에선 추출을 못 돌려 카탈로그를
+      #    손으로 쓰는데, 보간 문자열의 키(예: "\(n)일차" → "%lld일차")를 소스만 보고 단정할
+      #    수 없다. 이 xliff가 그 정답지다 — 내려받아 카탈로그 키와 대조한다.
+      - name: 실측 — 로컬라이즈 문자열 추출(xliff)
+        run: |
+          set -o pipefail
+          xcodebuild -exportLocalizations \
+            -project TempoRoutine.xcodeproj \
+            -localizationPath build/loc \
+            -exportLanguage ko \
+            -derivedDataPath build/dd || true
+          find build/loc -name "*.xliff" -exec sh -c 'echo "== {}"; grep -c "<trans-unit" "{}"' \;
+      - name: Upload xliff
+        uses: actions/upload-artifact@v4
+        with:
+          name: localizations
+          path: build/loc
+          if-no-files-found: warn
 
   testflight:
     name: TestFlight upload (archive + cloud signing)

@@ -5,6 +5,10 @@ options:
   deploymentTarget:
     iOS: "26.0"
   xcodeVersion: "26.0"
+  # 원본 언어 = 한국어(2026-08-20 로컬라이제이션 개시). 화면 문자열의 키가 한글 리터럴이라
+  # 원본 언어를 ko로 선언해야 폴백이 한국어로 떨어진다. en·ja는 String Catalog의 로케일에서
+  # XcodeGen이 자동으로 knownRegions에 넣는다(StringCatalogDecoding.swift 실측 — 별도 설정 불요).
+  developmentLanguage: ko
 
 packages:
   TempoCore:

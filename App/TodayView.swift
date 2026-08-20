@@ -65,22 +65,29 @@ struct SeasonMeta {
 
 func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     switch phase {
+    // 로컬라이제이션(2026-08-20): 이 값들은 String으로 흘러 Text(변수)에 닿는다 —
+    // 만드는 자리에서 String(localized:)로 뽑아야 번역이 붙는다. phaseName은 렌더 사용처가
+    // 0(개정 M-1c)이라 번역 대상이 아니다 — loc_audit의 무시 목록에 근거와 함께 있다.
     case .menstrual:
-        SeasonMeta(name: "겨울", phaseName: "월경기", color: Ink.winter, glow: Ink.glowWinter,
-                   moodline: "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요.",
-                   lever: "오늘은 천천히 이어가볼까요?")
+        SeasonMeta(name: String(localized: "겨울"), phaseName: "월경기",
+                   color: Ink.winter, glow: Ink.glowWinter,
+                   moodline: String(localized: "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요."),
+                   lever: String(localized: "오늘은 천천히 이어가볼까요?"))
     case .follicular:
-        SeasonMeta(name: "봄", phaseName: "난포기", color: Ink.spring, glow: Ink.glowSpring,
-                   moodline: "봄이에요. 가볍게 시작해보기 좋은 때예요.",
-                   lever: "시동 거는 주기예요. 가볍게 시작해도 좋아요.")
+        SeasonMeta(name: String(localized: "봄"), phaseName: "난포기",
+                   color: Ink.spring, glow: Ink.glowSpring,
+                   moodline: String(localized: "봄이에요. 가볍게 시작해보기 좋은 때예요."),
+                   lever: String(localized: "시동 거는 주기예요. 가볍게 시작해도 좋아요."))
     case .ovulation:
-        SeasonMeta(name: "여름", phaseName: "배란기", color: Ink.summer, glow: Ink.glowSummer,
-                   moodline: "여름이에요. 하고 싶은 만큼 빛나도 좋아요.",
-                   lever: "마음껏 몰입해도 좋아요.")
+        SeasonMeta(name: String(localized: "여름"), phaseName: "배란기",
+                   color: Ink.summer, glow: Ink.glowSummer,
+                   moodline: String(localized: "여름이에요. 하고 싶은 만큼 빛나도 좋아요."),
+                   lever: String(localized: "마음껏 몰입해도 좋아요."))
     case .luteal:
-        SeasonMeta(name: "가을", phaseName: "황체기", color: Ink.autumn, glow: Ink.glowAutumn,
-                   moodline: "가을이에요. 스스로를 돌아보는 시간을 가져봐요.",
-                   lever: "조금 더 해볼 수 있나요? 무리하지는 말아요.")
+        SeasonMeta(name: String(localized: "가을"), phaseName: "황체기",
+                   color: Ink.autumn, glow: Ink.glowAutumn,
+                   moodline: String(localized: "가을이에요. 스스로를 돌아보는 시간을 가져봐요."),
+                   lever: String(localized: "조금 더 해볼 수 있나요? 무리하지는 말아요."))
     }
 }
 
@@ -310,7 +317,7 @@ struct TodayView: View {
                         // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
                         // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
                         // 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소, 전 표면 통일)
-                        Text("\(info.dayInPhase)일차")
+                        Text(Loc.fmt("%lld일차", info.dayInPhase))
                             .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
                         if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
                         else if info.projected { Text("예상").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
@@ -367,14 +374,18 @@ struct TodayView: View {
             let high: Int = Int(wx.highC.rounded())
             let low: Int = Int(wx.lowC.rounded())
             let chance: Int = Int((wx.precipitationChance * 100).rounded())
-            let precip: String = wx.precipitationIsSnow ? "눈" : "비"
-            let lead: Text = Text("지금 \(now)°").foregroundStyle(Ink.text.opacity(0.95))
-            let rest: Text = Text(" · 최고 \(high)° 최저 \(low)° · \(precip) \(chance)%")
-                .foregroundStyle(Ink.text.opacity(0.7))
+            let precip: String = String(localized: wx.precipitationIsSnow ? "눈" : "비")
+            let lead: Text = Text(Loc.fmt("지금 %lld°", now)).foregroundStyle(Ink.text.opacity(0.95))
+            let tail: String = Loc.fmt("최고 %1$lld° 최저 %2$lld°", high, low)
+                + " · " + Loc.fmt("%1$@ %2$lld%%", precip, chance)
+            let rest: Text = Text(verbatim: " · " + tail).foregroundStyle(Ink.text.opacity(0.7))
             (lead + rest)
                 .font(.almanacBody(.footnote, size: 13))
                 .skyInkShadow()
-                .accessibilityLabel("지금 \(now)도, 최고 \(high)도, 최저 \(low)도, \(precip) 올 확률 \(chance)퍼센트")
+                // 접근성 라벨은 String을 받는 오버로드라 로컬라이즈 경로가 아니다 — Text로 넘긴다
+                .accessibilityLabel(Text(verbatim: Loc.fmt(
+                    "지금 %1$lld도, 최고 %2$lld도, 최저 %3$lld도, %4$@ 올 확률 %5$lld퍼센트",
+                    now, high, low, precip, chance)))
         }
     }
 
@@ -382,7 +393,7 @@ struct TodayView: View {
     private var compactBar: some View {
         HStack {
             Spacer()
-            Text(todayInfo?.meta.name ?? "템포루틴")
+            Text(todayInfo?.meta.name ?? String(localized: "템포루틴"))
                 .font(.almanac(size: 28, weight: .bold))   // v39~41: 58 → 28px 컴팩트 바
                 .foregroundStyle(todayInfo?.meta.color ?? Ink.text)
             Spacer()
@@ -437,7 +448,8 @@ struct TodayView: View {
             }
             .padding(.vertical, 12)
         } else if overdueDiff >= avgLength + Self.overdueGraceDays {
-            Text("예정일에서 \(overdueDiff - avgLength)일이 지났어요. 리듬은 늘 조금씩 다르니, 생리가 시작되면 캘린더에서 기록해 주세요.")
+            Text(Loc.fmt("예정일에서 %lld일이 지났어요. 리듬은 늘 조금씩 다르니, 생리가 시작되면 캘린더에서 기록해 주세요.",
+                         overdueDiff - avgLength))
                 .font(.footnote)
                 .foregroundStyle(Ink.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -545,12 +557,13 @@ struct TodayView: View {
                     Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
                     // 여러 날 일정 — 오늘이 몇 일차인지(§8.2.3)
                     if let index = item.dayIndex(on: today) {
-                        Text("\(index)/\(item.spanDays)일차")
+                        Text(Loc.fmt("%1$lld/%2$lld일차", index, item.spanDays))
                             .font(.caption2)
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
                     Spacer()
-                    Text(item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened))
+                    Text(item.isAllDay ? String(localized: "종일")
+                         : item.date.formatted(date: .omitted, time: .shortened))
                         .font(.caption)
                         .foregroundStyle(Ink.text.opacity(0.5))
                 }
@@ -646,7 +659,7 @@ struct TodayView: View {
         }
         .simultaneousGesture(quickDeleteGesture(.input(item), into: $pendingDelete,
                                                 feedback: $confirmFeedback))
-        .accessibilityValue(checked ? "완료" : "미완료")
+        .accessibilityValue(checked ? "완료" as LocalizedStringKey : "미완료")
         .accessibilityAction(named: "삭제") { pendingDelete = .input(item) }
     }
 
@@ -701,7 +714,8 @@ struct TodayView: View {
             if case .cycleAnchored = $0.schedule { return true }
             return false
         }
-        return hasColdBlocked ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
+        return hasColdBlocked ? String(localized: "생리를 기록하면 계획이 보이기 시작해요.")
+                              : String(localized: "아직 없어요")
     }
 
     @ViewBuilder
@@ -755,13 +769,13 @@ struct TodayView: View {
                 HStack(spacing: 10) {
                     Image(systemName: item.percent >= 1 ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(item.percent >= 1 ? Ink.text : Ink.text.opacity(0.35))
-                    Text(item.percent >= 1 ? "완료" : "체크")
+                    Text(item.percent >= 1 ? "완료" as LocalizedStringKey : "체크")
                         .font(.footnote)
                         .foregroundStyle(Ink.text.opacity(item.percent >= 1 ? 1 : 0.6))
                     Spacer()
                 }
             }
-            .accessibilityValue(item.percent >= 1 ? "완료" : "미완료")
+            .accessibilityValue(item.percent >= 1 ? "완료" as LocalizedStringKey : "미완료")
         case .subtasks:
             let list = (item.subtasks ?? []).sorted { $0.order < $1.order }
             ForEach(list) { sub in
@@ -777,7 +791,7 @@ struct TodayView: View {
                         Spacer()
                     }
                 }
-                .accessibilityValue(sub.isDone ? "완료" : "미완료")
+                .accessibilityValue(sub.isDone ? "완료" as LocalizedStringKey : "미완료")
             }
         case .sessions:
             SessionProgressControl(logged: item.loggedSessions,
@@ -834,6 +848,8 @@ struct DDayBadge: View {
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
             .background(Ink.text.opacity(0.08), in: Capsule())
-            .accessibilityLabel(remaining >= 0 ? "목표일까지 \(remaining)일" : "목표일에서 \(-remaining)일 지남")
+            .accessibilityLabel(Text(verbatim: remaining >= 0
+                                     ? Loc.fmt("목표일까지 %lld일", remaining)
+                                     : Loc.fmt("목표일에서 %lld일 지남", -remaining)))
     }
 }
