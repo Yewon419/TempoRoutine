@@ -87,7 +87,8 @@ struct PlaylistPlayerCard: View {
 
     private var kicker: some View {
         HStack(spacing: 8) {
-            Text("NOW PLAYING")
+            // 레코드판 문법의 라틴 각인 — 카피가 아니라 디자인 요소다(번역 대상 아님)
+            Text(verbatim: "NOW PLAYING")
                 .font(.system(size: 10, weight: .medium))
                 .kerning(1.8)
                 .foregroundStyle(Ink.dim)

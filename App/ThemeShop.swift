@@ -540,7 +540,7 @@ struct ThemePreviewScreen: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
-                    Text("NOW PLAYING")
+                    Text(verbatim: "NOW PLAYING")   // 디자인 요소(PlaylistChrome와 동일)
                         .font(.system(size: 9, weight: .medium))
                         .kerning(1.6)
                         .foregroundStyle(p.dim)
@@ -596,10 +596,10 @@ struct ThemePreviewScreen: View {
                 headline
                 Spacer(minLength: 0)
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text("18")
+                    Text(verbatim: "18")   // 미리보기 목업 숫자 — 번역 대상 아님
                         .font(displayFont(size: 34))
                         .foregroundStyle(groundInk.opacity(0.85))
-                    Text("Aug Tue")
+                    Text(verbatim: "Aug Tue")   // 티켓 미리보기 목업
                         .font(.caption2)
                         .foregroundStyle(groundInk.opacity(0.55))
                 }
@@ -778,7 +778,7 @@ struct ThemePreview: View {
                 Text("8월")
                     .font(titleFont)
                     .foregroundStyle(groundInk(p))
-                Text("2026")
+                Text(verbatim: "2026")   // 미리보기 목업 숫자
                     .font(.caption)
                     .foregroundStyle(groundInk(p).opacity(0.5))
                 Spacer(minLength: 0)
