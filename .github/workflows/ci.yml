@@ -61,12 +61,16 @@ jobs:
       - name: 실측 — 로컬라이즈 문자열 추출(xliff)
         run: |
           set -o pipefail
+          # -derivedDataPath를 쓰면 -scheme이 필수다(2026-08-20 실측: "The flag -scheme ... is required")
           xcodebuild -exportLocalizations \
             -project TempoRoutine.xcodeproj \
+            -scheme TempoRoutine \
             -localizationPath build/loc \
             -exportLanguage ko \
             -derivedDataPath build/dd || true
-          find build/loc -name "*.xliff" -exec sh -c 'echo "== {}"; grep -c "<trans-unit" "{}"' \;
+          # 추출이 실패해도 이 단계가 빌드를 죽이지 않게 — 계측이지 게이트가 아니다
+          find build/loc -name "*.xliff" -exec sh -c 'echo "== $1"; grep -c "<trans-unit" "$1"' _ {} \; || true
+          echo "추출 파일:"; ls -R build/loc 2>/dev/null | head -20 || true
       - name: Upload xliff
         uses: actions/upload-artifact@v4
         with:
