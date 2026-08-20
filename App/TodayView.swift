@@ -852,7 +852,7 @@ struct DDayBadge: View {
             .padding(.vertical, 3)
             .background(Ink.text.opacity(0.08), in: Capsule())
             .accessibilityLabel(Text(verbatim: remaining >= 0
-                                     ? String(localized: "목표일까지 \(remaining)일")
-                                     : String(localized: "목표일에서 \(-remaining)일 지남")))
+                                     ? Loc.fmt("목표일까지 %lld일", remaining)
+                                     : Loc.fmt("목표일에서 %lld일 지남", -remaining)))
     }
 }

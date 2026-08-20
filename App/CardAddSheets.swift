@@ -552,7 +552,7 @@ struct InputAddSheet: View {
             .pickerStyle(.menu)
             .tint(Ink.text)
             if progressKind == .sessions {
-                Stepper(String(localized: "목표 \(targetSessions)회"), value: $targetSessions, in: 1...50)
+                Stepper(Loc.fmt("목표 %lld회", targetSessions), value: $targetSessions, in: 1...50)
             }
             if progressKind == .timer {
                 Stepper(Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, in: 1...240)
@@ -922,7 +922,7 @@ struct OutputAddSheet: View {
                     .pickerStyle(.menu)
                     .tint(Ink.text)
                     if kind == .sessions {
-                        Stepper(String(localized: "목표 \(targetSessions)세션"), value: $targetSessions, in: 1...50)
+                        Stepper(Loc.fmt("목표 %lld세션", targetSessions), value: $targetSessions, in: 1...50)
                     }
                     if kind == .timer {
                         Stepper(Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, in: 5...240, step: 5)

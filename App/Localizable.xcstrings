@@ -375,19 +375,19 @@
         }
       }
     },
-    "%1$@ 기록 %2$@회 · 패턴을 말하기엔 아직 일러요": {
+    "%1$@ 기록 %2$lld회 · 패턴을 말하기엔 아직 일러요": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ logged %2$@ times · too early to call it a pattern"
+            "value": "%1$@ logged %2$lld time(s) · too early to call it a pattern"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@の記録 %2$@回 · パターンを語るにはまだ早いです"
+            "value": "%1$@の記録%2$lld回・パターンを言うにはまだ早いです"
           }
         }
       }
@@ -813,23 +813,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@~%2$@日 · %3$@日間"
-          }
-        }
-      }
-    },
-    "%1$@건을 가져왔어요.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Imported %1$@ records."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@件を読み込みました。"
           }
         }
       }
@@ -1323,6 +1306,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@日目"
+          }
+        }
+      }
+    },
+    "%lld건을 가져왔어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records imported: %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld件を読み込みました。"
           }
         }
       }
@@ -2908,19 +2908,19 @@
         }
       }
     },
-    "건강 앱에서 생리 기록 %1$@일을 가져왔어요.": {
+    "건강 앱에서 생리 기록 %lld일을 가져왔어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Imported %1$@ days of period records from the Health app."
+            "value": "Imported %lld day(s) of period records from the Health app."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ヘルスケアAppから生理の記録を%1$@日分読み込みました。"
+            "value": "ヘルスケアAppから生理の記録を%lld日分読み込みました。"
           }
         }
       }
@@ -5985,36 +5985,36 @@
         }
       }
     },
-    "목표 %1$@세션": {
+    "목표 %lld세션": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Goal %1$@ sessions"
+            "value": "Goal: %lld session(s)"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "目標%1$@セッション"
+            "value": "目標 %lldセッション"
           }
         }
       }
     },
-    "목표 %1$@회": {
+    "목표 %lld회": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Goal %1$@ sessions"
+            "value": "Goal: %lld session(s)"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "目標%1$@回"
+            "value": "目標 %lld回"
           }
         }
       }
@@ -6059,7 +6059,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days to the target date"
+            "value": "%lld day(s) to the target date"
           }
         },
         "ja": {
@@ -6076,7 +6076,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days past the target date"
+            "value": "%lld day(s) past the target date"
           }
         },
         "ja": {
@@ -8059,172 +8059,121 @@
         }
       }
     },
-    "씨앗 %1$@개": {
+    "씨앗 %1$lld개로 구매할 수 있어요 · 지금 %2$lld개": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ seeds"
+            "value": "You can get it for %1$lld seeds · you have %2$lld now"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "たね%1$@個"
+            "value": "たね%1$lld個で購入できます・いま%2$lld個"
           }
         }
       }
     },
-    "씨앗 %1$@개 받기": {
+    "씨앗 %lld개": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get %1$@ seeds"
+            "value": "Seeds: %lld"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "たねを%1$@個受け取る"
+            "value": "たね：%lld"
           }
         }
       }
     },
-    "씨앗 %1$@개로 구매": {
+    "씨앗 %lld개 받기": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Buy for %1$@ seeds"
+            "value": "Get %lld seeds"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "たね%1$@個で購入"
+            "value": "たねを%lld個受け取る"
           }
         }
       }
     },
-    "씨앗 %1$@개로 구매할 수 있어요 · 지금 %2$@개": {
+    "씨앗 %lld개로 구매": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You can get it for %1$@ seeds · you have %2$@ now"
+            "value": "Buy for %lld seeds"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "たね%1$@個で購入できます · 現在%2$@個"
+            "value": "たね%lld個で購入"
           }
         }
       }
     },
-    "씨앗 %1$@개로 소장": {
+    "씨앗 %lld개로 소장": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get it for %1$@ seeds"
+            "value": "Get it for %lld seeds"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "たね%1$@個で手に入れる"
+            "value": "たね%lld個で手に入れる"
           }
         }
       }
     },
-    "씨앗 %1$@개를 받았어요": {
+    "씨앗 %lld개를 받았어요": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You received %1$@ seeds"
+            "value": "Seeds received: %lld"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "たねを%1$@個受け取りました"
+            "value": "たねを%lld個受け取りました"
           }
         }
       }
     },
-    "씨앗 %1$@개를 썼어요.": {
+    "씨앗 %lld개를 썼어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You used %1$@ seeds."
+            "value": "You used %lld seeds."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "たねを%1$@個使いました。"
-          }
-        }
-      }
-    },
-    "씨앗 %@개 받기": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Get %@ seeds"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "たねを%@個受け取る"
-          }
-        }
-      }
-    },
-    "씨앗 %@개로 구매": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buy with %@ seeds"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "たね%@個で購入"
-          }
-        }
-      }
-    },
-    "씨앗 %@개를 썼어요.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You spent %@ seeds."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "たねを%@個使いました。"
+            "value": "たねを%lld個使いました。"
           }
         }
       }
@@ -11374,53 +11323,53 @@
         }
       }
     },
-    "지난 %1$@번, 예측한 날에 시작했어요.": {
+    "지난 %lld번, 예측한 날에 시작했어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The last %1$@ times, it started on the predicted day."
+            "value": "The last %lld time(s), it started on the predicted day."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "直近%1$@回は、予測した日に始まりました。"
+            "value": "直近%lld回、予測した日に始まりました。"
           }
         }
       }
     },
-    "지난 %1$@주기 · ": {
+    "지난 %lld주기 · ": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Last %1$@ cycles · "
+            "value": "Last %lld cycle(s) · "
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "直近%1$@周期 · "
+            "value": "直近%lld周期・"
           }
         }
       }
     },
-    "지난 %1$@주기,": {
+    "지난 %lld주기,": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Over the last %1$@ cycles,"
+            "value": "Over the last %lld cycle(s),"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "過去%1$@周期、"
+            "value": "この%lld周期は、"
           }
         }
       }
