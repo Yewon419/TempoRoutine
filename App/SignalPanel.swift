@@ -82,7 +82,7 @@ struct SignalPanel: View {
             return Loc.fmt("%1$@ 패턴은 아직 또렷하지 않아요. 기록이 더 쌓이면 여기에 담아둘게요.", "\(signalName)")
         }
         let lead = completedCycles >= 1
-            ? Loc.fmt("지난 %1$@주기,", "\(completedCycles)")
+            ? String(localized: "지난 \(completedCycles)주기,")
             : String(localized: "지난 기록상,")
         // 신호마다 **문장 하나가 키**다. 조각(주어·형용사)을 이어 붙이면 어순이 다른 언어에서
         // 무너진다 — 한국어에서 조사(는/은) 때문에 쪼개져 있던 것을 문장으로 되돌린 것.
@@ -133,9 +133,9 @@ struct SignalPanel: View {
     // ── ⑥ 근거 각주 ──
     private var footnote: String {
         guard narratable else {
-            return Loc.fmt("%1$@ 기록 %2$@회 · 패턴을 말하기엔 아직 일러요", "\(signalName)", "\(totalCount)")
+            return String(localized: "\(signalName) 기록 \(totalCount)회 · 패턴을 말하기엔 아직 일러요")
         }
-        let cyclesPart = completedCycles >= 1 ? Loc.fmt("지난 %1$@주기 · ", "\(completedCycles)") : ""
+        let cyclesPart = completedCycles >= 1 ? String(localized: "지난 \(completedCycles)주기 · ") : ""
         return Loc.fmt("%1$@%2$@ 기록 %3$@회 · 기록상 패턴이에요", "\(cyclesPart)", "\(signalName)", "\(totalCount)")
     }
 

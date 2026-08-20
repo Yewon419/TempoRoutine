@@ -337,7 +337,7 @@ struct RhythmView: View {
                 Text("예측 정확도")
                     .font(.almanacBody(.footnote, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.5))
-                Text(m == 0 ? Loc.fmt("지난 %1$@번, 예측한 날에 시작했어요.", "\(errors.count)")
+                Text(m == 0 ? String(localized: "지난 \(errors.count)번, 예측한 날에 시작했어요.")
                             : Loc.fmt("지난 %1$@번, 예측과 실제가 평균 %2$@일 차이였어요.", "\(errors.count)", "\(m)"))
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)

@@ -118,7 +118,7 @@ struct ThemeShopView: View {
             titleVisibility: .visible
         ) {
             if let price = plantCandidate?.seedPrice {
-                Button(Loc.fmt("씨앗 %1$@개로 구매", "\(price)")) {
+                Button(String(localized: "씨앗 \(price)개로 구매")) {
                     if let theme = plantCandidate { plant(theme) }
                     plantCandidate = nil
                 }
@@ -133,7 +133,7 @@ struct ThemeShopView: View {
             Button("지금 적용하기") { apply(theme) }
             Button("나중에") { plantedAlert = nil }
         } message: { theme in
-            Text(Loc.fmt("씨앗 %1$@개를 썼어요.", "\(theme.seedPrice ?? 0)"))
+            Text(String(localized: "씨앗 \(theme.seedPrice ?? 0)개를 썼어요."))
         }
         .sheet(item: $previewing) { theme in
             ThemePreviewScreen(theme: theme)
@@ -346,7 +346,7 @@ struct ThemeShopView: View {
                         .background(Ink.text, in: Capsule())
                 }
                 if let price = theme.seedPrice, available >= price {
-                    Button(Loc.fmt("씨앗 %1$@개로 소장", "\(price)")) {
+                    Button(String(localized: "씨앗 \(price)개로 소장")) {
                         lightFeedback += 1
                         plantCandidate = theme
                     }
@@ -365,7 +365,7 @@ struct ThemeShopView: View {
                             .fill(Ink.paper)
                             .frame(width: 8, height: 11)
                             .rotationEffect(.degrees(16))
-                        Text(Loc.fmt("씨앗 %1$@개로 구매", "\(price)"))
+                        Text(String(localized: "씨앗 \(price)개로 구매"))
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(Ink.paper)
@@ -380,7 +380,7 @@ struct ThemeShopView: View {
                         .fill(Ink.text.opacity(0.4))
                         .frame(width: 8, height: 11)
                         .rotationEffect(.degrees(16))
-                    Text(Loc.fmt("씨앗 %1$@개로 구매할 수 있어요 · 지금 %2$@개", "\(price)", "\(available)"))
+                    Text(String(localized: "씨앗 \(price)개로 구매할 수 있어요 · 지금 \(available)개"))
                         .font(.footnote)
                         .foregroundStyle(Ink.text.opacity(0.55))
                 }

@@ -115,7 +115,7 @@ final class HealthMirror {
                 return "기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
             }
             if imported > 0 {
-                return Loc.fmt("건강 앱에서 생리 기록 %1$@일을 가져왔어요.", "\(imported)")
+                return String(localized: "건강 앱에서 생리 기록 \(imported)일을 가져왔어요.")
             }
             if sourceCount > 0 {
                 return "새로 가져올 기록은 없었어요. 건강 앱의 기록은 이미 모두 반영돼 있어요."

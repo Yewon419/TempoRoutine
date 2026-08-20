@@ -453,7 +453,7 @@ struct SettingsView: View {
             let envelope = try ExportCodec.decode(try Data(contentsOf: url))
             let added = ExportImport.merge(envelope, into: modelContext, existing: store)
             if added > 0 { refreshDerivedSurfaces() }
-            message = added > 0 ? Loc.fmt("%1$@건을 가져왔어요.", "\(added)") : "새로 가져올 기록이 없어요."
+            message = added > 0 ? String(localized: "\(added)건을 가져왔어요.") : "새로 가져올 기록이 없어요."
         } catch ExportCodec.CodecError.newerVersion {
             message = "이 백업은 지금 앱보다 새로운 버전이에요. 앱을 업데이트한 뒤 가져와 주세요."
         } catch {
