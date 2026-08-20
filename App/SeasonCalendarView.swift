@@ -726,7 +726,9 @@ struct SeasonCalendarView: View {
                 recorded.insert(day)
                 // 겨울 글로우와 겹치는 기록은 표시 생략(중복 — 2026-07-28 사용자 결정).
                 // 모델과 어긋난 기록(월경기 밖·S0)만 코랄로 남아 "실측이 다르다"는 신호가 된다.
-                if cellStyle(for: day).meta?.name != "겨울" {
+                // ⚠ 이름이 아니라 단계로 비교한다 — 표시명은 번역되므로 키로 쓰면
+                // 다른 언어에서 이 억제가 통째로 풀린다(2026-08-21 발견)
+                if cellStyle(for: day).meta?.phase != .menstrual {
                     periodShown.insert(day)
                 }
             } else if isPredictedPeriod(day) {
@@ -739,7 +741,8 @@ struct SeasonCalendarView: View {
                         holidays[day] = KoreanHoliday(name: name,
                                                       isPublic: !KoreanHolidays.isCommemorationName(name))
                     }
-                } else {
+                } else if EventOverlay.usesBuiltInKoreanHolidays {
+                    // 내장 표는 한국 지역 폴백 전용(2026-08-21)
                     holidays[day] = KoreanHolidays.holidays(on: day, calendar: cal).first
                 }
             }

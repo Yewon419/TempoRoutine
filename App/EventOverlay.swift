@@ -42,11 +42,28 @@ final class EventOverlay {
     }
 
     /// 애플 기본 캘린더의 공휴일 구독 캘린더(제목 "공휴일"/"holiday") — 표기 소스(2026-07-28)
+    /// 애플이 지역별로 붙여 주는 공휴일 구독 캘린더. **제목은 기기 언어를 따른다** —
+    /// 「공휴일」·「holiday」만 보면 일본 기기(「日本の祝日」)·독일 기기(「Feiertage」)에서
+    /// 못 찾아 내장 한국 표로 떨어졌다(2026-08-21 — 공휴일은 애플 캘린더 기준으로
+    /// 각 나라에 맞게, 대표님 지시).
+    private static let holidayKeywords = [
+        "공휴일", "holiday", "祝日", "休日",          // ko · en · ja
+        "feiertag", "fériés", "festivo", "feriado",  // de · fr · es · pt
+        "festività", "helligdage", "helgdagar", "vapaapäivät",
+    ]
+
     private var holidayCalendars: [EKCalendar] {
         store.calendars(for: .event).filter { c in
             let title = c.title.lowercased()
-            return title.contains("공휴일") || title.contains("holiday")
+            return Self.holidayKeywords.contains { title.contains($0) }
         }
+    }
+
+    /// 내장 한국 공휴일 표를 써도 되는가 — **한국 지역 기기의 폴백 전용**이다.
+    /// 애플 캘린더가 있으면 그쪽이 각 나라 공휴일을 준다. 없을 때 다른 나라 기기에
+    /// 한국 공휴일을 띄우는 건 번역 문제가 아니라 **틀린 정보**다.
+    static var usesBuiltInKoreanHolidays: Bool {
+        Locale.current.region?.identifier == "KR"
     }
 
     /// 구간의 공휴일 이름(일 단위 키). 미연동·공휴일 캘린더 없음 = nil — 호출측이 내장 테이블 폴백.

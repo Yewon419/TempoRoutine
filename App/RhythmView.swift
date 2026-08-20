@@ -862,7 +862,7 @@ struct RhythmView: View {
         for offset in 0...(snapshot.averageLength * 2 + 7) {
             guard let day = cal.date(byAdding: .day, value: offset, to: today),
                   let info = snapshot.phaseInfo(on: day) else { continue }
-            if info.meta.name == seasonMeta(for: slot.phase).name,
+            if info.meta.phase == slot.phase,   // 이름이 아니라 단계로(표시명은 번역된다)
                info.dayInPhase == slot.dayInPhase {
                 return day
             }

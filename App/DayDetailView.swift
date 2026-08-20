@@ -194,7 +194,7 @@ struct DayDetailView: View {
     /// 날짜를 옮기면 옮긴 날 기준으로 따라간다.
     private var cycleAnchorPreset: (season: SeasonAnchor, dayOffset: Int)? {
         guard presetsCycleAnchor, let info = snapshot.phaseInfo(on: day),
-              let season = SeasonAnchor.allCases.first(where: { seasonMeta(for: $0.phase).name == info.meta.name })
+              let season = SeasonAnchor.allCases.first(where: { $0.phase == info.meta.phase })   // 표시명 비교 금지
         else { return nil }
         return (season, info.dayInPhase - 1)
     }
@@ -262,7 +262,8 @@ struct DayDetailView: View {
                 KoreanHoliday(name: $0, isPublic: !KoreanHolidays.isCommemorationName($0))
             }
         }
-        return KoreanHolidays.holidays(on: day)
+        // 내장 표는 한국 지역 폴백 전용(2026-08-21) — 다른 나라 기기엔 아무것도 안 띄운다
+        return EventOverlay.usesBuiltInKoreanHolidays ? KoreanHolidays.holidays(on: day) : []
     }
 
     // ── 생리 기록 토글 (§5.5.4 접근성 대체 — 미래 금지) ──
