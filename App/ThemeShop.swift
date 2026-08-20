@@ -571,8 +571,8 @@ struct ThemePreviewScreen: View {
                 .frame(width: 56, height: 56)
         }
         .padding(16)
-        // 틴트 흰 20% — Almanac.MilkGlass와 동값(시안 --glass 평균, 2026-08-20 완화)
-        .glassEffect(.regular.tint(.white.opacity(0.2)), in: RoundedRectangle(cornerRadius: 20))
+        // .clear — Almanac.MilkGlass와 동일 재질(2026-08-20 "여전히 안투명" 대응)
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20))
         .padding(.top, 20)
     }
 
@@ -661,8 +661,8 @@ struct ThemePreviewScreen: View {
         if chrome.liquidGlassCards {
             // 플레이리스트 — 시스템 리퀴드 글래스. 재질이라 활성 테마와 무관하게 제 모습으로 뜬다.
             // ⚠ `isEnabled:` 파라미터는 SDK에 없다(CI 실측 2026-08-19) — 분기로 켠다.
-            // 틴트 흰 20% — Almanac.MilkGlass와 동값(시안 --glass 평균, 2026-08-20 완화)
-            card.glassEffect(.regular.tint(.white.opacity(0.2)), in: RoundedRectangle(cornerRadius: 20))
+            // .clear — Almanac.MilkGlass와 동일 재질(2026-08-20 "여전히 안투명" 대응)
+            card.glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20))
         } else {
             card.background {
                 if chrome.engravedCards {
@@ -842,7 +842,7 @@ struct ThemePreview: View {
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         if chrome.liquidGlassCards {
-            row.glassEffect(.regular.tint(.white.opacity(0.2)), in: RoundedRectangle(cornerRadius: 9))
+            row.glassEffect(.clear, in: RoundedRectangle(cornerRadius: 9))
         } else {
             row.background {
                 RoundedRectangle(cornerRadius: 9)

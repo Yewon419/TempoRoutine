@@ -214,10 +214,11 @@ final class InputItem {
         self.targetSeconds = nil
     }
 
-    /// .once가 이 날짜에 뜨는가 — 소급 기록은 적어 넣은 그날에만. 완료 판정은 호출부(뷰) 책임.
+    /// .once가 이 날짜에 뜨는가 — **적어 넣은 그날에만**(2026-08-20 개정: Output .once와 통일.
+    /// 종전 「완료 전까지 계속 표시」 폐기 — 베타 피드백 "며칠째 유지되네, 하루 단위 초기화").
+    /// 완료된 날의 기록 표시는 호출부(뷰)가 completion으로 판정한다.
     func onceShows(on day: Date) -> Bool {
-        guard backfilled else { return occursByCalendar(on: day) }
-        return Calendar.current.isDate(createdAt, inSameDayAs: day)
+        Calendar.current.isDate(createdAt, inSameDayAs: day)
     }
 
     /// .once·.daily·.weekly·.monthly 판정(달력 기준 — 주기 기준은 CycleSnapshot 필요라 호출부에서 별도 처리).

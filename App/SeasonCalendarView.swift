@@ -914,6 +914,7 @@ struct SeasonCalendarView: View {
         // 은필도 따른다 — 셀 안에서 색이 뜻하는 건 계절 하나로 족하다.
         let ink: Color = Ink.text
         let radius: CGFloat = 2   // 직각화(2026-07-28 시안 결정 — 계절 밑줄과 같은 결)
+        let fill: Color = Self.scheduleBandFill
         let width: CGFloat = max(0, unit * CGFloat(bar.segment.length) - 2)
         let x: CGFloat = unit * CGFloat(bar.segment.column) + 1
         let y: CGFloat = bandTop + CGFloat(bar.lane) * bandSlot
@@ -924,10 +925,18 @@ struct SeasonCalendarView: View {
             topTrailingRadius: bar.segment.isEnd ? radius : 0
         )
         return shape
-            .fill(ink.opacity(0.13))
+            .fill(fill)
             .frame(width: width, height: bandHeight)
             .overlay(alignment: .leading) { bandTitle(bar: bar, ink: ink) }
             .offset(x: x, y: y)
+    }
+
+    /// 일정 띠·박스 지면 — 날씨만 다크 글래스 톤(2026-08-20 베타 피드백 "일정 회색을 더 진하게" —
+    /// 잉크가 흰색이라 흰 13% 지면 위에서 흰 제목이 안 읽힌다). 다른 테마는 종전 잉크 13%.
+    private static var scheduleBandFill: Color {
+        ThemeStore.chrome.skyGround
+            ? Color.flatRGB(0x0E, 0x1A, 0x28).opacity(0.45)   // surface(다크 글래스)와 같은 계열
+            : Ink.text.opacity(0.13)
     }
 
     /// 제목은 시작 조각에만 — 잘린 조각은 띠만 이어진다
@@ -1117,7 +1126,7 @@ struct SeasonCalendarView: View {
     private func scheduleBox(title: String) -> some View {
         let ink: Color = Ink.text   // 지난 일정 갈색 분기 폐기(2026-08-12 — bandView 주석 참조)
         return RoundedRectangle(cornerRadius: 2)
-            .fill(ink.opacity(0.13))
+            .fill(Self.scheduleBandFill)
             .frame(height: bandHeight)
             .frame(maxWidth: .infinity)
             .overlay(alignment: .leading) {

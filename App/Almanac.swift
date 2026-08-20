@@ -187,6 +187,17 @@ func almanacDisplay(_ text: String, size: CGFloat, color: Color) -> some View {
     }
 }
 
+extension View {
+    /// 하늘 지면 위 보조 활자 가독 그림자(2026-08-20 베타 피드백 "가독성 떨어진다" —
+    /// 흰 구름 위 흰 날짜·무드라인이 잠긴다). 표제 그림자(almanacDisplay)와 같은 색,
+    /// 작은 활자라 반경만 줄임. 다른 테마는 무영향(.clear).
+    func skyInkShadow() -> some View {
+        shadow(color: ThemeStore.chrome.skyGround
+               ? Color(red: 4 / 255, green: 14 / 255, blue: 28 / 255).opacity(0.4) : .clear,
+               radius: 4, y: 1)
+    }
+}
+
 // ── 재질 위계 (§4 보강 I: 크롬 유리 / 밀크 글래스 2단) ──
 // 콘텐츠 카드 = 밀크 글래스(반투명 지면 + 은필 실선), 배경 계절광이 비쳐 유리감이 성립.
 struct MilkGlass: ViewModifier {
@@ -223,7 +234,9 @@ struct MilkGlass: ViewModifier {
             // colorScheme발 검정 폴백 시절 응급값 — 근본 수정(forcesLightAppearance,
             // 2026-08-19) 후 "틴트가 세서 유리가 아니라 면으로 보인다" 베타 피드백로 복귀.
             // 0으로 다 걷지 않는 이유 = 시안도 흰 기운을 남긴다("흰 계열" §4.4 ⑥).
-            content.glassEffect(.regular.tint(.white.opacity(0.2)),
+            // .clear 변형(2026-08-20) — .regular는 무틴트여도 재질 자체가 뿌옇다(베타 피드백
+            // "여전히 안투명", 틴트 0.2로도 재현). .clear가 미디어 지면용 고투명 유리.
+            content.glassEffect(.clear,
                                 in: RoundedRectangle(cornerRadius: radius == 16 ? 20 : radius))
         } else if ThemeStore.chrome.engravedCards {
             // 활판(시안 §2.3-7-1) — 배경 없음. **눌린 것은 카드가 아니라 선 하나**다:

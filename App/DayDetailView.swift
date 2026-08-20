@@ -414,13 +414,10 @@ struct DayDetailView: View {
         inputs.compactMap { item in
             switch item.schedule {
             case .once:
-                // 소급 기록(2026-07-27)은 적어 넣은 그날에만 — 오늘까지 따라오지 않는다
-                if item.backfilled {
-                    return item.onceShows(on: day) ? InputRow(item: item, projected: false) : nil
-                }
-                // 단발 체크(2026-07-23): 완료된 날엔 기록으로, 미완료면 생성일 이후 모든 날에 대기로
+                // 적어 넣은 그날에만(2026-08-20 개정 — Output과 통일, 종전 「완료 전까지
+                // 모든 날 대기」 폐기). 완료된 날엔 기록으로 남는다
                 if isCompleted(item.id) { return InputRow(item: item, projected: false) }
-                if !hasAnyCompletion(item.id) && item.occursByCalendar(on: day) {
+                if item.onceShows(on: day) {
                     return InputRow(item: item, projected: false)
                 }
                 return nil

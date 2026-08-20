@@ -313,11 +313,13 @@ struct TodayView: View {
                         else if info.projected { Text("예상").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
                     }
                     .font(.almanacBody(.footnote, size: 13))
+                    .skyInkShadow()   // 날씨 = 흰 구름 위 가독(2026-08-20)
                 }
                 Text(moodlineText ?? info.meta.moodline)
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.88))
                     .padding(.top, 2)
+                    .skyInkShadow()
                 // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백). 2026-08-02 교정: 캡슐 버튼+시트가
                 // 아니라 하루 상세와 같은 인라인 토글이다("이 스위치야") — 그 자리에서 켜고 끈다.
                 periodToggle
@@ -345,6 +347,7 @@ struct TodayView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(today.formatted(.dateTime.month().day().weekday(.wide)))
+        .skyInkShadow()   // 날씨 = 흰 구름 위 날짜 가독(2026-08-20 베타 피드백)
     }
 
     // ── 컬랩싱 헤더: 컴팩트 바 층 ──
@@ -545,12 +548,9 @@ struct TodayView: View {
         inputs.filter { item in
             switch item.schedule {
             case .once:
-                if item.backfilled {
-                    item.onceShows(on: today)   // 소급 기록은 적어 넣은 그날에만(2026-07-27)
-                } else {
-                    // 단발 체크(2026-07-23): 완료 전까지 계속, 완료하면 완료한 그날만 남음
-                    item.occursByCalendar(on: today) && (!hasAnyCompletion(item.id) || isChecked(item.id))
-                }
+                // 적어 넣은 그날에만(2026-08-20 개정 — Output과 통일). 과거에 다른 날
+                // 완료한 이력이 있으면 그 완료일에는 기록으로 남는다(isChecked = 오늘 완료)
+                item.onceShows(on: today) || isChecked(item.id)
             case .daily, .weekly, .monthly:
                 item.occursByCalendar(on: today)
             case .cycleAnchored(let r):

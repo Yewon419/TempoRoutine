@@ -651,7 +651,8 @@ struct OnboardingFlow: View {
                         Text("건강 앱과 연동")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Ink.text)
-                        Text("쓰던 앱이 건강 앱에 기록을 남겼다면 불러올 수 있습니다.")
+                        // 줄바꿈 정리(2026-08-20 베타 피드백) — 종전 문장은 「불러올 / 수」로 꺾였다
+                        Text("쓰던 앱이 건강 앱에 남긴 기록을 불러올 수 있어요.")
                             .font(.caption)
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
@@ -666,7 +667,9 @@ struct OnboardingFlow: View {
                 }
                 if mirror.available && mirror.linked {
                     // 읽기 권한은 애플이 재요청 못 하게 막음 — 안 불러와지면 설정 원탭 이동(2026-07-24)
-                    Button("정상적으로 가져올 수 없나요? \n건강 권한 설정 열기") {
+                    // 수동 \n 제거(2026-08-20 베타 피드백 "줄바꿈 난리") — 버튼 다중행은
+                    // 중앙 정렬돼 둘째 줄이 떠 보였다. 왼쪽 정렬로 자연 줄바꿈에 맡긴다
+                    Button("정상적으로 가져올 수 없나요? 건강 권한 설정 열기") {
                         lightFeedback += 1
                         if let url = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(url)
@@ -674,6 +677,8 @@ struct OnboardingFlow: View {
                     }
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Ink.text)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(16)

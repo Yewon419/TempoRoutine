@@ -209,10 +209,14 @@ struct SignalPanel: View {
                 if let value {
                     ringFill(color: meta.color, progress: Double(value) / 100)
                 }
-                Text(value.map(String.init) ?? "—")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .foregroundStyle(ringValueInk(hasValue: value != nil))
+                // 레코드판은 중앙 숫자 없음(2026-08-20 베타 피드백 — 원판 위 숫자가 은유를 깬다.
+                // 시안 §4.4-⑩도 무숫자). 값은 아래 스탯 2행이 담당, VoiceOver는 서술 라벨 담당.
+                if ThemeStore.chrome.signalRing != .vinyl {
+                    Text(value.map(String.init) ?? "—")
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Ink.text.opacity(value == nil ? 0.35 : 0.7))
+                }
             }
             .frame(width: 54, height: 54)
             HStack(spacing: 3) {
@@ -282,14 +286,6 @@ struct SignalPanel: View {
             .trim(from: 0, to: max(0.02, progress))   // 0이어도 씨앗만큼은 보이게
             .stroke(color.opacity(opacity), style: style)
             .rotationEffect(.degrees(-90))   // 12시부터 차오른다
-    }
-
-    /// 링 중앙 숫자 잉크 — 레코드판은 어두운 원판 위라 흰 계열로 뒤집는다
-    private func ringValueInk(hasValue: Bool) -> Color {
-        if case .vinyl = ThemeStore.chrome.signalRing {
-            return Color.white.opacity(hasValue ? 0.9 : 0.5)
-        }
-        return Ink.text.opacity(hasValue ? 0.7 : 0.35)
     }
 
     // ── ④ 하이라이트 스탯 2행 ──
