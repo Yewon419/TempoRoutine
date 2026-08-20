@@ -63,7 +63,7 @@ enum WidgetBridge {
         return sorted.prefix(4).map { item in
             var title = item.title
             if let index = item.dayIndex(on: day) {
-                title += " · \(index)/\(item.spanDays)일차"
+                title += Loc.fmt(" · %1$@/%2$@일차", "\(index)", "\(item.spanDays)")
             }
             let time = item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened)
             return WidgetScheduleLine(time: time, title: title)
@@ -96,10 +96,10 @@ enum WidgetBridge {
             case .timer:
                 let target = max(1, goal.targetSeconds ?? 1)
                 let elapsed = min(Double(target), state?.elapsedSeconds ?? 0)
-                return "\(Int(elapsed) / 60)/\(target / 60)분"
+                return Loc.fmt("%1$@/%2$@분", "\(Int(elapsed) / 60)", "\(target / 60)")
             case .stopwatch:
                 let elapsed = state?.elapsedSeconds ?? 0
-                return elapsed > 0 ? "\(Int(elapsed) / 60)분" : nil
+                return elapsed > 0 ? Loc.fmt("%1$@분", "\(Int(elapsed) / 60)") : nil
             }
         }
         func checked(_ id: UUID) -> Bool {
@@ -175,12 +175,12 @@ enum WidgetBridge {
                 let target = max(1, item.targetSeconds ?? 1)
                 let elapsed = min(Double(target), item.elapsedSeconds())
                 return WidgetProgressLine(title: item.title,
-                                          label: "\(Int(elapsed) / 60)/\(target / 60)분",
+                                          label: Loc.fmt("%1$@/%2$@분", "\(Int(elapsed) / 60)", "\(target / 60)"),
                                           fraction: min(1, elapsed / Double(target)),
                                           id: item.id, kind: item.progressKind.rawValue, dday: dday)
             case .stopwatch:
                 return WidgetProgressLine(title: item.title,
-                                          label: "\(Int(item.elapsedSeconds()) / 60)분",
+                                          label: Loc.fmt("%1$@분", "\(Int(item.elapsedSeconds()) / 60)"),
                                           fraction: 0,
                                           id: item.id, kind: item.progressKind.rawValue, dday: dday)
             }
@@ -217,8 +217,8 @@ enum WidgetBridge {
             let hedge = info.projected ? " · 예상" : ""
             // 일차 = 계절 내 일차(2026-08-09 — 앱 표면과 통일)
             var entry = WidgetDay(day: day, season: key, title: info.meta.name,
-                                  sub: "\(info.meta.name) \(info.dayInPhase)일차\(hedge)",
-                                  inline: "\(info.meta.name) \(info.dayInPhase)일차",
+                                  sub: Loc.fmt("%1$@ %2$@일차%3$@", "\(info.meta.name)", "\(info.dayInPhase)", "\(hedge)"),
+                                  inline: Loc.fmt("%1$@ %2$@일차", "\(info.meta.name)", "\(info.dayInPhase)"),
                                   mood: info.meta.moodline, projected: info.projected)
             // 주기 진행(플레이리스트 미니 시크바, 시안 §4.4 ⑧) — 재생 위치 = 주기 일차
             entry.cycleProgress = min(1, Double(info.dayInCycle) / Double(max(snapshot.averageLength, 1)))

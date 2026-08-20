@@ -246,7 +246,7 @@ struct TipBubble: View {
 
     private var message: String {
         if store.cups > 0 {
-            return "커피 \(store.cups)잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!"
+            return Loc.fmt("커피 %1$@잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!", "\(store.cups)")
         }
         return "광고도 구독도 없이 만들고 있어요."
     }
@@ -297,7 +297,7 @@ struct TipBubble: View {
     /// 상품이 잡히면 실제 가격, 시험 빌드면 값 없이 「시험용」 표기(진짜 결제로 오인하지 않게)
     private var buyLabel: String? {
         if let product = store.product {
-            return "커피 한 잔 · \(product.displayPrice)"
+            return Loc.fmt("커피 한 잔 · %1$@", "\(product.displayPrice)")
         }
         return store.isFreeTrial ? "커피 한 잔 (시험용)" : nil
     }

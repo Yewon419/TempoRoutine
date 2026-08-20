@@ -160,7 +160,7 @@ struct NoticesView: View {
     @ViewBuilder
     private func seedRow(notice: Notice, seeds: Int) -> some View {
         if Seeds.claimedNotices.contains(notice.id) {
-            Label("씨앗 \(seeds)개를 받았어요", systemImage: "checkmark.seal")
+            Label(Loc.fmt("씨앗 %1$@개를 받았어요", "\(seeds)"), systemImage: "checkmark.seal")
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.55))
         } else {
@@ -173,7 +173,7 @@ struct NoticesView: View {
                         .fill(Ink.paper)
                         .frame(width: 8, height: 11)
                         .rotationEffect(.degrees(16))
-                    Text("씨앗 \(seeds)개 받기")
+                    Text(Loc.fmt("씨앗 %1$@개 받기", "\(seeds)"))
                         .font(.footnote.weight(.semibold))
                 }
                 .foregroundStyle(Ink.paper)

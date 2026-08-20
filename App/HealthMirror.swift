@@ -115,7 +115,7 @@ final class HealthMirror {
                 return "기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
             }
             if imported > 0 {
-                return "건강 앱에서 생리 기록 \(imported)일을 가져왔어요."
+                return Loc.fmt("건강 앱에서 생리 기록 %1$@일을 가져왔어요.", "\(imported)")
             }
             if sourceCount > 0 {
                 return "새로 가져올 기록은 없었어요. 건강 앱의 기록은 이미 모두 반영돼 있어요."
@@ -183,17 +183,17 @@ final class HealthMirror {
         // 저장 실측(2026-07-23 — "가져옴 vs 캘린더 미반영" 판별): 오류를 삼키지 않고,
         // 저장 후 스토어를 재조회한 실제 일수까지 진단에 담는다.
         var saveNote = ""
-        do { try context.save() } catch { saveNote = " / 저장 오류: \(error.localizedDescription)" }
+        do { try context.save() } catch { saveNote = Loc.fmt(" / 저장 오류: %1$@", "\(error.localizedDescription)") }
         let savedCount = (try? context.fetchCount(FetchDescriptor<PeriodDay>())) ?? -1
         var range = ""
         if let lo = importedMin, let hi = importedMax {
-            range = " / 범위 \(ExportCodec.dayString(lo))~\(ExportCodec.dayString(hi))"
+            range = Loc.fmt(" / 범위 %1$@~%2$@", "\(ExportCodec.dayString(lo))", "\(ExportCodec.dayString(hi))")
         }
-        lastSyncReport = "원본 \(result.samples.count)건, 가져옴 \(imported)건"
-            + (skippedKnown + skippedDup > 0 ? ", 이미 있음 \(skippedKnown + skippedDup)건" : "")
-            + (skippedTombstone > 0 ? ", 이전에 지운 날 \(skippedTombstone)건" : "")
-            + (skippedDeleted > 0 ? ", 삭제된 기록 \(skippedDeleted)건" : "")
-            + " / 저장 후 스토어 \(savedCount)일" + range + saveNote
+        lastSyncReport = Loc.fmt("원본 %1$@건, 가져옴 %2$@건", "\(result.samples.count)", "\(imported)")
+            + (skippedKnown + skippedDup > 0 ? Loc.fmt(", 이미 있음 %1$@건", "\(skippedKnown + skippedDup)") : "")
+            + (skippedTombstone > 0 ? Loc.fmt(", 이전에 지운 날 %1$@건", "\(skippedTombstone)") : "")
+            + (skippedDeleted > 0 ? Loc.fmt(", 삭제된 기록 %1$@건", "\(skippedDeleted)") : "")
+            + Loc.fmt(" / 저장 후 스토어 %1$@일", "\(savedCount)") + range + saveNote
         lastOutcome = SyncOutcome(imported: imported, sourceCount: result.samples.count,
                                   saveFailed: !saveNote.isEmpty)
         return imported

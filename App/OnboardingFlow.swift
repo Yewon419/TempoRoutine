@@ -782,7 +782,7 @@ struct OnboardingFlow: View {
 
     private func cardPageView(_ kind: CardKind) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "하루의 구성 \(cardPage + 1) / 3", title: kind.rawValue)
+            stepHeader(eyebrow: Loc.fmt("하루의 구성 %1$@ / 3", "\(cardPage + 1)"), title: kind.rawValue)
             cardSketch(kind)
             Text(kind.info)
                 .font(.system(.body, design: .serif))
@@ -884,7 +884,7 @@ struct OnboardingFlow: View {
             modelContext.insert(item)
         case "output-study":
             let item = OutputItem(title: "시험공부", schedule: .once, progressKind: .subtasks)
-            item.subtasks = (1...6).map { OutputSubtask(title: "\($0)챕터", order: $0 - 1) }
+            item.subtasks = (1...6).map { OutputSubtask(title: Loc.fmt("%1$@챕터", "\($0)"), order: $0 - 1) }
             exampleOutputs[key] = item
             modelContext.insert(item)
         case "output-listening":
@@ -993,7 +993,7 @@ struct OnboardingFlow: View {
                 .stroke(Ink.text.opacity(selected ? 0.8 : 0), lineWidth: 1.5))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(theme.displayName) 테마")
+        .accessibilityLabel(Loc.fmt("%1$@ 테마", "\(theme.displayName)"))
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 

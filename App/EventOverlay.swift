@@ -122,7 +122,7 @@ struct OverlayEventRows: View {
                     .overlay(Capsule().stroke(Ink.text.opacity(0.25), lineWidth: 1))
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(event.title), 캘린더에서 가져옴, 읽기 전용")
+            .accessibilityLabel(Loc.fmt("%1$@, 캘린더에서 가져옴, 읽기 전용", "\(event.title)"))
         }
     }
 }

@@ -268,11 +268,11 @@ struct RhythmView: View {
                 Text("계절과 루틴")
                     .font(.almanacBody(.footnote, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.5))
-                Text("기록상 \(seasonMeta(for: top.key).name)에 계획한 걸 가장 많이 수행했어요.")
+                Text(Loc.fmt("기록상 %1$@에 계획한 걸 가장 많이 수행했어요.", "\(seasonMeta(for: top.key).name)"))
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("마친 기록 \(completions.count)건 기준")
+                Text(Loc.fmt("마친 기록 %1$@건 기준", "\(completions.count)"))
                     .font(.caption)
                     .foregroundStyle(Ink.text.opacity(0.45))
             }
@@ -305,11 +305,11 @@ struct RhythmView: View {
                 Text("주기 길이")
                     .font(.almanacBody(.footnote, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.5))
-                Text("최근 주기 \(last)일")
+                Text(Loc.fmt("최근 주기 %1$@일", "\(last)"))
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
-                Text(lo == hi ? "기록된 \(lengths.count)주기 모두 \(lo)일"
-                              : "기록된 \(lengths.count)주기 \(lo)~\(hi)일")
+                Text(lo == hi ? Loc.fmt("기록된 %1$@주기 모두 %2$@일", "\(lengths.count)", "\(lo)")
+                              : Loc.fmt("기록된 %1$@주기 %2$@~%3$@일", "\(lengths.count)", "\(lo)", "\(hi)"))
                     .font(.caption)
                     .foregroundStyle(Ink.text.opacity(0.45))
             }
@@ -337,8 +337,8 @@ struct RhythmView: View {
                 Text("예측 정확도")
                     .font(.almanacBody(.footnote, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.5))
-                Text(m == 0 ? "지난 \(errors.count)번, 예측한 날에 시작했어요."
-                            : "지난 \(errors.count)번, 예측과 실제가 평균 \(m)일 차이였어요.")
+                Text(m == 0 ? Loc.fmt("지난 %1$@번, 예측한 날에 시작했어요.", "\(errors.count)")
+                            : Loc.fmt("지난 %1$@번, 예측과 실제가 평균 %2$@일 차이였어요.", "\(errors.count)", "\(m)"))
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
                     .fixedSize(horizontal: false, vertical: true)
@@ -363,7 +363,7 @@ struct RhythmView: View {
                 Text("겨울로 넘어가기 전")
                     .font(.almanacBody(.footnote, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.5))
-                Text("기록상 생리 시작 \(learned)일 전부터 컨디션이 낮게 기록됐어요.")
+                Text(Loc.fmt("기록상 생리 시작 %1$@일 전부터 컨디션이 낮게 기록됐어요.", "\(learned)"))
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
                     .fixedSize(horizontal: false, vertical: true)
@@ -497,19 +497,19 @@ struct RhythmView: View {
         let unlocked = unlockedPhases
         if unlocked.isEmpty {
             let body = curCount == 0
-                ? "\(curName)의 에너지를 세 번 기록하면, 이 계절의 첫 패턴이 보여요."
-                : "\(curName)의 에너지 기록이 \(curCount)번 쌓였어요. 세 번이면 이 계절의 첫 패턴이 보여요."
+                ? Loc.fmt("%1$@의 에너지를 세 번 기록하면, 이 계절의 첫 패턴이 보여요.", "\(curName)")
+                : Loc.fmt("%1$@의 에너지 기록이 %2$@번 쌓였어요. 세 번이면 이 계절의 첫 패턴이 보여요.", "\(curName)", "\(curCount)")
             return (Double(curCount) / Double(goal), "첫 패턴을 기다리는 중", body,
-                    "\(curName) 기록 \(curCount) / \(goal)")
+                    Loc.fmt("%1$@ 기록 %2$@ / %3$@", "\(curName)", "\(curCount)", "\(goal)"))
         }
         let names = unlocked.map { seasonMeta(for: $0).name }.joined(separator: "·")
         // 「채워지면」 뒤에서 줄바꿈(2026-08-16 베타 피드백) — "거에요"만 다음 줄로 넘어가던 것
-        var body = "\(names)의 패턴이 보이기 시작했어요. 네 계절이 모두 채워지면\n리듬 전체가 이어질 거에요."
+        var body = Loc.fmt("%1$@의 패턴이 보이기 시작했어요. 네 계절이 모두 채워지면\n리듬 전체가 이어질 거에요.", "\(names)")
         if let phase = curPhase, profile.level(for: phase) == nil {
-            body += " \(curName)은 \(curCount) / \(goal)회째예요."
+            body += Loc.fmt(" %1$@은 %2$@ / %3$@회째예요.", "\(curName)", "\(curCount)", "\(goal)")
         }
         return (Double(unlocked.count) / 4.0, "패턴이 보이기 시작했어요", body,
-                "네 계절 중 \(unlocked.count)")
+                Loc.fmt("네 계절 중 %1$@", "\(unlocked.count)"))
     }
 
     private var coldCard: some View {
@@ -618,7 +618,7 @@ struct RhythmView: View {
         /// 낱장 렌더 허용(§3.5.1 개정 2026-08-18 — 개인 계절 길이·오늘 위치는 여전히 금지).
         var dayBadge: String {
             guard let r = recurrence else { return "" }
-            return r.spansWholePhase ? "매일" : "\(r.dayOffset + 1)일차"
+            return r.spansWholePhase ? "매일" : Loc.fmt("%1$@일차", "\(r.dayOffset + 1)")
         }
     }
 
@@ -752,10 +752,10 @@ struct RhythmView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(meta.name)에 루틴 추가")
+                .accessibilityLabel(Loc.fmt("%1$@에 루틴 추가", "\(meta.name)"))
             }
             .accessibilityElement(children: .contain)
-            .accessibilityLabel(routines.isEmpty ? "\(meta.name), 루틴 없음" : meta.name)
+            .accessibilityLabel(routines.isEmpty ? Loc.fmt("%1$@, 루틴 없음", "\(meta.name)") : meta.name)
             // 빈 계절 = 여백 + 행 구분 괘선만(빈 낱장도 캡처물 성립 — §3.5.1).
             // 안쪽 괘선은 행 구분선과 겹쳐 이중 줄로 보여 걷음(2026-08-08 조판).
             ForEach(routines) { routine in
@@ -808,8 +808,8 @@ struct RhythmView: View {
                 }
             }
             // 계절별 일수 캡션 — "봄 몇 칸"을 숫자로도 읽게. 값은 §5.3 경계 그대로.
-            Text(ordered.map { "\(seasonMeta(for: $0.phase).name) \($0.length)일" }
-                    .joined(separator: " · ") + " · 평균 주기 \(snapshot.averageLength)일 기준")
+            Text(ordered.map { Loc.fmt("%1$@ %2$@일", "\(seasonMeta(for: $0.phase).name)", "\($0.length)") }
+                    .joined(separator: " · ") + Loc.fmt(" · 평균 주기 %1$@일 기준", "\(snapshot.averageLength)"))
                 .font(.caption2)
                 .foregroundStyle(Ink.text.opacity(0.45))
         }
@@ -853,7 +853,7 @@ struct RhythmView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(meta.name) \(slot.dayInPhase)일차\(hasRoutine ? ", 루틴 있음" : "")")
+        .accessibilityLabel(Loc.fmt("%1$@ %2$@일차%3$@", "\(meta.name)", "\(slot.dayInPhase)", "\(hasRoutine ? ", 루틴 있음" : "")"))
     }
 
     /// 그 위상(계절 s의 d일차)이 다음으로 오는 절대 날짜 — 오늘부터 두 주기치 스캔.

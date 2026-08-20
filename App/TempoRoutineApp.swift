@@ -27,7 +27,7 @@ struct TempoRoutineApp: App {
         do {
             return try ModelContainer(for: schema)
         } catch {
-            fatalError("스토어 열기 실패: \(error)")
+            fatalError("스토어 열기 실패: \(error)")   // 크래시 로그 — 사용자 표면 아님(번역 제외)
         }
     }()
 

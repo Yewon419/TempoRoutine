@@ -57,7 +57,7 @@ struct SessionProgressControl: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("세션 진행")
-        .accessibilityValue("\(logged) / \(target) 세션")
+        .accessibilityValue(Loc.fmt("%1$@ / %2$@ 세션", "\(logged)", "\(target)"))
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment where logged < target:
@@ -73,7 +73,7 @@ struct SessionProgressControl: View {
     // ── 카운터 + 진행 바 (목표 없음 또는 9+) ──
     private var counterRow: some View {
         HStack(spacing: 12) {
-            Text(target > 0 ? "\(logged) / \(target) 세션" : "\(logged) 세션")
+            Text(target > 0 ? Loc.fmt("%1$@ / %2$@ 세션", "\(logged)", "\(target)") : Loc.fmt("%1$@ 세션", "\(logged)"))
                 .font(.footnote)
                 .monospacedDigit()
                 .foregroundStyle(Ink.text.opacity(0.7))
@@ -114,7 +114,7 @@ struct SessionProgressControl: View {
         .foregroundStyle(Ink.text)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("세션 진행")
-        .accessibilityValue(target > 0 ? "\(logged) / \(target) 세션" : "\(logged) 세션")
+        .accessibilityValue(target > 0 ? Loc.fmt("%1$@ / %2$@ 세션", "\(logged)", "\(target)") : Loc.fmt("%1$@ 세션", "\(logged)"))
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment:

@@ -125,7 +125,7 @@ struct TicketMonthHeader: View {
                 .kerning(2.2)
                 .foregroundStyle(TicketSpec.label)
             // 표제는 아웃라인이 아니라 솔리드 — 티켓 크롬은 outlineDisplay가 false다
-            Text("\(month)월")
+            Text(Loc.fmt("%1$@월", "\(month)"))
                 .font(.almanac(size: 38))
                 .foregroundStyle(Ink.text)
             Spacer(minLength: 12)

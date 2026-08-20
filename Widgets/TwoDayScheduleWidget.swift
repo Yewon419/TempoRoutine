@@ -145,7 +145,7 @@ struct TwoDayScheduleView: View {
     private func dateLabel(_ date: Date) -> String {
         let cal = Calendar.current
         let weekday = ["일", "월", "화", "수", "목", "금", "토"][cal.component(.weekday, from: date) - 1]
-        return "\(cal.component(.month, from: date))월 \(cal.component(.day, from: date))일 (\(weekday))"
+        return Loc.fmt("%1$@월 %2$@일 (%3$@)", "\(cal.component(.month, from: date))", "\(cal.component(.day, from: date))", "\(weekday)")
     }
 
     private func scheduleSummary(_ day: WidgetDay?) -> String {

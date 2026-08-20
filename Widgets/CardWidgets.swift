@@ -111,7 +111,7 @@ struct InputTodayView: View {
                         row(line)
                     }
                     if hiddenCount > 0 {
-                        Text("+\(hiddenCount)개 더")
+                        Text(Loc.fmt("+%1$@개 더", "\(hiddenCount)"))
                             .font(.system(size: 11))
                             .foregroundStyle(WInk.text.opacity(0.4))
                     }

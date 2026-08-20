@@ -115,10 +115,10 @@ struct SignalPanel: View {
     // ── ① 서술 ──
     private var narration: String {
         guard narratable, let high = highest, let low = lowest else {
-            return "\(signalName) 패턴은 아직 또렷하지 않아요. 기록이 더 쌓이면 여기에 담아둘게요."
+            return Loc.fmt("%1$@ 패턴은 아직 또렷하지 않아요. 기록이 더 쌓이면 여기에 담아둘게요.", "\(signalName)")
         }
-        let lead = completedCycles >= 1 ? "지난 \(completedCycles)주기," : "지난 기록상,"
-        return "\(lead) \(subject) \(seasonMeta(for: high.phase).name)에 \(highWord) \(seasonMeta(for: low.phase).name)에 \(lowWord) 기록됐어요."
+        let lead = completedCycles >= 1 ? Loc.fmt("지난 %1$@주기,", "\(completedCycles)") : "지난 기록상,"
+        return Loc.fmt("%1$@ %2$@ %3$@에 %4$@ %5$@에 %6$@ 기록됐어요.", "\(lead)", "\(subject)", "\(seasonMeta(for: high.phase).name)", "\(highWord)", "\(seasonMeta(for: low.phase).name)", "\(lowWord)")
     }
 
     // ── ⑤ 일관성 서술 (시안 v69 — 반복성이 핵심 가치) ──
@@ -132,23 +132,23 @@ struct SignalPanel: View {
         let reversed = Array(topPhases.reversed())
         while run < reversed.count && reversed[run] == reversed[0] { run += 1 }
         if run >= 2 {
-            return "\(run)주기 연속, \(seasonMeta(for: reversed[0]).name)이 \(consistencyWord) 기록됐어요."
+            return Loc.fmt("%1$@주기 연속, %2$@이 %3$@ 기록됐어요.", "\(run)", "\(seasonMeta(for: reversed[0]).name)", "\(consistencyWord)")
         }
         // 연속이 아니면 분포 서술("2주기는 여름이, 1주기는 봄이 …")
         var counts: [CyclePhase: Int] = [:]
         for phase in topPhases { counts[phase, default: 0] += 1 }
         let parts = counts.sorted { $0.value > $1.value }
-            .map { "\($0.value)주기는 \(seasonMeta(for: $0.key).name)이" }
-        return "\(parts.joined(separator: ", ")) \(consistencyWord) 기록됐어요."
+            .map { Loc.fmt("%1$@주기는 %2$@이", "\($0.value)", "\(seasonMeta(for: $0.key).name)") }
+        return Loc.fmt("%1$@ %2$@ 기록됐어요.", "\(parts.joined(separator: ", "))", "\(consistencyWord)")
     }
 
     // ── ⑥ 근거 각주 ──
     private var footnote: String {
         guard narratable else {
-            return "\(signalName) 기록 \(totalCount)회 · 패턴을 말하기엔 아직 일러요"
+            return Loc.fmt("%1$@ 기록 %2$@회 · 패턴을 말하기엔 아직 일러요", "\(signalName)", "\(totalCount)")
         }
-        let cyclesPart = completedCycles >= 1 ? "지난 \(completedCycles)주기 · " : ""
-        return "\(cyclesPart)\(signalName) 기록 \(totalCount)회 · 기록상 패턴이에요"
+        let cyclesPart = completedCycles >= 1 ? Loc.fmt("지난 %1$@주기 · ", "\(completedCycles)") : ""
+        return Loc.fmt("%1$@%2$@ 기록 %3$@회 · 기록상 패턴이에요", "\(cyclesPart)", "\(signalName)", "\(totalCount)")
     }
 
     var body: some View {

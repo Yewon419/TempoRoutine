@@ -104,7 +104,7 @@ enum DailyNotices {
                       let fire = cal.date(bySettingHour: briefingHour, minute: 0, second: 0, of: day),
                       fire > .now else { continue }
                 let shown = titles.prefix(3).joined(separator: " · ")
-                let extras = titles.count > 3 ? " 외 \(titles.count - 3)개" : ""
+                let extras = titles.count > 3 ? Loc.fmt(" 외 %1$@개", "\(titles.count - 3)") : ""
                 requests.append((briefingPrefix + dayKey(day),
                                  "오늘은 다음과 같은 일정이 있어요",
                                  shown + extras,

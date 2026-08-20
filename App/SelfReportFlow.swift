@@ -83,7 +83,7 @@ struct SelfReportFlow: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("진행도 \(step) / \(totalSteps)")
+        .accessibilityLabel(Loc.fmt("진행도 %1$@ / %2$@", "\(step)", "\(totalSteps)"))
     }
 
     @ViewBuilder

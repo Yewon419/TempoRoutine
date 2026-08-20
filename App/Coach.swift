@@ -232,7 +232,7 @@ private struct CoachOverlay: View {
         .offset(y: y)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(steps.count > 1
-                            ? "사용법 안내 \(shownIndex + 1) / \(steps.count). \(step.title). \(step.body)"
-                            : "사용법 안내. \(step.title). \(step.body)")
+                            ? Loc.fmt("사용법 안내 %1$@ / %2$@. %3$@. %4$@", "\(shownIndex + 1)", "\(steps.count)", "\(step.title)", "\(step.body)")
+                            : Loc.fmt("사용법 안내. %1$@. %2$@", "\(step.title)", "\(step.body)"))
     }
 }

@@ -1,6 +1,91 @@
 {
   "sourceLanguage": "ko",
   "strings": {
+    " %1$@은 %2$@ / %3$@회째예요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " %1$@ is at %2$@ of %3$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " %1$@は%2$@ / %3$@回目です。"
+          }
+        }
+      }
+    },
+    " / 범위 %1$@~%2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " / Range %1$@~%2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " / 範囲 %1$@~%2$@"
+          }
+        }
+      }
+    },
+    " / 저장 오류: %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " / Save error: %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " / 保存エラー: %1$@"
+          }
+        }
+      }
+    },
+    " / 저장 후 스토어 %1$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " / %1$@ days in store after saving"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " / 保存後ストア %1$@日"
+          }
+        }
+      }
+    },
+    " · %1$@/%2$@일차": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · Day %1$@/%2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · %1$@/%2$@日目"
+          }
+        }
+      }
+    },
     " · 예상": {
       "extractionState": "manual",
       "localizations": {
@@ -14,6 +99,40 @@
           "stringUnit": {
             "state": "translated",
             "value": " · 予想"
+          }
+        }
+      }
+    },
+    " · 평균 주기 %1$@일 기준": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · Based on a %1$@-day average cycle"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · 平均周期%1$@日を基準"
+          }
+        }
+      }
+    },
+    " 외 %1$@개": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " and %1$@ more"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " ほか%1$@件"
           }
         }
       }
@@ -35,6 +154,57 @@
         }
       }
     },
+    "%1$@ %2$@ %3$@에 %4$@ %5$@에 %6$@ 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ was logged as %4$@ in %3$@ and %6$@ in %5$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@は%3$@に%4$@、%5$@に%6$@と記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@ %2$@ 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ was logged %2$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@が%2$@記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@ %2$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@日"
+          }
+        }
+      }
+    },
     "%1$@ %2$@일차": {
       "extractionState": "manual",
       "localizations": {
@@ -48,6 +218,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ %2$@日目"
+          }
+        }
+      }
+    },
+    "%1$@ %2$@일차%3$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ Day %2$@%3$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@日目%3$@"
           }
         }
       }
@@ -69,6 +256,23 @@
         }
       }
     },
+    "%1$@ / %2$@ 세션": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ / %2$@ sessions"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ / %2$@ セッション"
+          }
+        }
+      }
+    },
     "%1$@ · %2$@": {
       "extractionState": "manual",
       "localizations": {
@@ -82,6 +286,244 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%1$@ 기록 %2$@ / %3$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ records %2$@ / %3$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 記録 %2$@ / %3$@"
+          }
+        }
+      }
+    },
+    "%1$@ 기록 %2$@회 · 패턴을 말하기엔 아직 일러요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ logged %2$@ times · too early to call it a pattern"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の記録 %2$@回 · パターンを語るにはまだ早いです"
+          }
+        }
+      }
+    },
+    "%1$@ 며칠째": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Days since %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@から何日目"
+          }
+        }
+      }
+    },
+    "%1$@ 반복": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeats %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@繰り返し"
+          }
+        }
+      }
+    },
+    "%1$@ 설명": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ description"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の説明"
+          }
+        }
+      }
+    },
+    "%1$@ 세션": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ sessions"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ セッション"
+          }
+        }
+      }
+    },
+    "%1$@ 시작": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Started %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 開始"
+          }
+        }
+      }
+    },
+    "%1$@ 예상": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ expected"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 予測"
+          }
+        }
+      }
+    },
+    "%1$@ 전체": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All of %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 全体"
+          }
+        }
+      }
+    },
+    "%1$@ 종료": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ends at %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 終了"
+          }
+        }
+      }
+    },
+    "%1$@ 추가": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@を追加"
+          }
+        }
+      }
+    },
+    "%1$@ 테마": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ theme"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ テーマ"
+          }
+        }
+      }
+    },
+    "%1$@ 테마 미리보기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ theme preview"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@テーマのプレビュー"
+          }
+        }
+      }
+    },
+    "%1$@ 패턴은 아직 또렷하지 않아요. 기록이 더 쌓이면 여기에 담아둘게요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The %1$@ pattern isn't clear yet. Once more records build up, it will show here."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@のパターンはまだはっきりしていません。記録が増えたら、ここに載せておきます。"
           }
         }
       }
@@ -103,6 +545,108 @@
         }
       }
     },
+    "%1$@%2$@ %3$@일차%4$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$@ Day %3$@%4$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$@ %3$@日目%4$@"
+          }
+        }
+      }
+    },
+    "%1$@%2$@ 기록 %3$@회 · 기록상 패턴이에요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$@ logged %3$@ times · a pattern in your records"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$@の記録%3$@回 · 記録から見えるパターンです"
+          }
+        }
+      }
+    },
+    "%1$@, 루틴 없음": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, no routines"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、ルーティンなし"
+          }
+        }
+      }
+    },
+    "%1$@, 오늘": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, today"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、今日"
+          }
+        }
+      }
+    },
+    "%1$@, 캘린더에서 가져옴, 읽기 전용": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, from Calendar, read-only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、カレンダーから取得、読み取り専用"
+          }
+        }
+      }
+    },
+    "%1$@/%2$@분": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@/%2$@ min"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@/%2$@分"
+          }
+        }
+      }
+    },
     "%1$@/%2$@일차": {
       "extractionState": "manual",
       "localizations": {
@@ -116,6 +660,329 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@/%2$@日目"
+          }
+        }
+      }
+    },
+    "%1$@~%2$@일 · %3$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@–%2$@ · %3$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@~%2$@日 · %3$@日間"
+          }
+        }
+      }
+    },
+    "%1$@건을 가져왔어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported %1$@ records."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@件を読み込みました。"
+          }
+        }
+      }
+    },
+    "%1$@분": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ min"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@分"
+          }
+        }
+      }
+    },
+    "%1$@에 루틴 추가": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a routine in %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@にルーティンを追加"
+          }
+        }
+      }
+    },
+    "%1$@에 시작해요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starts at %1$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@に始まります。"
+          }
+        }
+      }
+    },
+    "%1$@에 하는 걸로 표시돼요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shown as %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@に行うものとして表示されます"
+          }
+        }
+      }
+    },
+    "%1$@월": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Month %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@月"
+          }
+        }
+      }
+    },
+    "%1$@월 %2$@일 (%3$@)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@/%2$@ (%3$@)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@月%2$@日 (%3$@)"
+          }
+        }
+      }
+    },
+    "%1$@의 에너지 기록이 %2$@번 쌓였어요. 세 번이면 이 계절의 첫 패턴이 보여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've logged energy in %1$@ %2$@ times. At three, the first pattern of this season comes into view."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@のエネルギー記録が%2$@回たまりました。3回になると、この季節の最初のパターンが見えてきます。"
+          }
+        }
+      }
+    },
+    "%1$@의 에너지를 세 번 기록하면, 이 계절의 첫 패턴이 보여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log your energy three times in %1$@, and the first pattern of this season shows up."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@にエネルギーを3回記録すると、この季節の最初のパターンが見えてきます。"
+          }
+        }
+      }
+    },
+    "%1$@의 패턴이 보이기 시작했어요. 네 계절이 모두 채워지면\n리듬 전체가 이어질 거에요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A pattern is starting to show in %1$@. Once all four seasons fill in, the whole rhythm comes together."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@のパターンが見えはじめました。四つの季節がすべて埋まると、リズム全体がつながります。"
+          }
+        }
+      }
+    },
+    "%1$@인 날엔 매일 보여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shown every day on %1$@ days."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の日は毎日表示されます。"
+          }
+        }
+      }
+    },
+    "%1$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@日"
+          }
+        }
+      }
+    },
+    "%1$@일 %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@ %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@日 %2$@"
+          }
+        }
+      }
+    },
+    "%1$@일에 걸친 일정이에요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This event spans %1$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@日間にわたる予定です"
+          }
+        }
+      }
+    },
+    "%1$@일차": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@日目"
+          }
+        }
+      }
+    },
+    "%1$@주기 연속, %2$@이 %3$@ 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ cycles in a row, %2$@ was logged %3$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@周期連続で、%2$@が%3$@記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@주기는 %2$@이": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in %1$@ cycles, %2$@ was"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@周期では%2$@が"
+          }
+        }
+      }
+    },
+    "%1$@챕터": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ chapters"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@章"
           }
         }
       }
@@ -269,6 +1136,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld日目"
+          }
+        }
+      }
+    },
+    "+%1$@개 더": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%1$@ more"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%1$@件"
+          }
+        }
+      }
+    },
+    ", 삭제된 기록 %1$@건": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", %1$@ deleted records"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、削除された記録 %1$@件"
+          }
+        }
+      }
+    },
+    ", 이미 있음 %1$@건": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", already there %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、すでにあり %1$@件"
+          }
+        }
+      }
+    },
+    ", 이전에 지운 날 %1$@건": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", %1$@ days deleted earlier"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、以前に削除した日 %1$@件"
           }
         }
       }
@@ -681,6 +1616,23 @@
         }
       }
     },
+    "TempoRoutine-백업-%1$@.json": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine-backup-%1$@.json"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine-バックアップ-%1$@.json"
+          }
+        }
+      }
+    },
     "iCloud (플래너·체크인)": {
       "extractionState": "manual",
       "localizations": {
@@ -779,6 +1731,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "・予測"
+          }
+        }
+      }
+    },
+    "「%1$@」 구매": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy \"%1$@\""
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%1$@」を購入"
+          }
+        }
+      }
+    },
+    "「%1$@」를 %2$@으로 읽었어요. 시각을 직접 고치면 그대로 둬요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read \"%1$@\" as %2$@. If you set the time yourself, it stays as you set it."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%1$@」を%2$@と読み取りました。時刻をご自分で直した場合は、そのままにします。"
+          }
+        }
+      }
+    },
+    "「%1$@」으로 시작하기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start with \"%1$@\""
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%1$@」で始める"
+          }
+        }
+      }
+    },
+    "「%1$@」을 구매했어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You bought “%1$@”"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%1$@」を購入しました"
           }
         }
       }
@@ -1242,6 +2262,23 @@
         }
       }
     },
+    "가져오기 오류 — %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import error — %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み込みエラー — %1$@"
+          }
+        }
+      }
+    },
     "가져올 기록이 없다면 읽기 권한이 꺼진 경우가 많아요. 아래 ‘건강 권한 설정 열기’를 눌러 템포루틴의 ‘생리’ 읽기를 켜주세요.": {
       "extractionState": "manual",
       "localizations": {
@@ -1599,6 +2636,23 @@
         }
       }
     },
+    "건강 앱에서 생리 기록 %1$@일을 가져왔어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported %1$@ days of period records from the Health app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアAppから生理の記録を%1$@日分読み込みました。"
+          }
+        }
+      }
+    },
     "건강 앱에서 읽어올 생리 기록이 없었어요. 기록이 없거나 읽기 권한이 꺼져 있을 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -1714,6 +2768,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "冬のころです"
+          }
+        }
+      }
+    },
+    "겨울 예상 · 예정일 %1$@일 지남": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Winter expected · %1$@ days past the due date"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬の予想 · 予定日から%1$@日経過"
           }
         }
       }
@@ -1850,6 +2921,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "季節の間を通っています"
+          }
+        }
+      }
+    },
+    "계절 시작 +%1$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Season start +%1$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節の始まり +%1$@日"
           }
         }
       }
@@ -2330,6 +3418,40 @@
         }
       }
     },
+    "기록된 %1$@주기 %2$@~%3$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ cycles logged, %2$@–%3$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録された%1$@周期 %2$@~%3$@日"
+          }
+        }
+      }
+    },
+    "기록된 %1$@주기 모두 %2$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All %1$@ recorded cycles were %2$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録された%1$@周期すべてが%2$@日"
+          }
+        }
+      }
+    },
     "기록된 시작일과 그때까지의 예측을 비교한 값": {
       "extractionState": "manual",
       "localizations": {
@@ -2381,6 +3503,23 @@
         }
       }
     },
+    "기록상 %1$@에 계획한 걸 가장 많이 수행했어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your records show you got the most of your plans done in %1$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録では、%1$@に計画したことをいちばん多くこなしていました。"
+          }
+        }
+      }
+    },
     "기록상 %@에 계획한 걸 가장 많이 수행했어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -2394,6 +3533,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "記録では、%@に予定を一番多くこなしています。"
+          }
+        }
+      }
+    },
+    "기록상 생리 시작 %1$@일 전부터 컨디션이 낮게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your records show how you feel dipping from %1$@ days before your period starts."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録では、生理が始まる%1$@日前から体調が低めに記録されています。"
           }
         }
       }
@@ -2942,6 +4098,23 @@
         }
       }
     },
+    "날짜 %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付 %1$@"
+          }
+        }
+      }
+    },
     "날짜 선택": {
       "extractionState": "manual",
       "localizations": {
@@ -3027,6 +4200,23 @@
         }
       }
     },
+    "내림 %1$@·삭제 %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulled %1$@·Deleted %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取得 %1$@・削除 %2$@"
+          }
+        }
+      }
+    },
     "내보내기에 실패했어요. 다시 시도해 주세요.": {
       "extractionState": "manual",
       "localizations": {
@@ -3091,6 +4281,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "明日ごろ冬に入るかもしれません。前もって備えても大丈夫です。"
+          }
+        }
+      }
+    },
+    "네 계절 중 %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ of four seasons"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四季のうち%1$@"
           }
         }
       }
@@ -4013,6 +5220,23 @@
         }
       }
     },
+    "마지막 동기화 · %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last sync · %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最終同期 · %1$@"
+          }
+        }
+      }
+    },
     "마지막 동기화 · %@": {
       "extractionState": "manual",
       "localizations": {
@@ -4064,6 +5288,23 @@
         }
       }
     },
+    "마지막 응답 %1$@건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your last %1$@ answers are saved on this device. Answering again updates them with your new answers."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最後の回答%1$@件がこの端末に保存されています。もう一度答えると、新しい回答に更新されます。"
+          }
+        }
+      }
+    },
     "마지막으로": {
       "extractionState": "manual",
       "localizations": {
@@ -4077,6 +5318,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "最後に"
+          }
+        }
+      }
+    },
+    "마친 기록 %1$@건 기준": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Based on %1$@ finished records"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了した記録%1$@件を基準"
           }
         }
       }
@@ -4417,6 +5675,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "木"
+          }
+        }
+      }
+    },
+    "목표 %1$@분": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal %1$@ min"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標 %1$@分"
+          }
+        }
+      }
+    },
+    "목표 %1$@세션": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal %1$@ sessions"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標%1$@セッション"
+          }
+        }
+      }
+    },
+    "목표 %1$@회": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal %1$@ sessions"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標%1$@回"
           }
         }
       }
@@ -4880,6 +6189,23 @@
         }
       }
     },
+    "보내기 오류 — %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send error — %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信エラー — %1$@"
+          }
+        }
+      }
+    },
     "보다 편한 시작을 할 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -5148,6 +6474,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "使い方をもう一度見る"
+          }
+        }
+      }
+    },
+    "사용법 안내 %1$@ / %2$@. %3$@. %4$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to use %1$@ / %2$@. %3$@. %4$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使い方ガイド %1$@ / %2$@. %3$@. %4$@"
+          }
+        }
+      }
+    },
+    "사용법 안내. %1$@. %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to use. %1$@. %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使い方の案内。%1$@。%2$@"
           }
         }
       }
@@ -5985,6 +7345,23 @@
         }
       }
     },
+    "스토어 열기 실패: %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open the store: %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ストアを開けませんでした: %1$@"
+          }
+        }
+      }
+    },
     "스톱워치": {
       "extractionState": "manual",
       "localizations": {
@@ -6410,19 +7787,121 @@
         }
       }
     },
+    "씨앗 %1$@개": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ seeds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たね%1$@個"
+          }
+        }
+      }
+    },
+    "씨앗 %1$@개 받기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get %1$@ seeds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねを%1$@個受け取る"
+          }
+        }
+      }
+    },
+    "씨앗 %1$@개로 구매": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy for %1$@ seeds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たね%1$@個で購入"
+          }
+        }
+      }
+    },
     "씨앗 %1$@개로 구매할 수 있어요 · 지금 %2$@개": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You can buy it for %1$@ seeds · you have %2$@"
+            "value": "You can get it for %1$@ seeds · you have %2$@ now"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "たね%1$@個で購入できます · 現在%2$@個"
+          }
+        }
+      }
+    },
+    "씨앗 %1$@개로 소장": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get it for %1$@ seeds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たね%1$@個で手に入れる"
+          }
+        }
+      }
+    },
+    "씨앗 %1$@개를 받았어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You received %1$@ seeds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねを%1$@個受け取りました"
+          }
+        }
+      }
+    },
+    "씨앗 %1$@개를 썼어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You used %1$@ seeds."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねを%1$@個使いました。"
           }
         }
       }
@@ -7719,6 +9198,23 @@
         }
       }
     },
+    "오류 %1$@(%2$@) %3$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error %1$@(%2$@) %3$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エラー %1$@(%2$@) %3$@"
+          }
+        }
+      }
+    },
     "오히려 기운이 넘쳐요": {
       "extractionState": "manual",
       "localizations": {
@@ -7766,6 +9262,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "オンボーディングを閉じる"
+          }
+        }
+      }
+    },
+    "올림 %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uploaded %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アップロード %1$@"
           }
         }
       }
@@ -7834,6 +9347,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "運動"
+          }
+        }
+      }
+    },
+    "원본 %1$@건, 가져옴 %2$@건": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ in source, %2$@ imported"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "元データ%1$@件、読み込み%2$@件"
           }
         }
       }
@@ -8133,13 +9663,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This file holds your period and how-you-feel records. Saved right now: %1$@ period days · %2$@ check-ins"
+            "value": "This file contains your period and how-you-feel records. Saved right now: %1$@ period days · %2$@ check-ins"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このファイルには生理・体調の記録が入っています。現在保存されている記録：生理%1$@日 · チェックイン%2$@件"
+            "value": "このファイルには生理・体調の記録が入っています。今保存されている記録：生理%1$@日 · チェックイン%2$@件"
           }
         }
       }
@@ -9198,6 +10728,23 @@
         }
       }
     },
+    "존 오류 %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone error %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゾーンエラー %1$@"
+          }
+        }
+      }
+    },
     "종료": {
       "extractionState": "manual",
       "localizations": {
@@ -9487,6 +11034,23 @@
         }
       }
     },
+    "지금은 무료 체험 기간이에요. %1$@일 동안 모든 테마를 자유롭게 바꿔볼 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're in the free trial right now. For %1$@ days you can switch between all themes freely."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いまは無料体験期間です。%1$@日間、すべてのテーマを自由に切り替えられます。"
+          }
+        }
+      }
+    },
     "지금은 무료 체험 기간이에요. %@일 동안 모든 테마를 자유롭게 바꿔볼 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -9517,6 +11081,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "今は準備中です"
+          }
+        }
+      }
+    },
+    "지난 %1$@번, 예측과 실제가 평균 %2$@일 차이였어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over the last %1$@ times, the prediction and the actual day differed by %2$@ days on average."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直近%1$@回、予測と実際の差は平均%2$@日でした。"
+          }
+        }
+      }
+    },
+    "지난 %1$@번, 예측한 날에 시작했어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The last %1$@ times, it started on the predicted day."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直近%1$@回は、予測した日に始まりました。"
+          }
+        }
+      }
+    },
+    "지난 %1$@주기 · ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last %1$@ cycles · "
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直近%1$@周期 · "
+          }
+        }
+      }
+    },
+    "지난 %1$@주기,": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over the last %1$@ cycles,"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "過去%1$@周期、"
           }
         }
       }
@@ -9704,6 +11336,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "進行中のアウトプットはありません"
+          }
+        }
+      }
+    },
+    "진행도 %1$@ / %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress %1$@ / %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進捗 %1$@ / %2$@"
           }
         }
       }
@@ -9997,6 +11646,23 @@
         }
       }
     },
+    "최근 주기 %1$@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent cycle %1$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直近の周期 %1$@日"
+          }
+        }
+      }
+    },
     "최근 주기 %@일": {
       "extractionState": "manual",
       "localizations": {
@@ -10184,6 +11850,23 @@
         }
       }
     },
+    "커피 %1$@잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I received %1$@ cups of coffee. Thanks to your kindness, I get to keep building happily for a few more days!"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コーヒーを%1$@杯いただきました。あなたのやさしさのおかげで、あと数日も楽しく開発できます！"
+          }
+        }
+      }
+    },
     "커피 한 잔 (시험용)": {
       "extractionState": "manual",
       "localizations": {
@@ -10197,6 +11880,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "コーヒー一杯（テスト用）"
+          }
+        }
+      }
+    },
+    "커피 한 잔 · %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A cup of coffee · %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コーヒー一杯 · %1$@"
           }
         }
       }
@@ -10894,6 +12594,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "一日を簡単に書き残してみませんか"
+          }
+        }
+      }
+    },
+    "하루의 구성 %1$@ / 3": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How a day is made up %1$@ / 3"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一日の構成 %1$@ / 3"
           }
         }
       }

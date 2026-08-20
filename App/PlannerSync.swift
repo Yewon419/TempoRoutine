@@ -145,13 +145,13 @@ final class PlannerSync: NSObject {
         do {
             try await engine.sendChanges()
         } catch {
-            stampReport(suffix: "보내기 오류 — \(shortError(error))")
+            stampReport(suffix: Loc.fmt("보내기 오류 — %1$@", "\(shortError(error))"))
             return
         }
         do {
             try await engine.fetchChanges()
         } catch {
-            stampReport(suffix: "가져오기 오류 — \(shortError(error))")
+            stampReport(suffix: Loc.fmt("가져오기 오류 — %1$@", "\(shortError(error))"))
             return
         }
         if lastReport == before {
@@ -332,7 +332,7 @@ final class PlannerSync: NSObject {
         if pulled > 0 || removed > 0 {
             try? context.save()
             persistSynced()
-            stampReport(suffix: "내림 \(pulled)·삭제 \(removed)")
+            stampReport(suffix: Loc.fmt("내림 %1$@·삭제 %2$@", "\(pulled)", "\(removed)"))
         }
     }
 
@@ -599,7 +599,7 @@ extension PlannerSync: CKSyncEngineDelegate {
                 UserDefaults.standard.set(true, forKey: "plannerSyncZoneSaved")
             }
             for failure in sent.failedZoneSaves {
-                stampReport(suffix: "존 오류 \((failure.error as? CKError)?.code.rawValue ?? -1)")
+                stampReport(suffix: Loc.fmt("존 오류 %1$@", "\((failure.error as? CKError)?.code.rawValue ?? -1)"))
             }
         case .sentRecordZoneChanges(let sent):
             var pushed = 0
@@ -619,7 +619,7 @@ extension PlannerSync: CKSyncEngineDelegate {
             }
             if pushed > 0 || !sent.deletedRecordIDs.isEmpty {
                 persistSynced()
-                stampReport(suffix: "올림 \(pushed)")
+                stampReport(suffix: Loc.fmt("올림 %1$@", "\(pushed)"))
             }
         default:
             break
@@ -650,7 +650,7 @@ extension PlannerSync: CKSyncEngineDelegate {
         default:
             // 진단 상세(2026-08-11 — "오류 12"만으론 원인 특정 불가했던 교훈): 코드 이름+설명까지
             let detail = ckError.localizedDescription.prefix(80)
-            stampReport(suffix: "오류 \(ckError.code.rawValue)(\(Self.codeName(ckError.code))) \(detail)")
+            stampReport(suffix: Loc.fmt("오류 %1$@(%2$@) %3$@", "\(ckError.code.rawValue)", "\(Self.codeName(ckError.code))", "\(detail)"))
         }
     }
 

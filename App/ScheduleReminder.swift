@@ -35,7 +35,7 @@ enum ScheduleReminder {
             content.body = if isAllDay {
                 reminderMinutes >= 1440 ? "내일 일정이에요." : "오늘 일정이에요."
             } else {
-                "\(date.formatted(date: .omitted, time: .shortened))에 시작해요."
+                Loc.fmt("%1$@에 시작해요.", "\(date.formatted(date: .omitted, time: .shortened))")
             }
             content.sound = .signature   // 시그니처 칼림바(2026-08-09)
             try? await center.add(UNNotificationRequest(identifier: id.uuidString,

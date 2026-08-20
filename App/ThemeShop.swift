@@ -78,7 +78,7 @@ struct ThemeShopView: View {
                         header
                         // 7일 무료 체험 안내(2026-08-19) — 기간은 사실만, 재촉 문구 금지(§7)
                         if ThemeTrial.isActive {
-                            Text("지금은 무료 체험 기간이에요. \(ThemeTrial.daysLeft)일 동안 모든 테마를 자유롭게 바꿔볼 수 있어요.")
+                            Text(Loc.fmt("지금은 무료 체험 기간이에요. %1$@일 동안 모든 테마를 자유롭게 바꿔볼 수 있어요.", "\(ThemeTrial.daysLeft)"))
                                 .font(.footnote)
                                 .foregroundStyle(Ink.text.opacity(0.6))
                                 .fixedSize(horizontal: false, vertical: true)
@@ -112,13 +112,13 @@ struct ThemeShopView: View {
         .sensoryFeedback(.success, trigger: celebrateTick)
         // 구매 확인(2026-08-09) — 씨앗을 쓰는 확정 액션이라 한 번 묻는다(§8.2.6 확인 문법)
         .confirmationDialog(
-            plantCandidate.map { "「\($0.displayName)」 구매" } ?? "",
+            plantCandidate.map { Loc.fmt("「%1$@」 구매", "\($0.displayName)") } ?? "",
             isPresented: Binding(get: { plantCandidate != nil },
                                  set: { if !$0 { plantCandidate = nil } }),
             titleVisibility: .visible
         ) {
             if let price = plantCandidate?.seedPrice {
-                Button("씨앗 \(price)개로 구매") {
+                Button(Loc.fmt("씨앗 %1$@개로 구매", "\(price)")) {
                     if let theme = plantCandidate { plant(theme) }
                     plantCandidate = nil
                 }
@@ -126,14 +126,14 @@ struct ThemeShopView: View {
             Button("취소", role: .cancel) { plantCandidate = nil }
         }
         // 성공 메시지(연출 한 박자 뒤) — 구매와 적용이 분리라 여기서 적용을 권한다
-        .alert(plantedAlert.map { "「\($0.displayName)」을 구매했어요" } ?? "",
+        .alert(plantedAlert.map { Loc.fmt("「%1$@」을 구매했어요", "\($0.displayName)") } ?? "",
                isPresented: Binding(get: { plantedAlert != nil },
                                     set: { if !$0 { plantedAlert = nil } }),
                presenting: plantedAlert) { theme in
             Button("지금 적용하기") { apply(theme) }
             Button("나중에") { plantedAlert = nil }
         } message: { theme in
-            Text("씨앗 \(theme.seedPrice ?? 0)개를 썼어요.")
+            Text(Loc.fmt("씨앗 %1$@개를 썼어요.", "\(theme.seedPrice ?? 0)"))
         }
         .sheet(item: $previewing) { theme in
             ThemePreviewScreen(theme: theme)
@@ -346,7 +346,7 @@ struct ThemeShopView: View {
                         .background(Ink.text, in: Capsule())
                 }
                 if let price = theme.seedPrice, available >= price {
-                    Button("씨앗 \(price)개로 소장") {
+                    Button(Loc.fmt("씨앗 %1$@개로 소장", "\(price)")) {
                         lightFeedback += 1
                         plantCandidate = theme
                     }
@@ -365,7 +365,7 @@ struct ThemeShopView: View {
                             .fill(Ink.paper)
                             .frame(width: 8, height: 11)
                             .rotationEffect(.degrees(16))
-                        Text("씨앗 \(price)개로 구매")
+                        Text(Loc.fmt("씨앗 %1$@개로 구매", "\(price)"))
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(Ink.paper)
@@ -380,7 +380,7 @@ struct ThemeShopView: View {
                         .fill(Ink.text.opacity(0.4))
                         .frame(width: 8, height: 11)
                         .rotationEffect(.degrees(16))
-                    Text("씨앗 \(price)개로 구매할 수 있어요 · 지금 \(available)개")
+                    Text(Loc.fmt("씨앗 %1$@개로 구매할 수 있어요 · 지금 %2$@개", "\(price)", "\(available)"))
                         .font(.footnote)
                         .foregroundStyle(Ink.text.opacity(0.55))
                 }
@@ -807,7 +807,7 @@ struct ThemePreview: View {
             else if chrome.forcesLightAppearance { scheme = .light }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(theme.displayName) 테마 미리보기")
+        .accessibilityLabel(Loc.fmt("%1$@ 테마 미리보기", "\(theme.displayName)"))
     }
 
     /// 카드 지면 — 티켓은 유화, 날씨는 하늘, 그 외는 팔레트 지면색(ThemePreviewScreen과 동형,
@@ -886,7 +886,7 @@ struct TrialEndSheet: View {
             Button {
                 confirm()
             } label: {
-                Text("「\(choice.displayName)」으로 시작하기")
+                Text(Loc.fmt("「%1$@」으로 시작하기", "\(choice.displayName)"))
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Ink.paper)
                     .frame(maxWidth: .infinity)
@@ -926,7 +926,7 @@ struct TrialEndSheet: View {
                 .stroke(Ink.text.opacity(selected ? 0.8 : 0), lineWidth: 1.5))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(theme.displayName) 테마")
+        .accessibilityLabel(Loc.fmt("%1$@ 테마", "\(theme.displayName)"))
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 

@@ -148,7 +148,7 @@ def strip_swift_noise(source: str) -> list[tuple[int, str]]:
                 # 보간 `\(...)` — 안에 또 문자열이 들어갈 수 있다("a\(b ? "c" : "d")e").
                 # 괄호 균형을 세며 통째로 건너뛰지 않으면 안쪽 따옴표에서 리터럴이 잘린다.
                 if source[index] == "\\" and source[index : index + 2] == "\\(":
-                    buffer.append("\\(")
+                    interp_start = index      # 보간 원문을 그대로 보존한다(변환기가 식을 쓴다)
                     index += 2
                     depth = 1
                     while index < length and depth > 0:
@@ -167,7 +167,7 @@ def strip_swift_noise(source: str) -> list[tuple[int, str]]:
                             line += 1
                         index += 1
                     index += 1
-                    buffer.append(")")
+                    buffer.append(source[interp_start:index])
                     continue
                 if source[index] == "\\" and index + 1 < length:
                     buffer.append(source[index])

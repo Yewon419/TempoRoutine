@@ -228,7 +228,7 @@ struct SeedBadge: View {
         .overlay(Capsule().stroke(Ink.text.opacity(0.15), lineWidth: 1))
         .animation(.spring(response: 0.32, dampingFraction: 0.7), value: count)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("씨앗 \(count)개")
+        .accessibilityLabel(Loc.fmt("씨앗 %1$@개", "\(count)"))
     }
 }
 

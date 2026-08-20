@@ -224,7 +224,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(healthCaption)
                         if mirror.linked && !mirror.lastSyncReport.isEmpty {
-                            Text("마지막 동기화 · \(mirror.lastSyncReport)")
+                            Text(Loc.fmt("마지막 동기화 · %1$@", "\(mirror.lastSyncReport)"))
                         }
                     }
                     .foregroundStyle(Ink.groundSub)
@@ -253,7 +253,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 연동됩니다. 생리 기록은 iCloud로 보내지 않습니다.")
                         if !PlannerSync.shared.lastReport.isEmpty {
-                            Text("마지막 동기화 · \(PlannerSync.shared.lastReport)")
+                            Text(Loc.fmt("마지막 동기화 · %1$@", "\(PlannerSync.shared.lastReport)"))
                         }
                         // 연결 상태 진단(2026-08-11) — 엔진이 안 떠 있으면 기기 iCloud 설정 안내
                         if syncOn && !PlannerSync.shared.running {
@@ -297,7 +297,7 @@ struct SettingsView: View {
                 } footer: {
                     Text(selfReports.isEmpty
                          ? "응답은 이 기기에만 저장돼요."
-                         : "마지막 응답 \(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.")
+                         : Loc.fmt("마지막 응답 %1$@건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.", "\(selfReports.count)"))
                         .foregroundStyle(Ink.groundSub)
                 }
 
@@ -319,7 +319,7 @@ struct SettingsView: View {
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
                         // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
-                        Text("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \(periodDays.count)일 · 체크인 \(checkIns.count)건")
+                        Text(Loc.fmt("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$@일 · 체크인 %2$@건", "\(periodDays.count)", "\(checkIns.count)"))
                         // 기기 이전 경로 노출(2026-08-19, 개정 P 후속) — 경로는 종전부터 동작, 카피만 신설
                         Text("기기를 바꾸시나요? 내보내기 파일을 새 기기로 보내고 「백업 가져오기」로 열면 기록이 이어져요.")
                     }
@@ -436,7 +436,7 @@ struct SettingsView: View {
     private func exportData() {
         do {
             let data = try ExportCodec.encode(ExportImport.buildEnvelope(from: store))
-            let name = "TempoRoutine-백업-\(ExportCodec.dayString(.now)).json"
+            let name = Loc.fmt("TempoRoutine-백업-%1$@.json", "\(ExportCodec.dayString(.now))")
             let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
             try data.write(to: url, options: .atomic)
             shareURL = url
@@ -453,7 +453,7 @@ struct SettingsView: View {
             let envelope = try ExportCodec.decode(try Data(contentsOf: url))
             let added = ExportImport.merge(envelope, into: modelContext, existing: store)
             if added > 0 { refreshDerivedSurfaces() }
-            message = added > 0 ? "\(added)건을 가져왔어요." : "새로 가져올 기록이 없어요."
+            message = added > 0 ? Loc.fmt("%1$@건을 가져왔어요.", "\(added)") : "새로 가져올 기록이 없어요."
         } catch ExportCodec.CodecError.newerVersion {
             message = "이 백업은 지금 앱보다 새로운 버전이에요. 앱을 업데이트한 뒤 가져와 주세요."
         } catch {

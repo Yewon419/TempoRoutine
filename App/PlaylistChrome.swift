@@ -71,9 +71,9 @@ struct PlaylistPlayerCard: View {
             PlaylistSeekBar(progress: progress)
                 .padding(.top, 12)
             HStack {
-                Text("\(dayInCycle)일차")
+                Text(Loc.fmt("%1$@일차", "\(dayInCycle)"))
                 Spacer(minLength: 0)
-                Text("\(cycleLength)일")
+                Text(Loc.fmt("%1$@일", "\(cycleLength)"))
             }
             .font(.caption2)
             .monospacedDigit()
@@ -173,7 +173,7 @@ struct PlaylistAlbumHeader: View {
                 .kerning(1.8)
                 .foregroundStyle(Ink.dim)
             HStack(alignment: .center, spacing: 2) {
-                Text("\(month)월")
+                Text(Loc.fmt("%1$@월", "\(month)"))
                     .font(.system(size: 38, weight: .semibold))
                     .foregroundStyle(Ink.text)
                 Spacer(minLength: 0)

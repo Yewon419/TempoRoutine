@@ -108,13 +108,13 @@ struct ScheduleAddSheet: View {
     private var multiDaySpanLabel: String? {
         guard allDay, allDayEndDate != nil else { return nil }
         let days = ScheduleSpan.dayCount(start: start, end: endDay, calendar: Calendar.current)
-        return "\(days)일에 걸친 일정이에요"
+        return Loc.fmt("%1$@일에 걸친 일정이에요", "\(days)")
     }
 
     /// 제목에서 읽은 시각을 알려주는 한 줄 — 무엇을 근거로 시각이 채워졌는지(2026-08-01)
     private var parseHint: String? {
         guard !timeManuallySet, let matched = lastAppliedMatch else { return nil }
-        return "「\(matched)」를 \(start.formatted(date: .omitted, time: .shortened))으로 읽었어요. 시각을 직접 고치면 그대로 둬요."
+        return Loc.fmt("「%1$@」를 %2$@으로 읽었어요. 시각을 직접 고치면 그대로 둬요.", "\(matched)", "\(start.formatted(date: .omitted, time: .shortened))")
     }
 
     /// 기준 날짜(day 성분) + 시:분 — bySettingHour의 전진 탐색을 피해 컴포넌트로 조립
@@ -357,16 +357,16 @@ struct QuickScheduleBar: View {
         .padding(.vertical, 7)
         .background(Ink.text.opacity(0.08), in: Capsule())
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("날짜 \(dayLabel)")
+        .accessibilityLabel(Loc.fmt("날짜 %1$@", "\(dayLabel)"))
     }
 
     private var dayLabel: String {
         guard let endDay else {
-            return "\(cal.component(.day, from: day))일 \(day.formatted(.dateTime.weekday(.abbreviated)))"
+            return Loc.fmt("%1$@일 %2$@", "\(cal.component(.day, from: day))", "\(day.formatted(.dateTime.weekday(.abbreviated)))")
         }
         // 드래그 기간 — 같은 달 안에서만 선택되므로 일(day)만 잇는다
         let count = ScheduleSpan.dayCount(start: day, end: endDay, calendar: cal)
-        return "\(cal.component(.day, from: day))~\(cal.component(.day, from: endDay))일 · \(count)일"
+        return Loc.fmt("%1$@~%2$@일 · %3$@일", "\(cal.component(.day, from: day))", "\(cal.component(.day, from: endDay))", "\(count)")
     }
 
     private func timeText(_ time: ParsedTime) -> String {
@@ -552,10 +552,10 @@ struct InputAddSheet: View {
             .pickerStyle(.menu)
             .tint(Ink.text)
             if progressKind == .sessions {
-                Stepper("목표 \(targetSessions)회", value: $targetSessions, in: 1...50)
+                Stepper(Loc.fmt("목표 %1$@회", "\(targetSessions)"), value: $targetSessions, in: 1...50)
             }
             if progressKind == .timer {
-                Stepper("목표 \(targetMinutes)분", value: $targetMinutes, in: 1...240)
+                Stepper(Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, in: 1...240)
                 Text("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요.")
                     .font(.footnote)
                     .foregroundStyle(Ink.text.opacity(0.5))
@@ -666,7 +666,7 @@ struct InputAddSheet: View {
                         Picker("시작 계절", selection: $anchor) {
                             ForEach(SeasonAnchor.allCases) { Text($0.rawValue).tag($0) }
                         }
-                        Stepper("계절 시작 +\(offset)일", value: $offset, in: 0...13)
+                        Stepper(Loc.fmt("계절 시작 +%1$@일", "\(offset)"), value: $offset, in: 0...13)
                         Toggle("매 주기 반복", isOn: $everyCycle)
                     }
                 }
@@ -868,7 +868,7 @@ struct OutputAddSheet: View {
                             }
                         }
                     }
-                    Toggle("\(anchor.rawValue) 반복", isOn: Binding(
+                    Toggle(Loc.fmt("%1$@ 반복", "\(anchor.rawValue)"), isOn: Binding(
                         get: { cycleBased },
                         set: { on in cycleBased = on; if on { repeats = false } }
                     ))
@@ -879,16 +879,16 @@ struct OutputAddSheet: View {
                         }
                         // 계절 전체 ↔ N일차(2026-08-01) — 전체는 그 계절 내내, N일차는 하루만
                         Picker("범위", selection: $wholePhase) {
-                            Text("\(anchor.rawValue) 전체").tag(true)
-                            Text("\(anchor.rawValue) 며칠째").tag(false)
+                            Text(Loc.fmt("%1$@ 전체", "\(anchor.rawValue)")).tag(true)
+                            Text(Loc.fmt("%1$@ 며칠째", "\(anchor.rawValue)")).tag(false)
                         }
                         .pickerStyle(.segmented)
                         if wholePhase {
-                            Text("\(anchor.rawValue)인 날엔 매일 보여요.")
+                            Text(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(anchor.rawValue)"))
                                 .font(.footnote)
                                 .foregroundStyle(Ink.text.opacity(0.5))
                         } else {
-                            Stepper("\(anchor.rawValue) \(offset + 1)일차", value: $offset, in: 0...13)
+                            Stepper(Loc.fmt("%1$@ %2$@일차", "\(anchor.rawValue)", "\(offset + 1)"), value: $offset, in: 0...13)
                         }
                         Toggle("매 주기 반복", isOn: $everyCycle)
                     }
@@ -922,10 +922,10 @@ struct OutputAddSheet: View {
                     .pickerStyle(.menu)
                     .tint(Ink.text)
                     if kind == .sessions {
-                        Stepper("목표 \(targetSessions)세션", value: $targetSessions, in: 1...50)
+                        Stepper(Loc.fmt("목표 %1$@세션", "\(targetSessions)"), value: $targetSessions, in: 1...50)
                     }
                     if kind == .timer {
-                        Stepper("목표 \(targetMinutes)분", value: $targetMinutes, in: 5...240, step: 5)
+                        Stepper(Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, in: 5...240, step: 5)
                         Text("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요.")
                             .font(.footnote)
                             .foregroundStyle(Ink.text.opacity(0.5))
@@ -1070,7 +1070,7 @@ struct OutputAddSheet: View {
 func cardTimeHint(timeMinutes: Int?, clear: @escaping () -> Void) -> some View {
     if let t = timeMinutes {
         HStack {
-            Text("\(timeOfDayLabel(t))에 하는 걸로 표시돼요")
+            Text(Loc.fmt("%1$@에 하는 걸로 표시돼요", "\(timeOfDayLabel(t))"))
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.55))
             Spacer()

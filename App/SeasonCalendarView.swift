@@ -524,7 +524,7 @@ struct SeasonCalendarView: View {
                                    color: Ink.text)
                 }
             } else {
-                almanacDisplay("\(cal.component(.month, from: monthStart))월", size: 58, color: Ink.text)
+                almanacDisplay(Loc.fmt("%1$@월", "\(cal.component(.month, from: monthStart))"), size: 58, color: Ink.text)
                 Text(String(cal.component(.year, from: monthStart)))
                     .font(.system(.footnote, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.5))
@@ -1218,7 +1218,7 @@ struct SeasonCalendarView: View {
         guard let last = starts.max() else { return "첫 생리일을 기록하면 계절이 채워지기 시작할거예요" }
         let diff = cal.dateComponents([.day], from: last, to: today).day ?? 0
         if diff >= avgLength + TodayView.overdueGraceDays {
-            return "겨울 예상 · 예정일 \(diff - avgLength)일 지남"
+            return Loc.fmt("겨울 예상 · 예정일 %1$@일 지남", "\(diff - avgLength)")
         }
         guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
             return "첫 생리일을 기록하면 계절이 채워지기 시작할거예요"
@@ -1231,7 +1231,7 @@ struct SeasonCalendarView: View {
             .first { $0.phase == phase }?.startDay ?? 1
         let hedge = starts.count == 1 ? "아마 " : ""
         let projected = r.projected ? " · 예상" : ""
-        return "\(hedge)\(meta.name) \(max(1, r.day - spanStart + 1))일차\(projected)"
+        return Loc.fmt("%1$@%2$@ %3$@일차%4$@", "\(hedge)", "\(meta.name)", "\(max(1, r.day - spanStart + 1))", "\(projected)")
     }
 
     // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
@@ -1279,7 +1279,7 @@ struct SeasonCalendarView: View {
         if let meta = style.meta {
             // 개정 M-1c: 단계명 제거 — VoiceOver는 소리로 읽혀 프라이버시 표면이기도 하다.
             // "예상"은 유지: faded 시각 hedge가 전달되지 않는 채널이라 텍스트가 유일한 hedge(§5.6.2).
-            parts.append(style.projected ? "\(meta.name) 예상" : meta.name)
+            parts.append(style.projected ? Loc.fmt("%1$@ 예상", "\(meta.name)") : meta.name)
         }
         if recorded { parts.append("생리 기록") }
         if predicted { parts.append("생리 예상") }

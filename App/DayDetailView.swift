@@ -44,7 +44,7 @@ struct InfoBadge: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(title) 설명")
+        .accessibilityLabel(Loc.fmt("%1$@ 설명", "\(title)"))
         .alert(title, isPresented: $show) {
             Button("확인") {}
         } message: {
@@ -225,7 +225,7 @@ struct DayDetailView: View {
             }
             if let info = snapshot.phaseInfo(on: day) {
                 HStack(spacing: 6) {
-                    Text("\(info.meta.name) \(info.dayInPhase)일차")   // 계절 내 일차(2026-08-09 통일)
+                    Text(Loc.fmt("%1$@ %2$@일차", "\(info.meta.name)", "\(info.dayInPhase)"))   // 계절 내 일차(2026-08-09 통일)
                     if info.projected { Text("· 예상") }
                 }
                 .font(.system(.footnote, design: .serif))
@@ -308,7 +308,7 @@ struct DayDetailView: View {
                         .foregroundStyle(Ink.text.opacity(0.6))
                         .frame(width: 32, height: 32)
                 }
-                .accessibilityLabel("\(kind.rawValue) 추가")
+                .accessibilityLabel(Loc.fmt("%1$@ 추가", "\(kind.rawValue)"))
             }
             if empty {
                 Text(emptyMessage)
@@ -368,7 +368,7 @@ struct DayDetailView: View {
                             Text(item.title).foregroundStyle(Ink.text)
                             // 여러 날 일정 — 그날이 몇 일차인지(§8.2.3)
                             if let index = item.dayIndex(on: day) {
-                                Text("\(index)/\(item.spanDays)일차")
+                                Text(Loc.fmt("%1$@/%2$@일차", "\(index)", "\(item.spanDays)"))
                                     .font(.caption2)
                                     .foregroundStyle(Ink.text.opacity(0.5))
                                     .padding(.horizontal, 6)

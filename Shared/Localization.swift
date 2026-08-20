@@ -1,5 +1,7 @@
 // 템포루틴 — 로컬라이제이션 도구 (2026-08-20, en·ja 이관 개시)
 // 계약 SSOT = `..\로컬라이제이션.md`. 여기는 그 규칙의 코드 쪽 한 조각.
+// **Shared 소속** — 위젯 익스텐션도 같은 규칙을 쓴다. 각 타깃이 제 번들 카탈로그를 본다
+// (앱 = App/Localizable.xcstrings, 위젯 = Widgets/Localizable.xcstrings).
 //
 // 규칙 ① **보간 없는 화면 문자열은 한글 리터럴을 그대로 키로 쓴다.** SwiftUI가 `Text`·`Button`·
 //   `Label` 등에서 리터럴을 `LocalizedStringKey`로 받으므로 소스를 고칠 필요가 없다.
