@@ -352,6 +352,10 @@ final class PlannerSync: NSObject {
             item.reminderMinutes = dto.reminderMinutes ?? -1
             item.createdAt = dto.createdAt
             if existing == nil { context.insert(item) }
+            // 취소 후 재예약(2026-08-20 감사) — schedule()은 reminderMinutes<0이면 즉시 반환이라,
+            // 원격에서 알림을 끄거나 시각을 바꾼 수정이 유입될 때 옛 pending이 남아 예전 시각에
+            // 울렸다(앱 내 편집 경로 CardAddSheets와 동일한 순서로 맞춤)
+            ScheduleReminder.cancel(id: item.id)
             ScheduleReminder.schedule(id: item.id, title: item.title, date: item.date,
                                       isAllDay: item.isAllDay, repeatRule: item.repeatRule,
                                       reminderMinutes: item.reminderMinutes)
@@ -439,7 +443,9 @@ final class PlannerSync: NSObject {
             item.note = dto.note
             item.createdAt = dto.createdAt
             item.isBackfilled = dto.isBackfilled ?? false
-            item.completedAt = dto.completedAt
+            // 도장은 불변(Seeds 계약 — 한 번 완성은 회수 안 함)이라 원격 nil이 로컬 도장을
+            // 지우지 않는다(2026-08-20 감사 — LWW가 다른 기기 도장·씨앗 근거를 덮던 결함)
+            item.completedAt = dto.completedAt ?? item.completedAt
             if byDay == nil { context.insert(item) }
             return true
         }
@@ -458,6 +464,10 @@ final class PlannerSync: NSObject {
             // 체크리스트 항목(InputSubtask)은 관계 cascade라 아이템과 같이 지워진다.
             let progresses = (try? context.fetch(FetchDescriptor<InputProgress>())) ?? []
             for record in progresses where record.itemID == item.id { context.delete(record) }
+            // 완료 기록도 같은 구조(itemID 참조)인데 빠져 있었다(2026-08-20 감사 — QuickDelete와
+            // 동일 처리). 안 걷으면 원격 삭제 후 고아 완료가 집계·씨앗 표면에 계속 섞인다
+            let completions = (try? context.fetch(FetchDescriptor<ItemCompletion>())) ?? []
+            for record in completions where record.itemID == item.id { context.delete(record) }
             context.delete(item)
             return true
         }

@@ -349,10 +349,13 @@ struct CheckInEditor: View {
             if AppSettings.trackedSignals.appetite {
                 signalRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite)
             }
-            TextField("", text: $draftNote, axis: .vertical)   // placeholder 제거(2026-07-31 사용자 지시)
-                .font(.footnote)
-                .foregroundStyle(Ink.text)
-                .onChange(of: draftNote) { persist() }
+            // 「오늘 한 줄」 토글 배선(2026-08-20 감사 — CheckInCard와 동일 규칙)
+            if AppSettings.trackedSignals.note {
+                TextField("", text: $draftNote, axis: .vertical)   // placeholder 제거(2026-07-31 사용자 지시)
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text)
+                    .onChange(of: draftNote) { persist() }
+            }
         }
         .padding(16)
         .milkGlass(radius: 14)
@@ -419,7 +422,10 @@ struct CheckInEditor: View {
                 modelContext.delete(existing)
             }
         } else if hasSignals || hasNote {
-            let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood)
+            // 소급 플래그(2026-08-20 감사 — CheckInCard와 동일 규칙. 스트립은 -90일까지
+            // 선택 가능한데 여기만 플래그가 빠져 지난 날 기록이 당일 가중치로 섞였다)
+            let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood,
+                                   isBackfilled: !Calendar.current.isDateInToday(day))
             new.sleep = draftSleep > 0 ? draftSleep : nil
             new.appetite = draftAppetite > 0 ? draftAppetite : nil
             new.note = hasNote ? draftNote : nil

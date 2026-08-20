@@ -57,15 +57,19 @@ struct CheckInCard: View {
             if signals.appetite {
                 checkInRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite)
             }
-            VStack(alignment: .leading, spacing: 6) {
-                Text(noteLabel).font(.caption).foregroundStyle(Ink.text.opacity(0.5))
-                // 안내문구 = prompt(2026-08-05 베타 피드백 "하루를 간단히 남겨봐요" — 07-31 placeholder 제거의 교체)
-                TextField("", text: $draftNote, prompt: Text("하루를 간단히 남겨봐요")
-                    .foregroundStyle(Ink.text.opacity(0.35)), axis: .vertical)
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.text)
-                    .focused($noteFocused)
-                    .onChange(of: draftNote) { persistDraft() }
+            // 「오늘 한 줄」도 추적 항목 토글을 따른다(2026-08-20 감사 — 온보딩 ③ 토글이
+            // 있는데 두 표면 다 무조건 렌더해 죽은 스위치였다). 꺼도 기존 노트는 보존된다
+            if signals.note {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(noteLabel).font(.caption).foregroundStyle(Ink.text.opacity(0.5))
+                    // 안내문구 = prompt(2026-08-05 베타 피드백 "하루를 간단히 남겨봐요" — 07-31 placeholder 제거의 교체)
+                    TextField("", text: $draftNote, prompt: Text("하루를 간단히 남겨봐요")
+                        .foregroundStyle(Ink.text.opacity(0.35)), axis: .vertical)
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.text)
+                        .focused($noteFocused)
+                        .onChange(of: draftNote) { persistDraft() }
+                }
             }
             if draftEnergy > 0 && draftMood > 0 {
                 Text(confirmLine)

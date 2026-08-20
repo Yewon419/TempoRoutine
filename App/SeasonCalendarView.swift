@@ -473,7 +473,8 @@ struct SeasonCalendarView: View {
     }
 
     /// 이 달의 잉크 글줄(§5.9-4: resolve가 캘린더에 뜨는지) — 일정 + cycle-anchored occurrence.
-    /// 매일 Input은 셀에 그리지 않음(전 셀 노이즈). projected는 faded.
+    /// 달력 반복(once·daily·weekly·monthly) Input·Output은 셀에 그리지 않음 — §8.2.3 잉크
+    /// 글줄 계약이 「일정 + 주기 occurrence」만 명시(daily는 전 셀 노이즈이기도). projected는 faded.
     private func monthMarks(_ layout: MonthLayout) -> [Date: [(title: String, projected: Bool, isSchedule: Bool)]] {
         var marks: [Date: [(title: String, projected: Bool, isSchedule: Bool)]] = [:]
         let snap = CycleSnapshot(periodDays: periodDays)
@@ -495,7 +496,7 @@ struct SeasonCalendarView: View {
             }
         }
         for item in outputs {
-            guard case .cycleAnchored(let r) = item.schedule else { continue }   // 매일 Input과 동일 — 노이즈 방지
+            guard case .cycleAnchored(let r) = item.schedule else { continue }   // 달력 반복 제외 — 위 주석과 동일 계약
             for occ in snap.occurrences(of: r, createdAt: cal.startOfDay(for: item.createdAt))
             where occ.date >= layout.start && occ.date < monthEnd {
                 if item.isComplete && occ.projected { continue }   // §5.5.2 완료된 Output 미래 미표시

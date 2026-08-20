@@ -452,6 +452,7 @@ struct SettingsView: View {
         do {
             let envelope = try ExportCodec.decode(try Data(contentsOf: url))
             let added = ExportImport.merge(envelope, into: modelContext, existing: store)
+            if added > 0 { refreshDerivedSurfaces() }
             message = added > 0 ? "\(added)건을 가져왔어요." : "새로 가져올 기록이 없어요."
         } catch ExportCodec.CodecError.newerVersion {
             message = "이 백업은 지금 앱보다 새로운 버전이에요. 앱을 업데이트한 뒤 가져와 주세요."
@@ -501,6 +502,25 @@ struct SettingsView: View {
         return "기록은 이 기기에만 저장됩니다."   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
     }
 
+    /// 삭제·복원·가져오기 직후 파생 표면 재정렬(2026-08-20 감사) — 위젯 스냅샷·브리핑·예측·
+    /// 커버 알림이 이 세 경로에서 갱신되지 않아, 전체 삭제 후에도 위젯이 옛 목록을 보여주고
+    /// 다음 날 아침 브리핑이 지운 일정 제목을 읽었다. @Query 배열은 트랜잭션 직후 stale일 수
+    /// 있어 컨텍스트에서 직접 읽는다.
+    private func refreshDerivedSurfaces() {
+        let periods = (try? modelContext.fetch(FetchDescriptor<PeriodDay>())) ?? []
+        let scheds = (try? modelContext.fetch(
+            FetchDescriptor<ScheduleItem>(sortBy: [SortDescriptor(\.date)]))) ?? []
+        let ins = (try? modelContext.fetch(
+            FetchDescriptor<InputItem>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
+        let outs = (try? modelContext.fetch(
+            FetchDescriptor<OutputItem>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
+        let comps = (try? modelContext.fetch(FetchDescriptor<ItemCompletion>())) ?? []
+        WidgetBridge.publish(periodDays: periods, schedules: scheds, inputs: ins,
+                             outputs: outs, completions: comps)
+        DailyNotices.reschedule(periodDays: periods, schedules: scheds)
+        CoverageReminder.reschedule(periodDays: periods, context: modelContext)
+    }
+
     private func wipeAll(includeHealth: Bool) {
         undoDismissTask?.cancel()
         let snapshot = ExportImport.buildEnvelope(from: store)
@@ -510,6 +530,7 @@ struct SettingsView: View {
         }
         HealthMirror.resetImportState()   // 앵커·툼스톤 리셋 — 재연동이 초기 가져오기가 되도록(2026-07-23)
         ExportImport.wipeAll(store, context: modelContext)
+        refreshDerivedSurfaces()
         withAnimation { undoSnapshot = snapshot }
         undoDismissTask = Task {
             try? await Task.sleep(for: .seconds(8))
@@ -524,6 +545,7 @@ struct SettingsView: View {
         undoDismissTask?.cancel()
         // 전량 삭제 직후라 기존 셋이 비어 있어 스냅샷 전체가 재삽입된다(UUID 보존)
         ExportImport.merge(snapshot, into: modelContext, existing: store)
+        refreshDerivedSurfaces()
         withAnimation { undoSnapshot = nil }
     }
 }

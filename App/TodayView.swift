@@ -564,10 +564,6 @@ struct TodayView: View {
         completions.contains { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: today) }
     }
 
-    private func hasAnyCompletion(_ itemID: UUID) -> Bool {
-        completions.contains { $0.itemID == itemID }
-    }
-
     private func toggleCheck(_ itemID: UUID) {
         if let existing = completions.first(where: { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: today) }) {
             modelContext.delete(existing)

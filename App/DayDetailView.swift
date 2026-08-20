@@ -439,10 +439,6 @@ struct DayDetailView: View {
         completions.contains { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: day) }
     }
 
-    private func hasAnyCompletion(_ itemID: UUID) -> Bool {
-        completions.contains { $0.itemID == itemID }
-    }
-
     private func toggleCompletion(_ itemID: UUID) {
         if let existing = completions.first(where: { $0.itemID == itemID && cal.isDate($0.occurredOn, inSameDayAs: day) }) {
             modelContext.delete(existing)
@@ -591,7 +587,11 @@ struct DayDetailView: View {
                                 .foregroundStyle(Ink.text.opacity(0.5))
                         }
                     }
-                    progressControl(row.item)
+                    // 미래는 조작 금지(원칙 4 — Input 체크·진행과 동일 가드, 2026-08-20 감사:
+                    // 미래 날짜에서 퍼센트·체크리스트를 만지면 아이템 누적에 즉시 반영되던 구멍)
+                    if !isFuture {
+                        progressControl(row.item)
+                    }
                 }
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())

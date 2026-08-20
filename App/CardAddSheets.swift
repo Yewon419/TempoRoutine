@@ -884,7 +884,12 @@ struct OutputAddSheet: View {
                     Toggle("목표일 정하기", isOn: $hasTargetDate.animation())
                         .tint(Ink.text)
                     if hasTargetDate {
-                        DatePicker("목표일", selection: $targetDate, displayedComponents: [.date])
+                        // 하한 = 오늘(2026-08-20 감사 — 과거 목표일은 occursByCalendar의
+                        // 생성일≤일≤목표일이 공집합이 돼 전 표면에서 안 뜨는 유령 카드가 된다).
+                        // 기존 아이템의 과거 목표일은 min으로 살려 편집은 막지 않는다
+                        DatePicker("목표일", selection: $targetDate,
+                                   in: min(targetDate, Calendar.current.startOfDay(for: .now))...,
+                                   displayedComponents: [.date])
                     }
                 }
                 Section("진행 방식") {

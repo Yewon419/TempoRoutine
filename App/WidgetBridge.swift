@@ -75,7 +75,6 @@ enum WidgetBridge {
         func checked(_ id: UUID) -> Bool {
             completions.contains { $0.itemID == id && cal.isDate($0.occurredOn, inSameDayAs: day) }
         }
-        func hasAny(_ id: UUID) -> Bool { completions.contains { $0.itemID == id } }
         let rows = inputs.filter { item in
             switch item.schedule {
             case .once:
@@ -102,6 +101,10 @@ enum WidgetBridge {
         let rows = outputs.filter { item in
             switch item.schedule {
             case .once, .daily, .weekly, .monthly:
+                // 완료된 Output의 미래 발생 숨김(§5.5.2) — 하루 상세와 동일 규칙.
+                // 위젯은 미래 날짜(-35...34일)를 실제로 그리므로 이 분기가 필요하다(2026-08-20 감사)
+                let future = day > cal.startOfDay(for: .now)
+                if item.isComplete && future { return false }
                 return item.occursByCalendar(on: day)
             case .cycleAnchored(let r):
                 guard let occ = snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: day) else {
