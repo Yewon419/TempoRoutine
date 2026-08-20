@@ -25,10 +25,12 @@ enum QuickAdd {
 
     /// 계절 → 에너지 매핑(2026-08-18 사용자 지시) — 겨울=낮음, 봄·가을=보통, 여름=높음.
     /// 에너지 레벨이 아직 없을 때(그 계절 체크인 3회 미만)의 초기값.
-    static func level(forSeason name: String?) -> EnergyLevel {
-        switch name {
-        case "겨울": .low
-        case "여름": .high
+    /// ⚠ 표시명이 아니라 **단계**로 받는다 — 이름은 번역되므로 키로 쓰면 다른 언어에서
+    /// 전부 default(보통)로 떨어진다(2026-08-20 로컬라이제이션에서 드러난 결함).
+    static func level(forPhase phase: CyclePhase?) -> EnergyLevel {
+        switch phase {
+        case .menstrual: .low
+        case .ovulation: .high
         default: .mid   // 봄·가을·미상
         }
     }

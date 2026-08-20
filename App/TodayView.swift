@@ -55,6 +55,9 @@ enum Ink {
 }
 
 struct SeasonMeta {
+    /// 이 계절의 단계 — **조회·비교는 이 값으로 한다.** 표시명(`name`)은 번역되므로 키로 쓰면
+    /// 다른 언어에서 조용히 어긋난다(2026-08-20 로컬라이제이션에서 실제로 드러난 결함).
+    let phase: CyclePhase
     let name: String
     let phaseName: String   // 개정 M-1c: 렌더 사용처 0 — 의학 단계명은 사용자 표면 금지. 새 UI에 쓰지 말 것
     let color: Color
@@ -69,22 +72,22 @@ func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     // 만드는 자리에서 String(localized:)로 뽑아야 번역이 붙는다. phaseName은 렌더 사용처가
     // 0(개정 M-1c)이라 번역 대상이 아니다 — loc_audit의 무시 목록에 근거와 함께 있다.
     case .menstrual:
-        SeasonMeta(name: String(localized: "겨울"), phaseName: "월경기",
+        SeasonMeta(phase: .menstrual, name: String(localized: "겨울"), phaseName: "월경기",
                    color: Ink.winter, glow: Ink.glowWinter,
                    moodline: String(localized: "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요."),
                    lever: String(localized: "오늘은 천천히 이어가볼까요?"))
     case .follicular:
-        SeasonMeta(name: String(localized: "봄"), phaseName: "난포기",
+        SeasonMeta(phase: .follicular, name: String(localized: "봄"), phaseName: "난포기",
                    color: Ink.spring, glow: Ink.glowSpring,
                    moodline: String(localized: "봄이에요. 가볍게 시작해보기 좋은 때예요."),
                    lever: String(localized: "시동 거는 주기예요. 가볍게 시작해도 좋아요."))
     case .ovulation:
-        SeasonMeta(name: String(localized: "여름"), phaseName: "배란기",
+        SeasonMeta(phase: .ovulation, name: String(localized: "여름"), phaseName: "배란기",
                    color: Ink.summer, glow: Ink.glowSummer,
                    moodline: String(localized: "여름이에요. 하고 싶은 만큼 빛나도 좋아요."),
                    lever: String(localized: "마음껏 몰입해도 좋아요."))
     case .luteal:
-        SeasonMeta(name: String(localized: "가을"), phaseName: "황체기",
+        SeasonMeta(phase: .luteal, name: String(localized: "가을"), phaseName: "황체기",
                    color: Ink.autumn, glow: Ink.glowAutumn,
                    moodline: String(localized: "가을이에요. 스스로를 돌아보는 시간을 가져봐요."),
                    lever: String(localized: "조금 더 해볼 수 있나요? 무리하지는 말아요."))

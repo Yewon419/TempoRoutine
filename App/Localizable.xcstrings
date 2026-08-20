@@ -1,6 +1,108 @@
 {
   "sourceLanguage": "ko",
   "strings": {
+    "%1$@ %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%1$@ %2$@일차": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ Day %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@日目"
+          }
+        }
+      }
+    },
+    "%1$@ / %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ / %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ / %2$@"
+          }
+        }
+      }
+    },
+    "%1$@ · %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%1$@%2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@%2$@"
+          }
+        }
+      }
+    },
+    "%1$@/%2$@일차": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day %1$@/%2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@/%2$@日目"
+          }
+        }
+      }
+    },
     "%1$lld/%2$lld일차": {
       "extractionState": "manual",
       "localizations": {
@@ -18,6 +120,125 @@
         }
       }
     },
+    "%@ 며칠째": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How many days into %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@は何日目"
+          }
+        }
+      }
+    },
+    "%@ 전체": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All of %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 全体"
+          }
+        }
+      }
+    },
+    "%@에 하는 걸로 표시돼요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It'll show as %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@に行うものとして表示されます"
+          }
+        }
+      }
+    },
+    "%@월": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Month %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@月"
+          }
+        }
+      }
+    },
+    "%@인 날엔 매일 보여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows every day you're in %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の日は毎日表示されます。"
+          }
+        }
+      }
+    },
+    "%@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@日"
+          }
+        }
+      }
+    },
+    "%@일차": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@日目"
+          }
+        }
+      }
+    },
     "%lld일차": {
       "extractionState": "manual",
       "localizations": {
@@ -31,6 +252,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld日目"
+          }
+        }
+      }
+    },
+    "/ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/ %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/ %@"
+          }
+        }
+      }
+    },
+    "2분짜리 설문으로 초기 세팅을 빠르게 할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A two-minute survey gets your setup done quickly."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2分のアンケートで初期設定を素早く終えられます。"
+          }
+        }
+      }
+    },
+    "iCloud 연결 안 됨 — 기기 설정 > Apple 계정 > iCloud에서 템포루틴이 켜져 있는지, 폰과 같은 계정인지 확인해 주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud isn't connected — in Settings > Apple Account > iCloud on this device, check that TempoRoutine is turned on and that you're signed in with the same account as your phone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloudに接続されていません — 端末の設定 > Appleアカウント > iCloudで、テンポルーティンがオンになっているか、スマートフォンと同じアカウントかをご確認ください。"
+          }
+        }
+      }
+    },
+    "· %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %@"
+          }
+        }
+      }
+    },
+    "· 예상": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· Estimated"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "・予測"
+          }
+        }
+      }
+    },
+    "「%@」으로 시작하기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start with \"%@\""
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」ではじめる"
           }
         }
       }
@@ -69,6 +392,108 @@
         }
       }
     },
+    "가져올게요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み込む"
+          }
+        }
+      }
+    },
+    "개발자": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Developer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開発者"
+          }
+        }
+      }
+    },
+    "건강 앱": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Health app"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアApp"
+          }
+        }
+      }
+    },
+    "건강 앱 설정에 따라 동기화될 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It may sync depending on your settings in the Health app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアAppの設定によって同期されることがあります。"
+          }
+        }
+      }
+    },
+    "건강 앱과 연동": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect to the Health app"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアAppと連携"
+          }
+        }
+      }
+    },
+    "건강 앱에 남은 생리 기록을 불러오면": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you import the period records left in the Health app,"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルスケアAppに残っている生理の記録を読み込むと、"
+          }
+        }
+      }
+    },
     "겨울": {
       "extractionState": "manual",
       "localizations": {
@@ -82,6 +507,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "冬"
+          }
+        }
+      }
+    },
+    "겨울로 넘어가기 전": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Before Winter begins"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬に入る前"
           }
         }
       }
@@ -103,6 +545,74 @@
         }
       }
     },
+    "계절과 루틴": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seasons and routines"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節とルーティン"
+          }
+        }
+      }
+    },
+    "계절별 루틴": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines by season"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節ごとのルーティン"
+          }
+        }
+      }
+    },
+    "계절에 맞게 계획하는 플래너예요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's a planner that helps you plan in tune with your season."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節に合わせて計画するプランナーです。"
+          }
+        }
+      }
+    },
+    "계획을 당신에게 맞추는 방법이에요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's a way to fit your plans to you."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "計画をあなたに合わせる方法です。"
+          }
+        }
+      }
+    },
     "괜찮아요": {
       "extractionState": "manual",
       "localizations": {
@@ -116,6 +626,210 @@
           "stringUnit": {
             "state": "translated",
             "value": "大丈夫です"
+          }
+        }
+      }
+    },
+    "그동안은": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Until then,"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "それまでは"
+          }
+        }
+      }
+    },
+    "기기를 바꾸시나요? 내보내기 파일을 새 기기로 보내고 「백업 가져오기」로 열면 기록이 이어져요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switching devices? Send the export file to your new device and open it with “Import backup” to carry your records over."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "端末を変えますか？書き出したファイルを新しい端末に送り、「バックアップを読み込む」で開くと記録が引き継がれます。"
+          }
+        }
+      }
+    },
+    "기록": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録"
+          }
+        }
+      }
+    },
+    "기록된 시작일과 그때까지의 예측을 비교한 값": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A comparison of the start dates you logged with the predictions made up to then"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録された開始日と、その時点までの予測を比べた値"
+          }
+        }
+      }
+    },
+    "기록상 %@에 계획한 걸 가장 많이 수행했어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your records show you got the most done in %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録では、%@に予定を一番多くこなしています。"
+          }
+        }
+      }
+    },
+    "기록상 생리 시작 %@일 전부터 컨디션이 낮게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In your records, how you feel starts dipping %@ days before your period begins."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録では、生理が始まる%@日前から体調が低めに記録されています。"
+          }
+        }
+      }
+    },
+    "기록은 이 기기와 Apple 건강 앱에 저장돼요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your records are saved on this device and in the Apple Health app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録はこの端末とAppleのヘルスケアAppに保存されます。"
+          }
+        }
+      }
+    },
+    "기본": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basic"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ベーシック"
+          }
+        }
+      }
+    },
+    "기본과 은필 중 당신의 테마를 골라 가지세요. 고른 테마는 계속 쓸 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick your theme from Basic and Silverpoint. The theme you pick is yours to keep."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ベーシックと銀筆から、あなたのテーマを選んでください。選んだテーマはずっと使えます。"
+          }
+        }
+      }
+    },
+    "기존 캘린더의 약속과 생일을 가져올까요?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import events and birthdays from your existing calendar?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既存のカレンダーの予定と誕生日を読み込みますか？"
+          }
+        }
+      }
+    },
+    "기타": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その他"
+          }
+        }
+      }
+    },
+    "나의 루틴": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My routines"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マイルーティン"
           }
         }
       }
@@ -137,6 +851,108 @@
         }
       }
     },
+    "나중에": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Later"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あとで"
+          }
+        }
+      }
+    },
+    "나중에 설정에서 바꿀 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can change this later in Settings."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あとで設定から変更できます。"
+          }
+        }
+      }
+    },
+    "날씨 연동 전 임시 스위치예요. 「시계 따름」이면 시간대가 기기 시계를 따라요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A temporary switch until weather is connected. With \"Follow clock,\" the time of day follows your device clock."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天気連携までの一時的なスイッチです。「時計に合わせる」にすると、時間帯が端末の時計に従います。"
+          }
+        }
+      }
+    },
+    "날씨 테마는 지금 계신 곳의 하늘을 그려요. 설정 > 위치에서 접근을 허용하면 쓸 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The weather theme draws the sky where you are right now. You can use it once you allow access in Settings > Location."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天気テーマは、今いる場所の空を描きます。設定 > 位置情報でアクセスを許可すると使えます。"
+          }
+        }
+      }
+    },
+    "낮": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昼"
+          }
+        }
+      }
+    },
+    "노을": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunset"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夕焼け"
+          }
+        }
+      }
+    },
     "눈": {
       "extractionState": "manual",
       "localizations": {
@@ -154,6 +970,176 @@
         }
       }
     },
+    "다시 보기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View again"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "もう一度見る"
+          }
+        }
+      }
+    },
+    "당신 몸의\n템포에 맞게.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In tune with\nyour body's tempo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたの体の\nテンポに合わせて。"
+          }
+        }
+      }
+    },
+    "당신만의 속도를 찾아서.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding your own pace."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなただけのペースを見つけて。"
+          }
+        }
+      }
+    },
+    "당신만이 언제든 내보내고 지울 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only you can export or delete them, anytime."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いつでも書き出したり削除したりできるのは、あなただけです。"
+          }
+        }
+      }
+    },
+    "당신의 계절은 기록이 쌓이며 맞춰집니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your seasons get more accurate as your records add up."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたの季節は、記録が積み重なるほど合っていきます。"
+          }
+        }
+      }
+    },
+    "대략이어도 괜찮아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A rough guess is fine."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "だいたいで大丈夫です。"
+          }
+        }
+      }
+    },
+    "데이터": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データ"
+          }
+        }
+      }
+    },
+    "리듬에 맞춰\n계획하는 법": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to plan\nwith your rhythm"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リズムに合わせて\n計画する方法"
+          }
+        }
+      }
+    },
+    "리듬의 모양은 사람마다 다르기에,": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Because the shape of that rhythm differs from person to person,"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リズムの形は人それぞれなので、"
+          }
+        }
+      }
+    },
+    "리듬의 모양은 사람마다 달라요.\n2분 정도 소요돼요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shape of a rhythm is different for everyone.\nIt takes about 2 minutes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リズムのかたちは人それぞれです。\n2分ほどかかります。"
+          }
+        }
+      }
+    },
     "마음껏 몰입해도 좋아요.": {
       "extractionState": "manual",
       "localizations": {
@@ -167,6 +1153,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "思いきり没頭しても大丈夫です。"
+          }
+        }
+      }
+    },
+    "마지막 동기화 · %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last synced · %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最終同期 · %@"
+          }
+        }
+      }
+    },
+    "마지막 생리 시작일을 선택해주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the day your last period started."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最後の生理開始日を選んでください。"
+          }
+        }
+      }
+    },
+    "마친 기록 %@건 기준": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Based on %@ completed records"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了した記録%@件をもとに"
+          }
+        }
+      }
+    },
+    "많은 사람이 겨울엔 에너지가 낮아진다고 느껴요. 당신의 리듬도 금방 찾게 될 거에요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Many people feel their energy dips in Winter. You'll find your own rhythm soon, too."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬はエネルギーが下がると感じる人が多いです。あなたのリズムもすぐに見つかります。"
+          }
+        }
+      }
+    },
+    "매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check in every day to collect seeds, and use your seeds to buy new themes!"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日チェックインするとたねが集まり、たねで新しいテーマを購入できます！"
+          }
+        }
+      }
+    },
+    "모든 기록을 삭제했어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All records have been deleted."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべての記録を削除しました。"
+          }
+        }
+      }
+    },
+    "모은 씨앗으로\n새 테마를 구매할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can buy new themes\nwith the seeds you collect."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "集めたたねで\n新しいテーマを購入できます。"
           }
         }
       }
@@ -205,6 +1310,57 @@
         }
       }
     },
+    "무료 체험이 끝났어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your free trial has ended"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無料体験が終了しました"
+          }
+        }
+      }
+    },
+    "미디어": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Media"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メディア"
+          }
+        }
+      }
+    },
+    "미리보기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プレビュー"
+          }
+        }
+      }
+    },
     "미완료": {
       "extractionState": "manual",
       "localizations": {
@@ -218,6 +1374,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "未完了"
+          }
+        }
+      }
+    },
+    "밤": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夜"
+          }
+        }
+      }
+    },
+    "별도의 서버나 데이터베이스에 저장되지 않습니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It isn't stored on any separate server or database."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別のサーバーやデータベースには保存されません。"
+          }
+        }
+      }
+    },
+    "보다 편한 시작을 할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can start out more comfortably."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "より楽に始められます。"
           }
         }
       }
@@ -273,6 +1480,57 @@
         }
       }
     },
+    "사람마다 리듬은 모두 달라요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everyone's rhythm is different."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リズムは人それぞれ違います。"
+          }
+        }
+      }
+    },
+    "사이클 싱킹": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycle syncing"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイクルシンキング"
+          }
+        }
+      }
+    },
+    "사이클 싱킹은 그 흐름을 계획에 맞추는 대신,": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycle syncing, instead of making that flow fit your plans,"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイクルシンキングは、その流れを計画に合わせるのではなく、"
+          }
+        }
+      }
+    },
     "삭제": {
       "extractionState": "manual",
       "localizations": {
@@ -290,6 +1548,40 @@
         }
       }
     },
+    "상단의 설명은 일반적인 경향입니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The description above shows general tendencies."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上の説明は一般的な傾向です。"
+          }
+        }
+      }
+    },
+    "생리": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Period"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生理"
+          }
+        }
+      }
+    },
     "생리 기록": {
       "extractionState": "manual",
       "localizations": {
@@ -303,6 +1595,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "生理を記録"
+          }
+        }
+      }
+    },
+    "생리 주기를 네 계절로 보고,": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It sees your period cycle as four seasons,"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生理周期を四つの季節として見て、"
           }
         }
       }
@@ -341,6 +1650,23 @@
         }
       }
     },
+    "설정 열기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く"
+          }
+        }
+      }
+    },
     "설정의 알림에서 언제든 바꿀 수 있습니다.": {
       "extractionState": "manual",
       "localizations": {
@@ -354,6 +1680,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "設定の通知でいつでも変更できます。"
+          }
+        }
+      }
+    },
+    "세션": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セッション"
+          }
+        }
+      }
+    },
+    "스톱워치": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopwatch"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ストップウォッチ"
+          }
+        }
+      }
+    },
+    "시계 따름": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow clock"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時計に合わせる"
           }
         }
       }
@@ -375,6 +1752,159 @@
         }
       }
     },
+    "시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once you start, you can check the time left from the Lock Screen too."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "はじめると、ロック画面でも残り時間を確認できます。"
+          }
+        }
+      }
+    },
+    "시작하면 잠금화면에서도 현재 시간을 확인할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once you start, you can check the current time from the Lock Screen too."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開始すると、ロック画面でも現在の時間を確認できます。"
+          }
+        }
+      }
+    },
+    "식단": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meals"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "食事"
+          }
+        }
+      }
+    },
+    "쓰던 앱이 건강 앱에 남긴 기록을 불러올 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can import the records your previous app left in the Health app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これまで使っていたAppがヘルスケアAppに残した記録を読み込めます。"
+          }
+        }
+      }
+    },
+    "씨앗 %1$@개로 구매할 수 있어요 · 지금 %2$@개": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can buy it for %1$@ seeds · you have %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たね%1$@個で購入できます · 現在%2$@個"
+          }
+        }
+      }
+    },
+    "씨앗 %@개 받기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get %@ seeds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねを%@個受け取る"
+          }
+        }
+      }
+    },
+    "씨앗 %@개로 구매": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy with %@ seeds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たね%@個で購入"
+          }
+        }
+      }
+    },
+    "씨앗 %@개를 썼어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You spent %@ seeds."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねを%@個使いました。"
+          }
+        }
+      }
+    },
+    "씨앗은 하루 체크인을 완성하면 하나씩 모여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You collect one seed each time you complete a day's check-in."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねは1日のチェックインを完成させるたびに、1つずつ集まります。"
+          }
+        }
+      }
+    },
     "아직 없어요": {
       "extractionState": "manual",
       "localizations": {
@@ -392,6 +1922,23 @@
         }
       }
     },
+    "알림": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知"
+          }
+        }
+      }
+    },
     "알림 받기": {
       "extractionState": "manual",
       "localizations": {
@@ -405,6 +1952,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "通知を受け取る"
+          }
+        }
+      }
+    },
+    "앞으로 7일간 모든 테마를 자유롭게 바꿔볼 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For the next 7 days you can switch between all themes freely."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これから7日間、すべてのテーマを自由に切り替えられます。"
+          }
+        }
+      }
+    },
+    "언제든 설정에서 다시 답변할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can answer again anytime in Settings."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いつでも設定から答え直せます。"
           }
         }
       }
@@ -494,6 +2075,23 @@
         }
       }
     },
+    "예측 정확도": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prediction accuracy"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予測の精度"
+          }
+        }
+      }
+    },
     "오늘": {
       "extractionState": "manual",
       "localizations": {
@@ -507,6 +2105,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "今日"
+          }
+        }
+      }
+    },
+    "오늘 탭에서 한 줄을 남기면 여기에 모여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave a line on the Today tab and it collects here."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日タブで一行残すと、ここに集まります。"
+          }
+        }
+      }
+    },
+    "오늘 한 줄 모음": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's one-line records"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の一行記録"
           }
         }
       }
@@ -545,6 +2177,159 @@
         }
       }
     },
+    "운동": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercise"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運動"
+          }
+        }
+      }
+    },
+    "응답은 이 기기에만 저장됩니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your answers are saved only on this device."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回答はこの端末にのみ保存されます。"
+          }
+        }
+      }
+    },
+    "이 기기에선 건강 앱을 사용할 수 없습니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Health app isn't available on this device."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末ではヘルスケアAppを使用できません。"
+          }
+        }
+      }
+    },
+    "이 기기의 생리·컨디션·계획 기록이 모두 지워져요. 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All of the period records, how-you-feel records, and plans on this device will be erased. The Health app option only erases what this app wrote to the Health app; originals from other apps or from the Health app itself can be deleted in the Health app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末の生理・体調・予定の記録がすべて消えます。ヘルスケアAppのオプションは、このAppがヘルスケアAppに書き込んだ記録だけを消します。ほかのAppやヘルスケアAppにある元の記録は、ヘルスケアAppで削除できます。"
+          }
+        }
+      }
+    },
+    "이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$@일 · 체크인 %2$@건": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file holds your period and how-you-feel records. Saved right now: %1$@ period days · %2$@ check-ins"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルには生理・体調の記録が入っています。現在保存されている記録：生理%1$@日 · チェックイン%2$@件"
+          }
+        }
+      }
+    },
+    "이 페이지의 질문은 건너뛰셔도 괜찮아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's fine to skip the questions on this page."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このページの質問は飛ばしても大丈夫です。"
+          }
+        }
+      }
+    },
+    "이 항목과 기록이 함께 지워져요. 되돌릴 수 없어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item and its records will be deleted together. This can't be undone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この項目と記録が一緒に消えます。元に戻せません。"
+          }
+        }
+      }
+    },
+    "이맘때 이야기를 하려면\n몇 가지 알아야 해요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To talk about this time of the month,\nthere are a few things to know."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この時期の話をするには\nいくつか知っておくことがあります。"
+          }
+        }
+      }
+    },
+    "이맘때 이야기를 하려면 몇 가지를 알아야 해요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To talk about this time of your cycle, we need to know a few things."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今の時期のお話をするには、いくつか知っておく必要があります。"
+          }
+        }
+      }
+    },
     "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요.": {
       "extractionState": "manual",
       "localizations": {
@@ -575,6 +2360,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "予定のある日の朝のブリーフィングと\n生理の予定日をお知らせできます。"
+          }
+        }
+      }
+    },
+    "일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 연동됩니다. 생리 기록은 iCloud로 보내지 않습니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Events, Input, Output, and check-ins sync through your iCloud between devices signed in to the same Apple Account. Period records are not sent to iCloud."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予定・Input・Output・チェックインは、同じAppleアカウントの端末どうしで、あなたのiCloudを通じて同期されます。生理の記録はiCloudに送信されません。"
+          }
+        }
+      }
+    },
+    "적용하기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "適用する"
+          }
+        }
+      }
+    },
+    "절댓값보다는 오르내림과 편차를 알아보는 데 의미를 가집니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's meant for noticing ups and downs and variation, rather than absolute values."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絶対値よりも、上がり下がりやばらつきを見るためのものです。"
           }
         }
       }
@@ -613,6 +2449,40 @@
         }
       }
     },
+    "주기 길이": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycle length"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "周期の長さ"
+          }
+        }
+      }
+    },
+    "지금": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今"
+          }
+        }
+      }
+    },
     "지금 %1$lld도, 최고 %2$lld도, 최저 %3$lld도, %4$@ 올 확률 %5$lld퍼센트": {
       "extractionState": "manual",
       "localizations": {
@@ -643,6 +2513,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "今 %lld°"
+          }
+        }
+      }
+    },
+    "지금은 무료 체험 기간이에요. %@일 동안 모든 테마를 자유롭게 바꿔볼 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're in the free trial right now. For %@ days you can switch between all themes freely."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今は無料体験期間です。%@日間、すべてのテーマを自由に切り替えられます。"
+          }
+        }
+      }
+    },
+    "지난 생리에서 다음 생리까지의 간격을 알려주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let us know the gap from one period to the next."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前回の生理から次の生理までの間隔を教えてください。"
+          }
+        }
+      }
+    },
+    "지난달로 넘기면 이전 생리도 기록할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe back to last month to log earlier periods too."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先月に移動すると、以前の生理も記録できます。"
+          }
+        }
+      }
+    },
+    "진행 방식": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracking style"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進め方"
+          }
+        }
+      }
+    },
+    "진행도가 함께 지워져요. 되돌릴 수 없어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your progress will be deleted along with it. This can't be undone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進み具合も一緒に消えます。元に戻せません。"
           }
         }
       }
@@ -698,6 +2653,57 @@
         }
       }
     },
+    "체크 기록이 함께 지워져요. 되돌릴 수 없어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your check records will be deleted along with it. This can't be undone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックの記録も一緒に削除されます。元に戻せません。"
+          }
+        }
+      }
+    },
+    "체크리스트": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checklist"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックリスト"
+          }
+        }
+      }
+    },
+    "체크만": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックのみ"
+          }
+        }
+      }
+    },
     "최고 %1$lld° 최저 %2$lld°": {
       "extractionState": "manual",
       "localizations": {
@@ -711,6 +2717,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "最高 %1$lld° 最低 %2$lld°"
+          }
+        }
+      }
+    },
+    "최근 주기 %@일": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent cycle %@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近の周期 %@日"
           }
         }
       }
@@ -732,6 +2755,74 @@
         }
       }
     },
+    "캘린더 가져오기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import calendar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダーを読み込む"
+          }
+        }
+      }
+    },
+    "캘린더 접근이 꺼져 있어요. 설정 앱의 개인정보 보호에서 캘린더 접근을 허용하면 다시 가져올 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendar access is turned off. Allow calendar access under Privacy in the Settings app, and you can import again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダーへのアクセスがオフになっています。設定Appのプライバシーでカレンダーへのアクセスを許可すると、もう一度読み込めます。"
+          }
+        }
+      }
+    },
+    "컨디션": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you feel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "体調"
+          }
+        }
+      }
+    },
+    "타이머": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タイマー"
+          }
+        }
+      }
+    },
     "탭하면 수정, 길게 누르면 삭제할 수 있어요": {
       "extractionState": "manual",
       "localizations": {
@@ -745,6 +2836,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "タップで編集、長押しで削除できます"
+          }
+        }
+      }
+    },
+    "탭해서 담아볼 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can tap to add one."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タップして追加できます。"
+          }
+        }
+      }
+    },
+    "테마": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマ"
           }
         }
       }
@@ -779,6 +2904,193 @@
           "stringUnit": {
             "state": "translated",
             "value": "テンポルーティン"
+          }
+        }
+      }
+    },
+    "템포루틴 · 당신 몸의 템포에 맞게": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine · In tempo with your body"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テンポルーティン・あなたの体のテンポに合わせて"
+          }
+        }
+      }
+    },
+    "템포루틴은 당신이 기록해 놓은 과거를 기반으로\n당신만의 템포를 보여주는 앱입니다.\n의학적 진단이나 조언은 포함되어 있지 않습니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine is an app that, based on the past you've recorded,\nshows you a tempo that is yours alone.\nIt doesn't include medical diagnosis or advice."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テンポルーティンは、あなたが記録してきた過去をもとに\nあなただけのテンポを見せるAppです。\n医学的な診断や助言は含まれていません。"
+          }
+        }
+      }
+    },
+    "템포루틴이 당신만의 리듬을 찾게 도와줄게요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine will help you find your own rhythm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テンポルーティンが、あなただけのリズムを見つけるお手伝いをします。"
+          }
+        }
+      }
+    },
+    "퍼센트": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Percent"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パーセント"
+          }
+        }
+      }
+    },
+    "플래너와 체크인은 당신의 iCloud로 기기 간에 이어지고,": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The planner and check-ins carry over between devices through your iCloud,"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プランナーとチェックインは、あなたのiCloudで端末間につながり、"
+          }
+        }
+      }
+    },
+    "하늘 (확인용)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky (test)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スカイ（確認用）"
+          }
+        }
+      }
+    },
+    "하루를 간단히 남겨봐요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave a short note about your day"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一日を簡単に書き残してみませんか"
+          }
+        }
+      }
+    },
+    "한 달 안의 사계절": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Four seasons in a month"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ひと月の中の四季"
+          }
+        }
+      }
+    },
+    "한 주기 안에서도 에너지와 컨디션은 오르내립니다.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Even within one cycle, your energy and how you feel rise and fall."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一つの周期の中でも、エネルギーと体調は上がり下がりします。"
+          }
+        }
+      }
+    },
+    "한 줄 기록": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One-line record"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一行記録"
+          }
+        }
+      }
+    },
+    "혼자 만들고 있어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm making this on my own"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ひとりでつくっています"
           }
         }
       }

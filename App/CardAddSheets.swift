@@ -498,27 +498,41 @@ struct InputAddSheet: View {
 
     private static let calendarChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly]
 
-    private static let examples: [InputCategory: [String: String]] = [
-        .food:     ["겨울": "따뜻한 국 한 그릇", "봄": "가벼운 아침 식사", "여름": "시원한 과일 한 접시", "가을": "든든한 저녁 챙기기"],
-        .exercise: ["겨울": "가볍게 걷기 20분", "봄": "아침 러닝", "여름": "수영 30분", "가을": "저녁 요가"],
-        .media:    ["겨울": "포근한 영화 한 편", "봄": "새 플레이리스트 찾기", "여름": "팟캐스트 한 편", "가을": "책 한 챕터"],
-        .other:    ["겨울": "철분 챙기기", "봄": "새 노트 펴기", "여름": "물 자주 마시기", "가을": "반신욕"],
+    /// ⚠ 키는 **단계**다 — 계절 표시명은 번역되므로 키로 쓰면 다른 언어에서 조회가 전부
+    /// 빗나가 폴백 예시만 나온다(2026-08-20 로컬라이제이션에서 드러난 결함).
+    private static let examples: [InputCategory: [CyclePhase: String]] = [
+        .food:     [.menstrual: String(localized: "따뜻한 국 한 그릇"),
+                    .follicular: String(localized: "가벼운 아침 식사"),
+                    .ovulation: String(localized: "시원한 과일 한 접시"),
+                    .luteal: String(localized: "든든한 저녁 챙기기")],
+        .exercise: [.menstrual: String(localized: "가볍게 걷기 20분"),
+                    .follicular: String(localized: "아침 러닝"),
+                    .ovulation: String(localized: "수영 30분"),
+                    .luteal: String(localized: "저녁 요가")],
+        .media:    [.menstrual: String(localized: "포근한 영화 한 편"),
+                    .follicular: String(localized: "새 플레이리스트 찾기"),
+                    .ovulation: String(localized: "팟캐스트 한 편"),
+                    .luteal: String(localized: "책 한 챕터")],
+        .other:    [.menstrual: String(localized: "철분 챙기기"),
+                    .follicular: String(localized: "새 노트 펴기"),
+                    .ovulation: String(localized: "물 자주 마시기"),
+                    .luteal: String(localized: "반신욕")],
     ]
 
     /// 빠른 추가 목록 — 에너지 레벨이 있으면 그 기준, 없으면 계절→에너지 초기 매핑
     /// (2026-08-18 사용자 지시: 겨울=낮음, 봄·가을=보통, 여름=높음. 별도 계절 표 폐기).
     private var quickAddSuggestions: [QuickAdd.Suggestion] {
         QuickAdd.inputs(category: category,
-                        level: energyLevel ?? QuickAdd.level(forSeason: currentSeason?.name))
+                        level: energyLevel ?? QuickAdd.level(forPhase: currentSeason?.phase))
     }
 
     private var placeholder: String {
         if let level = energyLevel {
-            return "예: \(EnergyProfile.inputExample(category: category, level: level))"
+            return Loc.fmt("예: %@", EnergyProfile.inputExample(category: category, level: level))
         }
         let byCat = Self.examples[category] ?? [:]
-        let ex = currentSeason.flatMap { byCat[$0.name] } ?? "스트레칭 10분"
-        return "예: \(ex)"
+        let ex = currentSeason.flatMap { byCat[$0.phase] } ?? String(localized: "스트레칭 10분")
+        return Loc.fmt("예: %@", ex)
     }
 
     /// 진행 방식(2026-08-12 사용자 지시) — Output 시트와 같은 문법이되 **값이 날짜별**이다.
