@@ -6393,23 +6393,6 @@
         }
       }
     },
-    "배란기 · 8월 18일 화요일": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ovulation · Tuesday, August 18"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "排卵期 · 8月18日（火）"
-          }
-        }
-      }
-    },
     "백업 가져오기": {
       "extractionState": "manual",
       "localizations": {

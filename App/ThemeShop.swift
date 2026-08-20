@@ -550,7 +550,9 @@ struct ThemePreviewScreen: View {
                     .font(displayFont(size: 28))
                     .foregroundStyle(p.text)
                     .padding(.top, 5)
-                Text("배란기 · 8월 18일 화요일")
+                // 실제 카드와 같은 문법(날짜만) — 단계명은 §M-1c 금지, 날짜는 포매터라
+                // 언어를 따라간다(종전엔 한국어 날짜가 박혀 있었다)
+                Text(Date.now.formatted(.dateTime.month().day().weekday(.wide)))
                     .font(.caption2)
                     .foregroundStyle(p.dim)
                     .padding(.top, 1)

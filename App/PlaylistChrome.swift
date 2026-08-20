@@ -64,7 +64,10 @@ struct PlaylistPlayerCard: View {
                 .font(.system(size: 30, weight: .semibold))
                 .foregroundStyle(Ink.text)   // 트랙명 = 잉크 — 색은 커버가 담당(§4.3)
                 .padding(.top, 6)
-            Text("\(meta.phaseName) · \(date.formatted(.dateTime.month().day().weekday(.wide)))")
+            // 부제 = 날짜만. 종전엔 의학 단계명(「배란기 · …」)이 앞에 붙어 있었는데
+            // MASTER 개정 M-1c의 「의학 단계명은 사용자 표면 금지」 위반이었다(2026-08-20).
+            // 계절명은 바로 위 30px 표제가 이미 말한다 — 부제에 다시 넣지 않는다.
+            Text(date.formatted(.dateTime.month().day().weekday(.wide)))
                 .font(.caption)
                 .foregroundStyle(Ink.dim)
                 .padding(.top, 1)
