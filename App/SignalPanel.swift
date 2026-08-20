@@ -40,60 +40,24 @@ struct SignalPanel: View {
         }
     }
 
-    /// 주어 형태 — 받침 유무로 조사가 갈려("에너지는"/"잠은") 이름과 따로 둔다.
-    private var subject: String {
-        switch signal {
-        case .energy: "에너지는"
-        case .mood: "기분은"
-        case .sleep: "잠은"
-        case .appetite: "식욕은"
-        }
-    }
-
-    private var highWord: String {
-        switch signal {
-        case .energy: "가장 높고"
-        case .mood: "가장 밝고"
-        case .sleep: "가장 포근하고"
-        case .appetite: "가장 좋고"
-        }
-    }
-
-    private var lowWord: String {
-        switch signal {
-        case .energy: "가장 낮게"
-        case .mood: "가장 잔잔하게"
-        case .sleep: "가장 뒤척인 걸로"
-        case .appetite: "가장 떨어진 걸로"
-        }
-    }
-
     private var statHighLabel: String {
         switch signal {
-        case .energy: "가장 높게"
-        case .mood: "가장 밝게"
-        case .sleep: "가장 포근하게"
-        case .appetite: "가장 좋게"
+        case .energy: String(localized: "가장 높게")
+        case .mood: String(localized: "가장 밝게")
+        case .sleep: String(localized: "가장 포근하게")
+        case .appetite: String(localized: "가장 좋게")
         }
     }
 
     private var statLowLabel: String {
         switch signal {
-        case .energy: "가장 낮게"
-        case .mood: "가장 잔잔하게"
-        case .sleep: "가장 뒤척임"
-        case .appetite: "가장 떨어짐"
+        case .energy: String(localized: "가장 낮게")
+        case .mood: String(localized: "가장 잔잔하게")
+        case .sleep: String(localized: "가장 뒤척임")
+        case .appetite: String(localized: "가장 떨어짐")
         }
     }
 
-    private var consistencyWord: String {
-        switch signal {
-        case .energy: "가장 높게"
-        case .mood: "가장 밝게"
-        case .sleep: "가장 포근하게"
-        case .appetite: "가장 좋게"
-        }
-    }
 
     // ── 값 스케일: 1...5 평균 → 0~100 정수(시안 표기 — 5점 원값은 각주 몫, 2026-08-05 사용자 결정) ──
     private func scaled(_ mean: Double) -> Int {
@@ -117,14 +81,26 @@ struct SignalPanel: View {
         guard narratable, let high = highest, let low = lowest else {
             return Loc.fmt("%1$@ 패턴은 아직 또렷하지 않아요. 기록이 더 쌓이면 여기에 담아둘게요.", "\(signalName)")
         }
-        let lead = completedCycles >= 1 ? Loc.fmt("지난 %1$@주기,", "\(completedCycles)") : "지난 기록상,"
-        return Loc.fmt("%1$@ %2$@ %3$@에 %4$@ %5$@에 %6$@ 기록됐어요.", "\(lead)", "\(subject)", "\(seasonMeta(for: high.phase).name)", "\(highWord)", "\(seasonMeta(for: low.phase).name)", "\(lowWord)")
+        let lead = completedCycles >= 1
+            ? Loc.fmt("지난 %1$@주기,", "\(completedCycles)")
+            : String(localized: "지난 기록상,")
+        // 신호마다 **문장 하나가 키**다. 조각(주어·형용사)을 이어 붙이면 어순이 다른 언어에서
+        // 무너진다 — 한국어에서 조사(는/은) 때문에 쪼개져 있던 것을 문장으로 되돌린 것.
+        // 한국어 출력은 종전과 글자 그대로 같다.
+        let key: String.LocalizationValue = switch signal {
+        case .energy: "%1$@ 에너지는 %2$@에 가장 높고 %3$@에 가장 낮게 기록됐어요."
+        case .mood: "%1$@ 기분은 %2$@에 가장 밝고 %3$@에 가장 잔잔하게 기록됐어요."
+        case .sleep: "%1$@ 잠은 %2$@에 가장 포근하고 %3$@에 가장 뒤척인 걸로 기록됐어요."
+        case .appetite: "%1$@ 식욕은 %2$@에 가장 좋고 %3$@에 가장 떨어진 걸로 기록됐어요."
+        }
+        return Loc.fmt(key, lead,
+                       seasonMeta(for: high.phase).name, seasonMeta(for: low.phase).name)
     }
 
     // ── ⑤ 일관성 서술 (시안 v69 — 반복성이 핵심 가치) ──
     private var consistencyLine: String? {
         guard narratable else {
-            return "기록이 12회쯤 쌓이면 계절별 패턴을 여기 담아둘게요."
+            return String(localized: "기록이 12회쯤 쌓이면 계절별 패턴을 여기 담아둘게요.")
         }
         guard topPhases.count >= 2 else { return nil }
         // 최근 주기부터 같은 계절이 이어진 길이
@@ -132,14 +108,26 @@ struct SignalPanel: View {
         let reversed = Array(topPhases.reversed())
         while run < reversed.count && reversed[run] == reversed[0] { run += 1 }
         if run >= 2 {
-            return Loc.fmt("%1$@주기 연속, %2$@이 %3$@ 기록됐어요.", "\(run)", "\(seasonMeta(for: reversed[0]).name)", "\(consistencyWord)")
+            let runKey: String.LocalizationValue = switch signal {
+            case .energy: "%1$@주기 연속, %2$@이 가장 높게 기록됐어요."
+            case .mood: "%1$@주기 연속, %2$@이 가장 밝게 기록됐어요."
+            case .sleep: "%1$@주기 연속, %2$@이 가장 포근하게 기록됐어요."
+            case .appetite: "%1$@주기 연속, %2$@이 가장 좋게 기록됐어요."
+            }
+            return Loc.fmt(runKey, "\(run)", seasonMeta(for: reversed[0]).name)
         }
         // 연속이 아니면 분포 서술("2주기는 여름이, 1주기는 봄이 …")
         var counts: [CyclePhase: Int] = [:]
         for phase in topPhases { counts[phase, default: 0] += 1 }
         let parts = counts.sorted { $0.value > $1.value }
             .map { Loc.fmt("%1$@주기는 %2$@이", "\($0.value)", "\(seasonMeta(for: $0.key).name)") }
-        return Loc.fmt("%1$@ %2$@ 기록됐어요.", "\(parts.joined(separator: ", "))", "\(consistencyWord)")
+        let distKey: String.LocalizationValue = switch signal {
+        case .energy: "%1$@ 가장 높게 기록됐어요."
+        case .mood: "%1$@ 가장 밝게 기록됐어요."
+        case .sleep: "%1$@ 가장 포근하게 기록됐어요."
+        case .appetite: "%1$@ 가장 좋게 기록됐어요."
+        }
+        return Loc.fmt(distKey, parts.joined(separator: ", "))
     }
 
     // ── ⑥ 근거 각주 ──

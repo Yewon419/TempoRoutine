@@ -290,6 +290,74 @@
         }
       }
     },
+    "%1$@ 가장 높게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ came out highest."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ いちばん高く記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@ 가장 밝게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ came out brightest."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ いちばん明るく記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@ 가장 좋게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ came out best."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ いちばん良く記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@ 가장 포근하게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ came out coziest."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ いちばん心地よく記録されました。"
+          }
+        }
+      }
+    },
     "%1$@ 기록 %2$@ / %3$@": {
       "extractionState": "manual",
       "localizations": {
@@ -320,6 +388,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@の記録 %2$@回 · パターンを語るにはまだ早いです"
+          }
+        }
+      }
+    },
+    "%1$@ 기분은 %2$@에 가장 밝고 %3$@에 가장 잔잔하게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ mood was brightest in %2$@ and calmest in %3$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@気分は%2$@にいちばん明るく、%3$@にいちばん穏やかに記録されました。"
           }
         }
       }
@@ -409,6 +494,40 @@
         }
       }
     },
+    "%1$@ 식욕은 %2$@에 가장 좋고 %3$@에 가장 떨어진 걸로 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ appetite was best in %2$@ and lowest in %3$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@食欲は%2$@にいちばん良く、%3$@にいちばん落ちて記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@ 에너지는 %2$@에 가장 높고 %3$@에 가장 낮게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ energy was highest in %2$@ and lowest in %3$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@エネルギーは%2$@にいちばん高く、%3$@にいちばん低く記録されました。"
+          }
+        }
+      }
+    },
     "%1$@ 예상": {
       "extractionState": "manual",
       "localizations": {
@@ -422,6 +541,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ 予測"
+          }
+        }
+      }
+    },
+    "%1$@ 잠은 %2$@에 가장 포근하고 %3$@에 가장 뒤척인 걸로 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ sleep was coziest in %2$@ and most restless in %3$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@睡眠は%2$@にいちばん心地よく、%3$@にいちばん落ち着かなく記録されました。"
           }
         }
       }
@@ -949,6 +1085,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@周期連続で、%2$@が%3$@記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@주기 연속, %2$@이 가장 높게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@ came out highest %1$@ cycles in a row."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@周期連続で、%2$@がいちばん高く記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@주기 연속, %2$@이 가장 밝게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@ came out brightest %1$@ cycles in a row."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@周期連続で、%2$@がいちばん明るく記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@주기 연속, %2$@이 가장 좋게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@ came out best %1$@ cycles in a row."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@周期連続で、%2$@がいちばん良く記録されました。"
+          }
+        }
+      }
+    },
+    "%1$@주기 연속, %2$@이 가장 포근하게 기록됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@ came out coziest %1$@ cycles in a row."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@周期連続で、%2$@がいちばん心地よく記録されました。"
           }
         }
       }
