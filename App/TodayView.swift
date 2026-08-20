@@ -113,6 +113,9 @@ struct TodayView: View {
     /// 씨앗 원장 방송 카운터 — 소비·수령은 생 UserDefaults라 이 키를 지켜봐야 배지가 따라온다
     /// (2026-08-11: 소식란에서 씨앗을 받아도 배지가 옛 숫자로 남아 있던 결함)
     @AppStorage(Seeds.revisionKey) private var seedRevision = 0
+    /// 날씨 수치 갱신 도장(2026-08-20) — 씨앗 카운터와 같은 이유. WeatherKit 응답이
+    /// 정적 캐시(WxState)에만 들어가면 이 화면이 다시 그려질 이유가 없어 줄이 안 뜬다.
+    @AppStorage(WxState.readoutStampKey) private var wxStamp = 0.0
 
 
     private var cal: Calendar { Calendar.current }
@@ -314,6 +317,7 @@ struct TodayView: View {
                     }
                     .font(.almanacBody(.footnote, size: 13))
                     .skyInkShadow()   // 날씨 = 흰 구름 위 가독(2026-08-20)
+                    skyReadout        // 날씨 테마 전용 수치 줄(2026-08-20 사용자 요청)
                 }
                 Text(moodlineText ?? info.meta.moodline)
                     .font(.system(.body, design: .serif))
@@ -329,6 +333,7 @@ struct TodayView: View {
                 Text("계절 기록 전")
                     .font(.almanac(size: 44, weight: .bold))
                     .foregroundStyle(Ink.text)
+                skyReadout   // 기록 전에도 하늘은 뜬다 — 수치도 같이(2026-08-20)
             }
         }
         // 상단 24pt 제거(2026-08-18 베타 피드백 "로고 위치 캘린더 탭과 같은 위치로") —
@@ -348,6 +353,29 @@ struct TodayView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(today.formatted(.dateTime.month().day().weekday(.wide)))
         .skyInkShadow()   // 날씨 = 흰 구름 위 날짜 가독(2026-08-20 베타 피드백)
+    }
+
+    /// 날씨 수치 한 줄(2026-08-20 사용자 요청) — **날씨 테마 전용**. 지금 기온이 주인공,
+    /// 최고·최저·강수 확률은 보조. 값이 없거나(권한·네트워크 실패) 3시간 넘게 낡았으면
+    /// 줄 자체가 사라진다 — 빈 자리를 남기거나 옛 기온을 내걸지 않는다.
+    /// 좁은 폭에서 두 줄로 접히도록 HStack이 아니라 이어붙인 Text 하나로 둔다.
+    @ViewBuilder
+    private var skyReadout: some View {
+        // wxStamp는 값이 아니라 「갱신 신호」다 — 물고 있어야 실측이 들어온 순간 이 줄이 뜬다
+        if ThemeStore.chrome.skyGround, wxStamp > 0, let wx = WxState.readout {
+            let now: Int = Int(wx.currentC.rounded())
+            let high: Int = Int(wx.highC.rounded())
+            let low: Int = Int(wx.lowC.rounded())
+            let chance: Int = Int((wx.precipitationChance * 100).rounded())
+            let precip: String = wx.precipitationIsSnow ? "눈" : "비"
+            let lead: Text = Text("지금 \(now)°").foregroundStyle(Ink.text.opacity(0.95))
+            let rest: Text = Text(" · 최고 \(high)° 최저 \(low)° · \(precip) \(chance)%")
+                .foregroundStyle(Ink.text.opacity(0.7))
+            (lead + rest)
+                .font(.almanacBody(.footnote, size: 13))
+                .skyInkShadow()
+                .accessibilityLabel("지금 \(now)도, 최고 \(high)도, 최저 \(low)도, \(precip) 올 확률 \(chance)퍼센트")
+        }
     }
 
     // ── 컬랩싱 헤더: 컴팩트 바 층 ──

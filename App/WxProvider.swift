@@ -60,10 +60,31 @@ final class WxProvider: NSObject {
         do {
             let weather = try await WeatherService.shared.weather(for: location)
             WxState.applyCondition(Self.fourWay(weather.currentWeather.condition))
+            if let readout = Self.readout(from: weather) { WxState.applyReadout(readout) }
         } catch {
             // 실패 = 마지막 값 유지(§5.7) — 다음 스로틀 창에서 재시도
             lastFetch = nil
         }
+    }
+
+    /// 오늘의 수치(2026-08-20 사용자 요청) — 현재 기온 + 그날 최고·최저·강수 확률.
+    /// 같은 `weather(for:)` 응답에서 뽑는다(추가 호출 없음 — dailyForecast가 이미 딸려 온다).
+    /// 오늘 칸이 없으면 nil = 마지막 값 유지 — 다른 날의 최고·최저를 오늘로 내걸지 않는다.
+    static func readout(from weather: Weather) -> WxReadout? {
+        guard let today = weather.dailyForecast.forecast.first(where: {
+            Calendar.current.isDateInToday($0.date)
+        }) else { return nil }
+        let isSnow: Bool
+        switch today.precipitation {
+        case .snow, .sleet: isSnow = true
+        default: isSnow = false      // rain·hail·mixed·none 및 향후 추가 케이스 = 「비」
+        }
+        return WxReadout(currentC: weather.currentWeather.temperature.converted(to: .celsius).value,
+                         highC: today.highTemperature.converted(to: .celsius).value,
+                         lowC: today.lowTemperature.converted(to: .celsius).value,
+                         precipitationChance: today.precipitationChance,
+                         precipitationIsSnow: isSnow,
+                         updatedAt: .now)
     }
 
     /// WeatherKit 세분 조건 → 시안 4분류(§5.7). 모르는 조건은 구름으로 접는다 —

@@ -62,6 +62,24 @@ enum SkySpec {
     }
 }
 
+/// 오늘의 수치 판독(2026-08-20 사용자 요청) — 하늘 위에 한 줄로 읽는 값.
+/// 하늘(조건 4분류)과 별개 축이다: 하늘은 분위기, 이 값은 숫자.
+/// **섭씨 고정** — 출시 국가 = 한국뿐(심사준비 §4-5). 다른 단위계 지역을 열 때 여기서 분기한다.
+struct WxReadout: Codable, Equatable, Sendable {
+    let currentC: Double
+    let highC: Double
+    let lowC: Double
+    /// 0…1 — 그날 강수 확률(`DayWeather.precipitationChance`)
+    let precipitationChance: Double
+    /// 눈 오는 날에 「비 올 확률」은 틀린 말이다 — 그날 강수 형태로 라벨을 가른다
+    let precipitationIsSnow: Bool
+    let updatedAt: Date
+
+    /// 낡은 수치는 거짓말이 된다 — 하늘 그라데이션이 낡은 건 안 보이지만 기온은 보인다.
+    /// 3시간 지난 값은 감춘다(스로틀이 30분이라 정상 사용에선 걸리지 않는다).
+    var isFresh: Bool { Date.now.timeIntervalSince(updatedAt) < 3 * 3600 }
+}
+
 /// 현재 하늘 상태 — Phase ①은 조건 = 확인용 스위처(기본 맑음), 시간대 = 기기 시계
 /// (스위처로 고정 가능 — 12상태를 시각과 무관하게 확인하는 자리).
 /// Phase ②에서 조건이 WeatherKit로 교체된다(실패 시 폴백: 마지막 값 → 맑음, §5.7).
@@ -87,6 +105,31 @@ enum WxState {
     static func applyCondition(_ new: WxCondition) {
         condition = new
         UserDefaults.standard.set(new.rawValue, forKey: conditionKey)
+    }
+
+    // ── 수치 판독(2026-08-20) — 조건과 같은 캐시 규칙(쓰기 = 메인, 읽기 = 뷰 body) ──
+    static let readoutKey = "wxReadout"
+    /// 갱신 도장 — 소비처가 `@AppStorage`로 물고 있어 값이 들어오면 그 화면이 다시 그려진다.
+    /// (하늘 그라데이션은 다음 등장까지 안 바뀌어도 되지만, 숫자는 빈 줄로 기다리면 고장으로 읽힌다.
+    ///  설정 스위처가 conditionKey를 같이 무는 것과 같은 패턴.)
+    static let readoutStampKey = "wxReadoutStamp"
+
+    nonisolated(unsafe) private static var readoutCache: WxReadout?
+
+    /// 신선한 값만 돌려준다 — 소비처(오늘 탭)는 nil이면 줄을 통째로 감춘다.
+    static var readout: WxReadout? { readoutCache.flatMap { $0.isFresh ? $0 : nil } }
+
+    /// 앱 시작 1회 — 마지막 값 복원(§5.7 폴백과 같은 자리). 낡았으면 읽는 쪽에서 걸러진다.
+    static func loadReadout() {
+        guard let data = UserDefaults.standard.data(forKey: readoutKey) else { return }
+        readoutCache = try? JSONDecoder().decode(WxReadout.self, from: data)
+    }
+
+    static func applyReadout(_ new: WxReadout) {
+        readoutCache = new
+        guard let data = try? JSONEncoder().encode(new) else { return }
+        UserDefaults.standard.set(data, forKey: readoutKey)
+        UserDefaults.standard.set(new.updatedAt.timeIntervalSinceReferenceDate, forKey: readoutStampKey)
     }
 }
 
