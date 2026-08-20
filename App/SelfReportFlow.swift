@@ -94,12 +94,22 @@ struct SelfReportFlow: View {
                               note: "이제 그때를 떠올리면서 답해주세요.",
                               questions: [SelfReportSurvey.calibration])
         case 2: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.phaseQuestions)
-        case 3: questionGroup(title: SelfReportSurvey.symptomAnchorLine(p2: answers["P2"]),
+        case 3: questionGroup(title: symptomAnchorTitle(p2: answers["P2"]),
                               note: "꼭 생리 중이 아니라도 가장 힘들었던 때를 떠올려주세요.",
                               questions: symptomOrder)
         case 4: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.amplitudeQuestions)
         default: optionalGroup
         }
+    }
+
+    /// 증상 문항의 시간 앵커 문구 — TempoCore의 `symptomAnchorLine`은 선택지 라벨을 문장에
+    /// **합성**해서 돌려주므로 그대로는 번역 키가 아니다. 순수 모듈을 건드리지 않으려고
+    /// 합성만 앱으로 가져온다(판정 규칙·선택지 자체는 그대로 TempoCore가 소유).
+    private func symptomAnchorTitle(p2: String?) -> String {
+        guard let p2, p2 != "none", p2 != "unknown",
+              let choice = SelfReportSurvey.phaseChoices.first(where: { $0.value == p2 })
+        else { return String(localized: "그나마 힘들었던 때를 떠올려서, 평소와 비교해서 답해주세요.") }
+        return Loc.fmt("「%1$@」, 평소와 비교해서 답해주세요.", Loc.text(choice.label))
     }
 
     private var intro: some View {

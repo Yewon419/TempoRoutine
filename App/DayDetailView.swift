@@ -219,7 +219,7 @@ struct DayDetailView: View {
             // 공휴일·기념일 표기(2026-07-28) — 소스는 캘린더 셀과 동일(애플 캘린더 우선, 내장 폴백)
             let holidays = dayHolidays()
             if !holidays.isEmpty {
-                Text(holidays.map(\.name).joined(separator: " · "))
+                Text(holidays.map { Loc.holidayName($0.name) }.joined(separator: " · "))
                     .font(.system(.footnote, design: .serif))
                     .foregroundStyle(holidays.contains(where: \.isPublic) ? Ink.holiday : Ink.text.opacity(0.55))
             }

@@ -1157,6 +1157,40 @@
         }
       }
     },
+    ", 루틴 있음": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", has a routine"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、ルーティンあり"
+          }
+        }
+      }
+    },
+    ", 미래": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", in the future"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、未来"
+          }
+        }
+      }
+    },
     ", 삭제된 기록 %1$@건": {
       "extractionState": "manual",
       "localizations": {
@@ -1170,6 +1204,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "、削除された記録 %1$@件"
+          }
+        }
+      }
+    },
+    ", 생리 기록됨": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", period logged"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、生理を記録済み"
           }
         }
       }
@@ -1748,6 +1799,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "「%1$@」を購入"
+          }
+        }
+      }
+    },
+    "「%1$@」, 평소와 비교해서 답해주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "During “%1$@”, answer compared with how you usually feel."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%1$@」のとき、普段と比べて答えてください。"
           }
         }
       }
@@ -4842,6 +4910,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "振替休日"
+          }
+        }
+      }
+    },
+    "대체공휴일(%1$@)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Substitute holiday (%1$@)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "振替休日（%1$@）"
           }
         }
       }

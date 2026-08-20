@@ -1047,7 +1047,7 @@ struct SeasonCalendarView: View {
                 }
                 // 공휴일·기념일 = 첫 글줄(빨간날 관례, 2026-07-28) — 일정 글줄과 같은 조판
                 if let holiday {
-                    Text(holiday.name)
+                    Text(Loc.holidayName(holiday.name))
                         .font(.system(size: 8.5, weight: .semibold))
                         .lineLimit(1)
                         .foregroundStyle(holiday.isPublic ? Ink.holiday : Ink.text.opacity(0.5))

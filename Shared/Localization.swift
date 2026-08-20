@@ -34,6 +34,16 @@ enum Loc {
         String(localized: String.LocalizationValue(appCopy))
     }
 
+    /// 공휴일 이름 — TempoCore는 순수 모듈이라 대체공휴일을 「대체공휴일(설날)」로 **합성해서**
+    /// 돌려준다. 합성된 문자열은 카탈로그 키가 아니므로 앱에서 풀어 다시 합성한다.
+    /// (합성을 TempoCore에서 걷어내려면 반환 타입을 구조체로 바꿔야 한다 — 로컬라이제이션.md §5)
+    static func holidayName(_ raw: String) -> String {
+        let prefix = "대체공휴일("
+        guard raw.hasPrefix(prefix), raw.hasSuffix(")") else { return text(raw) }
+        let base = String(raw.dropFirst(prefix.count).dropLast())
+        return fmt("대체공휴일(%1$@)", text(base))
+    }
+
     /// 포맷 인자가 있는 로컬라이즈 문자열.
     /// - Parameter key: 포맷 지정자를 포함한 **한글 키**(예: `"%lld일차"`). 카탈로그 키와 글자 그대로 같아야 한다.
     /// - Note: 번역에서 어순이 바뀌면 `%1$@`·`%2$lld` 위치 지정자를 쓴다. 리터럴 퍼센트는 `%%`.
