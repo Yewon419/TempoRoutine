@@ -1,0 +1,454 @@
+{
+ " / 범위 \\(ExportCodec.dayString(lo))~\\(ExportCodec.dayString(hi))": {
+  "en": " / Range \\(ExportCodec.dayString(lo))~\\(ExportCodec.dayString(hi))",
+  "ja": " / 範囲 \\(ExportCodec.dayString(lo))~\\(ExportCodec.dayString(hi))"
+ },
+ " / 저장 오류: \\(error.localizedDescription)": {
+  "en": " / Save error: \\(error.localizedDescription)",
+  "ja": " / 保存エラー: \\(error.localizedDescription)"
+ },
+ " / 저장 후 스토어 \\(savedCount)일": {
+  "en": " / \\(savedCount) days in store after saving",
+  "ja": " / 保存後ストア \\(savedCount)日"
+ },
+ " \\(curName)은 \\(curCount) / \\(goal)회째예요.": {
+  "en": " \\(curName) is at \\(curCount) of \\(goal).",
+  "ja": " \\(curName)は\\(curCount) / \\(goal)回目です。"
+ },
+ " · \\(index)/\\(item.spanDays)일차": {
+  "en": " · Day \\(index)/\\(item.spanDays)",
+  "ja": " · \\(index)/\\(item.spanDays)日目"
+ },
+ " · 평균 주기 \\(snapshot.averageLength)일 기준": {
+  "en": " · Based on a \\(snapshot.averageLength)-day average cycle",
+  "ja": " · 平均周期\\(snapshot.averageLength)日を基準"
+ },
+ " 외 \\(titles.count - 3)개": {
+  "en": " and \\(titles.count - 3) more",
+  "ja": " ほか\\(titles.count - 3)件"
+ },
+ "([0-9]+)분": {
+  "en": "([0-9]+)min",
+  "ja": "([0-9]+)分"
+ },
+ ")) \\(consistencyWord) 기록됐어요.": {
+  "en": ")) logged \\(consistencyWord).",
+  "ja": ")) \\(consistencyWord)記録されました。"
+ },
+ "+\\(hiddenCount)개 더": {
+  "en": "+\\(hiddenCount) more",
+  "ja": "+\\(hiddenCount)件"
+ },
+ ", 삭제된 기록 \\(skippedDeleted)건": {
+  "en": ", \\(skippedDeleted) deleted records",
+  "ja": "、削除された記録 \\(skippedDeleted)件"
+ },
+ ", 이미 있음 \\(skippedKnown + skippedDup)건": {
+  "en": ", already there \\(skippedKnown + skippedDup)",
+  "ja": "、すでにあり \\(skippedKnown + skippedDup)件"
+ },
+ ", 이전에 지운 날 \\(skippedTombstone)건": {
+  "en": ", \\(skippedTombstone) days deleted earlier",
+  "ja": "、以前に削除した日 \\(skippedTombstone)件"
+ },
+ "TempoRoutine-백업-\\(ExportCodec.dayString(.now)).json": {
+  "en": "TempoRoutine-backup-\\(ExportCodec.dayString(.now)).json",
+  "ja": "TempoRoutine-バックアップ-\\(ExportCodec.dayString(.now)).json"
+ },
+ "\\($0)챕터": {
+  "en": "\\($0) chapters",
+  "ja": "\\($0)章"
+ },
+ "\\($0.value)주기는 \\(seasonMeta(for: $0.key).name)이": {
+  "en": "in \\($0.value) cycles, \\(seasonMeta(for: $0.key).name) was",
+  "ja": "\\($0.value)周期では\\(seasonMeta(for: $0.key).name)が"
+ },
+ "\\(Int(elapsed) / 60)/\\(target / 60)분": {
+  "en": "\\(Int(elapsed) / 60)/\\(target / 60) min",
+  "ja": "\\(Int(elapsed) / 60)/\\(target / 60)分"
+ },
+ "\\(Int(elapsed) / 60)분": {
+  "en": "\\(Int(elapsed) / 60) min",
+  "ja": "\\(Int(elapsed) / 60)分"
+ },
+ "\\(Int(item.elapsedSeconds()) / 60)분": {
+  "en": "\\(Int(item.elapsedSeconds()) / 60) min",
+  "ja": "\\(Int(item.elapsedSeconds()) / 60)分"
+ },
+ "\\(added)건을 가져왔어요.": {
+  "en": "Imported \\(added) records.",
+  "ja": "\\(added)件を読み込みました。"
+ },
+ "\\(anchor.rawValue) \\(offset + 1)일차": {
+  "en": "\\(anchor.rawValue) Day \\(offset + 1)",
+  "ja": "\\(anchor.rawValue) \\(offset + 1)日目"
+ },
+ "\\(anchor.rawValue) 며칠째": {
+  "en": "Days since \\(anchor.rawValue)",
+  "ja": "\\(anchor.rawValue)から何日目"
+ },
+ "\\(anchor.rawValue) 반복": {
+  "en": "Repeats \\(anchor.rawValue)",
+  "ja": "\\(anchor.rawValue)繰り返し"
+ },
+ "\\(anchor.rawValue) 전체": {
+  "en": "All of \\(anchor.rawValue)",
+  "ja": "\\(anchor.rawValue) 全体"
+ },
+ "\\(anchor.rawValue)인 날엔 매일 보여요.": {
+  "en": "Shown every day on \\(anchor.rawValue) days.",
+  "ja": "\\(anchor.rawValue)の日は毎日表示されます。"
+ },
+ "\\(base), 오늘": {
+  "en": "\\(base), today",
+  "ja": "\\(base)、今日"
+ },
+ "\\(cal.component(.day, from: day))~\\(cal.component(.day, from: endDay))일 · \\(count)일": {
+  "en": "\\(cal.component(.day, from: day))–\\(cal.component(.day, from: endDay)) · \\(count) days",
+  "ja": "\\(cal.component(.day, from: day))~\\(cal.component(.day, from: endDay))日 · \\(count)日間"
+ },
+ "\\(cal.component(.day, from: day))일 \\(day.formatted(.dateTime.weekday(.abbreviated)))": {
+  "en": "\\(day.formatted(.dateTime.weekday(.abbreviated))) \\(cal.component(.day, from: day))",
+  "ja": "\\(cal.component(.day, from: day))日 \\(day.formatted(.dateTime.weekday(.abbreviated)))"
+ },
+ "\\(cal.component(.month, from: date))월 \\(cal.component(.day, from: date))일 (\\(weekday))": {
+  "en": "\\(cal.component(.month, from: date))/\\(cal.component(.day, from: date)) (\\(weekday))",
+  "ja": "\\(cal.component(.month, from: date))月\\(cal.component(.day, from: date))日 (\\(weekday))"
+ },
+ "\\(cal.component(.month, from: monthStart))월": {
+  "en": "Month \\(cal.component(.month, from: monthStart))",
+  "ja": "\\(cal.component(.month, from: monthStart))月"
+ },
+ "\\(context.state.anchor.formatted(date: .omitted, time: .shortened)) 시작": {
+  "en": "Started \\(context.state.anchor.formatted(date: .omitted, time: .shortened))",
+  "ja": "\\(context.state.anchor.formatted(date: .omitted, time: .shortened)) 開始"
+ },
+ "\\(context.state.anchor.formatted(date: .omitted, time: .shortened)) 종료": {
+  "en": "Ends at \\(context.state.anchor.formatted(date: .omitted, time: .shortened))",
+  "ja": "\\(context.state.anchor.formatted(date: .omitted, time: .shortened)) 終了"
+ },
+ "\\(curName) 기록 \\(curCount) / \\(goal)": {
+  "en": "\\(curName) records \\(curCount) / \\(goal)",
+  "ja": "\\(curName) 記録 \\(curCount) / \\(goal)"
+ },
+ "\\(curName)의 에너지 기록이 \\(curCount)번 쌓였어요. 세 번이면 이 계절의 첫 패턴이 보여요.": {
+  "en": "You've logged energy in \\(curName) \\(curCount) times. At three, the first pattern of this season comes into view.",
+  "ja": "\\(curName)のエネルギー記録が\\(curCount)回たまりました。3回になると、この季節の最初のパターンが見えてきます。"
+ },
+ "\\(curName)의 에너지를 세 번 기록하면, 이 계절의 첫 패턴이 보여요.": {
+  "en": "Log your energy three times in \\(curName), and the first pattern of this season shows up.",
+  "ja": "\\(curName)にエネルギーを3回記録すると、この季節の最初のパターンが見えてきます。"
+ },
+ "\\(cycleLength)일": {
+  "en": "\\(cycleLength) days",
+  "ja": "\\(cycleLength)日"
+ },
+ "\\(cyclesPart)\\(signalName) 기록 \\(totalCount)회 · 기록상 패턴이에요": {
+  "en": "\\(cyclesPart)\\(signalName) logged \\(totalCount) times · a pattern in your records",
+  "ja": "\\(cyclesPart)\\(signalName)の記録\\(totalCount)回 · 記録から見えるパターンです"
+ },
+ "\\(date.formatted(date: .omitted, time: .shortened))에 시작해요.": {
+  "en": "Starts at \\(date.formatted(date: .omitted, time: .shortened)).",
+  "ja": "\\(date.formatted(date: .omitted, time: .shortened))に始まります。"
+ },
+ "\\(dayInCycle)일차": {
+  "en": "Day \\(dayInCycle)",
+  "ja": "\\(dayInCycle)日目"
+ },
+ "\\(days)일에 걸친 일정이에요": {
+  "en": "This event spans \\(days) days",
+  "ja": "\\(days)日間にわたる予定です"
+ },
+ "\\(event.title), 캘린더에서 가져옴, 읽기 전용": {
+  "en": "\\(event.title), from Calendar, read-only",
+  "ja": "\\(event.title)、カレンダーから取得、読み取り専用"
+ },
+ "\\(hedge)\\(meta.name) \\(max(1, r.day - spanStart + 1))일차\\(projected)": {
+  "en": "\\(hedge)\\(meta.name) Day \\(max(1, r.day - spanStart + 1))\\(projected)",
+  "ja": "\\(hedge)\\(meta.name) \\(max(1, r.day - spanStart + 1))日目\\(projected)"
+ },
+ "\\(index)/\\(item.spanDays)일차": {
+  "en": "Day \\(index)/\\(item.spanDays)",
+  "ja": "\\(index)/\\(item.spanDays)日目"
+ },
+ "\\(info.meta.name) \\(info.dayInPhase)일차": {
+  "en": "\\(info.meta.name) Day \\(info.dayInPhase)",
+  "ja": "\\(info.meta.name) \\(info.dayInPhase)日目"
+ },
+ "\\(info.meta.name) \\(info.dayInPhase)일차\\(hedge)": {
+  "en": "\\(info.meta.name) Day \\(info.dayInPhase)\\(hedge)",
+  "ja": "\\(info.meta.name) \\(info.dayInPhase)日目\\(hedge)"
+ },
+ "\\(kind.rawValue) 추가": {
+  "en": "Add \\(kind.rawValue)",
+  "ja": "\\(kind.rawValue)を追加"
+ },
+ "\\(lead) \\(subject) \\(seasonMeta(for: high.phase).name)에 \\(highWord) \\(seasonMeta(for: low.phase).name)에 \\(lowWord) 기록됐어요.": {
+  "en": "\\(lead) \\(subject) was logged as \\(highWord) in \\(seasonMeta(for: high.phase).name) and \\(lowWord) in \\(seasonMeta(for: low.phase).name).",
+  "ja": "\\(lead) \\(subject)は\\(seasonMeta(for: high.phase).name)に\\(highWord)、\\(seasonMeta(for: low.phase).name)に\\(lowWord)と記録されました。"
+ },
+ "\\(logged) / \\(target) 세션": {
+  "en": "\\(logged) / \\(target) sessions",
+  "ja": "\\(logged) / \\(target) セッション"
+ },
+ "\\(logged) 세션": {
+  "en": "\\(logged) sessions",
+  "ja": "\\(logged) セッション"
+ },
+ "\\(meta.name) \\(slot.dayInPhase)일차\\(hasRoutine ? ": {
+  "en": "\\(meta.name) Day \\(slot.dayInPhase)\\(hasRoutine ? ",
+  "ja": "\\(meta.name) \\(slot.dayInPhase)日目\\(hasRoutine ? "
+ },
+ "\\(meta.name) 예상": {
+  "en": "\\(meta.name) expected",
+  "ja": "\\(meta.name) 予測"
+ },
+ "\\(meta.name), 루틴 없음": {
+  "en": "\\(meta.name), no routines",
+  "ja": "\\(meta.name)、ルーティンなし"
+ },
+ "\\(meta.name)에 루틴 추가": {
+  "en": "Add a routine in \\(meta.name)",
+  "ja": "\\(meta.name)にルーティンを追加"
+ },
+ "\\(month)월": {
+  "en": "Month \\(month)",
+  "ja": "\\(month)月"
+ },
+ "\\(names)의 패턴이 보이기 시작했어요. 네 계절이 모두 채워지면\n리듬 전체가 이어질 거에요.": {
+  "en": "Patterns in \\(names) are starting to show. Once all four seasons are filled in,\nyour whole rhythm will connect.",
+  "ja": "\\(names)のパターンが見えはじめました。四つの季節がすべて埋まると\nリズム全体がつながります。"
+ },
+ "\\(r.dayOffset + 1)일차": {
+  "en": "Day \\(r.dayOffset + 1)",
+  "ja": "\\(r.dayOffset + 1)日目"
+ },
+ "\\(run)주기 연속, \\(seasonMeta(for: reversed[0]).name)이 \\(consistencyWord) 기록됐어요.": {
+  "en": "\\(run) cycles in a row, \\(seasonMeta(for: reversed[0]).name) was logged \\(consistencyWord).",
+  "ja": "\\(run)周期連続で、\\(seasonMeta(for: reversed[0]).name)が\\(consistencyWord)記録されました。"
+ },
+ "\\(seasonMeta(for: $0.phase).name) \\($0.length)일": {
+  "en": "\\(seasonMeta(for: $0.phase).name) \\($0.length) days",
+  "ja": "\\(seasonMeta(for: $0.phase).name) \\($0.length)日"
+ },
+ "\\(signalName) 기록 \\(totalCount)회 · 패턴을 말하기엔 아직 일러요": {
+  "en": "\\(signalName) logged \\(totalCount) times · too early to call it a pattern",
+  "ja": "\\(signalName)の記録 \\(totalCount)回 · パターンを語るにはまだ早いです"
+ },
+ "\\(signalName) 패턴은 아직 또렷하지 않아요. 기록이 더 쌓이면 여기에 담아둘게요.": {
+  "en": "The \\(signalName) pattern isn't clear yet. Once more records build up, it will show here.",
+  "ja": "\\(signalName)のパターンはまだはっきりしていません。記録が増えたら、ここに載せておきます。"
+ },
+ "\\(theme.displayName) 테마": {
+  "en": "\\(theme.displayName) theme",
+  "ja": "\\(theme.displayName) テーマ"
+ },
+ "\\(theme.displayName) 테마 미리보기": {
+  "en": "\\(theme.displayName) theme preview",
+  "ja": "\\(theme.displayName)テーマのプレビュー"
+ },
+ "\\(timeOfDayLabel(t))에 하는 걸로 표시돼요": {
+  "en": "Shown as \\(timeOfDayLabel(t))",
+  "ja": "\\(timeOfDayLabel(t))に行うものとして表示されます"
+ },
+ "\\(title) 설명": {
+  "en": "\\(title) description",
+  "ja": "\\(title)の説明"
+ },
+ "invalidArguments — 프로덕션 스키마 미배포 의심": {
+  "en": "invalidArguments — production schema may not be deployed",
+  "ja": "invalidArguments — 本番スキーマが未デプロイの可能性"
+ },
+ "「\\($0.displayName)」 구매": {
+  "en": "Buy \"\\($0.displayName)\"",
+  "ja": "「\\($0.displayName)」を購入"
+ },
+ "「\\($0.displayName)」을 구매했어요": {
+  "en": "You bought “\\($0.displayName)”",
+  "ja": "「\\($0.displayName)」を購入しました"
+ },
+ "「\\(choice.displayName)」으로 시작하기": {
+  "en": "Start with \"\\(choice.displayName)\"",
+  "ja": "「\\(choice.displayName)」で始める"
+ },
+ "「\\(matched)」를 \\(start.formatted(date: .omitted, time: .shortened))으로 읽었어요. 시각을 직접 고치면 그대로 둬요.": {
+  "en": "Read \"\\(matched)\" as \\(start.formatted(date: .omitted, time: .shortened)). If you set the time yourself, it stays as you set it.",
+  "ja": "「\\(matched)」を\\(start.formatted(date: .omitted, time: .shortened))と読み取りました。時刻をご自分で直した場合は、そのままにします。"
+ },
+ "가져오기 오류 — \\(shortError(error))": {
+  "en": "Import error — \\(shortError(error))",
+  "ja": "読み込みエラー — \\(shortError(error))"
+ },
+ "건강 앱에서 생리 기록 \\(imported)일을 가져왔어요.": {
+  "en": "Imported \\(imported) days of period records from the Health app.",
+  "ja": "ヘルスケアAppから生理の記録を\\(imported)日分読み込みました。"
+ },
+ "겨울 예상 · 예정일 \\(diff - avgLength)일 지남": {
+  "en": "Winter expected · \\(diff - avgLength) days past the due date",
+  "ja": "冬の予想 · 予定日から\\(diff - avgLength)日経過"
+ },
+ "계절 시작 +\\(offset)일": {
+  "en": "Season start +\\(offset) days",
+  "ja": "季節の始まり +\\(offset)日"
+ },
+ "기록된 \\(lengths.count)주기 \\(lo)~\\(hi)일": {
+  "en": "\\(lengths.count) cycles logged, \\(lo)–\\(hi) days",
+  "ja": "記録された\\(lengths.count)周期 \\(lo)~\\(hi)日"
+ },
+ "기록된 \\(lengths.count)주기 모두 \\(lo)일": {
+  "en": "All \\(lengths.count) recorded cycles were \\(lo) days",
+  "ja": "記録された\\(lengths.count)周期すべてが\\(lo)日"
+ },
+ "기록상 \\(seasonMeta(for: top.key).name)에 계획한 걸 가장 많이 수행했어요.": {
+  "en": "Your records show you got the most of your plans done in \\(seasonMeta(for: top.key).name).",
+  "ja": "記録では、\\(seasonMeta(for: top.key).name)に計画したことをいちばん多くこなしていました。"
+ },
+ "기록상 생리 시작 \\(learned)일 전부터 컨디션이 낮게 기록됐어요.": {
+  "en": "Your records show how you feel dipping from \\(learned) days before your period starts.",
+  "ja": "記録では、生理が始まる\\(learned)日前から体調が低めに記録されています。"
+ },
+ "날짜 \\(dayLabel)": {
+  "en": "Date \\(dayLabel)",
+  "ja": "日付 \\(dayLabel)"
+ },
+ "내림 \\(pulled)·삭제 \\(removed)": {
+  "en": "Pulled \\(pulled)·Deleted \\(removed)",
+  "ja": "取得 \\(pulled)・削除 \\(removed)"
+ },
+ "네 계절 중 \\(unlocked.count)": {
+  "en": "\\(unlocked.count) of four seasons",
+  "ja": "四季のうち\\(unlocked.count)"
+ },
+ "마지막 동기화 · \\(PlannerSync.shared.lastReport)": {
+  "en": "Last sync · \\(PlannerSync.shared.lastReport)",
+  "ja": "最終同期 · \\(PlannerSync.shared.lastReport)"
+ },
+ "마지막 동기화 · \\(mirror.lastSyncReport)": {
+  "en": "Last sync · \\(mirror.lastSyncReport)",
+  "ja": "最終同期 · \\(mirror.lastSyncReport)"
+ },
+ "마지막 응답 \\(selfReports.count)건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.": {
+  "en": "Your last \\(selfReports.count) answers are saved on this device. Answering again updates them with your new answers.",
+  "ja": "最後の回答\\(selfReports.count)件がこの端末に保存されています。もう一度答えると、新しい回答に更新されます。"
+ },
+ "마친 기록 \\(completions.count)건 기준": {
+  "en": "Based on \\(completions.count) finished records",
+  "ja": "完了した記録\\(completions.count)件を基準"
+ },
+ "목표 \\(targetMinutes)분": {
+  "en": "Goal \\(targetMinutes) min",
+  "ja": "目標 \\(targetMinutes)分"
+ },
+ "목표 \\(targetSessions)세션": {
+  "en": "Goal \\(targetSessions) sessions",
+  "ja": "目標\\(targetSessions)セッション"
+ },
+ "목표 \\(targetSessions)회": {
+  "en": "Goal \\(targetSessions) sessions",
+  "ja": "目標\\(targetSessions)回"
+ },
+ "보내기 오류 — \\(shortError(error))": {
+  "en": "Send error — \\(shortError(error))",
+  "ja": "送信エラー — \\(shortError(error))"
+ },
+ "사용법 안내 \\(shownIndex + 1) / \\(steps.count). \\(step.title). \\(step.body)": {
+  "en": "How to use \\(shownIndex + 1) / \\(steps.count). \\(step.title). \\(step.body)",
+  "ja": "使い方ガイド \\(shownIndex + 1) / \\(steps.count). \\(step.title). \\(step.body)"
+ },
+ "사용법 안내. \\(step.title). \\(step.body)": {
+  "en": "How to use. \\(step.title). \\(step.body)",
+  "ja": "使い方の案内。\\(step.title)。\\(step.body)"
+ },
+ "스토어 열기 실패: \\(error)": {
+  "en": "Couldn't open the store: \\(error)",
+  "ja": "ストアを開けませんでした: \\(error)"
+ },
+ "씨앗 \\(count)개": {
+  "en": "\\(count) seeds",
+  "ja": "たね\\(count)個"
+ },
+ "씨앗 \\(price)개로 구매": {
+  "en": "Buy for \\(price) seeds",
+  "ja": "たね\\(price)個で購入"
+ },
+ "씨앗 \\(price)개로 구매할 수 있어요 · 지금 \\(available)개": {
+  "en": "You can get it for \\(price) seeds · you have \\(available) now",
+  "ja": "たね\\(price)個で購入できます · 現在\\(available)個"
+ },
+ "씨앗 \\(price)개로 소장": {
+  "en": "Get it for \\(price) seeds",
+  "ja": "たね\\(price)個で手に入れる"
+ },
+ "씨앗 \\(seeds)개 받기": {
+  "en": "Get \\(seeds) seeds",
+  "ja": "たねを\\(seeds)個受け取る"
+ },
+ "씨앗 \\(seeds)개를 받았어요": {
+  "en": "You received \\(seeds) seeds",
+  "ja": "たねを\\(seeds)個受け取りました"
+ },
+ "씨앗 \\(theme.seedPrice ?? 0)개를 썼어요.": {
+  "en": "You used \\(theme.seedPrice ?? 0) seeds.",
+  "ja": "たねを\\(theme.seedPrice ?? 0)個使いました。"
+ },
+ "오류 \\(ckError.code.rawValue)(\\(Self.codeName(ckError.code))) \\(detail)": {
+  "en": "Error \\(ckError.code.rawValue)(\\(Self.codeName(ckError.code))) \\(detail)",
+  "ja": "エラー \\(ckError.code.rawValue)(\\(Self.codeName(ckError.code))) \\(detail)"
+ },
+ "올림 \\(pushed)": {
+  "en": "Uploaded \\(pushed)",
+  "ja": "アップロード \\(pushed)"
+ },
+ "원본 \\(result.samples.count)건, 가져옴 \\(imported)건": {
+  "en": "\\(result.samples.count) in source, \\(imported) imported",
+  "ja": "元データ\\(result.samples.count)件、読み込み\\(imported)件"
+ },
+ "이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 \\(periodDays.count)일 · 체크인 \\(checkIns.count)건": {
+  "en": "This file contains your period and how-you-feel records. Saved right now: \\(periodDays.count) period days · \\(checkIns.count) check-ins",
+  "ja": "このファイルには生理・体調の記録が入っています。今保存されている記録：生理\\(periodDays.count)日 · チェックイン\\(checkIns.count)件"
+ },
+ "존 오류 \\((failure.error as? CKError)?.code.rawValue ?? -1)": {
+  "en": "Zone error \\((failure.error as? CKError)?.code.rawValue ?? -1)",
+  "ja": "ゾーンエラー \\((failure.error as? CKError)?.code.rawValue ?? -1)"
+ },
+ "지금은 무료 체험 기간이에요. \\(ThemeTrial.daysLeft)일 동안 모든 테마를 자유롭게 바꿔볼 수 있어요.": {
+  "en": "You're in the free trial right now. For \\(ThemeTrial.daysLeft) days you can switch between all themes freely.",
+  "ja": "いまは無料体験期間です。\\(ThemeTrial.daysLeft)日間、すべてのテーマを自由に切り替えられます。"
+ },
+ "지난 \\(completedCycles)주기 · ": {
+  "en": "Last \\(completedCycles) cycles · ",
+  "ja": "直近\\(completedCycles)周期 · "
+ },
+ "지난 \\(completedCycles)주기,": {
+  "en": "Over the last \\(completedCycles) cycles,",
+  "ja": "過去\\(completedCycles)周期、"
+ },
+ "지난 \\(errors.count)번, 예측과 실제가 평균 \\(m)일 차이였어요.": {
+  "en": "Over the last \\(errors.count) times, the prediction and the actual day differed by \\(m) days on average.",
+  "ja": "直近\\(errors.count)回、予測と実際の差は平均\\(m)日でした。"
+ },
+ "지난 \\(errors.count)번, 예측한 날에 시작했어요.": {
+  "en": "The last \\(errors.count) times, it started on the predicted day.",
+  "ja": "直近\\(errors.count)回は、予測した日に始まりました。"
+ },
+ "진행도 \\(step) / \\(totalSteps)": {
+  "en": "Progress \\(step) / \\(totalSteps)",
+  "ja": "進捗 \\(step) / \\(totalSteps)"
+ },
+ "최근 주기 \\(last)일": {
+  "en": "Recent cycle \\(last) days",
+  "ja": "直近の周期 \\(last)日"
+ },
+ "커피 \\(store.cups)잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!": {
+  "en": "I received \\(store.cups) cups of coffee. Thanks to your kindness, I get to keep building happily for a few more days!",
+  "ja": "コーヒーを\\(store.cups)杯いただきました。あなたのやさしさのおかげで、あと数日も楽しく開発できます！"
+ },
+ "커피 한 잔 · \\(product.displayPrice)": {
+  "en": "A cup of coffee · \\(product.displayPrice)",
+  "ja": "コーヒー一杯 · \\(product.displayPrice)"
+ },
+ "하루의 구성 \\(cardPage + 1) / 3": {
+  "en": "How a day is made up \\(cardPage + 1) / 3",
+  "ja": "一日の構成 \\(cardPage + 1) / 3"
+ }
+}

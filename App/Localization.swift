@@ -15,8 +15,23 @@
 //   변수로 넘길 문구는 만드는 자리에서 `String(localized:)`로 뽑아 둘 것.
 
 import Foundation
+import SwiftUI
 
 enum Loc {
+    /// **앱이 만든 한국어 문구를 담은 String**을 다시 번역 키로 되돌린다.
+    /// 쓰는 자리: TempoCore가 돌려주는 문구(설문 문항·선택지·공휴일 이름·표시명)처럼
+    /// 리터럴이 아니라 값으로 흘러오는 앱 카피. 키가 앱 카탈로그에 있으면 런타임에 조회된다
+    /// — TempoCore를 순수 모듈로 두고(패키지 로컬라이제이션·번들 리소스 불요) 번역만 앱에서 한다.
+    ///
+    /// ⚠ **사용자가 입력한 내용에는 절대 쓰지 않는다.** 사용자가 적은 「완료」라는 제목이
+    /// 영어에서 「Done」으로 둔갑한다. 대상은 앱이 쓴 문구뿐이다.
+    static func key(_ appCopy: String) -> LocalizedStringKey { LocalizedStringKey(appCopy) }
+
+    /// 뷰 밖(알림 본문·위젯 스냅샷 합성 등)에서 같은 일을 한다.
+    static func text(_ appCopy: String) -> String {
+        String(localized: String.LocalizationValue(appCopy))
+    }
+
     /// 포맷 인자가 있는 로컬라이즈 문자열.
     /// - Parameter key: 포맷 지정자를 포함한 **한글 키**(예: `"%lld일차"`). 카탈로그 키와 글자 그대로 같아야 한다.
     /// - Note: 번역에서 어순이 바뀌면 `%1$@`·`%2$lld` 위치 지정자를 쓴다. 리터럴 퍼센트는 `%%`.

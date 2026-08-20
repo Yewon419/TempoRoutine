@@ -30,7 +30,17 @@ HANGUL_END = "힣"
 # 로컬라이즈 대상이 아닌 리터럴 — 화면에 안 나가는 값.
 # 의학 단계명 4종: MASTER 개정 M-1c로 렌더 사용처 0(사용자 표면 금지). 데이터 라벨로만 남아
 # 있어 번역 대상이 아니다. 새 UI에 쓰지 말 것 — 쓰게 되면 이 목록에서 빼고 번역을 넣는다.
-IGNORED_LITERALS: frozenset[str] = frozenset({"월경기", "난포기", "배란기", "황체기"})
+IGNORED_LITERALS: frozenset[str] = frozenset({
+    "월경기", "난포기", "배란기", "황체기",
+    # 한국어 시각 파서 토큰(ScheduleTextParser) — 화면 문구가 아니라 **입력 해석**이다.
+    # 「오후 3시 회의」를 읽는 사전이므로 번역하면 한국어 입력이 안 읽힌다. 영어·일본어
+    # 입력 파서는 별도 기능이지 번역이 아니다(로컬라이제이션.md §5).
+    "시", "분", "반", "경", "께", "간", "부터", "까지", "에", "에는",
+    "오전", "오후", "새벽", "아침", "점심", "저녁", "정오", "자정",
+    "([0-9]+)분",   # 제목에서 「N분」을 읽는 정규식(QuickAdd)
+    # 개발자 진단 로그 — 사용자 표면 아님
+    "invalidArguments — 프로덕션 스키마 미배포 의심",
+})
 
 # Swift 리터럴 이스케이프 → 실제 문자. 카탈로그 키는 실제 문자(줄바꿈 등)라 맞춰야 대조된다.
 ESCAPES: dict[str, str] = {"n": "\n", "t": "\t", "0": "\0", '"': '"', "'": "'", "\\": "\\"}
@@ -135,6 +145,30 @@ def strip_swift_noise(source: str) -> list[tuple[int, str]]:
             index += 1
             buffer: list[str] = []
             while index < length and source[index] != '"':
+                # 보간 `\(...)` — 안에 또 문자열이 들어갈 수 있다("a\(b ? "c" : "d")e").
+                # 괄호 균형을 세며 통째로 건너뛰지 않으면 안쪽 따옴표에서 리터럴이 잘린다.
+                if source[index] == "\\" and source[index : index + 2] == "\\(":
+                    buffer.append("\\(")
+                    index += 2
+                    depth = 1
+                    while index < length and depth > 0:
+                        cur = source[index]
+                        if cur == "(":
+                            depth += 1
+                        elif cur == ")":
+                            depth -= 1
+                            if depth == 0:
+                                break
+                        elif cur == '"':          # 보간 안 문자열은 통째로 건너뛴다
+                            index += 1
+                            while index < length and source[index] != '"':
+                                index += 2 if source[index] == "\\" else 1
+                        elif cur == "\n":
+                            line += 1
+                        index += 1
+                    index += 1
+                    buffer.append(")")
+                    continue
                 if source[index] == "\\" and index + 1 < length:
                     buffer.append(source[index])
                     buffer.append(source[index + 1])
