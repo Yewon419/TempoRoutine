@@ -571,8 +571,8 @@ struct ThemePreviewScreen: View {
                 .frame(width: 56, height: 56)
         }
         .padding(16)
-        // 무틴트 실기기 검정 폴백 실측(2026-08-19) — Almanac.MilkGlass와 같은 틴트 고정
-        .glassEffect(.regular.tint(.white.opacity(0.55)), in: RoundedRectangle(cornerRadius: 20))
+        // 틴트 흰 20% — Almanac.MilkGlass와 동값(시안 --glass 평균, 2026-08-20 완화)
+        .glassEffect(.regular.tint(.white.opacity(0.2)), in: RoundedRectangle(cornerRadius: 20))
         .padding(.top, 20)
     }
 
@@ -661,8 +661,8 @@ struct ThemePreviewScreen: View {
         if chrome.liquidGlassCards {
             // 플레이리스트 — 시스템 리퀴드 글래스. 재질이라 활성 테마와 무관하게 제 모습으로 뜬다.
             // ⚠ `isEnabled:` 파라미터는 SDK에 없다(CI 실측 2026-08-19) — 분기로 켠다.
-            // 무틴트 실기기 검정 폴백 실측(2026-08-19) — Almanac.MilkGlass와 같은 틴트 고정
-            card.glassEffect(.regular.tint(.white.opacity(0.55)), in: RoundedRectangle(cornerRadius: 20))
+            // 틴트 흰 20% — Almanac.MilkGlass와 동값(시안 --glass 평균, 2026-08-20 완화)
+            card.glassEffect(.regular.tint(.white.opacity(0.2)), in: RoundedRectangle(cornerRadius: 20))
         } else {
             card.background {
                 if chrome.engravedCards {
@@ -697,7 +697,9 @@ struct ThemePreviewScreen: View {
             }
         }
         .padding(.vertical, 12)
-        .background((chrome.ticketChrome ? TicketSpec.ticketPaper : p.surface),
+        // 틴트 유리 바(2026-08-20)는 지면색으로 근사 — 목업엔 실제 블러가 없다
+        .background((chrome.ticketChrome ? TicketSpec.ticketPaper
+                     : chrome.tintedTabBar ? p.paper.opacity(0.75) : p.surface),
                     in: Capsule())
     }
 
@@ -834,7 +836,7 @@ struct ThemePreview: View {
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         if chrome.liquidGlassCards {
-            row.glassEffect(.regular.tint(.white.opacity(0.55)), in: RoundedRectangle(cornerRadius: 9))
+            row.glassEffect(.regular.tint(.white.opacity(0.2)), in: RoundedRectangle(cornerRadius: 9))
         } else {
             row.background {
                 RoundedRectangle(cornerRadius: 9)

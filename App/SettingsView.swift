@@ -120,9 +120,22 @@ struct SettingsView: View {
                     inputProgresses: inputProgresses)
     }
 
+    /// 설정 행 재질(2026-08-20 베타 피드백 "설정탭만 이질적" — 시안 `.list-group`은 그 테마의
+    /// 카드 재질과 동일하다). nil = 시스템 insetGrouped 그대로(기본·포인트컬러·티켓).
+    /// 활판은 채움 없음(§2.6 — 눌린 것은 면이 아니라 선), 행 구분은 세퍼레이터가 담당.
+    private static var themedRowGround: AnyView? {
+        switch ThemeStore.chrome.settingsList {
+        case .system: nil
+        case .glass: AnyView(Rectangle().fill(.ultraThinMaterial).overlay { Ink.surface })
+        case .bare: AnyView(Color.clear)
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             List {
+                // 행 재질 트레이트는 Group에 걸어 안의 전 행에 전파한다(개별 Section 무수정)
+                Group {
                 // 테마(2026-08-09 — 테마 탭 진입 행. 심기·적용·미리보기는 ThemeShopView, §3.8.1)
                 Section {
                     Button {
@@ -346,6 +359,8 @@ struct SettingsView: View {
                     .onChange(of: wxCondition) { _, _ in applyWxState() }
                     .onChange(of: wxDaypart) { _, _ in applyWxState() }
                 }
+                }   // Group — 행 재질 전파 끝
+                .listRowBackground(Self.themedRowGround)
             }
             .scrollContentBackground(.hidden)
             .centeredColumn(680)   // 아이패드 중앙 조판(2026-07-23) — 배경은 루트로 이동

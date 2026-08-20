@@ -78,6 +78,9 @@ struct RootTabView: View {
         .id(appTheme + "·" + pointColor)   // 포인트색 변경도 같은 리빌드 경로(2026-08-17)
         .onChange(of: appTheme) { _, newValue in
             ThemeStore.apply(newValue)   // 설정의 선(先)apply 보완 벨트 — 외부 변경(백업 복원 등) 대비
+            // 프록시를 리빌드 전에 갱신(2026-08-20) — onAppear에만 두면 새 UITabBar가 옛
+            // 프록시로 먼저 만들어질 수 있다(테마 전환 직후 하단바만 이전 테마로 남던 증상)
+            Self.applyTabBarAppearance()
             // 위젯도 즉시 테마 추종(Phase 5) — 스냅샷 재발행 + reloadAllTimelines(publish 내장)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
                                  inputs: inputs, outputs: outputs, completions: completions)
@@ -202,8 +205,27 @@ struct RootTabView: View {
             UITabBar.appearance().scrollEdgeAppearance = appearance
             return
         }
+        if ThemeStore.chrome.tintedTabBar {
+            // 테마 지면색 틴트 유리(2026-08-20 베타 피드백 "하단바가 한 테마 안에서 통일감이
+            // 없다") — 시스템 유리는 탭마다 다른 지면을 샘플링해 바 색이 널뛴다. 블러 위에
+            // Ink.paper 60%를 얹어 테마 지면으로 고정하고, 라벨·미선택 아이콘을 잉크로 맞춘다.
+            // 선택 아이콘 색은 SwiftUI `.tint`가 담당(티켓 branch 전례).
+            appearance.configureWithDefaultBackground()
+            appearance.backgroundColor = UIColor(Ink.paper.opacity(0.6))
+            let normal = UIColor(Ink.text.opacity(0.45))
+            for layout in [appearance.stackedLayoutAppearance,
+                           appearance.inlineLayoutAppearance,
+                           appearance.compactInlineLayoutAppearance] {
+                layout.normal.titleTextAttributes = [.foregroundColor: normal]
+                layout.normal.iconColor = normal
+                layout.selected.titleTextAttributes = [.foregroundColor: UIColor(Ink.text)]
+            }
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+            return
+        }
         guard ThemeStore.chrome.ticketChrome else {
-            // 종전 테마는 시스템 기본(유리) 그대로 — 프록시가 남아 오염되지 않게 되돌린다
+            // 기본·포인트컬러 = 시스템 기본(유리) 그대로 — 프록시가 남아 오염되지 않게 되돌린다
             appearance.configureWithDefaultBackground()
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance

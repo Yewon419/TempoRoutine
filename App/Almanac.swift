@@ -219,10 +219,11 @@ struct MilkGlass: ViewModifier {
             // 플레이리스트(시안 §4.4 ⑥) — iOS 26 시스템 리퀴드 글래스. 시안의 커스텀 공식
             // (사선 그라데이션 + 4방 림 스펙큘러)은 이 재질의 근사였다 — 본물을 쓴다.
             // 라운드는 시안 20(기본 16만 승격, 명시 radius는 존중).
-            // ⚠ 무틴트 `.regular`는 실기기(베타 피드백 2026-08-19 "리퀴드글래스 전혀 안되어있네")
-            // 에서 거의 순검정(RGB 20대)으로 떨어진다 — 배경을 못 샘플링할 때의 시스템 기본
-            // 폴백으로 추정. 명시 흰 틴트로 밝은 유리를 고정한다(시안 §4.4 ⑥ "흰 계열" 의도).
-            content.glassEffect(.regular.tint(.white.opacity(0.55)),
+            // 틴트 = 흰 20%(시안 --glass 그라데이션 10~30%의 평균). 종전 55%는 다크
+            // colorScheme발 검정 폴백 시절 응급값 — 근본 수정(forcesLightAppearance,
+            // 2026-08-19) 후 "틴트가 세서 유리가 아니라 면으로 보인다" 베타 피드백로 복귀.
+            // 0으로 다 걷지 않는 이유 = 시안도 흰 기운을 남긴다("흰 계열" §4.4 ⑥).
+            content.glassEffect(.regular.tint(.white.opacity(0.2)),
                                 in: RoundedRectangle(cornerRadius: radius == 16 ? 20 : radius))
         } else if ThemeStore.chrome.engravedCards {
             // 활판(시안 §2.3-7-1) — 배경 없음. **눌린 것은 카드가 아니라 선 하나**다:

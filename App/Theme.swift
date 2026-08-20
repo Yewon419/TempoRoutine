@@ -472,6 +472,23 @@ struct ThemeChrome {
         case vinyl
     }
     var signalRing: SignalRing = .plain
+
+    // ── 하단바·설정 리스트 재질(2026-08-20 베타 피드백 — "하단바가 한 테마 안에서 통일감이
+    //    없다" / "설정탭만 이질적이다". 시스템 기본 재질이 테마 팔레트를 모르는 게 공통 뿌리) ──
+    /// 하단바 = 테마 지면색 틴트 유리(블러 + `Ink.paper` 60% + 잉크 라벨). 시스템 유리는
+    /// 탭마다 다른 지면을 샘플링해 같은 테마 안에서도 바 색이 널뛴다 — 지면색으로 고정한다.
+    /// 티켓·활판은 각자 불투명 문법이 이미 있다(ticketChrome·textOnlyTabBar가 우선).
+    var tintedTabBar = false
+    /// 설정 리스트 행 재질 — 시안 `.list-group`은 그 테마의 카드 재질과 동일하다.
+    /// `.system` = 시스템 insetGrouped 그대로(기본·포인트컬러·티켓 — 티켓은 흰 행이 곧 발권지).
+    enum SettingsList {
+        case system
+        /// 블러 + `Ink.surface` — 은필 밀크 글래스 / 플레이리스트 글래스 / 날씨 다크 글래스
+        case glass
+        /// 활판 §2.6 — 채움 없음(눌린 것은 면이 아니라 선). 행 구분은 세퍼레이터가 담당
+        case bare
+    }
+    var settingsList: SettingsList = .system
 }
 
 extension ThemeChrome {
@@ -482,7 +499,8 @@ extension ThemeChrome {
         dimsInDarkMode: true, forcesDarkAppearance: false,
         seasonRowFirst: false, todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
-        ticketChrome: false, photographicGround: false, pointTabTint: false
+        ticketChrome: false, photographicGround: false, pointTabTint: false,
+        tintedTabBar: true, settingsList: .glass
     )
 
     /// 기본 — 장식을 전부 끈다(2026-08-12). 계절 정보(글리프·밴드 색)는 팔레트가 담당하므로
@@ -534,7 +552,7 @@ extension ThemeChrome {
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         debossDisplay: true, hairlineSeasonBand: true, latinCalendarHeader: true,
         textOnlyTabBar: true, engravedCards: true, hidesRecordDot: true,
-        forcesLightAppearance: true, signalRing: .engraved
+        forcesLightAppearance: true, signalRing: .engraved, settingsList: .bare
     )
 
     /// 플레이리스트 (시안 §4.4) — 계절광은 켜되 진한 파스텔로, 카드는 리퀴드 글래스로.
@@ -547,7 +565,8 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true,
-        forcesLightAppearance: true, signalRing: .vinyl
+        forcesLightAppearance: true, signalRing: .vinyl,
+        tintedTabBar: true, settingsList: .glass
     )
 
     /// 날씨 (시안 §5.3) — 지면 = 하늘, 계절광 없음(하늘이 빛 담당). 밤 하늘이 곧 다크라
@@ -559,7 +578,7 @@ extension ThemeChrome {
         seasonRowFirst: false, todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: true,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
-        skyGround: true
+        skyGround: true, tintedTabBar: true, settingsList: .glass
     )
 }
 
