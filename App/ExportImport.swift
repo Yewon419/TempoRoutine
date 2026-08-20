@@ -57,6 +57,8 @@ struct StoreArrays {
     let checkIns: [DailyCheckIn]
     /// Input 그날치 진행(2026-08-12). 기본값 = 구 호출부 무영향
     var inputProgresses: [InputProgress] = []
+    /// 리듬 설문 응답(2026-08-20 감사 — 봉투·전체 삭제에서 빠져 있던 유일한 @Model)
+    var selfReports: [SelfReportRecord] = []
 }
 
 enum ExportImport {
@@ -77,7 +79,10 @@ enum ExportImport {
                                 date: $0.isAllDay ? ExportCodec.dayString($0.date) : ExportCodec.instantString($0.date),
                                 isAllDay: $0.isAllDay, repeatRule: $0.repeatRule, createdAt: $0.createdAt,
                                 endDate: $0.endDate.map { ExportCodec.instantString($0) },
-                                reminderMinutes: $0.reminderMinutes >= 0 ? $0.reminderMinutes : nil)
+                                reminderMinutes: $0.reminderMinutes >= 0 ? $0.reminderMinutes : nil,
+                                // 종일 종료는 date-only 병기(2026-08-20 — 시차 이동 시 하루 밀림 방지.
+                                // instant는 구 빌드 호환용으로 계속 쓴다)
+                                endDay: $0.isAllDay ? $0.endDate.map { ExportCodec.dayString($0) } : nil)
             },
             inputItems: store.inputs.map {
                 InputItemDTO(id: $0.id, title: $0.title, category: $0.category,
@@ -138,10 +143,17 @@ enum ExportImport {
                                             loggedSessions: record.loggedSessions,
                                             percent: record.percent,
                                             elapsedSeconds: elapsed,
-                                            doneSubtaskIDs: done)
+                                            doneSubtaskIDs: done,
+                                            // 날짜-키 병기(2026-08-20) — 읽기는 이쪽 우선
+                                            day: ExportCodec.dayString(record.occurredOn))
                 }
                 return rows.isEmpty ? nil : rows
-            }()
+            }(),
+            // 리듬 설문 응답(2026-08-20 감사) — 빈 배열이면 안 싣는다(구 봉투와 같은 모양)
+            selfReports: store.selfReports.isEmpty ? nil : store.selfReports.map {
+                SelfReportDTO(id: $0.id, answers: $0.answers,
+                              completedAt: $0.completedAt, sharedToServer: $0.sharedToServer)
+            }
         )
     }
 
@@ -161,8 +173,11 @@ enum ExportImport {
         for dto in envelope.scheduleItems where !scheduleIDs.contains(dto.id) {
             let date = dto.isAllDay ? ExportCodec.day(from: dto.date) : ExportCodec.instant(from: dto.date)
             guard let date else { continue }
+            // 종일 종료는 date-only(endDay) 우선(2026-08-20) — 구 봉투는 instant 폴백
+            let endDate = dto.endDay.flatMap { ExportCodec.day(from: $0) }
+                ?? dto.endDate.flatMap { ExportCodec.instant(from: $0) }
             let item = ScheduleItem(title: dto.title, date: date, isAllDay: dto.isAllDay, repeatRule: dto.repeatRule,
-                                    endDate: dto.endDate.flatMap { ExportCodec.instant(from: $0) },
+                                    endDate: endDate,
                                     reminderMinutes: dto.reminderMinutes ?? -1)
             item.id = dto.id
             item.createdAt = dto.createdAt
@@ -201,7 +216,9 @@ enum ExportImport {
         // 더하면 안 된다. 없을 때만 채우는 게 가져오기의 기존 문법(완료 기록과 같다).
         let existingProgress = Set(store.inputProgresses.map { ProgressKey($0.itemID, $0.occurredOn) })
         for dto in envelope.inputProgress ?? [] {
-            let day = Calendar.current.startOfDay(for: dto.occurredOn)
+            // 날짜-키(day) 우선(2026-08-20) — instant는 시차 이동 시 전날/다음날로 밀린다
+            let day = dto.day.flatMap { ExportCodec.day(from: $0) }
+                ?? Calendar.current.startOfDay(for: dto.occurredOn)
             guard !existingProgress.contains(ProgressKey(dto.itemID, day)) else { continue }
             let record = InputProgress(itemID: dto.itemID, occurredOn: day)
             record.id = dto.id
@@ -267,13 +284,25 @@ enum ExportImport {
             added += 1
         }
 
+        // 리듬 설문 응답(2026-08-20) — dedup = UUID
+        let reportIDs = Set(store.selfReports.map(\.id))
+        for dto in envelope.selfReports ?? [] where !reportIDs.contains(dto.id) {
+            let record = SelfReportRecord(answers: dto.answers)
+            record.id = dto.id
+            record.completedAt = dto.completedAt
+            record.sharedToServer = dto.sharedToServer
+            context.insert(record)
+            added += 1
+        }
+
         // 씨앗 소비 원장 — 덮어쓰기가 아니라 합집합 병합. 백업이 이 기기보다 오래됐어도 그 사이에
         // 산 테마를 되돌리지 않는다. 아이템 추가 건수(added)에는 세지 않는다 — 재화는 항목이 아니다.
         if let remote = envelope.seedLedger { Seeds.merge(remote) }
         return added
     }
 
-    // ── 전체 삭제 (§8.2.6 — undo는 호출측이 스냅샷으로. 알림은 undo 미복원 — 재저장 시 재스케줄) ──
+    // ── 전체 삭제 (§8.2.6 — undo는 호출측이 스냅샷으로. 알림은 undo 미복원 — 재저장 시 재스케줄.
+    //    씨앗 원장(획득·소비·보유)은 UserDefaults라 안 지워진다 — 재화는 기록이 아니다, 2026-08-20) ──
     static func wipeAll(_ store: StoreArrays, context: ModelContext) {
         store.schedules.forEach { ScheduleReminder.cancel(id: $0.id) }
         store.periodDays.forEach { context.delete($0) }
@@ -284,6 +313,8 @@ enum ExportImport {
         store.checkIns.forEach { context.delete($0) }
         // 진행 레코드는 itemID 참조라 cascade가 닿지 않는다(2026-08-12)
         store.inputProgresses.forEach { context.delete($0) }
+        // 설문 응답(2026-08-20 감사 — 「모든 기록 삭제」 약속에서 빠져 있던 유일한 @Model)
+        store.selfReports.forEach { context.delete($0) }
     }
 }
 

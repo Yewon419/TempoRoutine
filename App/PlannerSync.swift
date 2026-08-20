@@ -190,7 +190,9 @@ final class PlannerSync: NSObject {
                                 date: item.isAllDay ? ExportCodec.dayString(item.date) : ExportCodec.instantString(item.date),
                                 isAllDay: item.isAllDay, repeatRule: item.repeatRule, createdAt: item.createdAt,
                                 endDate: item.endDate.map { ExportCodec.instantString($0) },
-                                reminderMinutes: item.reminderMinutes >= 0 ? item.reminderMinutes : nil))
+                                reminderMinutes: item.reminderMinutes >= 0 ? item.reminderMinutes : nil,
+                                // 종일 종료 date-only 병기(2026-08-20 — 기기 간 시간대가 다르면 하루 밀림)
+                                endDay: item.isAllDay ? item.endDate.map { ExportCodec.dayString($0) } : nil))
         }
         let inputs = (try? context.fetch(FetchDescriptor<InputItem>())) ?? []
         for item in inputs {
@@ -217,7 +219,8 @@ final class PlannerSync: NSObject {
                                  loggedSessions: record.loggedSessions,
                                  percent: record.percent,
                                  elapsedSeconds: record.elapsedAccumSeconds,
-                                 doneSubtaskIDs: record.doneSubtaskIDs.sorted { $0.uuidString < $1.uuidString }))
+                                 doneSubtaskIDs: record.doneSubtaskIDs.sorted { $0.uuidString < $1.uuidString },
+                                 day: ExportCodec.dayString(record.occurredOn)))   // 날짜-키 병기(2026-08-20)
         }
         let outputs = (try? context.fetch(FetchDescriptor<OutputItem>())) ?? []
         for item in outputs {
@@ -348,7 +351,9 @@ final class PlannerSync: NSObject {
             item.date = date
             item.isAllDay = dto.isAllDay
             item.repeatRule = dto.repeatRule
-            item.endDate = dto.endDate.flatMap { ExportCodec.instant(from: $0) }
+            // 종일 종료는 date-only(endDay) 우선(2026-08-20) — 구 기기 레코드는 instant 폴백
+            item.endDate = dto.endDay.flatMap { ExportCodec.day(from: $0) }
+                ?? dto.endDate.flatMap { ExportCodec.instant(from: $0) }
             item.reminderMinutes = dto.reminderMinutes ?? -1
             item.createdAt = dto.createdAt
             if existing == nil { context.insert(item) }
@@ -383,10 +388,13 @@ final class PlannerSync: NSObject {
         // prefix가 "input_"이 아니라 "inputprogress_"라 위 분기와 겹치지 않는다
         if name.hasPrefix("inputprogress_"), let dto = try? dec.decode(InputProgressDTO.self, from: payload) {
             let existing = fetchOne(InputProgress.self, id: dto.id, context: context)
-            let record = existing ?? InputProgress(itemID: dto.itemID, occurredOn: dto.occurredOn)
+            // 날짜-키(day) 우선(2026-08-20) — instant는 기기 간 시간대가 다르면 전날/다음날로 민다
+            let progressDay = dto.day.flatMap { ExportCodec.day(from: $0) }
+                ?? Calendar.current.startOfDay(for: dto.occurredOn)
+            let record = existing ?? InputProgress(itemID: dto.itemID, occurredOn: progressDay)
             record.id = dto.id
             record.itemID = dto.itemID
-            record.occurredOn = Calendar.current.startOfDay(for: dto.occurredOn)
+            record.occurredOn = progressDay
             record.loggedSessions = dto.loggedSessions
             record.percent = dto.percent
             // 실행 중(timerStartedAt)은 이 기기 상태 — 누적만 맞춘다(Output 타이머와 같은 규칙)

@@ -22,6 +22,8 @@ struct RootTabView: View {
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]        // 오늘 카드 위젯(2026-07-27)
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query private var completions: [ItemCompletion]
+    @Query private var inputProgresses: [InputProgress]   // 위젯 진행 라벨(2026-08-20)
+    @Query private var checkIns: [DailyCheckIn]   // 씨앗 획득 원장 백필(2026-08-20)
     @AppStorage("onboardingDone") private var onboardingDone = false
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
     /// 포인트색(2026-08-17) — 아래 `.id`에 함께 태운다. 테마 키만 보면 포인트색 변경이
@@ -83,13 +85,15 @@ struct RootTabView: View {
             Self.applyTabBarAppearance()
             // 위젯도 즉시 테마 추종(Phase 5) — 스냅샷 재발행 + reloadAllTimelines(publish 내장)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
-                                 inputs: inputs, outputs: outputs, completions: completions)
+                                 inputs: inputs, outputs: outputs, completions: completions,
+                                 inputProgresses: inputProgresses)
         }
         .onChange(of: pointColor) { _, newValue in
             // 시트의 선 apply와 같은 경로의 보완 벨트(외부 변경 대비) — apply는 멱등이라 무해
             ThemeStore.apply(appTheme, pointRawValue: newValue)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
-                                 inputs: inputs, outputs: outputs, completions: completions)
+                                 inputs: inputs, outputs: outputs, completions: completions,
+                                 inputProgresses: inputProgresses)
         }
         // 시트는 자기 presentation — 위 preferredColorScheme이 닿지 않아 루트마다 강제(2026-08-20)
         .sheet(isPresented: $showThemeShop) { ThemeShopView().themeColorScheme() }
@@ -114,9 +118,12 @@ struct RootTabView: View {
                     ThemeTrial.resolve()
                 }
             }
+            // 씨앗 획득 원장 백필(2026-08-20) — 원장 도입 전 획득(행 파생)을 1회 옮겨 적는다(멱등)
+            Seeds.backfillEarnedLedger(checkIns)
             await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)
             WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
-                                 inputs: inputs, outputs: outputs, completions: completions)   // 위젯 스냅샷
+                                 inputs: inputs, outputs: outputs, completions: completions,
+                                 inputProgresses: inputProgresses)   // 위젯 스냅샷
             CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
             DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
             PlannerSync.shared.kick()   // 기기 간 동기화(2026-08-10) — 실행 시 왕복
@@ -133,7 +140,8 @@ struct RootTabView: View {
             } else if phase == .background {
                 // 세션 중 편집 반영 — 백그라운드 진입 때 최신 상태로 재발행
                 WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
-                                     inputs: inputs, outputs: outputs, completions: completions)
+                                     inputs: inputs, outputs: outputs, completions: completions,
+                                 inputProgresses: inputProgresses)
                 // 이 세션의 체크인·일정까지 반영해 다시 건다(§5.12 ⑤ / §5.11 재스케줄 계약)
                 CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
                 DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)

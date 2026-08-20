@@ -134,6 +134,13 @@ struct InputTodayView: View {
                 .strikethrough(line.done, color: WInk.text.opacity(0.35))
                 .lineLimit(1)
             Spacer(minLength: 0)
+            // 그날 진행 라벨(2026-08-20) — "2/3"·"40%"·"12/30분". 앱이 합성, 위젯은 그대로 그린다
+            if let label = line.progressLabel {
+                Text(label)
+                    .font(.system(size: 11))
+                    .monospacedDigit()
+                    .foregroundStyle(WInk.text.opacity(0.5))
+            }
         }
     }
 }

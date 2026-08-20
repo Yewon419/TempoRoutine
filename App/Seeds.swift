@@ -1,7 +1,9 @@
 // 템포루틴 — 씨앗 (테마 재화, 2026-08-09 사용자 결정)
 // 하루 체크인을 다 적으면(오늘 한 줄 제외) 씨앗 1개. 당일 작성이 원칙, 다음날 작성까지 인정.
-// 별도 원장 모델을 두지 않고 DailyCheckIn.completedAt에서 파생한다(§5.5 파생 우선 철학) —
-// 기록 철회(삭제)면 그 씨앗도 사라진다. 소비(테마 구매)가 붙는 시점에 잔액 하한을 함께 설계.
+// **획득 원장(2026-08-20 개정)**: 지급된 날은 원장(SeedLedgerDTO.earnedDays)에도 적는다 —
+// 종전 「행 존재에서 파생」만으로는 기록 정리(행 삭제)·전체 삭제가 재화 회수가 됐다(철회
+// 비대칭·잔액 고착). 잔액 근거 = 원장 ∪ 파생(구 사용자 호환 — 시작 시 1회 백필).
+// 재화는 기록이 아니다: 전체 삭제도 원장(획득·소비·보유)은 건드리지 않는다.
 // 스트릭·연속 표시 금지(§3.4)는 그대로다 — 씨앗은 개수만 말하고 연속을 말하지 않는다.
 
 import SwiftUI
@@ -27,7 +29,33 @@ enum Seeds {
                          sleep: record.sleep, appetite: record.appetite, signals: signals)
         else { return false }
         record.completedAt = .now
-        return isAwarded(record)
+        let awarded = isAwarded(record)
+        if awarded { recordEarned(day: record.day) }   // 획득 원장(2026-08-20) — 행이 지워져도 남는다
+        return awarded
+    }
+
+    /// 획득 원장 기입 — 같은 날은 한 번(집합). 원장은 동기화·백업이 실어 나른다.
+    private static func recordEarned(day: Date) {
+        var next = ledger
+        var days = Set(next.earnedDays ?? [])
+        let key = ExportCodec.dayString(day)
+        guard !days.contains(key) else { return }
+        days.insert(key)
+        next.earnedDays = days.sorted()
+        write(next)
+    }
+
+    /// 구 사용자 백필(앱 시작 1회 호출) — 원장 도입 전 획득(행 파생)을 원장에 옮겨 적는다.
+    /// 멱등: 이미 다 적혀 있으면 쓰기 없음.
+    static func backfillEarnedLedger(_ checkIns: [DailyCheckIn]) {
+        let derived = Set(checkIns.filter { isAwarded($0) }.map { ExportCodec.dayString($0.day) })
+        guard !derived.isEmpty else { return }
+        var next = ledger
+        let existing = Set(next.earnedDays ?? [])
+        let union = existing.union(derived)
+        guard union != existing else { return }
+        next.earnedDays = union.sorted()
+        write(next)
     }
 
     /// 지급 판정 — 그날 또는 다음날 안에 완성된 기록만(마감 = day+2일 0시).
@@ -39,8 +67,15 @@ enum Seeds {
         return stamped < deadline
     }
 
+    /// 획득 = 원장 ∪ 파생(같은 날은 한 번). 원장 도입(2026-08-20) 전 기록·백필 전 상태를
+    /// 위해 파생과의 합집합을 유지한다 — 행이 있으면 원장에 없어도 센다.
     static func balance(_ checkIns: [DailyCheckIn]) -> Int {
-        checkIns.filter { isAwarded($0) }.count
+        earnedDayKeys(checkIns).count
+    }
+
+    private static func earnedDayKeys(_ checkIns: [DailyCheckIn]) -> Set<String> {
+        Set(checkIns.filter { isAwarded($0) }.map { ExportCodec.dayString($0.day) })
+            .union(ledger.earnedDays ?? [])
     }
 
     // ── 소비 원장 (2026-08-09 테마 탭 / 2026-08-11 맵 원장으로 개정) ──

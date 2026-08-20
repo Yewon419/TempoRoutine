@@ -452,8 +452,12 @@ struct DayDetailView: View {
             ForEach(inputRows) { row in
                 VStack(alignment: .leading, spacing: 4) {
                     inputCheckRow(row)
-                    // 진행 방식이 붙은 Input만(2026-08-12) — 미래는 조작 금지(원칙 4)
-                    if let goal = row.item.progressGoal, !isFuture {
+                    // 진행 방식이 붙은 Input만(2026-08-12) — 미래는 조작 금지(원칙 4).
+                    // 타이머·스톱워치는 오늘만(2026-08-20 사용자 결정 — 잠금화면 인텐트가 날짜를
+                    // 오늘로 고정해 과거 날짜 타이머는 버튼 무반응·오늘 레코드 오염. 지난날
+                    // 실시간 측정은 의미도 없어 시작 자체를 막는다)
+                    if let goal = row.item.progressGoal, !isFuture,
+                       cal.isDateInToday(day) || (goal.kind != .timer && goal.kind != .stopwatch) {
                         InputProgressControl(
                             goal: goal,
                             itemID: row.item.id,

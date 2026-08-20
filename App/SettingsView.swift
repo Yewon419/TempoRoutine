@@ -117,7 +117,7 @@ struct SettingsView: View {
     private var store: StoreArrays {
         StoreArrays(periodDays: periodDays, schedules: schedules, inputs: inputs,
                     outputs: outputs, completions: completions, checkIns: checkIns,
-                    inputProgresses: inputProgresses)
+                    inputProgresses: inputProgresses, selfReports: selfReports)
     }
 
     /// 설정 행 재질(2026-08-20 베타 피드백 "설정탭만 이질적" — 시안 `.list-group`은 그 테마의
@@ -515,8 +515,9 @@ struct SettingsView: View {
         let outs = (try? modelContext.fetch(
             FetchDescriptor<OutputItem>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
         let comps = (try? modelContext.fetch(FetchDescriptor<ItemCompletion>())) ?? []
+        let progresses = (try? modelContext.fetch(FetchDescriptor<InputProgress>())) ?? []
         WidgetBridge.publish(periodDays: periods, schedules: scheds, inputs: ins,
-                             outputs: outs, completions: comps)
+                             outputs: outs, completions: comps, inputProgresses: progresses)
         DailyNotices.reschedule(periodDays: periods, schedules: scheds)
         CoverageReminder.reschedule(periodDays: periods, context: modelContext)
     }

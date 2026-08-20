@@ -252,6 +252,13 @@ struct TodayScheduleView: View {
                         .foregroundStyle(WInk.text.opacity(line.done ? 0.5 : 0.9))
                         .strikethrough(line.done, color: WInk.text.opacity(0.4))
                         .lineLimit(1)
+                    // 그날 진행 라벨(2026-08-20) — 오늘 카드 위젯과 동일 문법
+                    if let label = line.progressLabel {
+                        Text(label)
+                            .font(.system(size: 9))
+                            .monospacedDigit()
+                            .foregroundStyle(WInk.text.opacity(0.5))
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@
 // 앱을 안 연 채 한 달은 버틴다. 발행 시점 = 앱 활성화·백그라운드 진입(RootTabView).
 
 import Foundation
+import TempoCore
 import WidgetKit
 
 @MainActor
@@ -10,7 +11,8 @@ enum WidgetBridge {
 
     static func publish(periodDays: [PeriodDay], schedules: [ScheduleItem] = [],
                         inputs: [InputItem] = [], outputs: [OutputItem] = [],
-                        completions: [ItemCompletion] = []) {
+                        completions: [ItemCompletion] = [],
+                        inputProgresses: [InputProgress] = []) {
         guard let url = WidgetShared.snapshotURL else { return }   // App Group 미프로비저닝이면 조용히 통과
         let cal = Calendar.current
         let today = cal.startOfDay(for: .now)
@@ -27,7 +29,8 @@ enum WidgetBridge {
                 && snapshot.phase(on: day) == .menstrual
             entry.schedules = scheduleLines(on: day, schedules: schedules)
             // 총계는 잘리기 전 개수 — 위젯 카운터·잠금화면 요약이 이걸 쓴다(잘린 배열을 세면 거짓말)
-            if let input = inputLines(on: day, snapshot: snapshot, inputs: inputs, completions: completions) {
+            if let input = inputLines(on: day, snapshot: snapshot, inputs: inputs,
+                                      completions: completions, inputProgresses: inputProgresses) {
                 entry.inputs = input.lines
                 entry.inputTotal = input.total
                 entry.inputDone = input.done
@@ -69,9 +72,36 @@ enum WidgetBridge {
 
     /// 그날 Input 줄 — TodayView.todayInputs 판정과 동형(.once 캐리·소급·주기 앵커)
     private static func inputLines(on day: Date, snapshot: CycleSnapshot, inputs: [InputItem],
-                                   completions: [ItemCompletion])
+                                   completions: [ItemCompletion],
+                                   inputProgresses: [InputProgress] = [])
     -> (lines: [WidgetCheckLine], total: Int, done: Int)? {
         let cal = Calendar.current
+        // 그날 진행 라벨(2026-08-20) — Output 줄의 label 합성과 같은 문법, 값은 그날 레코드
+        func progressLabel(_ item: InputItem) -> String? {
+            guard let goal = item.progressGoal else { return nil }
+            let record = inputProgresses.first {
+                $0.itemID == item.id && cal.isDate($0.occurredOn, inSameDayAs: day)
+            }
+            let state = record?.state()
+            switch goal.kind {
+            case .checkOnly:
+                return nil   // Input의 「체크만」은 progressKind nil — 도달 불가 가드
+            case .subtasks:
+                let total = item.subtasks?.count ?? 0
+                return total > 0 ? "\(state?.doneSubtasks ?? 0)/\(total)" : nil
+            case .sessions:
+                return "\(state?.loggedSessions ?? 0)/\(max(1, goal.targetSessions))"
+            case .percent:
+                return (state?.percent ?? 0).formatted(.percent.precision(.fractionLength(0)))
+            case .timer:
+                let target = max(1, goal.targetSeconds ?? 1)
+                let elapsed = min(Double(target), state?.elapsedSeconds ?? 0)
+                return "\(Int(elapsed) / 60)/\(target / 60)분"
+            case .stopwatch:
+                let elapsed = state?.elapsedSeconds ?? 0
+                return elapsed > 0 ? "\(Int(elapsed) / 60)분" : nil
+            }
+        }
         func checked(_ id: UUID) -> Bool {
             completions.contains { $0.itemID == id && cal.isDate($0.occurredOn, inSameDayAs: day) }
         }
@@ -90,7 +120,10 @@ enum WidgetBridge {
         guard !rows.isEmpty else { return nil }
         // 시각 정렬(2026-08-09 — 앱 행과 통일) 후 6줄까지 — 중형 위젯이 5줄을 그린다
         let ordered = sortedByTimeOfDay(rows) { $0.timeMinutes }
-        let lines = ordered.prefix(6).map { WidgetCheckLine(title: $0.title, done: checked($0.id), id: $0.id) }
+        let lines = ordered.prefix(6).map {
+            WidgetCheckLine(title: $0.title, done: checked($0.id), id: $0.id,
+                            progressLabel: progressLabel($0))
+        }
         return (lines, rows.count, rows.filter { checked($0.id) }.count)
     }
 

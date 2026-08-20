@@ -798,11 +798,13 @@ struct RhythmView: View {
             (1...max(1, span.length)).map { GridSlot(phase: span.phase, dayInPhase: $0) }
         }
         let routineSlots = routineSlotMap(spans: spans)
+        let wholePhases = wholePhaseRoutinePhases()
         let columns = Array(repeating: GridItem(.flexible(), spacing: 3), count: 7)
         return VStack(alignment: .leading, spacing: 8) {
             LazyVGrid(columns: columns, spacing: 3) {
                 ForEach(slots) { slot in
-                    cycleGridCell(slot: slot, hasRoutine: routineSlots.contains(slot))
+                    cycleGridCell(slot: slot, hasRoutine: routineSlots.contains(slot),
+                                  seasonWide: wholePhases.contains(slot.phase))
                 }
             }
             // 계절별 일수 캡션 — "봄 몇 칸"을 숫자로도 읽게. 값은 §5.3 경계 그대로.
@@ -824,7 +826,7 @@ struct RhythmView: View {
 
     @State private var gridDestination: GridDestination?
 
-    private func cycleGridCell(slot: GridSlot, hasRoutine: Bool) -> some View {
+    private func cycleGridCell(slot: GridSlot, hasRoutine: Bool, seasonWide: Bool) -> some View {
         let meta = seasonMeta(for: slot.phase)
         return Button {
             guard let day = nextDate(of: slot) else { return }   // 콜드·지평 밖 = 무시
@@ -836,9 +838,15 @@ struct RhythmView: View {
                     .font(.system(size: 10))
                     .monospacedDigit()
                     .foregroundStyle(Ink.text.opacity(0.65))
-                Circle()
-                    .fill(hasRoutine ? Ink.text.opacity(0.75) : .clear)
-                    .frame(width: 4, height: 4)
+                // 채운 점 = 특정 일차 루틴 / 윤곽 점 = 계절 전체 루틴(2026-08-20 사용자 결정 —
+                // 목록엔 「매일」 배지로 뜨는데 지도엔 아무 표시가 없어 어긋나 보이던 것)
+                if hasRoutine {
+                    Circle().fill(Ink.text.opacity(0.75)).frame(width: 4, height: 4)
+                } else if seasonWide {
+                    Circle().stroke(Ink.text.opacity(0.4), lineWidth: 1).frame(width: 4, height: 4)
+                } else {
+                    Circle().fill(.clear).frame(width: 4, height: 4)
+                }
             }
             .frame(maxWidth: .infinity, minHeight: 30)
             .background(meta.glow.opacity(0.32), in: RoundedRectangle(cornerRadius: 5))
@@ -862,8 +870,21 @@ struct RhythmView: View {
         return nil
     }
 
+    /// 계절 전체(매일) 루틴이 걸린 계절 집합 — 그 계절 전 칸에 윤곽 점(2026-08-20 사용자 결정)
+    private func wholePhaseRoutinePhases() -> Set<CyclePhase> {
+        var phases = Set<CyclePhase>()
+        for routine in routinesBySeason.values.joined() {
+            guard let r = routine.recurrence, r.spansWholePhase else { continue }
+            switch r.anchor {
+            case .cycleStart: phases.insert(.menstrual)
+            case .phase(let p): phases.insert(p)
+            }
+        }
+        return phases
+    }
+
     /// 루틴이 걸린 칸 집합 — 앵커 계절의 dayOffset+1(계절 내 일차, §5.5.3 기본 clamp).
-    /// 계절 전체(매일) 루틴은 특정일 점이 아니라 계절 색 자체가 대변하므로 제외한다.
+    /// 계절 전체(매일) 루틴은 특정일 점이 아니라 계절 전 칸 윤곽 점으로(위 함수) — 여기선 제외.
     private func routineSlotMap(spans: [PhaseSpan]) -> Set<GridSlot> {
         var slots = Set<GridSlot>()
         for routine in routinesBySeason.values.joined() {

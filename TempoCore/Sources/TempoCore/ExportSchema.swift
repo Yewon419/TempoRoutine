@@ -49,11 +49,16 @@ public struct ScheduleItemDTO: Codable, Equatable, Sendable {
     public var repeatRule: ScheduleRepeat
     public var createdAt: Date
     // v1 내 추가 필드(2026-07-22 일정 시트 개편) — optional이라 구 백업 decode 시 nil로 흡수
-    public var endDate: String?         // 시간 지정 일정의 종료(ISO8601 instant). 하루종일이면 nil
+    public var endDate: String?         // 종료(ISO8601 instant). 종일 일정은 endDay가 정본, 이건 구 빌드 호환용 병기
     public var reminderMinutes: Int?    // nil·음수 = 알림 없음 / 0 = 정시 / N = N분 전
+    /// 종일 일정의 종료 **date-only**(2026-08-20 감사 — instant만 있으면 파일 머리말의 날짜-키
+    /// 규칙 위반: 시차 이동 후 재임포트·동기화에서 마지막 날이 하루 민다). 쓰기는 endDate와
+    /// 병기(구 빌드는 instant를 계속 읽는다), 읽기는 이쪽 우선.
+    public var endDay: String?
 
     public init(id: UUID, title: String, date: String, isAllDay: Bool, repeatRule: ScheduleRepeat,
-                createdAt: Date, endDate: String? = nil, reminderMinutes: Int? = nil) {
+                createdAt: Date, endDate: String? = nil, reminderMinutes: Int? = nil,
+                endDay: String? = nil) {
         self.id = id
         self.title = title
         self.date = date
@@ -62,6 +67,7 @@ public struct ScheduleItemDTO: Codable, Equatable, Sendable {
         self.createdAt = createdAt
         self.endDate = endDate
         self.reminderMinutes = reminderMinutes
+        self.endDay = endDay
     }
 }
 
@@ -120,14 +126,19 @@ public struct InputSubtaskDTO: Codable, Equatable, Sendable {
 public struct InputProgressDTO: Codable, Equatable, Sendable {
     public var id: UUID
     public var itemID: UUID
+    /// ⚠ instant — 날짜-키 규칙 위반의 잔재(구 빌드 호환 병기). 읽기는 `day` 우선.
     public var occurredOn: Date
     public var loggedSessions: Int
     public var percent: Double
     public var elapsedSeconds: Double
     public var doneSubtaskIDs: [UUID]
+    /// 날짜-키 **date-only** "yyyy-MM-dd"(2026-08-20 감사 — instant만 있으면 시차 이동 시
+    /// 진행이 전날/다음날 칸에 붙어 「체크는 됐는데 진행 막대는 0」이 된다).
+    public var day: String?
 
     public init(id: UUID, itemID: UUID, occurredOn: Date, loggedSessions: Int,
-                percent: Double, elapsedSeconds: Double, doneSubtaskIDs: [UUID]) {
+                percent: Double, elapsedSeconds: Double, doneSubtaskIDs: [UUID],
+                day: String? = nil) {
         self.id = id
         self.itemID = itemID
         self.occurredOn = occurredOn
@@ -135,6 +146,7 @@ public struct InputProgressDTO: Codable, Equatable, Sendable {
         self.percent = percent
         self.elapsedSeconds = elapsedSeconds
         self.doneSubtaskIDs = doneSubtaskIDs
+        self.day = day
     }
 }
 
@@ -363,11 +375,17 @@ public struct SeedLedgerDTO: Codable, Equatable, Sendable {
     /// 맵 원장 이전 판(UserDefaults `seedsBonus`)에서 넘어온 수령 총액. 공지별로 쪼갤 수 없어
     /// 따로 둔다 — 병합은 max(합산하면 같은 공지를 두 기기에서 받은 게 두 배가 된다).
     public var legacyBonus: Int
+    /// 획득 원장(2026-08-20 사용자 결정 — 도장 불변 원칙의 원장판): 씨앗을 받은 날
+    /// "yyyy-MM-dd" 집합. 체크인 행이 지워져도 획득이 남는다 — 종전엔 행 존재에서 파생해
+    /// 기록 정리가 재화 회수가 됐다(철회 비대칭). optional = 구 원장 JSON 호환.
+    public var earnedDays: [String]?
 
-    public init(purchases: [String: Int] = [:], claims: [String: Int] = [:], legacyBonus: Int = 0) {
+    public init(purchases: [String: Int] = [:], claims: [String: Int] = [:], legacyBonus: Int = 0,
+                earnedDays: [String]? = nil) {
         self.purchases = purchases
         self.claims = claims
         self.legacyBonus = legacyBonus
+        self.earnedDays = earnedDays
     }
 
     public var spent: Int { purchases.values.reduce(0, +) }
@@ -375,7 +393,9 @@ public struct SeedLedgerDTO: Codable, Equatable, Sendable {
     public var ownedThemes: Set<String> { Set(purchases.keys) }
 
     /// 합집합 병합. 키가 겹치면 잔액이 부풀지 않는 쪽(소비는 큰 값·수령은 작은 값)을 고른다 —
-    /// 셋 다 교환·결합·멱등이라 어느 기기에서 어떤 순서로 돌려도 같은 결과에 수렴한다.
+    /// 전부 교환·결합·멱등이라 어느 기기에서 어떤 순서로 돌려도 같은 결과에 수렴한다.
+    /// 획득 원장은 합집합(같은 날은 한 번) — 구 빌드가 이 필드를 모른 채 되올려도(nil)
+    /// 로컬 원장이 보존된다.
     public func merged(with other: SeedLedgerDTO) -> SeedLedgerDTO {
         var out = self
         for (theme, paid) in other.purchases {
@@ -385,6 +405,9 @@ public struct SeedLedgerDTO: Codable, Equatable, Sendable {
             out.claims[notice] = min(out.claims[notice] ?? seeds, seeds)
         }
         out.legacyBonus = max(legacyBonus, other.legacyBonus)
+        if earnedDays != nil || other.earnedDays != nil {
+            out.earnedDays = Array(Set(earnedDays ?? []).union(other.earnedDays ?? [])).sorted()
+        }
         return out
     }
 }
@@ -410,12 +433,16 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
     /// Input 진행도(2026-08-12) — 아이템의 **정의**는 InputItemDTO에, 그날의 **값**은 여기.
     /// 빠지면 백업 복원·기기 이전에서 오늘 채운 진행이 사라진다(씨앗 원장 P-6와 같은 구멍).
     public var inputProgress: [InputProgressDTO]?
+    /// 리듬 설문 응답(2026-08-20 감사 — 「모든 기록 삭제」·백업 양쪽에서 빠져 있던 유일한
+    /// @Model). 같은 optional 추가 패턴. dedup = UUID.
+    public var selfReports: [SelfReportDTO]?
 
     public init(exportedAt: Date, periodDays: [PeriodDayDTO], scheduleItems: [ScheduleItemDTO],
                 inputItems: [InputItemDTO], outputItems: [OutputItemDTO],
                 completions: [ItemCompletionDTO], checkIns: [DailyCheckInDTO],
                 trackedSignals: TrackedSignals, rhythmSummary: RhythmSummaryDTO? = nil,
-                seedLedger: SeedLedgerDTO? = nil, inputProgress: [InputProgressDTO]? = nil) {
+                seedLedger: SeedLedgerDTO? = nil, inputProgress: [InputProgressDTO]? = nil,
+                selfReports: [SelfReportDTO]? = nil) {
         self.schemaVersion = ExportCodec.schemaVersion
         self.exportedAt = exportedAt
         self.periodDays = periodDays
@@ -428,6 +455,22 @@ public struct ExportEnvelopeV1: Codable, Equatable, Sendable {
         self.rhythmSummary = rhythmSummary
         self.seedLedger = seedLedger
         self.inputProgress = inputProgress
+        self.selfReports = selfReports
+    }
+}
+
+/// 리듬 설문 응답(2026-08-20) — answers = 문항 id → 선택지 문자열.
+public struct SelfReportDTO: Codable, Equatable, Sendable {
+    public var id: UUID
+    public var answers: [String: String]
+    public var completedAt: Date
+    public var sharedToServer: Bool
+
+    public init(id: UUID, answers: [String: String], completedAt: Date, sharedToServer: Bool) {
+        self.id = id
+        self.answers = answers
+        self.completedAt = completedAt
+        self.sharedToServer = sharedToServer
     }
 }
 
