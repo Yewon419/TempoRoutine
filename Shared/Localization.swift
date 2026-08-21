@@ -94,14 +94,14 @@ enum Loc {
         }
         // 위젯은 **별도 프로세스**라 앱의 기본 도메인을 못 본다 — App Group에도 적어야
         // 홈 화면 위젯이 같은 언어로 뜬다(2026-08-21). 스냅샷과 같은 그룹.
-        UserDefaults(suiteName: WidgetSnapshot.appGroupID)?
+        UserDefaults(suiteName: WidgetShared.appGroupID)?
             .set(new.rawValue, forKey: AppLanguage.storageKey)
     }
 
     /// 앱·위젯 시작 복원 — 저장값이 없으면 시스템 따름.
     /// 위젯 프로세스에는 기본 도메인 값이 없으므로 App Group을 먼저 본다.
     static func restore() {
-        let shared = UserDefaults(suiteName: WidgetSnapshot.appGroupID)?
+        let shared = UserDefaults(suiteName: WidgetShared.appGroupID)?
             .string(forKey: AppLanguage.storageKey)
         let saved = shared ?? UserDefaults.standard.string(forKey: AppLanguage.storageKey)
         apply(saved.flatMap(AppLanguage.init(rawValue:)) ?? .system, persist: false)
