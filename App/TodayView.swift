@@ -68,30 +68,30 @@ struct SeasonMeta {
 func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     switch phase {
     // 로컬라이제이션(2026-08-20): 이 값들은 String으로 흘러 Text(변수)에 닿는다 —
-    // 만드는 자리에서 String(localized:)로 뽑아야 번역이 붙는다.
+    // 만드는 자리에서 Loc.str로 뽑아야 번역이 붙는다(선택 언어까지 탄다).
     // ⚠ **의학 단계명(월경기·난포기…) 필드는 두지 않는다**(2026-08-21 삭제). 개정 M-1c가
     // 사용자 표면 금지인데 필드가 있으니 플레이리스트 이식이 부제에 갖다 썼다 —
     // 없으면 같은 사고가 구조적으로 불가능하다. 단계가 필요하면 `phase`(CyclePhase)를 쓸 것.
     case .menstrual:
-        SeasonMeta(phase: .menstrual, name: String(localized: "겨울"),
+        SeasonMeta(phase: .menstrual, name: Loc.str("겨울"),
                    color: Ink.winter, glow: Ink.glowWinter,
-                   moodline: String(localized: "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요."),
-                   lever: String(localized: "오늘은 천천히 이어가볼까요?"))
+                   moodline: Loc.str("이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요."),
+                   lever: Loc.str("오늘은 천천히 이어가볼까요?"))
     case .follicular:
-        SeasonMeta(phase: .follicular, name: String(localized: "봄"),
+        SeasonMeta(phase: .follicular, name: Loc.str("봄"),
                    color: Ink.spring, glow: Ink.glowSpring,
-                   moodline: String(localized: "봄이에요. 가볍게 시작해보기 좋은 때예요."),
-                   lever: String(localized: "시동 거는 주기예요. 가볍게 시작해도 좋아요."))
+                   moodline: Loc.str("봄이에요. 가볍게 시작해보기 좋은 때예요."),
+                   lever: Loc.str("시동 거는 주기예요. 가볍게 시작해도 좋아요."))
     case .ovulation:
-        SeasonMeta(phase: .ovulation, name: String(localized: "여름"),
+        SeasonMeta(phase: .ovulation, name: Loc.str("여름"),
                    color: Ink.summer, glow: Ink.glowSummer,
-                   moodline: String(localized: "여름이에요. 하고 싶은 만큼 빛나도 좋아요."),
-                   lever: String(localized: "마음껏 몰입해도 좋아요."))
+                   moodline: Loc.str("여름이에요. 하고 싶은 만큼 빛나도 좋아요."),
+                   lever: Loc.str("마음껏 몰입해도 좋아요."))
     case .luteal:
-        SeasonMeta(phase: .luteal, name: String(localized: "가을"),
+        SeasonMeta(phase: .luteal, name: Loc.str("가을"),
                    color: Ink.autumn, glow: Ink.glowAutumn,
-                   moodline: String(localized: "가을이에요. 스스로를 돌아보는 시간을 가져봐요."),
-                   lever: String(localized: "조금 더 해볼 수 있나요? 무리하지는 말아요."))
+                   moodline: Loc.str("가을이에요. 스스로를 돌아보는 시간을 가져봐요."),
+                   lever: Loc.str("조금 더 해볼 수 있나요? 무리하지는 말아요."))
     }
 }
 
@@ -378,7 +378,7 @@ struct TodayView: View {
             let high: Int = Int(wx.highC.rounded())
             let low: Int = Int(wx.lowC.rounded())
             let chance: Int = Int((wx.precipitationChance * 100).rounded())
-            let precip: String = String(localized: wx.precipitationIsSnow ? "눈" : "비")
+            let precip: String = Loc.str(wx.precipitationIsSnow ? "눈" : "비")
             let lead: Text = Text(Loc.fmt("지금 %lld°", now)).foregroundStyle(Ink.text.opacity(0.95))
             let tail: String = Loc.fmt("최고 %1$lld° 최저 %2$lld°", high, low)
                 + " · " + Loc.fmt("%1$@ %2$lld%%", precip, chance)
@@ -397,7 +397,7 @@ struct TodayView: View {
     private var compactBar: some View {
         HStack {
             Spacer()
-            Text(todayInfo?.meta.name ?? String(localized: "템포루틴"))
+            Text(todayInfo?.meta.name ?? Loc.str("템포루틴"))
                 .font(.almanac(size: 28, weight: .bold))   // v39~41: 58 → 28px 컴팩트 바
                 .foregroundStyle(todayInfo?.meta.color ?? Ink.text)
             Spacer()
@@ -566,7 +566,7 @@ struct TodayView: View {
                             .foregroundStyle(Ink.text.opacity(0.5))
                     }
                     Spacer()
-                    Text(item.isAllDay ? String(localized: "종일")
+                    Text(item.isAllDay ? Loc.str("종일")
                          : item.date.formatted(date: .omitted, time: .shortened))
                         .font(.caption)
                         .foregroundStyle(Ink.text.opacity(0.5))
@@ -718,8 +718,8 @@ struct TodayView: View {
             if case .cycleAnchored = $0.schedule { return true }
             return false
         }
-        return hasColdBlocked ? String(localized: "생리를 기록하면 계획이 보이기 시작해요.")
-                              : String(localized: "아직 없어요")
+        return hasColdBlocked ? Loc.str("생리를 기록하면 계획이 보이기 시작해요.")
+                              : Loc.str("아직 없어요")
     }
 
     @ViewBuilder

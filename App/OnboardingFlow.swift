@@ -42,6 +42,8 @@ struct OnboardingFlow: View {
     @State private var sceneAppeared = false    // 씬A 전용 스태거 트리거(Phase 1 — 씬B·C는 기존 drawProgress 유지, Phase 2에서 정합)
     @State private var orbitAngle: Double = 0   // 궤도 도는 잉크 점 회전각(3.1s 후 26s 무한 선형 회전)
     @State private var introEntered = false     // "시작/다음" 버튼 1000ms 지연 노출 — 스텝1 (재)진입마다 리셋
+    /// 첫 화면 언어 선택(2026-08-21) — 저장값이 없으면 시스템 따름이라 어느 칩도 선택 상태가 아니다
+    @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
     /// ①.5 테마 선택(2026-08-19) — 기본 선택 = 은필(사용자: "우리 정체성"). 저장은 case 2,
     /// 적용은 finishOnboarding(진행 중 적용 = 루트 `.id` 리빌드가 step을 날린다).
     @State private var themeChoice: AppTheme = .standard
@@ -449,7 +451,37 @@ struct OnboardingFlow: View {
             cycleWheel
                 .frame(maxWidth: .infinity)
             Spacer()
+            languagePicker
+                .staggerIn(sceneAppeared, delay: 1.34, duration: 0.48, reduceMotion: reduceMotion)
         }
+    }
+
+    // ── 언어 선택 (2026-08-21 대표님 요청 — 첫 화면) ────────────────────────────
+    /// 기본값은 **기기 설정 따름**이다. 여기서 고르는 건 그 위의 덮개이고, 고르면 즉시 전환된다.
+    /// 이름을 각자의 언어로 적는 이유: 지금 화면이 무슨 언어로 떠 있든 자기 언어를 찾을 수 있어야 한다.
+    /// ⚠ 인트로는 아무 데나 탭하면 다음 씬으로 넘어간다 — 버튼이 탭을 먹으므로 여기선 안 넘어간다.
+    private var languagePicker: some View {
+        HStack(spacing: 8) {
+            ForEach(AppLanguage.allCases.filter { $0 != .system }) { lang in
+                Button {
+                    lightFeedback += 1
+                    Loc.apply(lang)          // 즉시 반영(정적 캐시) — @AppStorage 변화가 트리를 리빌드한다
+                    appLanguage = lang.rawValue
+                } label: {
+                    Text(verbatim: lang.nativeName)   // 이름 자체가 그 언어 — 번역 대상이 아니다
+                        .font(.footnote.weight(appLanguage == lang.rawValue ? .semibold : .regular))
+                        .foregroundStyle(appLanguage == lang.rawValue ? Ink.paper : Ink.text.opacity(0.7))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(appLanguage == lang.rawValue ? Ink.text : Ink.text.opacity(0.08),
+                                    in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(appLanguage == lang.rawValue ? [.isSelected] : [])
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityLabel("언어 선택")
     }
 
     private static let wheelPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]

@@ -39,6 +39,10 @@ IGNORED_LITERALS: frozenset[str] = frozenset({
     "쯤",           # 파서 hedge("3시쯤")
     "([0-9]+)분",   # 제목에서 「N분」을 읽는 정규식(QuickAdd)
     "스토어 열기 실패: \(error)",   # fatalError 크래시 로그 — 사용자 표면 아님
+    # 언어 이름은 **그 언어로** 적는다(endonym) — 번역하면 안 되는 자리다.
+    # 「한국어」는 어느 언어 화면에서도 「한국어」여야 자기 언어를 찾을 수 있다(AppLanguage).
+    "한국어",
+    "시스템",   # AppLanguage.system 라벨 — 현재 피커에서 제외돼 화면 사용처 0
     # 개발자 진단 로그 — 사용자 표면 아님
     "invalidArguments — 프로덕션 스키마 미배포 의심",
     # 합성 문자열을 되풀어내는 접두사(Loc.holidayName) — 화면에 그대로 나가지 않는다

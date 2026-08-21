@@ -108,7 +108,7 @@ struct SelfReportFlow: View {
     private func symptomAnchorTitle(p2: String?) -> String {
         guard let p2, p2 != "none", p2 != "unknown",
               let choice = SelfReportSurvey.phaseChoices.first(where: { $0.value == p2 })
-        else { return String(localized: "그나마 힘들었던 때를 떠올려서, 평소와 비교해서 답해주세요.") }
+        else { return Loc.str("그나마 힘들었던 때를 떠올려서, 평소와 비교해서 답해주세요.") }
         return Loc.fmt("「%1$@」, 평소와 비교해서 답해주세요.", Loc.text(choice.label))
     }
 

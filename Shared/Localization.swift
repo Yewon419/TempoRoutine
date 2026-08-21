@@ -14,12 +14,76 @@
 //   `tools/loc_audit.py`가 카탈로그와 1:1로 대조할 수 있다.
 //
 // ⚠ `String` 값을 받는 API(`Text(변수)`·`accessibilityLabel(String)`)는 로컬라이즈되지 않는다.
-//   변수로 넘길 문구는 만드는 자리에서 `String(localized:)`로 뽑아 둘 것.
+//   변수로 넘길 문구는 만드는 자리에서 `Loc.str`로 뽑아 둘 것 — 앱 언어 선택까지 함께 탄다.
 
 import Foundation
 import SwiftUI
 
+/// 앱 언어 선택(2026-08-21 대표님 요청 — 온보딩 첫 화면). 기본값은 **기기 설정 따름**이다.
+/// 시스템 언어를 그대로 쓰는 게 애플 표준이고(설정 > 앱 > 언어), 여기서 고르는 건 그 위의 덮개다.
+enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
+    case system, ko, en, ja
+
+    var id: String { rawValue }
+
+    /// 선택지 이름은 **그 언어로** 적는다 — 지금 화면이 무슨 언어든 읽을 수 있어야 한다.
+    var nativeName: String {
+        switch self {
+        case .system: "시스템"      // 표시 시 로컬라이즈(키 = 이 문자열)
+        case .ko: "한국어"
+        case .en: "English"
+        case .ja: "日本語"
+        }
+    }
+
+    static let storageKey = "appLanguage"
+
+    /// 다음 실행부터 시스템도 이 언어로 앱을 띄우도록 표준 키에 적는다(설정 > 앱 > 언어와 같은 자리).
+    static let systemOverrideKey = "AppleLanguages"
+}
+
 enum Loc {
+    // ── 언어 선택 상태 — 쓰기는 메인(설정 탭·온보딩), 읽기는 뷰 body와 헬퍼뿐 ──
+    nonisolated(unsafe) private(set) static var language: AppLanguage = .system
+    /// 조회에 쓸 번들 — `.system`이면 메인, 아니면 그 언어의 `.lproj`.
+    /// 번들을 명시해야 조회 언어가 확정된다(로케일만 바꾸면 서식만 바뀔 수 있다).
+    nonisolated(unsafe) private(set) static var bundle: Bundle = .main
+    /// SwiftUI `Text` 리터럴용 — 루트에 `.environment(\.locale, Loc.locale)`로 걸면 즉시 전환된다.
+    nonisolated(unsafe) private(set) static var locale: Locale = .current
+
+    /// 앱 시작 1회 + 사용자가 고를 때. 저장까지 한다.
+    static func apply(_ new: AppLanguage, persist: Bool = true) {
+        language = new
+        switch new {
+        case .system:
+            bundle = .main
+            locale = .current
+        default:
+            bundle = Bundle.main.path(forResource: new.rawValue, ofType: "lproj")
+                .flatMap(Bundle.init(path:)) ?? .main
+            locale = Locale(identifier: new.rawValue)
+        }
+        guard persist else { return }
+        let defaults = UserDefaults.standard
+        defaults.set(new.rawValue, forKey: AppLanguage.storageKey)
+        if new == .system {
+            defaults.removeObject(forKey: AppLanguage.systemOverrideKey)
+        } else {
+            defaults.set([new.rawValue], forKey: AppLanguage.systemOverrideKey)
+        }
+    }
+
+    /// 앱 시작 복원 — 저장값이 없으면 시스템 따름.
+    static func restore() {
+        let saved = UserDefaults.standard.string(forKey: AppLanguage.storageKey)
+        apply(saved.flatMap(AppLanguage.init(rawValue:)) ?? .system, persist: false)
+    }
+
+    /// 로컬라이즈 문자열 — **선택된 언어로** 뽑는다. 리터럴이 아닌 자리(String 반환)는 전부 이걸 쓴다.
+    static func str(_ key: String.LocalizationValue) -> String {
+        String(localized: key, bundle: bundle, locale: locale)
+    }
+
     /// **앱이 만든 한국어 문구를 담은 String**을 다시 번역 키로 되돌린다.
     /// 쓰는 자리: TempoCore가 돌려주는 문구(설문 문항·선택지·공휴일 이름·표시명)처럼
     /// 리터럴이 아니라 값으로 흘러오는 앱 카피. 키가 앱 카탈로그에 있으면 런타임에 조회된다
@@ -31,7 +95,7 @@ enum Loc {
 
     /// 뷰 밖(알림 본문·위젯 스냅샷 합성 등)에서 같은 일을 한다.
     static func text(_ appCopy: String) -> String {
-        String(localized: String.LocalizationValue(appCopy))
+        str(String.LocalizationValue(appCopy))
     }
 
     /// 공휴일 이름 — TempoCore는 순수 모듈이라 대체공휴일을 「대체공휴일(설날)」로 **합성해서**
@@ -48,6 +112,6 @@ enum Loc {
     /// - Parameter key: 포맷 지정자를 포함한 **한글 키**(예: `"%lld일차"`). 카탈로그 키와 글자 그대로 같아야 한다.
     /// - Note: 번역에서 어순이 바뀌면 `%1$@`·`%2$lld` 위치 지정자를 쓴다. 리터럴 퍼센트는 `%%`.
     static func fmt(_ key: String.LocalizationValue, _ args: CVarArg...) -> String {
-        String(format: String(localized: key), arguments: args)
+        String(format: str(key), arguments: args)
     }
 }

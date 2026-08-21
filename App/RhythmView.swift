@@ -853,7 +853,7 @@ struct RhythmView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Loc.fmt("%1$@ %2$@일차%3$@", "\(meta.name)", "\(slot.dayInPhase)", "\(hasRoutine ? String(localized: ", 루틴 있음") : "")"))
+        .accessibilityLabel(Loc.fmt("%1$@ %2$@일차%3$@", "\(meta.name)", "\(slot.dayInPhase)", "\(hasRoutine ? Loc.str(", 루틴 있음") : "")"))
     }
 
     /// 그 위상(계절 s의 d일차)이 다음으로 오는 절대 날짜 — 오늘부터 두 주기치 스캔.

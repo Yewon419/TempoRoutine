@@ -8620,6 +8620,23 @@
         }
       }
     },
+    "언어 선택": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose language"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語を選ぶ"
+          }
+        }
+      }
+    },
     "언제든 설정에서 다시 답변할 수 있어요.": {
       "extractionState": "manual",
       "localizations": {

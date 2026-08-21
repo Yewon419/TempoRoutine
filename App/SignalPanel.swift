@@ -42,19 +42,19 @@ struct SignalPanel: View {
 
     private var statHighLabel: String {
         switch signal {
-        case .energy: String(localized: "가장 높게")
-        case .mood: String(localized: "가장 밝게")
-        case .sleep: String(localized: "가장 포근하게")
-        case .appetite: String(localized: "가장 좋게")
+        case .energy: Loc.str("가장 높게")
+        case .mood: Loc.str("가장 밝게")
+        case .sleep: Loc.str("가장 포근하게")
+        case .appetite: Loc.str("가장 좋게")
         }
     }
 
     private var statLowLabel: String {
         switch signal {
-        case .energy: String(localized: "가장 낮게")
-        case .mood: String(localized: "가장 잔잔하게")
-        case .sleep: String(localized: "가장 뒤척임")
-        case .appetite: String(localized: "가장 떨어짐")
+        case .energy: Loc.str("가장 낮게")
+        case .mood: Loc.str("가장 잔잔하게")
+        case .sleep: Loc.str("가장 뒤척임")
+        case .appetite: Loc.str("가장 떨어짐")
         }
     }
 
@@ -83,7 +83,7 @@ struct SignalPanel: View {
         }
         let lead = completedCycles >= 1
             ? Loc.fmt("지난 %lld주기,", completedCycles)
-            : String(localized: "지난 기록상,")
+            : Loc.str("지난 기록상,")
         // 신호마다 **문장 하나가 키**다. 조각(주어·형용사)을 이어 붙이면 어순이 다른 언어에서
         // 무너진다 — 한국어에서 조사(는/은) 때문에 쪼개져 있던 것을 문장으로 되돌린 것.
         // 한국어 출력은 종전과 글자 그대로 같다.
@@ -100,7 +100,7 @@ struct SignalPanel: View {
     // ── ⑤ 일관성 서술 (시안 v69 — 반복성이 핵심 가치) ──
     private var consistencyLine: String? {
         guard narratable else {
-            return String(localized: "기록이 12회쯤 쌓이면 계절별 패턴을 여기 담아둘게요.")
+            return Loc.str("기록이 12회쯤 쌓이면 계절별 패턴을 여기 담아둘게요.")
         }
         guard topPhases.count >= 2 else { return nil }
         // 최근 주기부터 같은 계절이 이어진 길이

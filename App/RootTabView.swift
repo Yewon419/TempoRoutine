@@ -30,6 +30,9 @@ struct RootTabView: View {
     /// 리빌드를 못 일으켜, 이미 그려진 화면이 옛 색으로 남았다("되었다 안 되었다" 베타 보고 —
     /// 색을 바꾼 직후엔 그대로였다가 테마 왕복·재실행 등 다른 이유로 리빌드될 때만 반영됐다).
     @AppStorage(PointColor.storageKey) private var pointColor = PointColor.vermilion.rawValue
+    /// 앱 언어(2026-08-21) — 테마·포인트색과 같은 리빌드 경로에 태운다. 정적 캐시(Loc)만
+    /// 바꾸면 이미 그려진 화면이 옛 언어로 남는다.
+    @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
     /// 선택 탭을 뷰 밖(UserDefaults)에 둔다 — 아래 `.id(appTheme)` 리빌드가 TabView의 내부
     /// 선택 상태를 통째로 버려서, 테마를 갈아입을 때마다 첫 탭으로 튕기던 결함(2026-08-11).
     /// 실행 간 이월은 안 한다(TempoRoutineApp.init에서 「오늘」로 되돌린다) — 이번 수정 범위는
@@ -77,7 +80,13 @@ struct RootTabView: View {
         }())
         // 테마 변경 = 전체 트리 리빌드(정적 팔레트 캐시 갱신 반영 — Theme.swift 반응성 설계).
         // 변경 진입점은 설정뿐이라 스택·스크롤 초기화는 허용 범위(2026-07-29 계획 리스크 ①).
-        .id(appTheme + "·" + pointColor)   // 포인트색 변경도 같은 리빌드 경로(2026-08-17)
+        // 선택 언어 주입 — Text 리터럴은 이 로케일로 다시 조회된다(값 경로는 Loc.bundle 담당)
+        .environment(\.locale, Loc.locale)
+        .id(appTheme + "·" + pointColor + "·" + appLanguage)   // 포인트색·언어도 같은 리빌드 경로
+        .onChange(of: appLanguage) { _, newValue in
+            // 외부 변경(백업 복원·설정) 대비 보완 벨트 — 고르는 자리에서 이미 apply 한다
+            Loc.apply(AppLanguage(rawValue: newValue) ?? .system)
+        }
         .onChange(of: appTheme) { _, newValue in
             ThemeStore.apply(newValue)   // 설정의 선(先)apply 보완 벨트 — 외부 변경(백업 복원 등) 대비
             // 프록시를 리빌드 전에 갱신(2026-08-20) — onAppear에만 두면 새 UITabBar가 옛

@@ -33,6 +33,8 @@ struct TempoRoutineApp: App {
 
     init() {
         // 팔레트 캐시는 첫 렌더 전에 확정돼야 한다(Ink가 정적 캐시를 읽는다 — Theme.swift)
+        // 앱 언어 선택 복원(2026-08-21) — 팔레트와 같은 이유로 첫 렌더 전에 확정한다
+        Loc.restore()
         let savedTheme = UserDefaults.standard.string(forKey: ThemeStore.storageKey)
         ThemeStore.apply(savedTheme,
                          pointRawValue: UserDefaults.standard.string(forKey: PointColor.storageKey))

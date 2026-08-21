@@ -501,22 +501,22 @@ struct InputAddSheet: View {
     /// ⚠ 키는 **단계**다 — 계절 표시명은 번역되므로 키로 쓰면 다른 언어에서 조회가 전부
     /// 빗나가 폴백 예시만 나온다(2026-08-20 로컬라이제이션에서 드러난 결함).
     private static let examples: [InputCategory: [CyclePhase: String]] = [
-        .food:     [.menstrual: String(localized: "따뜻한 국 한 그릇"),
-                    .follicular: String(localized: "가벼운 아침 식사"),
-                    .ovulation: String(localized: "시원한 과일 한 접시"),
-                    .luteal: String(localized: "든든한 저녁 챙기기")],
-        .exercise: [.menstrual: String(localized: "가볍게 걷기 20분"),
-                    .follicular: String(localized: "아침 러닝"),
-                    .ovulation: String(localized: "수영 30분"),
-                    .luteal: String(localized: "저녁 요가")],
-        .media:    [.menstrual: String(localized: "포근한 영화 한 편"),
-                    .follicular: String(localized: "새 플레이리스트 찾기"),
-                    .ovulation: String(localized: "팟캐스트 한 편"),
-                    .luteal: String(localized: "책 한 챕터")],
-        .other:    [.menstrual: String(localized: "철분 챙기기"),
-                    .follicular: String(localized: "새 노트 펴기"),
-                    .ovulation: String(localized: "물 자주 마시기"),
-                    .luteal: String(localized: "반신욕")],
+        .food:     [.menstrual: Loc.str("따뜻한 국 한 그릇"),
+                    .follicular: Loc.str("가벼운 아침 식사"),
+                    .ovulation: Loc.str("시원한 과일 한 접시"),
+                    .luteal: Loc.str("든든한 저녁 챙기기")],
+        .exercise: [.menstrual: Loc.str("가볍게 걷기 20분"),
+                    .follicular: Loc.str("아침 러닝"),
+                    .ovulation: Loc.str("수영 30분"),
+                    .luteal: Loc.str("저녁 요가")],
+        .media:    [.menstrual: Loc.str("포근한 영화 한 편"),
+                    .follicular: Loc.str("새 플레이리스트 찾기"),
+                    .ovulation: Loc.str("팟캐스트 한 편"),
+                    .luteal: Loc.str("책 한 챕터")],
+        .other:    [.menstrual: Loc.str("철분 챙기기"),
+                    .follicular: Loc.str("새 노트 펴기"),
+                    .ovulation: Loc.str("물 자주 마시기"),
+                    .luteal: Loc.str("반신욕")],
     ]
 
     /// 빠른 추가 목록 — 에너지 레벨이 있으면 그 기준, 없으면 계절→에너지 초기 매핑
@@ -531,7 +531,7 @@ struct InputAddSheet: View {
             return Loc.fmt("예: %@", EnergyProfile.inputExample(category: category, level: level))
         }
         let byCat = Self.examples[category] ?? [:]
-        let ex = currentSeason.flatMap { byCat[$0.phase] } ?? String(localized: "스트레칭 10분")
+        let ex = currentSeason.flatMap { byCat[$0.phase] } ?? Loc.str("스트레칭 10분")
         return Loc.fmt("예: %@", ex)
     }
 
