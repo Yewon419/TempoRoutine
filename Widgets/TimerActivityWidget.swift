@@ -11,6 +11,7 @@ struct TimerActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TimerActivityAttributes.self) { context in
             TimerLockBanner(context: context)
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(2026-08-21)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {

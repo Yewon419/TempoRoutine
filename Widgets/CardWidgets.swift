@@ -75,6 +75,7 @@ struct InputTodayWidget: Widget {
         StaticConfiguration(kind: "InputToday", provider: ScheduleProvider()) { entry in
             InputTodayView(entry: entry)
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("오늘의 Input")
         .description("오늘 챙길 Input을 목록으로 보여줘요.")
@@ -152,6 +153,7 @@ struct OutputTodayWidget: Widget {
         StaticConfiguration(kind: "OutputToday", provider: ScheduleProvider()) { entry in
             OutputTodayView(entry: entry)
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("오늘의 Output")
         .description("진행 중인 Output과 남은 날짜를 보여줘요.")
@@ -229,6 +231,7 @@ struct CardLockWidget: Widget {
         StaticConfiguration(kind: "CardLock", provider: ScheduleProvider()) { entry in
             CardLockView(entry: entry)
                 .containerBackground(.clear, for: .widget)
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("오늘의 카드")
         .description("잠금화면에서 오늘의 계절과 일정을 보여줘요.")

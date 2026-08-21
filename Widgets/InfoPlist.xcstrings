@@ -21,6 +21,12 @@
             "state": "translated",
             "value": "템포루틴"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine"
+          }
         }
       }
     }

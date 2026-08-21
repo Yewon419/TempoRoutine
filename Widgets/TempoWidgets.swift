@@ -501,6 +501,7 @@ struct SeasonTodayWidget: Widget {
         StaticConfiguration(kind: "SeasonToday", provider: SeasonProvider()) { entry in
             SeasonWidgetView(entry: entry)
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("오늘의 계절")
         .description("지금 계절과 일차를 보여줘요.")

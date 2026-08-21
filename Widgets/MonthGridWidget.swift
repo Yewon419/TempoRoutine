@@ -37,6 +37,7 @@ struct MonthGridWidget: Widget {
         StaticConfiguration(kind: "MonthGrid", provider: MonthProvider()) { entry in
             MonthGridView(entry: entry)
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date, grid: true) }
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("이번 달")
         .description("한 달의 계절과 기록을 보여줘요.")

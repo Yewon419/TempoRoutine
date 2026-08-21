@@ -52,6 +52,7 @@ struct TwoDayScheduleWidget: Widget {
         StaticConfiguration(kind: "TwoDaySchedule", provider: TwoDayProvider()) { entry in
             TwoDayScheduleView(entry: entry)
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("오늘·내일")
         .description("이틀치 일정을 나란히 보여줘요.")

@@ -461,7 +461,9 @@ struct OnboardingFlow: View {
     /// 이름을 각자의 언어로 적는 이유: 지금 화면이 무슨 언어로 떠 있든 자기 언어를 찾을 수 있어야 한다.
     /// ⚠ 인트로는 아무 데나 탭하면 다음 씬으로 넘어간다 — 버튼이 탭을 먹으므로 여기선 안 넘어간다.
     private var languagePicker: some View {
-        HStack(spacing: 8) {
+        // 언어가 넷이라 한 줄에 안 들어가는 폭이 있다 — 적응형 그리드로 자연히 접힌다
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8, alignment: .leading)],
+                  alignment: .leading, spacing: 8) {
             ForEach(AppLanguage.allCases.filter { $0 != .system }) { lang in
                 Button {
                     lightFeedback += 1
@@ -479,7 +481,6 @@ struct OnboardingFlow: View {
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(appLanguage == lang.rawValue ? [.isSelected] : [])
             }
-            Spacer(minLength: 0)
         }
         .accessibilityLabel("언어 선택")
     }

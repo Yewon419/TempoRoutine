@@ -53,6 +53,7 @@ struct WeekStripWidget: Widget {
         StaticConfiguration(kind: "WeekStrip", provider: WeekProvider()) { entry in
             WeekStripView(entry: entry)
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date, grid: true) }
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("이번 주")
         .description("일주일의 계절과 기록을 한 줄로 보여줘요.")
@@ -163,6 +164,7 @@ struct TodayScheduleWidget: Widget {
         StaticConfiguration(kind: "TodaySchedule", provider: ScheduleProvider()) { entry in
             TodayScheduleView(entry: entry)
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
+                .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("오늘")
         .description("오늘의 일정·Input·Output을 한눈에 보여줘요.")

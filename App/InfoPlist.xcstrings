@@ -22,6 +22,12 @@
             "state": "translated",
             "value": "템포루틴"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine"
+          }
         }
       }
     },
@@ -45,6 +51,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "기존 캘린더의 약속과 생일을 화면에 비추기 위해서만 읽어요. 기록이 밖으로 나가지 않아요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅用于把你已有的日程和生日显示在画面上。记录不会离开这台设备。"
           }
         }
       }
@@ -70,6 +82,12 @@
             "state": "translated",
             "value": "건강 앱에 기록된 생리 기록을 불러와 계절 계산에 반영해요. 기록이 밖으로 나가지 않아요."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读取“健康”App 中的月经记录，用于计算你的季节。记录不会离开这台设备。"
+          }
         }
       }
     },
@@ -94,6 +112,12 @@
             "state": "translated",
             "value": "이 앱에서 남긴 생리 기록을 건강 앱에도 저장해요. 원할 때 끌 수 있어요."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把你在这里记下的月经记录也保存到“健康”App。你可以随时关闭。"
+          }
         }
       }
     },
@@ -117,6 +141,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "날씨 테마의 하늘을 지금 계신 곳의 날씨로 맞추기 위해서만 써요. 대략적인 위치면 충분하고, 위치가 밖으로 나가지 않아요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅用于让“天气”主题的天空贴合你所在位置的天气。大致位置就足够，位置信息不会离开这台设备。"
           }
         }
       }

@@ -22,7 +22,13 @@ import SwiftUI
 /// 앱 언어 선택(2026-08-21 대표님 요청 — 온보딩 첫 화면). 기본값은 **기기 설정 따름**이다.
 /// 시스템 언어를 그대로 쓰는 게 애플 표준이고(설정 > 앱 > 언어), 여기서 고르는 건 그 위의 덮개다.
 enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
-    case system, ko, en, ja
+    case system
+    case ko
+    case en
+    case ja
+    /// 간체 중국어 — rawValue가 곧 `.lproj` 폴더 이름이자 로케일 식별자라 `zh-Hans` 표기를 쓴다.
+    /// 번체(zh-Hant)는 이번 범위가 아니다(글자 변환이 아니라 어휘가 달라 별도 번역이 필요하다).
+    case zhHans = "zh-Hans"
 
     var id: String { rawValue }
 
@@ -33,6 +39,7 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         case .ko: "한국어"
         case .en: "English"
         case .ja: "日本語"
+        case .zhHans: "简体中文"
         }
     }
 
@@ -43,25 +50,39 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
 }
 
 enum Loc {
-    // ── 언어 선택 상태 — 쓰기는 메인(설정 탭·온보딩), 읽기는 뷰 body와 헬퍼뿐 ──
-    nonisolated(unsafe) private(set) static var language: AppLanguage = .system
+    // ── 언어 선택 상태 ──
+    // 쓰기는 사용자가 고를 때(메인)와 **첫 읽기의 지연 복원**뿐이고, 그 뒤엔 읽기만이다.
+    // 지연 복원이 필요한 이유: 위젯은 앱과 다른 프로세스이고 렌더 단명이라 시작 훅이 없다 —
+    // 값을 처음 읽는 순간 App Group에서 복원해야 홈 화면 위젯도 같은 언어로 뜬다(테마 캐시와 같은 규칙).
+    nonisolated(unsafe) private static var loaded = false
+    nonisolated(unsafe) private static var storedLanguage: AppLanguage = .system
+    nonisolated(unsafe) private static var storedBundle: Bundle = .main
+    nonisolated(unsafe) private static var storedLocale: Locale = .current
+
+    static var language: AppLanguage { ensureLoaded(); return storedLanguage }
     /// 조회에 쓸 번들 — `.system`이면 메인, 아니면 그 언어의 `.lproj`.
     /// 번들을 명시해야 조회 언어가 확정된다(로케일만 바꾸면 서식만 바뀔 수 있다).
-    nonisolated(unsafe) private(set) static var bundle: Bundle = .main
+    static var bundle: Bundle { ensureLoaded(); return storedBundle }
     /// SwiftUI `Text` 리터럴용 — 루트에 `.environment(\.locale, Loc.locale)`로 걸면 즉시 전환된다.
-    nonisolated(unsafe) private(set) static var locale: Locale = .current
+    static var locale: Locale { ensureLoaded(); return storedLocale }
+
+    private static func ensureLoaded() {
+        guard !loaded else { return }
+        restore()
+    }
 
     /// 앱 시작 1회 + 사용자가 고를 때. 저장까지 한다.
     static func apply(_ new: AppLanguage, persist: Bool = true) {
-        language = new
+        loaded = true
+        storedLanguage = new
         switch new {
         case .system:
-            bundle = .main
-            locale = .current
+            storedBundle = .main
+            storedLocale = .current
         default:
-            bundle = Bundle.main.path(forResource: new.rawValue, ofType: "lproj")
+            storedBundle = Bundle.main.path(forResource: new.rawValue, ofType: "lproj")
                 .flatMap(Bundle.init(path:)) ?? .main
-            locale = Locale(identifier: new.rawValue)
+            storedLocale = Locale(identifier: new.rawValue)
         }
         guard persist else { return }
         let defaults = UserDefaults.standard
@@ -71,17 +92,25 @@ enum Loc {
         } else {
             defaults.set([new.rawValue], forKey: AppLanguage.systemOverrideKey)
         }
+        // 위젯은 **별도 프로세스**라 앱의 기본 도메인을 못 본다 — App Group에도 적어야
+        // 홈 화면 위젯이 같은 언어로 뜬다(2026-08-21). 스냅샷과 같은 그룹.
+        UserDefaults(suiteName: WidgetSnapshot.appGroupID)?
+            .set(new.rawValue, forKey: AppLanguage.storageKey)
     }
 
-    /// 앱 시작 복원 — 저장값이 없으면 시스템 따름.
+    /// 앱·위젯 시작 복원 — 저장값이 없으면 시스템 따름.
+    /// 위젯 프로세스에는 기본 도메인 값이 없으므로 App Group을 먼저 본다.
     static func restore() {
-        let saved = UserDefaults.standard.string(forKey: AppLanguage.storageKey)
+        let shared = UserDefaults(suiteName: WidgetSnapshot.appGroupID)?
+            .string(forKey: AppLanguage.storageKey)
+        let saved = shared ?? UserDefaults.standard.string(forKey: AppLanguage.storageKey)
         apply(saved.flatMap(AppLanguage.init(rawValue:)) ?? .system, persist: false)
     }
 
     /// 로컬라이즈 문자열 — **선택된 언어로** 뽑는다. 리터럴이 아닌 자리(String 반환)는 전부 이걸 쓴다.
     static func str(_ key: String.LocalizationValue) -> String {
-        String(localized: key, bundle: bundle, locale: locale)
+        ensureLoaded()
+        return String(localized: key, bundle: storedBundle, locale: storedLocale)
     }
 
     /// **앱이 만든 한국어 문구를 담은 String**을 다시 번역 키로 되돌린다.
