@@ -70,7 +70,9 @@ enum Loc {
 
     /// App Group 기본값 — **한 번만 만든다.** 문자열 조회마다 `UserDefaults(suiteName:)`을 새로
     /// 생성하던 것이 "적용이 느리다"(2026-08-22 베타)의 한 축이었다(화면당 수백 회 조회).
-    private static let sharedDefaults = UserDefaults(suiteName: WidgetShared.appGroupID)
+    /// nonisolated(unsafe): UserDefaults는 Sendable 표기가 없지만 스레드 안전(Apple 문서) — Swift 6 strict
+    /// 전역 let 규칙(repo CLAUDE.md)을 같은 근거로 통과시킨다.
+    nonisolated(unsafe) private static let sharedDefaults = UserDefaults(suiteName: WidgetShared.appGroupID)
 
     private static var storedRaw: String? {
         // 위젯 프로세스에는 기본 도메인 값이 없다 — App Group을 먼저 본다(스냅샷과 같은 그룹)
