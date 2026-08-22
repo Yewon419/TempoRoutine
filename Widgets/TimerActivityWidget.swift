@@ -151,10 +151,10 @@ struct TimerLockBanner: View {
                 .font(.title2.weight(.semibold))
                 .monospacedDigit()
         } else if context.state.countsDown {
-            Text(Loc.fmt("%1$@ 종료", "\(context.state.anchor.formatted(date: .omitted, time: .shortened))"))
+            Text(Loc.fmt("%1$@ 종료", "\(context.state.anchor.formatted(Loc.shortTime))"))
                 .font(.subheadline.weight(.semibold))
         } else {
-            Text(Loc.fmt("%1$@ 시작", "\(context.state.anchor.formatted(date: .omitted, time: .shortened))"))
+            Text(Loc.fmt("%1$@ 시작", "\(context.state.anchor.formatted(Loc.shortTime))"))
                 .font(.subheadline.weight(.semibold))
         }
     }

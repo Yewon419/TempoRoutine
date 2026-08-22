@@ -143,7 +143,7 @@ struct PeriodTrackerSheet: View {
     }
 
     private var dayTitle: String {
-        let base = selectedDay.formatted(.dateTime.month().day())
+        let base = selectedDay.formatted(Loc.dateTime.month().day())
         return selectedDay == today ? Loc.fmt("%1$@, 오늘", "\(base)") : base
     }
 
@@ -201,7 +201,7 @@ struct PeriodTrackerSheet: View {
             .transaction { $0.animation = nil }   // 기록 on/off는 즉시 전환(페이드 금지 — 사용자 결정)
         }
         .disabled(future)
-        .accessibilityLabel(Loc.fmt("%1$@%2$@%3$@", "\(day.formatted(.dateTime.month().day()))", "\(recorded ? Loc.str(", 생리 기록됨") : "")", "\(future ? Loc.str(", 미래") : "")"))
+        .accessibilityLabel(Loc.fmt("%1$@%2$@%3$@", "\(day.formatted(Loc.dateTime.month().day()))", "\(recorded ? Loc.str(", 생리 기록됨") : "")", "\(future ? Loc.str(", 미래") : "")"))
         .accessibilityHint(future ? "" : "이중 탭으로 생리 기록 전환")
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }

@@ -36,7 +36,7 @@ struct OnboardingFlow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
 
-    @State private var step = 1
+    @State private var step = 0   // 0 = 언어 선택(2026-08-22 베타 "첫 탭을 따로") — 재진입은 1부터
     @State private var introScene = 0          // 0=A 브랜드·원 / 1=B 곡선 / 2=C 네 계절
     @State private var drawProgress: CGFloat = 0
     @State private var sceneAppeared = false    // 씬A 전용 스태거 트리거(Phase 1 — 씬B·C는 기존 drawProgress 유지, Phase 2에서 정합)
@@ -50,7 +50,10 @@ struct OnboardingFlow: View {
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 단계 진행·토글, 확정 아님)
 
     // 브랜드 스플래시 — 온보딩 최초 1회. 로고 + 시그니처 사운드(2026-07-28)
-    @State private var showSplash = true
+    /// 프로세스당 1회 — 언어를 고르면 루트 .id 리빌드로 이 뷰가 새로 만들어지는데, 그때마다
+    /// 스플래시·사운드가 다시 재생되면 안 된다(2026-08-22). 쓰기는 메인뿐.
+    nonisolated(unsafe) private static var splashShownThisLaunch = false
+    @State private var showSplash = !OnboardingFlow.splashShownThisLaunch
     @State private var splashLogoIn = false
 
     // ② 기준일 — 순차 플로우(개정 M): 0=연동 / 1=지속일 / 2=캘린더 / 3=주기
@@ -94,6 +97,7 @@ struct OnboardingFlow: View {
                 topBar
                 Group {
                     switch step {
+                    case 0: languageStep   // 언어(2026-08-22) — 인트로보다 먼저, 한 화면 통째로
                     case 1: intro
                     case 2: themeStep     // ①.5 테마 선택(2026-08-19 — 7일 체험 고지 포함)
                     case 3: baselineStep
@@ -126,6 +130,8 @@ struct OnboardingFlow: View {
         }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .overlay { if showSplash { splash } }
+        // 재진입(다시 보기)은 언어 단계를 건너뛴다 — 이미 쓰는 언어가 있다
+        .onAppear { if isRevisit && step == 0 { step = 1 } }
         // 스플래시가 걷힌 뒤에야 인트로 연출이 시작되도록 스플래시 상태를 id에 넣는다.
         // 안 그러면 씬A의 원 그리기(2.8s)가 스플래시 뒤에서 다 끝나버린다.
         .task(id: [step, showSplash ? 1 : 0]) {
@@ -171,6 +177,7 @@ struct OnboardingFlow: View {
     /// - Parameter silencing: 사용자가 건너뛴 경우에만 true. 끝까지 재생된 소리는 건드리지 않는다.
     private func dismissSplash(silencing: Bool) {
         guard showSplash else { return }
+        Self.splashShownThisLaunch = true
         if silencing { SignatureSound.shared.fadeOut() }
         withAnimation(reduceMotion ? nil : .easeOut(duration: 0.5)) { showSplash = false }
     }
@@ -246,6 +253,7 @@ struct OnboardingFlow: View {
 
     private var primaryLabel: String {
         switch step {
+        case 0: "계속"
         case 1: introScene == 0 ? "시작" : "다음"
         case 2, 3, 4, 5, 6: "다음"
         // ⑥ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
@@ -255,6 +263,7 @@ struct OnboardingFlow: View {
 
     private func primaryAction() {
         switch step {
+        case 0: step = 1
         case 1: advanceIntro()
         case 2:
             // 테마 선택 저장(2026-08-19) — 종료 시트의 기본 선택값으로도 쓴다("이전 거랑 연결").
@@ -317,11 +326,13 @@ struct OnboardingFlow: View {
                 }
                 .accessibilityLabel("온보딩 닫기")
             }
-            if step >= 2 || (step == 1 && introScene > 0) {
+            if step >= 2 || (step == 1 && (introScene > 0 || !isRevisit)) {
                 Button {
                     lightFeedback += 1
-                    if step == 1 {
+                    if step == 1 && introScene > 0 {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.5)) { introScene -= 1 }
+                    } else if step == 1 {
+                        step = 0   // 인트로 첫 씬에서 뒤로 = 언어 단계(신규만)
                     } else if step == 3, let prev = baselineStack.popLast() {
                         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { baselinePage = prev }
                     } else if step == 4 && cardPage > 0 {
@@ -451,38 +462,62 @@ struct OnboardingFlow: View {
             cycleWheel
                 .frame(maxWidth: .infinity)
             Spacer()
-            languagePicker
-                .staggerIn(sceneAppeared, delay: 1.34, duration: 0.48, reduceMotion: reduceMotion)
         }
     }
 
-    // ── 언어 선택 (2026-08-21 대표님 요청 — 첫 화면) ────────────────────────────
-    /// 기본값은 **기기 설정 따름**이다. 여기서 고르는 건 그 위의 덮개이고, 고르면 즉시 전환된다.
-    /// 이름을 각자의 언어로 적는 이유: 지금 화면이 무슨 언어로 떠 있든 자기 언어를 찾을 수 있어야 한다.
-    /// ⚠ 인트로는 아무 데나 탭하면 다음 씬으로 넘어간다 — 버튼이 탭을 먹으므로 여기선 안 넘어간다.
-    private var languagePicker: some View {
-        // 언어가 넷이라 한 줄에 안 들어가는 폭이 있다 — 적응형 그리드로 자연히 접힌다
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8, alignment: .leading)],
-                  alignment: .leading, spacing: 8) {
-            ForEach(AppLanguage.allCases.filter { $0 != .system }) { lang in
-                Button {
-                    lightFeedback += 1
-                    Loc.apply(lang)          // 즉시 반영(정적 캐시) — @AppStorage 변화가 트리를 리빌드한다
-                    appLanguage = lang.rawValue
-                } label: {
-                    Text(verbatim: lang.nativeName)   // 이름 자체가 그 언어 — 번역 대상이 아니다
-                        .font(.footnote.weight(appLanguage == lang.rawValue ? .semibold : .regular))
-                        .foregroundStyle(appLanguage == lang.rawValue ? Ink.paper : Ink.text.opacity(0.7))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(appLanguage == lang.rawValue ? Ink.text : Ink.text.opacity(0.08),
-                                    in: Capsule())
+    // ── 언어 선택 — 온보딩 0단계 (2026-08-21 칩 → 08-22 베타 피드백 "첫 탭을 따로 빼줘") ──
+    /// 기본값은 **기기 설정 따름**. 여기서 고르면 즉시 전환된다(루트 .id 리빌드 — 이 뷰가 새로
+    /// 만들어져 step이 0으로 돌아오지만, 0단계가 곧 이 화면이라 제자리다. 스플래시는 프로세스당 1회).
+    /// 이름은 각자의 언어로(endonym) — 지금 화면이 무슨 언어든 자기 언어를 찾을 수 있어야 한다.
+    private var languageStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("템포루틴")
+                .font(.system(.footnote, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.5))
+                .kerning(2)
+            Text("언어")
+                .font(.almanac(size: 38, weight: .bold))
+                .foregroundStyle(Ink.text)
+            Text("앱에서 쓸 언어를 골라 주세요.")
+                .font(.system(.body, design: .serif))
+                .foregroundStyle(Ink.text.opacity(0.75))
+            VStack(spacing: 10) {
+                ForEach(AppLanguage.allCases) { lang in
+                    languageRow(lang)
                 }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(appLanguage == lang.rawValue ? [.isSelected] : [])
             }
+            .padding(.top, 12)
+            Spacer()
         }
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("언어 선택")
+    }
+
+    private func languageRow(_ lang: AppLanguage) -> some View {
+        let selected = appLanguage == lang.rawValue
+        return Button {
+            lightFeedback += 1
+            Loc.apply(lang)          // 즉시 반영(정적 캐시) — @AppStorage 변화가 트리를 리빌드한다
+            appLanguage = lang.rawValue
+        } label: {
+            HStack {
+                if lang == .system {
+                    Text("기기 설정 따름")
+                } else {
+                    Text(verbatim: lang.nativeName)   // 이름 자체가 그 언어 — 번역 대상이 아니다
+                }
+                Spacer()
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(selected ? Ink.text : Ink.text.opacity(0.3))
+            }
+            .font(.body.weight(selected ? .semibold : .regular))
+            .foregroundStyle(Ink.text)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(Ink.text.opacity(selected ? 0.10 : 0.05), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     private static let wheelPhases: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]

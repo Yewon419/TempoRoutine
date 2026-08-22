@@ -524,7 +524,7 @@ struct SeasonCalendarView: View {
                                    color: Ink.text)
                 }
             } else {
-                almanacDisplay(Loc.fmt("%1$@월", "\(cal.component(.month, from: monthStart))"), size: 58, color: Ink.text)
+                almanacDisplay(Loc.monthName(cal.component(.month, from: monthStart)), size: 58, color: Ink.text)
                 Text(String(cal.component(.year, from: monthStart)))
                     .font(.system(.footnote, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.5))
@@ -631,7 +631,7 @@ struct SeasonCalendarView: View {
             let shift = cal.firstWeekday - 1
             return Array(latin[shift...] + latin[..<shift])
         }
-        let symbols = cal.veryShortWeekdaySymbols
+        let symbols = Loc.veryShortWeekdaySymbols(cal)   // 앱 언어(기기 언어 아님, 2026-08-22)
         let shift = cal.firstWeekday - 1
         return Array(symbols[shift...] + symbols[..<shift])
     }
@@ -1278,7 +1278,7 @@ struct SeasonCalendarView: View {
 
     private func accessibilityText(for date: Date, style: (color: Color, meta: SeasonMeta?, projected: Bool),
                                    recorded: Bool, predicted: Bool) -> String {
-        var parts = [date.formatted(.dateTime.month().day())]
+        var parts = [date.formatted(Loc.dateTime.month().day())]
         if let meta = style.meta {
             // 개정 M-1c: 단계명 제거 — VoiceOver는 소리로 읽혀 프라이버시 표면이기도 하다.
             // "예상"은 유지: faded 시각 hedge가 전달되지 않는 채널이라 텍스트가 유일한 hedge(§5.6.2).

@@ -168,7 +168,7 @@ struct DayDetailView: View {
         HStack {
             navArrow(systemName: "chevron.left", label: "전날") { move(by: -1) }
             Spacer()
-            Text(day.formatted(.dateTime.month().day().weekday(.abbreviated)))
+            Text(day.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
                 .font(.almanacBody(.footnote, size: 13))
                 .foregroundStyle(Ink.text.opacity(0.6))
             Spacer()
@@ -212,7 +212,7 @@ struct DayDetailView: View {
                 almanacDisplay("\(cal.component(.day, from: day))",
                                size: ThemeStore.chrome.debossDisplay ? 80 : 56,
                                color: Ink.text)
-                Text(day.formatted(.dateTime.month().weekday(.wide)))
+                Text(day.formatted(Loc.dateTime.month().weekday(.wide)))
                     .font(.system(.subheadline, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.6))
             }
@@ -330,7 +330,7 @@ struct DayDetailView: View {
         switch kind {
         case .schedule:
             guard let first = scheduleRows.first(where: { !$0.isAllDay }) else { return nil }
-            return first.date.formatted(date: .omitted, time: .shortened)
+            return first.date.formatted(Loc.shortTime)
         case .input:
             let rows = inputRows
             guard !rows.isEmpty else { return nil }
@@ -378,8 +378,8 @@ struct DayDetailView: View {
                             }
                             Spacer()
                             if !item.isAllDay {
-                                let startText = item.date.formatted(date: .omitted, time: .shortened)
-                                Text(item.endDate.map { "\(startText)~\($0.formatted(date: .omitted, time: .shortened))" } ?? startText)
+                                let startText = item.date.formatted(Loc.shortTime)
+                                Text(item.endDate.map { "\(startText)~\($0.formatted(Loc.shortTime))" } ?? startText)
                                     .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
                             }
                             if let label = item.repeatRule.shortLabel {

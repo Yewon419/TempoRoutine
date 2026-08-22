@@ -552,7 +552,7 @@ struct ThemePreviewScreen: View {
                     .padding(.top, 5)
                 // 실제 카드와 같은 문법(날짜만) — 단계명은 §M-1c 금지, 날짜는 포매터라
                 // 언어를 따라간다(종전엔 한국어 날짜가 박혀 있었다)
-                Text(Date.now.formatted(.dateTime.month().day().weekday(.wide)))
+                Text(Date.now.formatted(Loc.dateTime.month().day().weekday(.wide)))
                     .font(.caption2)
                     .foregroundStyle(p.dim)
                     .padding(.top, 1)

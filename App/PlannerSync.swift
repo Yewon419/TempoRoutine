@@ -551,7 +551,7 @@ final class PlannerSync: NSObject {
     }
 
     private func stampReport(suffix: String) {
-        let time = Date.now.formatted(date: .omitted, time: .shortened)
+        let time = Date.now.formatted(Loc.shortTime)
         lastReport = "\(time) · \(suffix)"
     }
 }

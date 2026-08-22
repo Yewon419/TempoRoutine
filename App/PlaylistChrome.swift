@@ -67,7 +67,7 @@ struct PlaylistPlayerCard: View {
             // 부제 = 날짜만. 종전엔 의학 단계명(「배란기 · …」)이 앞에 붙어 있었는데
             // MASTER 개정 M-1c의 「의학 단계명은 사용자 표면 금지」 위반이었다(2026-08-20).
             // 계절명은 바로 위 30px 표제가 이미 말한다 — 부제에 다시 넣지 않는다.
-            Text(date.formatted(.dateTime.month().day().weekday(.wide)))
+            Text(date.formatted(Loc.dateTime.month().day().weekday(.wide)))
                 .font(.caption)
                 .foregroundStyle(Ink.dim)
                 .padding(.top, 1)
@@ -176,7 +176,7 @@ struct PlaylistAlbumHeader: View {
                 .kerning(1.8)
                 .foregroundStyle(Ink.dim)
             HStack(alignment: .center, spacing: 2) {
-                Text(Loc.fmt("%1$@월", "\(month)"))
+                Text(Loc.monthName(month))
                     .font(.system(size: 38, weight: .semibold))
                     .foregroundStyle(Ink.text)
                 Spacer(minLength: 0)

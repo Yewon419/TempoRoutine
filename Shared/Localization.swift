@@ -113,6 +113,27 @@ enum Loc {
         return String(localized: key, bundle: storedBundle, locale: storedLocale)
     }
 
+    // ── 날짜 서식도 선택 언어를 따른다(2026-08-22 베타 피드백 — 영어 앱에 날짜만 기기 언어) ──
+    /// `.formatted(.dateTime…)`는 Locale.current(기기)를 본다 — 이걸로 바꿔 쓴다.
+    static var dateTime: Date.FormatStyle { Date.FormatStyle.dateTime.locale(locale) }
+    /// `.formatted(date: .omitted, time: .shortened)` 대체
+    static var shortTime: Date.FormatStyle {
+        Date.FormatStyle(date: .omitted, time: .shortened, locale: locale)
+    }
+    /// 월 이름 — ko 「8월」· en 「Aug」· ja·zh 「8月」. 종전 「%@월」 키는 영어에서 「Month 8」이 되어
+    /// 표제가 「Mon / th 8」로 꺾였다. 달력 심볼은 언어가 제 형식을 안다.
+    static func monthName(_ month: Int) -> String {
+        var cal = Calendar.current
+        cal.locale = locale
+        return cal.shortStandaloneMonthSymbols[max(0, min(11, month - 1))]
+    }
+    /// 요일 한 글자 — 일요일부터(인덱스 0 = 일). 종전 「일 월 화…」 리터럴 배열 대체.
+    static func veryShortWeekdaySymbols(_ calendar: Calendar) -> [String] {
+        var cal = calendar
+        cal.locale = locale
+        return cal.veryShortStandaloneWeekdaySymbols
+    }
+
     /// **앱이 만든 한국어 문구를 담은 String**을 다시 번역 키로 되돌린다.
     /// 쓰는 자리: TempoCore가 돌려주는 문구(설문 문항·선택지·공휴일 이름·표시명)처럼
     /// 리터럴이 아니라 값으로 흘러오는 앱 카피. 키가 앱 카탈로그에 있으면 런타임에 조회된다

@@ -48,6 +48,8 @@ struct SettingsView: View {
     /// 오늘 탭 진입과 같은 키를 공유한다 — 테마 리빌드에서 살아남아야 해서 뷰 밖에 둔다(RootTab 주석).
     @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
     // 하늘 상태 스위처(날씨 테마 확인용, 2026-08-19 — Phase ②에서 WeatherKit로 대체)
+    /// 앱 언어(2026-08-22 베타 "설정에도 언어선택") — 온보딩 첫 단계와 같은 저장 키
+    @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
     @AppStorage(WxState.conditionKey) private var wxCondition = WxCondition.clear.rawValue
     @AppStorage(WxState.daypartKey) private var wxDaypart = ""
 
@@ -156,6 +158,24 @@ struct SettingsView: View {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
                     Text("매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!")
                         .foregroundStyle(Ink.groundSub)
+                }
+                // 언어(2026-08-22 베타 피드백) — 고르면 즉시 전환(루트 .id 리빌드).
+                // 이름은 각자의 언어로(endonym) — 지금 화면이 무슨 언어든 자기 언어를 찾을 수 있게.
+                Section {
+                    Picker(selection: $appLanguage) {
+                        ForEach(AppLanguage.allCases) { lang in
+                            if lang == .system {
+                                Text("기기 설정 따름").tag(lang.rawValue)
+                            } else {
+                                Text(verbatim: lang.nativeName).tag(lang.rawValue)
+                            }
+                        }
+                    } label: {
+                        Text("언어").foregroundStyle(Ink.text)
+                    }
+                    .onChange(of: appLanguage) { _, newValue in
+                        Loc.apply(AppLanguage(rawValue: newValue) ?? .system)
+                    }
                 }
 
                 // 알림(§5.11 계열) — 브리핑·예측 = 기본 켬(2026-08-05 사용자 결정),

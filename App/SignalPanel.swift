@@ -24,19 +24,19 @@ struct SignalPanel: View {
     /// 이름표(카드 제목) — 세로 나열 재편(2026-08-09)으로 패널이 자기 신호명을 단다.
     var titleName: String {
         switch signal {
-        case .energy: "에너지"
-        case .mood: "기분"
-        case .sleep: "수면"
-        case .appetite: "식욕"
+        case .energy: Loc.str("에너지")
+        case .mood: Loc.str("기분")
+        case .sleep: Loc.str("수면")
+        case .appetite: Loc.str("식욕")
         }
     }
 
     private var signalName: String {
         switch signal {
-        case .energy: "에너지"
-        case .mood: "기분"
-        case .sleep: "잠"
-        case .appetite: "식욕"
+        case .energy: Loc.str("에너지")
+        case .mood: Loc.str("기분")
+        case .sleep: Loc.str("잠")
+        case .appetite: Loc.str("식욕")
         }
     }
 

@@ -3112,7 +3112,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "at its highest"
+            "value": "Highest"
           }
         },
         "ja": {
@@ -3181,7 +3181,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "most restless"
+            "value": "Most restless"
           }
         },
         "ja": {
@@ -3227,7 +3227,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drops the most"
+            "value": "Lowest"
           }
         },
         "ja": {
@@ -3250,7 +3250,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "at its brightest"
+            "value": "Brightest"
           }
         },
         "ja": {
@@ -3296,7 +3296,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "As calm as it gets"
+            "value": "Calmest"
           }
         },
         "ja": {
@@ -3319,7 +3319,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "at its best"
+            "value": "Best"
           }
         },
         "ja": {
@@ -4279,6 +4279,29 @@
         }
       }
     },
+    "계속": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続ける"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续"
+          }
+        }
+      }
+    },
     "계절 기록 전": {
       "extractionState": "manual",
       "localizations": {
@@ -4919,6 +4942,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "设备间同步"
+          }
+        }
+      }
+    },
+    "기기 설정 따름": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow device setting"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "端末の設定に従う"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随设备设置"
           }
         }
       }
@@ -11524,6 +11570,29 @@
         }
       }
     },
+    "앱에서 쓸 언어를 골라 주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the language for the app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appで使う言語を選んでください。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请选择 App 使用的语言。"
+          }
+        }
+      }
+    },
     "앱을 한 번 열면 채워져요": {
       "extractionState": "manual",
       "localizations": {
@@ -11658,6 +11727,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "父母节"
+          }
+        }
+      }
+    },
+    "언어": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
           }
         }
       }

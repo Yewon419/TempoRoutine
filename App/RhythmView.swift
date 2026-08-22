@@ -87,7 +87,7 @@ struct RhythmView: View {
                     }
                     // 모던 = 아웃라인 표제(시안 §1.3-2 — 표제는 아웃라인 승격 이력)
                     // 「나의 리듬」→「나의 템포」(2026-08-18 사용자 지시 — 앱 이름과 같은 축)
-                    almanacDisplay("나의 템포", size: ThemeStore.chrome.debossDisplay ? 54 : 44,   // 68은 과함(2026-08-18 베타)
+                    almanacDisplay(Loc.str("나의 템포"), size: ThemeStore.chrome.debossDisplay ? 54 : 44,   // 68은 과함(2026-08-18 베타)
                                    color: Ink.onGround(Ink.text, white: 1.0))
                     selfReportPrompt
                     sectionSwitcher
@@ -191,6 +191,8 @@ struct RhythmView: View {
         case routines = "나의 루틴"
         case diary = "한 줄 기록"
         var id: String { rawValue }
+        /// rawValue는 저장 키이자 번역 키 — 표시는 번역을 거친다(2026-08-22 베타 "난리났네")
+        var title: String { Loc.text(rawValue) }
     }
 
     /// 저장된 마지막 탭 복원 — 구 rawValue("에너지" 등)는 init 실패로 사계 폴백
@@ -201,7 +203,7 @@ struct RhythmView: View {
     private var sectionSwitcher: some View {
         HStack(spacing: 8) {
             ForEach(RhythmTab.allCases) { item in
-                chip(label: item.rawValue, selected: tab == item) {
+                chip(label: item.title, selected: tab == item) {
                     lightFeedback += 1   // 칩 전환 햅틱(2026-08-09 사용자 지시)
                     lastTabRaw = item.rawValue
                 }
@@ -421,10 +423,10 @@ struct RhythmView: View {
 
     private func signalLabel(_ signal: SignalKind) -> String {
         switch signal {
-        case .energy: "에너지"
-        case .mood: "기분"
-        case .sleep: "수면"
-        case .appetite: "식욕"
+        case .energy: Loc.str("에너지")
+        case .mood: Loc.str("기분")
+        case .sleep: Loc.str("수면")
+        case .appetite: Loc.str("식욕")
         }
     }
 
@@ -711,7 +713,7 @@ struct RhythmView: View {
         let meta = phase.map(seasonMeta(for:))
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                Text(entry.day.formatted(.dateTime.month().day().weekday(.abbreviated)))
+                Text(entry.day.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
                     .font(.almanacBody(.caption, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.55))
                 if let meta {
@@ -729,7 +731,7 @@ struct RhythmView: View {
         .padding(.vertical, 8)
         .almanacRule()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(entry.day.formatted(.dateTime.month().day())), \(meta?.name ?? ""), \(entry.note ?? "")")
+        .accessibilityLabel("\(entry.day.formatted(Loc.dateTime.month().day())), \(meta?.name ?? ""), \(entry.note ?? "")")
     }
 
     private func seasonRow(phase: CyclePhase, routines: [SeasonRoutine]) -> some View {

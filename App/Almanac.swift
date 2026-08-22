@@ -549,6 +549,18 @@ struct SeasonLight: View {
                 ],
                 startPoint: .top, endPoint: .bottom
             )
+        } else if motif == .card {
+            // 상단 표제 구간 감쇠(2026-08-22 베타 "상단 가독성") — 선화가 계절명·무드라인을
+            // 가로질러 지나갔다. 그림을 걷지 않고 위 18%만 35%로 눌러 활자를 살린다(이하 원형).
+            LinearGradient(
+                stops: [
+                    .init(color: .black.opacity(0.35), location: 0.0),
+                    .init(color: .black.opacity(0.35), location: 0.18),
+                    .init(color: .black, location: 0.32),
+                    .init(color: .black, location: 1.0),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
         } else {
             Rectangle().fill(Color.black)
         }

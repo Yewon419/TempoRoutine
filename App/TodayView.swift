@@ -357,12 +357,12 @@ struct TodayView: View {
             Text("\(Calendar.current.component(.day, from: today))")
                 .font(.almanac(size: 44, weight: .bold))
                 .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.92))
-            Text(today.formatted(.dateTime.month().weekday(.abbreviated)))
+            Text(today.formatted(Loc.dateTime.month().weekday(.abbreviated)))
                 .font(.almanacBody(.caption, size: 12))
                 .foregroundStyle(Ink.onGround(Ink.text.opacity(0.55), white: 0.62))
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(today.formatted(.dateTime.month().day().weekday(.wide)))
+        .accessibilityLabel(today.formatted(Loc.dateTime.month().day().weekday(.wide)))
         .skyInkShadow()   // 날씨 = 흰 구름 위 날짜 가독(2026-08-20 베타 피드백)
     }
 
@@ -524,7 +524,7 @@ struct TodayView: View {
         case .schedule:
             // 시각 있는 첫 일정. 종일뿐이면 세울 값이 없다(발권물의 시각 칸에 「종일」은 어색하다)
             guard let first = todaySchedules.first(where: { !$0.isAllDay }) else { return nil }
-            return first.date.formatted(date: .omitted, time: .shortened)
+            return first.date.formatted(Loc.shortTime)
         case .input:
             let items = todayInputs
             guard !items.isEmpty else { return nil }
@@ -567,7 +567,7 @@ struct TodayView: View {
                     }
                     Spacer()
                     Text(item.isAllDay ? Loc.str("종일")
-                         : item.date.formatted(date: .omitted, time: .shortened))
+                         : item.date.formatted(Loc.shortTime))
                         .font(.caption)
                         .foregroundStyle(Ink.text.opacity(0.5))
                 }

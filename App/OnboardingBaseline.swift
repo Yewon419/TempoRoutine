@@ -98,7 +98,7 @@ struct OnboardingCalendar: View {
                     .frame(width: 44, height: 44).contentShape(Rectangle())
             }
             Spacer()
-            Text(monthAnchor.formatted(.dateTime.year().month(.wide)))
+            Text(monthAnchor.formatted(Loc.dateTime.year().month(.wide)))
                 .font(.system(.subheadline, design: .serif).weight(.semibold))
                 .foregroundStyle(Ink.text)
             Spacer()
@@ -124,7 +124,7 @@ struct OnboardingCalendar: View {
 
     private var weekdayRow: some View {
         HStack(spacing: 0) {
-            ForEach(["일", "월", "화", "수", "목", "금", "토"], id: \.self) { w in
+            ForEach(Loc.veryShortWeekdaySymbols(Calendar.current), id: \.self) { w in
                 Text(w)
                     .font(.caption2)
                     .foregroundStyle(Ink.text.opacity(0.4))

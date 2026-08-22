@@ -447,7 +447,7 @@ func timeOfDayLabel(_ minutes: Int) -> String {
     comps.hour = minutes / 60
     comps.minute = minutes % 60
     guard let date = Calendar.current.date(from: comps) else { return "" }
-    return date.formatted(date: .omitted, time: .shortened)
+    return date.formatted(Loc.shortTime)
 }
 
 /// 하루 안 정렬(2026-08-09): 시각 있는 항목 = 시간순, 없는 항목 = 맨 뒤. 동률·무시각은

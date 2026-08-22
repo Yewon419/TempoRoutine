@@ -36,9 +36,12 @@ enum QuickAdd {
     }
 
     /// Input 제목 → 진행 방식 유추: 「N분」이 있으면 타이머 N분, 없으면 체크만(nil)
-    private static func input(_ title: String) -> Suggestion {
-        if let range = title.range(of: #"([0-9]+)분"#, options: .regularExpression),
-           let minutes = Int(title[range].dropLast()) {
+    /// `key`는 한국어 원문(번역 키)이다 — 「N분」 판정은 원문으로 하고, 제목은 번역을 거쳐 낸다
+    /// (영어 제목 "20 min"에는 이 정규식이 안 맞는다 — 2026-08-22).
+    private static func input(_ key: String) -> Suggestion {
+        let title = Loc.text(key)
+        if let range = key.range(of: #"([0-9]+)분"#, options: .regularExpression),
+           let minutes = Int(key[range].dropLast()) {
             return Suggestion(title: title, kind: .timer, seconds: minutes * 60)
         }
         return Suggestion(title: title, kind: nil)
@@ -98,21 +101,21 @@ enum QuickAdd {
     static func outputs(level: EnergyLevel?) -> [Suggestion] {
         switch level ?? .mid {
         case .low:
-            [Suggestion(title: "오늘 할 일 적어두기", kind: .percent),
-             Suggestion(title: "자료 한 편 읽기", kind: .timer, seconds: 20 * 60),
-             Suggestion(title: "메일함 체크", kind: .timer, seconds: 15 * 60),
-             Suggestion(title: "자격증 공부", kind: .timer, seconds: 30 * 60),
-             Suggestion(title: "공부 한 챕터", kind: .sessions, sessions: 1)]
+            [Suggestion(title: Loc.str("오늘 할 일 적어두기"), kind: .percent),
+             Suggestion(title: Loc.str("자료 한 편 읽기"), kind: .timer, seconds: 20 * 60),
+             Suggestion(title: Loc.str("메일함 체크"), kind: .timer, seconds: 15 * 60),
+             Suggestion(title: Loc.str("자격증 공부"), kind: .timer, seconds: 30 * 60),
+             Suggestion(title: Loc.str("공부 한 챕터"), kind: .sessions, sessions: 1)]
         case .mid:
-            [Suggestion(title: "공부 한 챕터", kind: .sessions, sessions: 2),
-             Suggestion(title: "초안 쓰기", kind: .percent),
-             Suggestion(title: "강의 한 편 듣기", kind: .timer, seconds: 50 * 60),
-             Suggestion(title: "자격증 공부", kind: .timer, seconds: 60 * 60)]
+            [Suggestion(title: Loc.str("공부 한 챕터"), kind: .sessions, sessions: 2),
+             Suggestion(title: Loc.str("초안 쓰기"), kind: .percent),
+             Suggestion(title: Loc.str("강의 한 편 듣기"), kind: .timer, seconds: 50 * 60),
+             Suggestion(title: Loc.str("자격증 공부"), kind: .timer, seconds: 60 * 60)]
         case .high:
-            [Suggestion(title: "자격증 공부", kind: .timer, seconds: 90 * 60),
-             Suggestion(title: "프로젝트 한 단계 끝내기", kind: .percent),
-             Suggestion(title: "발표 자료 만들기", kind: .sessions, sessions: 3),
-             Suggestion(title: "공부 한 챕터", kind: .sessions, sessions: 3)]
+            [Suggestion(title: Loc.str("자격증 공부"), kind: .timer, seconds: 90 * 60),
+             Suggestion(title: Loc.str("프로젝트 한 단계 끝내기"), kind: .percent),
+             Suggestion(title: Loc.str("발표 자료 만들기"), kind: .sessions, sessions: 3),
+             Suggestion(title: Loc.str("공부 한 챕터"), kind: .sessions, sessions: 3)]
         }
     }
 }

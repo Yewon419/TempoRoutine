@@ -65,7 +65,7 @@ enum WidgetBridge {
             if let index = item.dayIndex(on: day) {
                 title += Loc.fmt(" · %1$@/%2$@일차", "\(index)", "\(item.spanDays)")
             }
-            let time = item.isAllDay ? "종일" : item.date.formatted(date: .omitted, time: .shortened)
+            let time = item.isAllDay ? "종일" : item.date.formatted(Loc.shortTime)
             return WidgetScheduleLine(time: time, title: title)
         }
     }

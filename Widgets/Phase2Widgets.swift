@@ -196,7 +196,7 @@ struct TodayScheduleView: View {
                     .stroke(WInk.season(season), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
                     .frame(width: 12, height: 12)
             }
-            Text(entry.date.formatted(.dateTime.month().day().weekday(.wide)))
+            Text(entry.date.formatted(Loc.dateTime.month().day().weekday(.wide)))
                 .font(WFont.almanac(14, weight: .bold))
                 .foregroundStyle(WInk.text)
             Spacer()

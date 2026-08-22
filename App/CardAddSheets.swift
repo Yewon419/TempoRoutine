@@ -114,7 +114,7 @@ struct ScheduleAddSheet: View {
     /// 제목에서 읽은 시각을 알려주는 한 줄 — 무엇을 근거로 시각이 채워졌는지(2026-08-01)
     private var parseHint: String? {
         guard !timeManuallySet, let matched = lastAppliedMatch else { return nil }
-        return Loc.fmt("「%1$@」를 %2$@으로 읽었어요. 시각을 직접 고치면 그대로 둬요.", "\(matched)", "\(start.formatted(date: .omitted, time: .shortened))")
+        return Loc.fmt("「%1$@」를 %2$@으로 읽었어요. 시각을 직접 고치면 그대로 둬요.", "\(matched)", "\(start.formatted(Loc.shortTime))")
     }
 
     /// 기준 날짜(day 성분) + 시:분 — bySettingHour의 전진 탐색을 피해 컴포넌트로 조립
@@ -362,7 +362,7 @@ struct QuickScheduleBar: View {
 
     private var dayLabel: String {
         guard let endDay else {
-            return Loc.fmt("%1$@일 %2$@", "\(cal.component(.day, from: day))", "\(day.formatted(.dateTime.weekday(.abbreviated)))")
+            return Loc.fmt("%1$@일 %2$@", "\(cal.component(.day, from: day))", "\(day.formatted(Loc.dateTime.weekday(.abbreviated)))")
         }
         // 드래그 기간 — 같은 달 안에서만 선택되므로 일(day)만 잇는다
         let count = ScheduleSpan.dayCount(start: day, end: endDay, calendar: cal)
@@ -377,7 +377,7 @@ struct QuickScheduleBar: View {
 
     private func clockText(_ time: ParsedTime) -> String {
         guard let d = date(at: time) else { return "" }
-        return d.formatted(date: .omitted, time: .shortened)
+        return d.formatted(Loc.shortTime)
     }
 
     /// 누른 날짜 + 시:분 — DateComponents로 직접 조립(bySettingHour의 전진 탐색 회피)
@@ -664,7 +664,7 @@ struct InputAddSheet: View {
                     .tint(Ink.text)
                     if cycleBased {
                         Picker("시작 계절", selection: $anchor) {
-                            ForEach(SeasonAnchor.allCases) { Text($0.rawValue).tag($0) }
+                            ForEach(SeasonAnchor.allCases) { Text(seasonMeta(for: $0.phase).name).tag($0) }   // rawValue = 저장 키, 표시 아님
                         }
                         Stepper(Loc.fmt("계절 시작 +%1$@일", "\(offset)"), value: $offset, in: 0...13)
                         Toggle("매 주기 반복", isOn: $everyCycle)
@@ -868,27 +868,27 @@ struct OutputAddSheet: View {
                             }
                         }
                     }
-                    Toggle(Loc.fmt("%1$@ 반복", "\(anchor.rawValue)"), isOn: Binding(
+                    Toggle(Loc.fmt("%1$@ 반복", "\(seasonMeta(for: anchor.phase).name)"), isOn: Binding(
                         get: { cycleBased },
                         set: { on in cycleBased = on; if on { repeats = false } }
                     ))
                     .tint(Ink.text)
                     if cycleBased {
                         Picker("어느 계절", selection: $anchor) {
-                            ForEach(SeasonAnchor.allCases) { Text($0.rawValue).tag($0) }
+                            ForEach(SeasonAnchor.allCases) { Text(seasonMeta(for: $0.phase).name).tag($0) }   // rawValue = 저장 키, 표시 아님
                         }
                         // 계절 전체 ↔ N일차(2026-08-01) — 전체는 그 계절 내내, N일차는 하루만
                         Picker("범위", selection: $wholePhase) {
-                            Text(Loc.fmt("%1$@ 전체", "\(anchor.rawValue)")).tag(true)
-                            Text(Loc.fmt("%1$@ 며칠째", "\(anchor.rawValue)")).tag(false)
+                            Text(Loc.fmt("%1$@ 전체", "\(seasonMeta(for: anchor.phase).name)")).tag(true)
+                            Text(Loc.fmt("%1$@ 며칠째", "\(seasonMeta(for: anchor.phase).name)")).tag(false)
                         }
                         .pickerStyle(.segmented)
                         if wholePhase {
-                            Text(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(anchor.rawValue)"))
+                            Text(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(seasonMeta(for: anchor.phase).name)"))
                                 .font(.footnote)
                                 .foregroundStyle(Ink.text.opacity(0.5))
                         } else {
-                            Stepper(Loc.fmt("%1$@ %2$@일차", "\(anchor.rawValue)", "\(offset + 1)"), value: $offset, in: 0...13)
+                            Stepper(Loc.fmt("%1$@ %2$@일차", "\(seasonMeta(for: anchor.phase).name)", "\(offset + 1)"), value: $offset, in: 0...13)
                         }
                         Toggle("매 주기 반복", isOn: $everyCycle)
                     }

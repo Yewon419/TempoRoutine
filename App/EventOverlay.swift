@@ -127,7 +127,7 @@ struct OverlayEventRows: View {
                     .font(.subheadline)
                     .foregroundStyle(Ink.text.opacity(0.8))
                 Spacer()
-                Text(event.isAllDay ? "종일" : event.start.formatted(date: .omitted, time: .shortened))
+                Text(event.isAllDay ? "종일" : event.start.formatted(Loc.shortTime))
                     .font(.caption)
                     .foregroundStyle(Ink.text.opacity(0.5))
                 // read-only 출처 배지 — dedup 없이 구분만(§3.6.1 G)

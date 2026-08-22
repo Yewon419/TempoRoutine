@@ -88,7 +88,7 @@ struct TicketSerial: View {
 
     private var serial: String {
         let cal = Calendar.current
-        let ymd = date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits))
+        let ymd = date.formatted(Loc.dateTime.year().month(.twoDigits).day(.twoDigits))
             .filter(\.isNumber)
         let ordinal = cal.ordinality(of: .day, in: .year, for: date) ?? 0
         return "TR-\(ymd)-\(String(format: "%04d", ordinal))"

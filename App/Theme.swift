@@ -36,13 +36,13 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .plain: "기본"
-        case .standard: "은필"
-        case .modern: "포인트컬러"
-        case .ticket: "티켓"
-        case .letterpress: "활판"
-        case .playlist: "플레이리스트"
-        case .weather: "날씨"
+        case .plain: Loc.str("기본")
+        case .standard: Loc.str("은필")
+        case .modern: Loc.str("포인트컬러")
+        case .ticket: Loc.str("티켓")
+        case .letterpress: Loc.str("활판")
+        case .playlist: Loc.str("플레이리스트")
+        case .weather: Loc.str("날씨")
         }
     }
 }
@@ -73,13 +73,13 @@ enum PointColor: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .vermilion: "다홍"
-        case .skyBlue: "스카이블루"
-        case .green: "그린"
-        case .yellow: "옐로"
-        case .purple: "퍼플"
-        case .cobalt: "코발트블루"
-        case .orange: "오렌지"
+        case .vermilion: Loc.str("다홍")
+        case .skyBlue: Loc.str("스카이블루")
+        case .green: Loc.str("그린")
+        case .yellow: Loc.str("옐로")
+        case .purple: Loc.str("퍼플")
+        case .cobalt: Loc.str("코발트블루")
+        case .orange: Loc.str("오렌지")
         }
     }
 
@@ -146,7 +146,9 @@ extension ThemePalette {
         summer: Color(light: .rgb(0x6E, 0x7C, 0x46), dark: .rgb(0xA3, 0xB3, 0x78)),
         autumn: Color(light: .rgb(0xA8, 0x4B, 0x38), dark: .rgb(0xD6, 0x82, 0x6B)),
         text: Color(light: .rgb(0x2C, 0x2B, 0x27), dark: .rgb(0xE8, 0xE6, 0xE1)),
-        paper: Color(light: .rgb(0xF1, 0xEE, 0xE6), dark: .rgb(0x1C, 0x1B, 0x19)),
+        // 2026-08-22 베타 "은필 전체적으로 노란기 빼줘" — F1EEE6(R−B 11, 크림)을 중성 F0F0ED로.
+        // frost(F2F3F0)와 같은 족이 되어 탭 간 지면 색이 튀지도 않는다.
+        paper: Color(light: .rgb(0xF0, 0xF0, 0xED), dark: .rgb(0x1C, 0x1B, 0x19)),
         coral: Color(light: .rgb(0xD6, 0x64, 0x4C), dark: .rgb(0xE0, 0x7A, 0x63)),
         record: Color(light: .rgb(0x5B, 0x62, 0x6B), dark: .rgb(0xA9, 0xB0, 0xB8)),
         danger: Color(light: .rgb(0xB2, 0x3A, 0x30), dark: .rgb(0xD0, 0x68, 0x5E)),
