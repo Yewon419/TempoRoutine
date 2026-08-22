@@ -94,13 +94,33 @@ struct CheckInCard: View {
         }
     }
 
+    /// 영어·일본어 칩이 길어 한 줄에 안 들어가면 칩이 낱말 중간에서 꺾였다(2026-08-22 베타
+    /// "체크인 줄바꿈 엄청나다"). 한 줄에 들어가면 종전 조판, 안 들어가면 라벨 위·칩 아래.
     private func checkInRow(label: String, options: [String], value: Binding<Int>) -> some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(Ink.text.opacity(0.75))
-                .frame(width: 108, alignment: .leading)
-            ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                checkInLabel(label).frame(width: 108, alignment: .leading)
+                checkInChips(label: label, options: options, value: value)
+                Spacer(minLength: 0)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                checkInLabel(label)
+                HStack(spacing: 8) {
+                    checkInChips(label: label, options: options, value: value)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    private func checkInLabel(_ label: String) -> some View {
+        Text(label)
+            .font(.subheadline)
+            .foregroundStyle(Ink.text.opacity(0.75))
+    }
+
+    private func checkInChips(label: String, options: [String], value: Binding<Int>) -> some View {
+        ForEach(Array(options.enumerated()), id: \.offset) { index, option in
                 let mapped = index * 2 + 1   // 3탭 = 1·3·5
                 let current = value.wrappedValue
                 let selected = current == mapped
@@ -113,6 +133,8 @@ struct CheckInCard: View {
                 } label: {
                     Text(option)
                         .font(.caption)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)   // 칩은 낱말을 꺾지 않는다
                         .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(half ? 0.9 : 0.7))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
@@ -133,8 +155,6 @@ struct CheckInCard: View {
                     value.wrappedValue = mapped - 1
                     persistDraft()
                 }
-            }
-            Spacer(minLength: 0)
         }
     }
 

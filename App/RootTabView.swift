@@ -43,6 +43,10 @@ struct RootTabView: View {
     @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
     /// 체험 종료 선택 시트(2026-08-19) — 리빌드에 날아가도 .task 재판정이 다시 띄운다(@State로 충분)
     @State private var showTrialEnd = false
+    /// 시작 작업(HealthKit 동기화·위젯 발행·알림 재예약·동기화 왕복)은 **프로세스당 1회**.
+    /// 테마·언어 변경 = 루트 `.id` 리빌드인데, 그때마다 `.task`가 다시 돌아 이 무거운 묶음이
+    /// 통째로 재실행됐다 — "적용이 조금씩 느리다"(2026-08-22 베타)의 본체. 쓰기는 메인뿐.
+    nonisolated(unsafe) private static var bootstrapped = false
 
     var body: some View {
         TabView(selection: $rootTab) {
@@ -86,6 +90,10 @@ struct RootTabView: View {
         .onChange(of: appLanguage) { _, newValue in
             // 외부 변경(백업 복원·설정) 대비 보완 벨트 — 고르는 자리에서 이미 apply 한다
             Loc.apply(AppLanguage(rawValue: newValue) ?? .system)
+            // 위젯 스냅샷 안 문구(「템포루틴」·「종일」·무드라인)는 **발행 시점 언어**로 박힌다 — 재발행
+            WidgetBridge.publish(periodDays: periodDays, schedules: schedules,
+                                 inputs: inputs, outputs: outputs, completions: completions,
+                                 inputProgresses: inputProgresses)
         }
         .onChange(of: appTheme) { _, newValue in
             ThemeStore.apply(newValue)   // 설정의 선(先)apply 보완 벨트 — 외부 변경(백업 복원 등) 대비
@@ -127,6 +135,10 @@ struct RootTabView: View {
                     ThemeTrial.resolve()
                 }
             }
+            // 아래는 프로세스당 1회 — 리빌드(테마·언어 변경)에서는 건너뛴다. 테마는 자기 onChange가
+            // 위젯을 재발행하고, 언어도 아래 onChange(of: appLanguage)가 맡는다.
+            guard !Self.bootstrapped else { return }
+            Self.bootstrapped = true
             // 씨앗 획득 원장 백필(2026-08-20) — 원장 도입 전 획득(행 파생)을 1회 옮겨 적는다(멱등)
             Seeds.backfillEarnedLedger(checkIns)
             await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)

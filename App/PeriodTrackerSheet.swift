@@ -367,13 +367,32 @@ struct CheckInEditor: View {
         .onChange(of: day) { load() }
     }
 
+    /// 체크인 카드와 같은 규칙(2026-08-22) — 한 줄에 안 들어가면 라벨 위·칩 아래
     private func signalRow(label: String, options: [String], value: Binding<Int>) -> some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.footnote)
-                .foregroundStyle(Ink.text.opacity(0.7))
-                .frame(width: 84, alignment: .leading)
-            ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                signalLabel(label).frame(width: 84, alignment: .leading)
+                signalChips(label: label, options: options, value: value)
+                Spacer(minLength: 0)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                signalLabel(label)
+                HStack(spacing: 8) {
+                    signalChips(label: label, options: options, value: value)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    private func signalLabel(_ label: String) -> some View {
+        Text(label)
+            .font(.footnote)
+            .foregroundStyle(Ink.text.opacity(0.7))
+    }
+
+    private func signalChips(label: String, options: [String], value: Binding<Int>) -> some View {
+        ForEach(Array(options.enumerated()), id: \.offset) { index, option in
                 let mapped = index * 2 + 1   // 3탭 = 1·3·5
                 let selected = value.wrappedValue == mapped
                 Button {
@@ -383,6 +402,8 @@ struct CheckInEditor: View {
                 } label: {
                     Text(option)
                         .font(.caption2)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                         .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
                         .padding(.horizontal, 9)
                         .padding(.vertical, 6)
@@ -391,8 +412,6 @@ struct CheckInEditor: View {
                 }
                 .accessibilityLabel("\(label) \(option)")
                 .accessibilityAddTraits(selected ? [.isSelected] : [])
-            }
-            Spacer(minLength: 0)
         }
     }
 

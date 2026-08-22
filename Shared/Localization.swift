@@ -68,9 +68,13 @@ enum Loc {
     nonisolated(unsafe) private static var cachedLocale: Locale = .current
     nonisolated(unsafe) private static var installed = false
 
+    /// App Group 기본값 — **한 번만 만든다.** 문자열 조회마다 `UserDefaults(suiteName:)`을 새로
+    /// 생성하던 것이 "적용이 느리다"(2026-08-22 베타)의 한 축이었다(화면당 수백 회 조회).
+    private static let sharedDefaults = UserDefaults(suiteName: WidgetShared.appGroupID)
+
     private static var storedRaw: String? {
         // 위젯 프로세스에는 기본 도메인 값이 없다 — App Group을 먼저 본다(스냅샷과 같은 그룹)
-        UserDefaults(suiteName: WidgetShared.appGroupID)?.string(forKey: AppLanguage.storageKey)
+        sharedDefaults?.string(forKey: AppLanguage.storageKey)
             ?? UserDefaults.standard.string(forKey: AppLanguage.storageKey)
     }
 
@@ -114,8 +118,7 @@ enum Loc {
             defaults.set([new.rawValue], forKey: AppLanguage.systemOverrideKey)
         }
         // 위젯은 **별도 프로세스**라 앱의 기본 도메인을 못 본다 — App Group에도 적는다
-        UserDefaults(suiteName: WidgetShared.appGroupID)?
-            .set(new.rawValue, forKey: AppLanguage.storageKey)
+        sharedDefaults?.set(new.rawValue, forKey: AppLanguage.storageKey)
         sync()
     }
 

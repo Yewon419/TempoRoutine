@@ -200,10 +200,12 @@ struct SignalPanel: View {
                 // 레코드판은 중앙 숫자 없음(2026-08-20 베타 피드백 — 원판 위 숫자가 은유를 깬다.
                 // 시안 §4.4-⑩도 무숫자). 값은 아래 스탯 2행이 담당, VoiceOver는 서술 라벨 담당.
                 if ThemeStore.chrome.signalRing != .vinyl {
+                    // 현재 계절 = 원 안 숫자를 계절색·볼드로(2026-08-22 베타 — 「지금」 텍스트 태그 대체).
+                    // 값 없음(「—」)은 현재 계절이어도 옅게 둔다.
                     Text(value.map(String.init) ?? "—")
-                        .font(.caption)
+                        .font(.caption.weight(isNow && value != nil ? .bold : .regular))
                         .monospacedDigit()
-                        .foregroundStyle(Ink.text.opacity(value == nil ? 0.35 : 0.7))
+                        .foregroundStyle(isNow && value != nil ? meta.color : Ink.text.opacity(value == nil ? 0.35 : 0.7))
                 }
             }
             .frame(width: 54, height: 54)
@@ -213,11 +215,8 @@ struct SignalPanel: View {
                     .font(.almanacBody(.caption, size: 12, weight: isNow ? .bold : .regular))
                     .foregroundStyle(meta.color)
             }
-            // 「지금」 = 색이 아니라 텍스트 태그(시안 v69 — 색맹 담보)
-            Text("지금")
-                .font(.system(size: 9.5, weight: .semibold))
-                .foregroundStyle(Ink.text.opacity(0.55))
-                .opacity(isNow ? 1 : 0)
+            // 「지금」 텍스트 태그는 제거(2026-08-22 베타) — 현재 계절은 원 안 숫자 색·볼드 + 계절명 볼드로.
+            // (시안 v69의 색맹 담보는 숫자 볼드·계절명 볼드가 이어받는다 — 색만으로 구분하지 않는다)
         }
         .frame(maxWidth: .infinity)
     }
