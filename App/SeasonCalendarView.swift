@@ -231,22 +231,18 @@ struct SeasonCalendarView: View {
     }
 
     private var calendarTopGlowLayers: some View {
-        let l = SeasonLight.lightColors(for: todayPhase)
-        let top = RadialGradient(colors: [l.a, .clear],
-                                 center: UnitPoint(x: 0.18, y: -0.10),
-                                 startRadius: 0, endRadius: 430)
-        let side = RadialGradient(colors: [l.b, .clear],
-                                  center: UnitPoint(x: 0.88, y: -0.06),
-                                  startRadius: 0, endRadius: 320)
-        return ZStack {
-            Rectangle().fill(top)
-            Rectangle().fill(side)
-        }
-        // 모던은 항상 다크 단일 외관 — 시스템 다크 감쇠 미적용(시안 --light-dim 1)
-        .opacity(ThemeStore.chrome.dimsInDarkMode && colorScheme == .dark ? 0.35 : 1.0)
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
+        // 다른 탭과 **같은 SeasonLight**(3겹 radial + 테마 질감) — 종전엔 2겹만 상단 앵커로 직접
+        // 그려, 같은 원색인데도 세 번째 겹·선화 질감이 빠져 색감이 달리 읽혔다(2026-08-22 베타
+        // "같은 가을인데 캘린더탭 색감만 이질적"). 그리드는 깨끗해야 하므로(2026-07-28 결정) 빛과
+        // 질감이 헤더 아래로 사그라드는 마스크만 얹는다 — 구성은 오늘 탭과 동일, 범위만 상단.
+        SeasonLight(phase: todayPhase)
+            .mask(
+                LinearGradient(stops: [.init(color: .black, location: 0.0),
+                                       .init(color: .black, location: 0.22),
+                                       .init(color: .clear, location: 0.40)],
+                               startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            )
     }
 
     /// 캘린더 열 — compact에선 전체 화면, regular에선 분할 좌측(2026-07-23)
