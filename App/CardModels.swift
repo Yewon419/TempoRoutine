@@ -142,10 +142,10 @@ extension ScheduleRepeat {
     var shortLabel: String? {
         switch self {
         case .none: nil
-        case .daily: "매일"
-        case .weekly: "매주"
-        case .monthly: "매달"
-        case .yearly: "매년"
+        case .daily: Loc.str("매일")
+        case .weekly: Loc.str("매주")
+        case .monthly: Loc.str("매달")
+        case .yearly: Loc.str("매년")
         }
     }
 }

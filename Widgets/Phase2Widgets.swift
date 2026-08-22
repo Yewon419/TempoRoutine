@@ -226,14 +226,14 @@ struct TodayScheduleView: View {
 
     private var scheduleColumn: some View {
         let lines = entry.day?.schedules ?? []
-        return column("일정", empty: lines.isEmpty) {
+        return column(Loc.str("일정"), empty: lines.isEmpty) {
             ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
                 VStack(alignment: .leading, spacing: 0) {
                     Text(line.title)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(WInk.text)
                         .lineLimit(1)
-                    Text(line.time)
+                    Text(Loc.text(line.time))   // 「종일」 센티널 번역(시각 문자열은 키가 없어 그대로)
                         .font(.system(size: 9))
                         .foregroundStyle(WInk.text.opacity(0.5))
                 }

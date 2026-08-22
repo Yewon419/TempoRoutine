@@ -253,11 +253,11 @@ struct OnboardingFlow: View {
 
     private var primaryLabel: String {
         switch step {
-        case 0: "계속"
-        case 1: introScene == 0 ? "시작" : "다음"
-        case 2, 3, 4, 5, 6: "다음"
+        case 0: Loc.str("계속")
+        case 1: introScene == 0 ? Loc.str("시작") : Loc.str("다음")
+        case 2, 3, 4, 5, 6: Loc.str("다음")
         // ⑥ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
-        default: selfReports.isEmpty ? "시작하기" : "오늘 화면으로"
+        default: selfReports.isEmpty ? Loc.str("시작하기") : Loc.str("오늘 화면으로")
         }
     }
 
@@ -657,10 +657,10 @@ struct OnboardingFlow: View {
                 .padding(.bottom, 6)
             // 2026-08-08 베타 피드백: 나열 순서 = 표시 순서(봄여름가을겨울 — §8.1 온보딩 예외 폐지,
             // 원·곡선 드로잉의 겨울 시작 서사는 유지) + 카피 = 사용자 지정 문안 그대로(위치 앵커 걷음).
-            seasonRow(.follicular, "미뤄둔 일이 만만해지는 시간")
-            seasonRow(.ovulation, "의욕이 충만해지는 시간")
-            seasonRow(.luteal, "나를 돌보기 시작하는 시간")
-            seasonRow(.menstrual, "스스로에게 휴식을 줘도 괜찮은 시간")
+            seasonRow(.follicular, Loc.str("미뤄둔 일이 만만해지는 시간"))
+            seasonRow(.ovulation, Loc.str("의욕이 충만해지는 시간"))
+            seasonRow(.luteal, Loc.str("나를 돌보기 시작하는 시간"))
+            seasonRow(.menstrual, Loc.str("스스로에게 휴식을 줘도 괜찮은 시간"))
             Spacer()
             VStack(alignment: .leading, spacing: 2) {
                 Text("상단의 설명은 일반적인 경향입니다.")
@@ -706,7 +706,7 @@ struct OnboardingFlow: View {
     // ②-1 연동 — 주 행동 = 스위치 카드(§8.2.1 스위치 켜기 = 시스템 시트). 분기는 consumeLinkAdvance.
     private var linkPage: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "기준일", title: "쓰던 기록이 있다면,\n그대로 이어져요.")
+            stepHeader(eyebrow: Loc.str("기준일"), title: Loc.str("쓰던 기록이 있다면,\n그대로 이어져요."))
             VStack(alignment: .leading, spacing: 2) {
                 Text("건강 앱에 남은 생리 기록을 불러오면")
                 Text("보다 편한 시작을 할 수 있어요.")
@@ -763,7 +763,7 @@ struct OnboardingFlow: View {
                         guard await mirror.requestAccess() else {
                             // 거부 = 스위치 되돌아감 + 알럿 닫으면 직접 기록으로(프로토 확정 — 0에피소드 분기)
                             pendingLinkAdvance = true
-                            syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없습니다. 직접 기록으로 이어갈게요."
+                            syncMessage = Loc.str("건강 앱 권한을 허용하지 않으면 연동할 수 없습니다. 직접 기록으로 이어갈게요.")
                             return
                         }
                         await mirror.sync(context: modelContext, periodDays: periodDays)
@@ -783,9 +783,9 @@ struct OnboardingFlow: View {
     // ②-2 지속일 스피너 — 가운데 고정·무게중심 위(프로토: padding-bottom 72)
     private var durationPage: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "기준일", title: "생리는 보통\n며칠간 하나요?")
+            stepHeader(eyebrow: Loc.str("기준일"), title: Loc.str("생리는 보통\n며칠간 하나요?"))
             Spacer(minLength: 0)
-            DrumPicker(value: $periodLength, range: 1...10, unit: "일")
+            DrumPicker(value: $periodLength, range: 1...10, unit: Loc.str("일"))
                 .onChange(of: periodLength) { _, _ in lightFeedback += 1 }
             Spacer(minLength: 72)
         }
@@ -794,7 +794,7 @@ struct OnboardingFlow: View {
     // ②-3 월 캘린더 — 시작일 탭 = 자동 채움·개별 토글·지난달 이동(전용 뷰, 미결 3 사용자 확정)
     private var calendarPage: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "기준일", title: "마지막 생리는...")
+            stepHeader(eyebrow: Loc.str("기준일"), title: Loc.str("마지막 생리는..."))
             // 문장 단위 3줄 + fixedSize — 캘린더에 밀려 압축될 때 둘째 줄이 말줄임으로 잘리던
             // 결함 수정(2026-08-08 베타 피드백 "이전 생리도 기록할 수 있어요 하고 문장 마무리").
             VStack(alignment: .leading, spacing: 2) {
@@ -815,12 +815,12 @@ struct OnboardingFlow: View {
     // ②-4 주기 스피너 — 에피소드 정확히 1개일 때만 도달(§3.10 개정 M). 답 → N prior(T1b).
     private var cyclePage: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "기준일", title: "주기가 보통\n며칠쯤인가요?")
+            stepHeader(eyebrow: Loc.str("기준일"), title: Loc.str("주기가 보통\n며칠쯤인가요?"))
             Text("지난 생리에서 다음 생리까지의 간격을 알려주세요.")
                 .font(.system(.footnote, design: .serif))
                 .foregroundStyle(Ink.text.opacity(0.55))
             Spacer(minLength: 0)
-            DrumPicker(value: $cycleLengthAnswer, range: 21...35, unit: "일")
+            DrumPicker(value: $cycleLengthAnswer, range: 21...35, unit: Loc.str("일"))
                 .onChange(of: cycleLengthAnswer) { _, _ in lightFeedback += 1 }
             Spacer(minLength: 72)
         }
@@ -858,11 +858,11 @@ struct OnboardingFlow: View {
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
             if kind == .input {
-                exampleBlock(chips: [("아침명상 5분", "input-meditation"),
-                                     ("잠들기 전 차 한 잔", "input-tea")])
+                exampleBlock(chips: [(Loc.str("아침명상 5분"), "input-meditation"),
+                                     (Loc.str("잠들기 전 차 한 잔"), "input-tea")])
             } else if kind == .output {
-                exampleBlock(chips: [("시험공부 6챕터", "output-study"),
-                                     ("영어 듣기 30분", "output-listening")])
+                exampleBlock(chips: [(Loc.str("시험공부 6챕터"), "output-study"),
+                                     (Loc.str("영어 듣기 30분"), "output-listening")])
             }
         }
     }
@@ -929,7 +929,7 @@ struct OnboardingFlow: View {
             .padding(.vertical, 8)
             .background(Ink.text.opacity(added ? 0.04 : 0.08), in: Capsule())
         }
-        .accessibilityValue(added ? "담김" : "")
+        .accessibilityValue(added ? Loc.str("담김") : "")
     }
 
     private func toggleExample(_ key: String) {
@@ -943,20 +943,20 @@ struct OnboardingFlow: View {
         addedExamples.insert(key)
         switch key {
         case "input-meditation":
-            let item = InputItem(title: "아침명상 5분", category: .other, schedule: .daily)
+            let item = InputItem(title: Loc.str("아침명상 5분"), category: .other, schedule: .daily)
             exampleInputs[key] = item
             modelContext.insert(item)
         case "input-tea":
-            let item = InputItem(title: "잠들기 전 차 한 잔", category: .food, schedule: .daily)
+            let item = InputItem(title: Loc.str("잠들기 전 차 한 잔"), category: .food, schedule: .daily)
             exampleInputs[key] = item
             modelContext.insert(item)
         case "output-study":
-            let item = OutputItem(title: "시험공부", schedule: .once, progressKind: .subtasks)
+            let item = OutputItem(title: Loc.str("시험공부"), schedule: .once, progressKind: .subtasks)
             item.subtasks = (1...6).map { OutputSubtask(title: Loc.fmt("%1$@챕터", "\($0)"), order: $0 - 1) }
             exampleOutputs[key] = item
             modelContext.insert(item)
         case "output-listening":
-            let item = OutputItem(title: "영어 듣기", schedule: .once, progressKind: .timer)
+            let item = OutputItem(title: Loc.str("영어 듣기"), schedule: .once, progressKind: .timer)
             item.targetSeconds = 30 * 60
             exampleOutputs[key] = item
             modelContext.insert(item)
@@ -968,7 +968,7 @@ struct OnboardingFlow: View {
     // ══ ④ 추적 항목 ══
     private var signalsStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "기록할 것", title: "무엇을 기록할까요?")
+            stepHeader(eyebrow: Loc.str("기록할 것"), title: Loc.str("무엇을 기록할까요?"))
             VStack(alignment: .leading, spacing: 2) {
                 Text("절댓값보다는 오르내림과 편차를 알아보는 데 의미를 가집니다.")
                 Text("나중에 설정에서 바꿀 수 있어요.")
@@ -978,11 +978,11 @@ struct OnboardingFlow: View {
             // 항목 ⓘ 설명(2026-08-08 베타 피드백) — 체크인 행에서 걷어낸 설명의 새 자리.
             // 롱프레스 중간값 힌트도 여기서 알린다(체크인 ⓘ 제거로 사라진 발견 경로 승계).
             VStack(spacing: 0) {
-                baseRow("에너지", info: "몸의 에너지와 컨디션을 기록합니다.")
-                baseRow("기분", info: "감정과 기분을 기록합니다.")
-                toggleRow("수면", $trackSleep, info: "지난밤 수면의 질을 기록합니다.")
-                toggleRow("식욕", $trackAppetite, info: "입맛과 식사량 등 종합적인 식욕을 기록합니다.")
-                toggleRow("오늘 한 줄", $trackNote, info: "자유롭게 하루를 한 문장으로 남기는 특별한 기록입니다. 일기도 좋고, 메모도 좋습니다.")
+                baseRow(Loc.str("에너지"), info: Loc.str("몸의 에너지와 컨디션을 기록합니다."))
+                baseRow(Loc.str("기분"), info: Loc.str("감정과 기분을 기록합니다."))
+                toggleRow(Loc.str("수면"), $trackSleep, info: Loc.str("지난밤 수면의 질을 기록합니다."))
+                toggleRow(Loc.str("식욕"), $trackAppetite, info: Loc.str("입맛과 식사량 등 종합적인 식욕을 기록합니다."))
+                toggleRow(Loc.str("오늘 한 줄"), $trackNote, info: Loc.str("자유롭게 하루를 한 문장으로 남기는 특별한 기록입니다. 일기도 좋고, 메모도 좋습니다."))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
@@ -1027,7 +1027,7 @@ struct OnboardingFlow: View {
     // 재진입(다시 보기)은 이 단계를 건너뛴다(advanceIntro) — 쓰는 테마를 여기서 덮으면 안 된다.
     private var themeStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "당신의 테마", title: "어떤 지면으로\n시작할까요?")
+            stepHeader(eyebrow: Loc.str("당신의 테마"), title: Loc.str("어떤 지면으로\n시작할까요?"))
             ForEach([AppTheme.standard, AppTheme.plain]) { theme in
                 themeChoiceCard(theme)
             }
@@ -1072,13 +1072,13 @@ struct OnboardingFlow: View {
         let healthOn = mirror.linked && mirror.writeAuthorized
         let cloudOn = AppStores.cloudEnabled
         return VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "저장 위치", title: "기록의 저장은 \n오로지 이곳에만")
+            stepHeader(eyebrow: Loc.str("저장 위치"), title: Loc.str("기록의 저장은 \n오로지 이곳에만"))
             VStack(alignment: .leading, spacing: 2) {
                 if healthOn {
                     Text("기록은 이 기기와 Apple 건강 앱에 저장돼요.")
                     Text("건강 앱 설정에 따라 동기화될 수 있어요.")
                 } else {
-                    Text(cloudOn ? "기록은 이 기기에 저장됩니다." : "기록은 이 기기에만 저장됩니다.")
+                    Text(cloudOn ? Loc.str("기록은 이 기기에 저장됩니다.") : Loc.str("기록은 이 기기에만 저장됩니다."))
                 }
                 if cloudOn {
                     Text("플래너와 체크인은 당신의 iCloud로 기기 간에 이어지고,")
@@ -1088,12 +1088,12 @@ struct OnboardingFlow: View {
             .font(.system(.footnote, design: .serif))
             .foregroundStyle(Ink.text.opacity(0.65))
             VStack(spacing: 0) {
-                placeRow(icon: "iphone", name: "이 기기")
+                placeRow(icon: "iphone", name: Loc.str("이 기기"))
                 if healthOn {
-                    placeRow(icon: "heart", name: "Apple 건강 앱")
+                    placeRow(icon: "heart", name: Loc.str("Apple 건강 앱"))
                 }
                 if cloudOn {
-                    placeRow(icon: "icloud", name: "iCloud (플래너·체크인)")
+                    placeRow(icon: "icloud", name: Loc.str("iCloud (플래너·체크인)"))
                 }
             }
             .padding(.horizontal, 16)
@@ -1111,7 +1111,7 @@ struct OnboardingFlow: View {
     // 여기서 답하면 나의 리듬 탭의 설문 프롬프트는 다시 뜨지 않는다(레코드 존재로 판정).
     private var surveyStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader(eyebrow: "마지막으로", title: "당신의 리듬,\n조금 더 알려주실래요?")
+            stepHeader(eyebrow: Loc.str("마지막으로"), title: Loc.str("당신의 리듬,\n조금 더 알려주실래요?"))
             VStack(alignment: .leading, spacing: 2) {
                 Text("리듬의 모양은 사람마다 다르기에,")
                 Text("2분짜리 설문으로 초기 세팅을 빠르게 할 수 있어요.")

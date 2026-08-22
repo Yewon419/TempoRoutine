@@ -105,7 +105,7 @@ struct InputTodayView: View {
         VStack(alignment: .leading, spacing: 7) {
             CardHeader(day: entry.day, label: "Input", trailing: counter)
             if lines.isEmpty {
-                CardEmpty(text: "오늘 챙길 Input이 없어요")
+                CardEmpty(text: Loc.str("오늘 챙길 Input이 없어요"))
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(lines.prefix(rowLimit).enumerated()), id: \.offset) { _, line in
@@ -175,7 +175,7 @@ struct OutputTodayView: View {
             CardHeader(day: entry.day, label: "Output",
                        trailing: hiddenCount > 0 ? "+\(hiddenCount)" : nil)
             if lines.isEmpty {
-                CardEmpty(text: "진행 중인 Output이 없어요")
+                CardEmpty(text: Loc.str("진행 중인 Output이 없어요"))
             } else {
                 VStack(alignment: .leading, spacing: family == .systemSmall ? 8 : 9) {
                     ForEach(Array(lines.prefix(rowLimit).enumerated()), id: \.offset) { _, line in
@@ -248,11 +248,11 @@ struct CardLockView: View {
     /// `inline`은 "겨울 3일차" 형태라 여기 쓰지 않는다.
     private var seasonName: String {
         switch entry.day?.season {
-        case "spring": "봄"
-        case "summer": "여름"
-        case "autumn": "가을"
-        case "winter": "겨울"
-        default: "템포루틴"
+        case "spring": Loc.str("봄")
+        case "summer": Loc.str("여름")
+        case "autumn": Loc.str("가을")
+        case "winter": Loc.str("겨울")
+        default: Loc.str("템포루틴")
         }
     }
 
@@ -278,7 +278,7 @@ struct CardLockView: View {
             }
             if let first = schedules.first {
                 HStack(spacing: 5) {
-                    Text(first.time)
+                    Text(Loc.text(first.time))
                         .font(.system(size: 11))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)

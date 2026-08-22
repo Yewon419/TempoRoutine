@@ -94,8 +94,8 @@ struct NoticesView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         if feed.notices.isEmpty {
                             Text(feed.loadFailed
-                                 ? "소식을 불러오지 못했어요. 잠시 뒤에 다시 열어주세요."
-                                 : "아직 소식이 없어요.")
+                                 ? Loc.str("소식을 불러오지 못했어요. 잠시 뒤에 다시 열어주세요.")
+                                 : Loc.str("아직 소식이 없어요."))
                                 .font(.subheadline)
                                 .foregroundStyle(Ink.text.opacity(0.55))
                                 .padding(.top, 24)

@@ -180,11 +180,11 @@ struct PlaylistAlbumHeader: View {
                     .font(.system(size: 38, weight: .semibold))
                     .foregroundStyle(Ink.text)
                 Spacer(minLength: 0)
-                navButton(action: onPrev, label: "이전 달") {
+                navButton(action: onPrev, label: Loc.str("이전 달")) {
                     PlaylistTriangle(pointsRight: false).fill(Ink.text)
                         .frame(width: 9, height: 12)
                 }
-                navButton(action: onStop, label: "오늘 달로") {
+                navButton(action: onStop, label: Loc.str("오늘 달로")) {
                     ZStack {
                         Circle().stroke(Ink.text, lineWidth: 1.4)
                         RoundedRectangle(cornerRadius: 1.5).fill(Ink.text)
@@ -192,7 +192,7 @@ struct PlaylistAlbumHeader: View {
                     }
                     .frame(width: 28, height: 28)
                 }
-                navButton(action: onNext, label: "다음 달") {
+                navButton(action: onNext, label: Loc.str("다음 달")) {
                     PlaylistTriangle(pointsRight: true).fill(Ink.text)
                         .frame(width: 9, height: 12)
                 }

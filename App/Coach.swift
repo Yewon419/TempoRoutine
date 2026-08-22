@@ -41,38 +41,38 @@ enum CoachStore {
 enum CoachSteps {
     /// 오늘 탭 — 일정·Input·Output 3구획(§3.6 카드 정의를 사용자 언어로)
     static let today: [CoachStep] = [
-        CoachStep(anchor: .todaySchedule, title: "일정",
-                  body: "약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요."),
+        CoachStep(anchor: .todaySchedule, title: Loc.str("일정"),
+                  body: Loc.str("약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요.")),
         CoachStep(anchor: .todayInput, title: "Input",
-                  body: "식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요."),
+                  body: Loc.str("식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요.")),
         CoachStep(anchor: .todayOutput, title: "Output",
-                  body: "프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?"),
+                  body: Loc.str("프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?")),
     ]
     /// 캘린더 탭 — 생리 기록 입구 + 그리드 읽는 법
     static let calendar: [CoachStep] = [
-        CoachStep(anchor: .calendarLog, title: "생리 기록은 여기서",
-                  body: "이 버튼이 기록의 입구예요. 날짜 칸을 탭해서 기록하고, 지난 기록도 고칠 수 있어요."),
+        CoachStep(anchor: .calendarLog, title: Loc.str("생리 기록은 여기서"),
+                  body: Loc.str("이 버튼이 기록의 입구예요. 날짜 칸을 탭해서 기록하고, 지난 기록도 고칠 수 있어요.")),
         // 2026-08-11 정정: 계절 문법 대개정(2026-07-28 3차)을 안 따라온 카피였다.
         // 숫자는 먹색이고 계절은 숫자 뒤 글로우(numberColor) · 예상 생리일은 시각 표시 없음
         // (render.predicted = a11y 전용) · 코랄은 겨울 띠와 어긋난 기록만이라 범례에도 없어
         // (2026-08-01 「기록」 스와치 폐기) 첫 안내에서 뺀다.
-        CoachStep(anchor: .calendarGrid, title: "날짜 아래 선으로 계절을 알 수 있어요",
-                  body: "날짜를 탭하면 빠르게 일정을 추가할 수 있어요. 길게 누르고 드래그해 며칠에 걸친 일정도 추가할 수 있어요. \n길게 누르면 하루 상세 탭으로 넘어갑니다."),
+        CoachStep(anchor: .calendarGrid, title: Loc.str("날짜 아래 선으로 계절을 알 수 있어요"),
+                  body: Loc.str("날짜를 탭하면 빠르게 일정을 추가할 수 있어요. 길게 누르고 드래그해 며칠에 걸친 일정도 추가할 수 있어요. \n길게 누르면 하루 상세 탭으로 넘어갑니다.")),
     ]
     /// 씨앗 최초 획득 — 오늘 탭 우상단 배지에서 1회(2026-08-12 사용자 지시).
     /// 얻는 법·쓰는 곳을 한 번에 말한다. 재촉은 하지 않는다(§7) — 사실만.
     static let seed: [CoachStep] = [
         // 제목에 개수를 넣지 않는다 — 「사용법 다시 보기」로 리셋하면 이미 여러 개를 가진
         // 사람에게도 다시 뜬다(2026-08-12).
-        CoachStep(anchor: .todaySeed, title: "씨앗이 모였어요",
-                  body: "하루 체크인을 완성할 때마다 씨앗이 하나씩 모여요. 탭하면 테마 화면이 열리고, 모은 씨앗으로 새 테마를 구매할 수 있어요."),
+        CoachStep(anchor: .todaySeed, title: Loc.str("씨앗이 모였어요"),
+                  body: Loc.str("하루 체크인을 완성할 때마다 씨앗이 하나씩 모여요. 탭하면 테마 화면이 열리고, 모은 씨앗으로 새 테마를 구매할 수 있어요.")),
     ]
     /// 테마 탭 첫 진입 — 잔액이 무엇인지, 구매와 적용이 왜 따로인지(§3.8.1 구매·적용 분리)
     static let themeShop: [CoachStep] = [
-        CoachStep(anchor: .themeSeedBalance, title: "지금 가진 씨앗",
-                  body: "하루 체크인을 완성하면 씨앗이 하나씩 모여요."),
-        CoachStep(anchor: .themeCardAction, title: "테마의 적용도 이곳에서 할 수 있어요.",
-                  body: "새로운 테마, 새로운 기분으로 템포루틴을 즐겨보세요!"),
+        CoachStep(anchor: .themeSeedBalance, title: Loc.str("지금 가진 씨앗"),
+                  body: Loc.str("하루 체크인을 완성하면 씨앗이 하나씩 모여요.")),
+        CoachStep(anchor: .themeCardAction, title: Loc.str("테마의 적용도 이곳에서 할 수 있어요."),
+                  body: Loc.str("새로운 테마, 새로운 기분으로 템포루틴을 즐겨보세요!")),
     ]
 }
 
@@ -213,7 +213,7 @@ private struct CoachOverlay: View {
                 Button {
                     advance(from: shownIndex)
                 } label: {
-                    Text(isLast ? "알겠어요" : "다음")
+                    Text(isLast ? Loc.str("알겠어요") : Loc.str("다음"))
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(Ink.paper)
                         .padding(.horizontal, 20)

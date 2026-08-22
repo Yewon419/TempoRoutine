@@ -68,8 +68,8 @@ struct TwoDayScheduleView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            column(title: "오늘", date: entry.date, day: entry.today, isToday: true)
-            column(title: "내일", date: nextDate, day: entry.tomorrow, isToday: false)
+            column(title: Loc.str("오늘"), date: entry.date, day: entry.today, isToday: true)
+            column(title: Loc.str("내일"), date: nextDate, day: entry.tomorrow, isToday: false)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -134,7 +134,7 @@ struct TwoDayScheduleView: View {
                     .foregroundStyle(WInk.text)
                     .lineLimit(1)
                 if line.time != "종일" {
-                    Text(line.time)
+                    Text(Loc.text(line.time))   // 「종일」 센티널 번역(시각 문자열은 키가 없어 그대로)
                         .font(.system(size: 10))
                         .monospacedDigit()
                         .foregroundStyle(WInk.text.opacity(0.5))
@@ -151,7 +151,7 @@ struct TwoDayScheduleView: View {
 
     private func scheduleSummary(_ day: WidgetDay?) -> String {
         let lines = day?.schedules ?? []
-        guard !lines.isEmpty else { return "일정 없음" }
+        guard !lines.isEmpty else { return Loc.str("일정 없음") }
         return lines.prefix(rowLimit).map(\.title).joined(separator: ", ")
     }
 }

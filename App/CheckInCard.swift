@@ -33,11 +33,11 @@ struct CheckInCard: View {
     private var isToday: Bool { normalizedDay == cal.startOfDay(for: .now) }
     private var record: DailyCheckIn? { checkIns.first { $0.day == normalizedDay } }
 
-    private var title: String { isToday ? "오늘의 체크인" : "이날의 체크인" }
-    private var noteLabel: String { isToday ? "오늘 한 줄" : "그날 한 줄" }
+    private var title: String { isToday ? Loc.str("오늘의 체크인") : Loc.str("이날의 체크인") }
+    private var noteLabel: String { isToday ? Loc.str("오늘 한 줄") : Loc.str("그날 한 줄") }
     private var confirmLine: String {
         // 탭 개명 추종(2026-08-18 「나의 리듬」→「나의 템포」) — 이 문구는 그 탭을 가리킨다
-        isToday ? "오늘 기록이 나의 템포에 담겼어요." : "이날 기록이 나의 템포에 담겼어요."
+        isToday ? Loc.str("오늘 기록이 나의 템포에 담겼어요.") : Loc.str("이날 기록이 나의 템포에 담겼어요.")
     }
 
     var body: some View {
@@ -49,13 +49,13 @@ struct CheckInCard: View {
             // 저장 필드는 남아 있고 과거 기록은 리듬 집계에 계속 유효하다 — 새 입력 경로만 없다.
             // 항목 ⓘ 설명 = 2026-08-06 베타 피드백 교정으로 여기서 걷고 온보딩 ③으로 이동
             // ("체크인 항목이 아니었어"). 구획 제목 ⓘ는 오늘 탭·하루 상세 셸이 담당.
-            checkInRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
-            checkInRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
+            checkInRow(label: Loc.str("에너지는"), options: [Loc.str("낮음"), Loc.str("보통"), Loc.str("높음")], value: $draftEnergy)
+            checkInRow(label: Loc.str("기분은"), options: [Loc.str("흐림"), Loc.str("보통"), Loc.str("맑음")], value: $draftMood)
             if signals.sleep {
-                checkInRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
+                checkInRow(label: Loc.str("지난밤 잠은"), options: [Loc.str("뒤척임"), Loc.str("보통"), Loc.str("푹 잤어요")], value: $draftSleep)
             }
             if signals.appetite {
-                checkInRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite)
+                checkInRow(label: Loc.str("식욕은"), options: [Loc.str("없음"), Loc.str("보통"), Loc.str("좋음")], value: $draftAppetite)
             }
             // 「오늘 한 줄」도 추적 항목 토글을 따른다(2026-08-20 감사 — 온보딩 ③ 토글이
             // 있는데 두 표면 다 무조건 렌더해 죽은 스위치였다). 꺼도 기존 노트는 보존된다
@@ -125,10 +125,10 @@ struct CheckInCard: View {
                     persistDraft()
                 }
                 .accessibilityLabel("\(label) \(option)")
-                .accessibilityValue(half ? "이전 항목과의 중간" : "")
+                .accessibilityValue(half ? Loc.str("이전 항목과의 중간") : "")
                 .accessibilityAddTraits(selected ? [.isSelected] : [])
                 // 롱프레스는 VoiceOver로 닿기 어렵다 — 같은 동작을 명시 액션으로도 연다
-                .accessibilityAction(named: "중간값으로") {
+                .accessibilityAction(named: Loc.str("중간값으로")) {
                     guard mapped > 1 else { return }
                     value.wrappedValue = mapped - 1
                     persistDraft()

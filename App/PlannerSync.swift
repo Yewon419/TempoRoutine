@@ -95,7 +95,7 @@ final class PlannerSync: NSObject {
         } else {
             engine = nil
             running = false
-            lastReport = "동기화 꺼짐"
+            lastReport = Loc.str("동기화 꺼짐")
         }
     }
 
@@ -105,7 +105,7 @@ final class PlannerSync: NSObject {
         let status = (try? await ck.accountStatus()) ?? .couldNotDetermine
         accountAvailable = status == .available
         guard accountAvailable else {
-            lastReport = "iCloud 계정 없음 — 로그인하면 이어져요"
+            lastReport = Loc.str("iCloud 계정 없음 — 로그인하면 이어져요")
             return
         }
         var stateSerialization: CKSyncEngine.State.Serialization?
@@ -155,7 +155,7 @@ final class PlannerSync: NSObject {
             return
         }
         if lastReport == before {
-            stampReport(suffix: "왕복 완료 — 새 변경 없음")
+            stampReport(suffix: Loc.str("왕복 완료 — 새 변경 없음"))
         }
     }
 
@@ -582,7 +582,7 @@ extension PlannerSync: CKSyncEngineDelegate {
             engine = nil
             running = false
             recordCache = [:]
-            lastReport = "iCloud 계정 변경 — 다음 실행에서 다시 연결해요"
+            lastReport = Loc.str("iCloud 계정 변경 — 다음 실행에서 다시 연결해요")
         case .fetchedRecordZoneChanges(let changes):
             apply(records: changes.modifications.map(\.record),
                   deletions: changes.deletions.map(\.recordID))
@@ -656,7 +656,7 @@ extension PlannerSync: CKSyncEngineDelegate {
 
     private static func codeName(_ code: CKError.Code) -> String {
         switch code {
-        case .invalidArguments: "invalidArguments — 프로덕션 스키마 미배포 의심"
+        case .invalidArguments: Loc.str("invalidArguments — 프로덕션 스키마 미배포 의심")
         case .notAuthenticated: "notAuthenticated"
         case .permissionFailure: "permissionFailure"
         case .quotaExceeded: "quotaExceeded"

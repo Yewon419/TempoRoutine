@@ -77,7 +77,7 @@ enum CoverageReminder {
 
                 let content = UNMutableNotificationContent()
                 content.title = title(quadrant: quadrant)
-                content.body = "이맘때 기록이 하나만 있어도 이번 주기가 리듬 계산에 들어가요."
+                content.body = Loc.str("이맘때 기록이 하나만 있어도 이번 주기가 리듬 계산에 들어가요.")
                 content.sound = .signature   // 시그니처 칼림바(2026-08-09)
                 // 화면을 깨우지 않는다 — 재촉이 아니라 안내다(§7).
                 content.interruptionLevel = .passive
@@ -118,10 +118,10 @@ enum CoverageReminder {
     /// 단정 대신 위치만 말한다(§5.11 hedge 고정).
     private static func title(quadrant: Int) -> String {
         switch quadrant {
-        case 0: "이번 주기 초반이 비어 있어요"
-        case 1: "이번 주기 중반이 비어 있어요"
-        case 2: "이번 주기 후반이 비어 있어요"
-        default: "이번 주기 끝자락이 비어 있어요"
+        case 0: Loc.str("이번 주기 초반이 비어 있어요")
+        case 1: Loc.str("이번 주기 중반이 비어 있어요")
+        case 2: Loc.str("이번 주기 후반이 비어 있어요")
+        default: Loc.str("이번 주기 끝자락이 비어 있어요")
         }
     }
 }

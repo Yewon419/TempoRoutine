@@ -13,10 +13,10 @@ enum WxCondition: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .clear: "맑음"
-        case .cloud: "구름"
-        case .rain: "비"
-        case .snow: "눈"
+        case .clear: Loc.str("맑음")
+        case .cloud: Loc.str("구름")
+        case .rain: Loc.str("비")
+        case .snow: Loc.str("눈")
         }
     }
 }

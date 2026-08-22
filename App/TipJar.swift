@@ -116,7 +116,7 @@ final class TipStore {
                 case .unverified(let transaction, _):
                     // 서명이 안 맞는 거래 — 잔은 세지 않되 큐에는 남기지 않는다
                     await transaction.finish()
-                    status = .failed("영수증을 확인하지 못했어요")
+                    status = .failed(Loc.str("영수증을 확인하지 못했어요"))
                 }
             case .userCancelled:
                 status = .ready
@@ -126,7 +126,7 @@ final class TipStore {
                 status = .ready
             }
         } catch {
-            status = .failed("결제를 끝내지 못했어요")
+            status = .failed(Loc.str("결제를 끝내지 못했어요"))
         }
     }
 
@@ -248,20 +248,20 @@ struct TipBubble: View {
         if store.cups > 0 {
             return Loc.fmt("커피 %1$@잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!", "\(store.cups)")
         }
-        return "광고도 구독도 없이 만들고 있어요."
+        return Loc.str("광고도 구독도 없이 만들고 있어요.")
     }
 
     @ViewBuilder
     private var actionRow: some View {
         switch store.status {
         case .loading:
-            note("잠시만요")
+            note(Loc.str("잠시만요"))
         case .unavailable:
-            note("지금은 준비 중이에요")
+            note(Loc.str("지금은 준비 중이에요"))
         case .purchasing:
-            note("결제 창을 여는 중이에요")
+            note(Loc.str("결제 창을 여는 중이에요"))
         case .pending:
-            note("승인을 기다리는 중이에요")
+            note(Loc.str("승인을 기다리는 중이에요"))
         case .thanks:
             Label("잘 마실게요", systemImage: "checkmark")
                 .font(.footnote.weight(.semibold))
@@ -299,7 +299,7 @@ struct TipBubble: View {
         if let product = store.product {
             return Loc.fmt("커피 한 잔 · %1$@", "\(product.displayPrice)")
         }
-        return store.isFreeTrial ? "커피 한 잔 (시험용)" : nil
+        return store.isFreeTrial ? Loc.str("커피 한 잔 (시험용)") : nil
     }
 
     private func note(_ text: String) -> some View {

@@ -30,13 +30,13 @@ extension AppTheme {
 
     var shopCaption: String {
         switch self {
-        case .plain: "기본 테마."
-        case .standard: "은필과 종이. 계절이 빛으로 스며드는 지면이에요."
-        case .modern: "기본 지면에 다홍 한 점. 계절은 밝기로 갈려요."
-        case .ticket: "색면 위에 놓인 한 장의 티켓. 일상을 여행처럼."
-        case .letterpress: "종이에 눌러 새긴 하루. 잉크 없는 음각의 물성."
-        case .playlist: "지금 재생 중인 계절. 하루가 트랙처럼 흘러요."
-        case .weather: "지면이 곧 오늘의 하늘. 시간과 날씨가 화면을 물들여요."
+        case .plain: Loc.str("기본 테마.")
+        case .standard: Loc.str("은필과 종이. 계절이 빛으로 스며드는 지면이에요.")
+        case .modern: Loc.str("기본 지면에 다홍 한 점. 계절은 밝기로 갈려요.")
+        case .ticket: Loc.str("색면 위에 놓인 한 장의 티켓. 일상을 여행처럼.")
+        case .letterpress: Loc.str("종이에 눌러 새긴 하루. 잉크 없는 음각의 물성.")
+        case .playlist: Loc.str("지금 재생 중인 계절. 하루가 트랙처럼 흘러요.")
+        case .weather: Loc.str("지면이 곧 오늘의 하늘. 시간과 날씨가 화면을 물들여요.")
         }
     }
 }
@@ -449,9 +449,9 @@ struct ThemePreviewScreen: View {
             if chrome.skyGround { weatherGlow }
             VStack(alignment: .leading, spacing: 16) {
                 header
-                sampleCard(title: "일정", rows: [("저녁 산책", "19:00")], trackCount: 1)
-                sampleCard(title: "Input", rows: [("아침명상 5분", "체크"), ("물 자주 마시기", "체크")], trackCount: 2)
-                sampleCard(title: "Output", rows: [("자격증 공부", "30:00 타이머")], trackCount: 1)
+                sampleCard(title: Loc.str("일정"), rows: [(Loc.str("저녁 산책"), "19:00")], trackCount: 1)
+                sampleCard(title: "Input", rows: [(Loc.str("아침명상 5분"), Loc.str("체크")), (Loc.str("물 자주 마시기"), Loc.str("체크"))], trackCount: 2)
+                sampleCard(title: "Output", rows: [(Loc.str("자격증 공부"), Loc.str("30:00 타이머"))], trackCount: 1)
                 Spacer(minLength: 0)
                 tabBarMock
             }
@@ -691,10 +691,10 @@ struct ThemePreviewScreen: View {
 
     private var tabBarMock: some View {
         HStack {
-            ForEach(["오늘", "캘린더", "나의 템포", "설정"], id: \.self) { name in
+            ForEach([Loc.str("오늘"), Loc.str("캘린더"), Loc.str("나의 템포"), Loc.str("설정")], id: \.self) { name in
                 Text(name)
                     .font(.caption2)
-                    .foregroundStyle(p.text.opacity(name == "오늘" ? 1 : 0.45))
+                    .foregroundStyle(p.text.opacity(name == Loc.str("오늘") ? 1 : 0.45))
                     .frame(maxWidth: .infinity)
             }
         }

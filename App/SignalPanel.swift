@@ -87,7 +87,7 @@ struct SignalPanel: View {
         // 신호마다 **문장 하나가 키**다. 조각(주어·형용사)을 이어 붙이면 어순이 다른 언어에서
         // 무너진다 — 한국어에서 조사(는/은) 때문에 쪼개져 있던 것을 문장으로 되돌린 것.
         // 한국어 출력은 종전과 글자 그대로 같다.
-        let key: String.LocalizationValue = switch signal {
+        let key: String = switch signal {
         case .energy: "%1$@ 에너지는 %2$@에 가장 높고 %3$@에 가장 낮게 기록됐어요."
         case .mood: "%1$@ 기분은 %2$@에 가장 밝고 %3$@에 가장 잔잔하게 기록됐어요."
         case .sleep: "%1$@ 잠은 %2$@에 가장 포근하고 %3$@에 가장 뒤척인 걸로 기록됐어요."
@@ -108,7 +108,7 @@ struct SignalPanel: View {
         let reversed = Array(topPhases.reversed())
         while run < reversed.count && reversed[run] == reversed[0] { run += 1 }
         if run >= 2 {
-            let runKey: String.LocalizationValue = switch signal {
+            let runKey: String = switch signal {
             case .energy: "%1$@주기 연속, %2$@이 가장 높게 기록됐어요."
             case .mood: "%1$@주기 연속, %2$@이 가장 밝게 기록됐어요."
             case .sleep: "%1$@주기 연속, %2$@이 가장 포근하게 기록됐어요."
@@ -121,7 +121,7 @@ struct SignalPanel: View {
         for phase in topPhases { counts[phase, default: 0] += 1 }
         let parts = counts.sorted { $0.value > $1.value }
             .map { Loc.fmt("%1$@주기는 %2$@이", "\($0.value)", "\(seasonMeta(for: $0.key).name)") }
-        let distKey: String.LocalizationValue = switch signal {
+        let distKey: String = switch signal {
         case .energy: "%1$@ 가장 높게 기록됐어요."
         case .mood: "%1$@ 가장 밝게 기록됐어요."
         case .sleep: "%1$@ 가장 포근하게 기록됐어요."

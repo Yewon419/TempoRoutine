@@ -91,11 +91,11 @@ struct SelfReportFlow: View {
         switch step {
         case 0: intro
         case 1: questionGroup(title: nil,
-                              note: "이제 그때를 떠올리면서 답해주세요.",
+                              note: Loc.str("이제 그때를 떠올리면서 답해주세요."),
                               questions: [SelfReportSurvey.calibration])
         case 2: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.phaseQuestions)
         case 3: questionGroup(title: symptomAnchorTitle(p2: answers["P2"]),
-                              note: "꼭 생리 중이 아니라도 가장 힘들었던 때를 떠올려주세요.",
+                              note: Loc.str("꼭 생리 중이 아니라도 가장 힘들었던 때를 떠올려주세요."),
                               questions: symptomOrder)
         case 4: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.amplitudeQuestions)
         default: optionalGroup
@@ -205,7 +205,7 @@ struct SelfReportFlow: View {
                     .font(.body)
                     .foregroundStyle(Ink.text.opacity(0.55))
             }
-            Button(step == totalSteps ? "제출" : "다음") { advance() }
+            Button(step == totalSteps ? Loc.str("제출") : Loc.str("다음")) { advance() }
                 .font(.body.weight(.semibold))
                 .foregroundStyle(canAdvance ? Ink.text : Ink.text.opacity(0.3))
                 .disabled(!canAdvance)

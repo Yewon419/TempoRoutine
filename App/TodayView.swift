@@ -314,6 +314,10 @@ struct TodayView: View {
                                        size: ThemeStore.chrome.debossDisplay ? 84 : 58,
                                        color: Ink.onGround(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0),
                                                            white: snapshot.isSingleRecord ? 0.6 : 1.0))
+                            // 영어 계절명("Autumn")이 날짜 도장과 한 줄에 못 들어가 「Autum / n」으로
+                            // 꺾였다(2026-08-22 베타). 한 줄 고정 + 축소 허용 — 한국어 2자는 무영향.
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                         Spacer(minLength: 0)
                         todayDateStamp
                     }
@@ -378,7 +382,7 @@ struct TodayView: View {
             let high: Int = Int(wx.highC.rounded())
             let low: Int = Int(wx.lowC.rounded())
             let chance: Int = Int((wx.precipitationChance * 100).rounded())
-            let precip: String = Loc.str(wx.precipitationIsSnow ? "눈" : "비")
+            let precip: String = Loc.str(wx.precipitationIsSnow ? Loc.str("눈") : Loc.str("비"))
             let lead: Text = Text(Loc.fmt("지금 %lld°", now)).foregroundStyle(Ink.text.opacity(0.95))
             let tail: String = Loc.fmt("최고 %1$lld° 최저 %2$lld°", high, low)
                 + " · " + Loc.fmt("%1$@ %2$lld%%", precip, chance)
@@ -388,7 +392,7 @@ struct TodayView: View {
                 .skyInkShadow()
                 // 접근성 라벨은 String을 받는 오버로드라 로컬라이즈 경로가 아니다 — Text로 넘긴다
                 .accessibilityLabel(Text(verbatim: Loc.fmt(
-                    "지금 %1$lld도, 최고 %2$lld도, 최저 %3$lld도, %4$@ 올 확률 %5$lld퍼센트",
+                    Loc.str("지금 %1$lld도, 최고 %2$lld도, 최저 %3$lld도, %4$@ 올 확률 %5$lld퍼센트"),
                     now, high, low, precip, chance)))
         }
     }
@@ -474,7 +478,7 @@ struct TodayView: View {
             TicketFieldLabel(text: ticketFieldName(kind))   // 발권 필드명(시안 §3.3-④, 티켓만)
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(kind.rawValue)
+                    Text(kind.title)
                         .font(.almanac(size: 17, weight: .bold))
                         .foregroundStyle(Ink.text)
                     // 플레이리스트 = 곡수 메타(시안 §4.4 ⑦ — 유형 라벨은 제목과 중복이라 기각)
@@ -485,7 +489,7 @@ struct TodayView: View {
                             .foregroundStyle(Ink.dim)
                     }
                 }
-                InfoBadge(title: kind.rawValue, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
+                InfoBadge(title: kind.title, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
                 Spacer()
                 Button {
                     lightFeedback += 1
@@ -577,7 +581,7 @@ struct TodayView: View {
             .simultaneousGesture(quickDeleteGesture(.schedule(item), into: $pendingDelete,
                                                     feedback: $confirmFeedback))
             .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
-            .accessibilityAction(named: "삭제") { pendingDelete = .schedule(item) }
+            .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .schedule(item) }
         }
         OverlayEventRows(day: today)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
         CalendarConnectRow()
@@ -663,8 +667,8 @@ struct TodayView: View {
         }
         .simultaneousGesture(quickDeleteGesture(.input(item), into: $pendingDelete,
                                                 feedback: $confirmFeedback))
-        .accessibilityValue(checked ? "완료" as LocalizedStringKey : "미완료")
-        .accessibilityAction(named: "삭제") { pendingDelete = .input(item) }
+        .accessibilityValue(checked ? Loc.str("완료") : Loc.str("미완료"))
+        .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .input(item) }
     }
 
     @ViewBuilder
@@ -750,7 +754,7 @@ struct TodayView: View {
                 .contentShape(Rectangle())
                 .simultaneousGesture(quickDeleteGesture(.output(item), into: $pendingDelete,
                                                         feedback: $confirmFeedback))
-                .accessibilityAction(named: "삭제") { pendingDelete = .output(item) }
+                .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .output(item) }
             }
         }
         if let meta = todayInfo?.meta, !todayOutputs.isEmpty {
@@ -773,13 +777,13 @@ struct TodayView: View {
                 HStack(spacing: 10) {
                     Image(systemName: item.percent >= 1 ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(item.percent >= 1 ? Ink.text : Ink.text.opacity(0.35))
-                    Text(item.percent >= 1 ? "완료" as LocalizedStringKey : "체크")
+                    Text(item.percent >= 1 ? Loc.str("완료") : Loc.str("체크"))
                         .font(.footnote)
                         .foregroundStyle(Ink.text.opacity(item.percent >= 1 ? 1 : 0.6))
                     Spacer()
                 }
             }
-            .accessibilityValue(item.percent >= 1 ? "완료" as LocalizedStringKey : "미완료")
+            .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
         case .subtasks:
             let list = (item.subtasks ?? []).sorted { $0.order < $1.order }
             ForEach(list) { sub in
@@ -795,7 +799,7 @@ struct TodayView: View {
                         Spacer()
                     }
                 }
-                .accessibilityValue(sub.isDone ? "완료" as LocalizedStringKey : "미완료")
+                .accessibilityValue(sub.isDone ? Loc.str("완료") : Loc.str("미완료"))
             }
         case .sessions:
             SessionProgressControl(logged: item.loggedSessions,

@@ -155,7 +155,7 @@ enum WidgetBridge {
             switch item.progressKind {
             case .checkOnly:
                 return WidgetProgressLine(title: item.title,
-                                          label: item.percent >= 1 ? "완료" : "",
+                                          label: item.percent >= 1 ? Loc.str("완료") : "",
                                           fraction: item.percent >= 1 ? 1 : 0,
                                           id: item.id, kind: item.progressKind.rawValue, dday: dday)
             case .percent:
@@ -214,7 +214,7 @@ enum WidgetBridge {
             case .ovulation: "summer"
             case .luteal: "autumn"
             }
-            let hedge = info.projected ? " · 예상" : ""
+            let hedge = info.projected ? Loc.str(" · 예상") : ""
             // 일차 = 계절 내 일차(2026-08-09 — 앱 표면과 통일)
             var entry = WidgetDay(day: day, season: key, title: info.meta.name,
                                   sub: Loc.fmt("%1$@ %2$@일차%3$@", "\(info.meta.name)", "\(info.dayInPhase)", "\(hedge)"),
@@ -225,8 +225,8 @@ enum WidgetBridge {
             return entry
         }
         // S0(기록 전)·투영 지평 밖 공통 — 중립(§3: 임신·질환 추론 금지, 단정 없는 카피)
-        return WidgetDay(day: day, season: nil, title: "템포루틴",
-                         sub: snapshot.isColdStart ? "기록하면 계절이 채워져요" : "계절 사이를 지나고 있어요",
-                         inline: "템포루틴", mood: nil, projected: false)
+        return WidgetDay(day: day, season: nil, title: Loc.str("템포루틴"),
+                         sub: snapshot.isColdStart ? Loc.str("기록하면 계절이 채워져요") : Loc.str("계절 사이를 지나고 있어요"),
+                         inline: Loc.str("템포루틴"), mood: nil, projected: false)
     }
 }

@@ -46,7 +46,7 @@ struct TimerProgressControl<Backing: TimerBacking>: View {
                     .font(.system(size: 28))
                     .foregroundStyle(Ink.text.opacity(backing.isTimerRunning ? 0.9 : 0.7))
             }
-            .accessibilityLabel(backing.isTimerRunning ? "일시정지" : "시작")
+            .accessibilityLabel(backing.isTimerRunning ? Loc.str("일시정지") : Loc.str("시작"))
             elapsedText
                 .font(.title3.weight(.semibold))
                 .monospacedDigit()

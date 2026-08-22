@@ -106,7 +106,7 @@ enum DailyNotices {
                 let shown = titles.prefix(3).joined(separator: " · ")
                 let extras = titles.count > 3 ? Loc.fmt(" 외 %1$@개", "\(titles.count - 3)") : ""
                 requests.append((briefingPrefix + dayKey(day),
-                                 "오늘은 다음과 같은 일정이 있어요",
+                                 Loc.str("오늘은 다음과 같은 일정이 있어요"),
                                  shown + extras,
                                  cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)))
             }
@@ -125,14 +125,14 @@ enum DailyNotices {
                 if let eveDay = cal.date(byAdding: .day, value: -1, to: predicted),
                    let fire = cal.date(bySettingHour: periodEveHour, minute: 0, second: 0, of: eveDay),
                    fire > .now {
-                    requests.append((periodEveID, "곧 겨울이에요",
-                                     "내일쯤 겨울로 접어들 수 있어요. 미리 채비해도 좋아요.",
+                    requests.append((periodEveID, Loc.str("곧 겨울이에요"),
+                                     Loc.str("내일쯤 겨울로 접어들 수 있어요. 미리 채비해도 좋아요."),
                                      cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)))
                 }
                 if let fire = cal.date(bySettingHour: periodDayHour, minute: 0, second: 0, of: predicted),
                    fire > .now {
-                    requests.append((periodDayID, "겨울 무렵이에요",
-                                     "오늘쯤 겨울이 시작될 수 있어요. 시작되면 기록해 주세요.",
+                    requests.append((periodDayID, Loc.str("겨울 무렵이에요"),
+                                     Loc.str("오늘쯤 겨울이 시작될 수 있어요. 시작되면 기록해 주세요."),
                                      cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)))
                 }
             }

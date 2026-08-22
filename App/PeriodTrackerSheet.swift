@@ -61,7 +61,7 @@ struct PeriodTrackerSheet: View {
                         .padding(.top, 6)
                         .popover(isPresented: $showDatePicker) {
                             DatePicker(
-                                "날짜 선택",
+                                Loc.str("날짜 선택"),
                                 selection: Binding(
                                     get: { selectedDay },
                                     set: { newDay in
@@ -202,7 +202,7 @@ struct PeriodTrackerSheet: View {
         }
         .disabled(future)
         .accessibilityLabel(Loc.fmt("%1$@%2$@%3$@", "\(day.formatted(Loc.dateTime.month().day()))", "\(recorded ? Loc.str(", 생리 기록됨") : "")", "\(future ? Loc.str(", 미래") : "")"))
-        .accessibilityHint(future ? "" : "이중 탭으로 생리 기록 전환")
+        .accessibilityHint(future ? "" : Loc.str("이중 탭으로 생리 기록 전환"))
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
@@ -237,7 +237,7 @@ struct PeriodTrackerSheet: View {
                     Text("건강 앱과 연동")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Ink.text)
-                    Text(on ? "생리 기록이 건강 앱에도 저장돼요." : "건강 앱의 기록을 함께 보고, 이 앱의 기록도 저장해요.")
+                    Text(on ? Loc.str("생리 기록이 건강 앱에도 저장돼요.") : Loc.str("건강 앱의 기록을 함께 보고, 이 앱의 기록도 저장해요."))
                         .font(.caption)
                         .foregroundStyle(Ink.text.opacity(0.55))
                 }
@@ -249,7 +249,7 @@ struct PeriodTrackerSheet: View {
             .padding(16)
             .milkGlass(radius: 14)
             .accessibilityElement(children: .combine)
-            .accessibilityValue(on ? "켜짐" : "꺼짐")
+            .accessibilityValue(on ? Loc.str("켜짐") : Loc.str("꺼짐"))
         }
     }
 
@@ -262,7 +262,7 @@ struct PeriodTrackerSheet: View {
                     let current = periodDays
                     Task {
                         guard await mirror.requestAccess() else {
-                            syncMessage = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
+                            syncMessage = Loc.str("건강 앱 권한을 허용하지 않으면 연동할 수 없어요.")
                             return
                         }
                         await mirror.sync(context: modelContext, periodDays: current)
@@ -295,7 +295,7 @@ struct PeriodTrackerSheet: View {
             .transaction { $0.animation = nil }
         }
         .disabled(isSelectedFuture)
-        .accessibilityValue(recorded ? "기록됨" : "기록 없음")
+        .accessibilityValue(recorded ? Loc.str("기록됨") : Loc.str("기록 없음"))
     }
 
     private func togglePeriod(on day: Date) {
@@ -341,13 +341,13 @@ struct CheckInEditor: View {
                 Spacer()
             }
             // 표시 항목은 체크인 카드와 같은 규칙 — 온보딩·설정에서 고른 추적 항목이 정한다(§3.10)
-            signalRow(label: "에너지는", options: ["낮음", "보통", "높음"], value: $draftEnergy)
-            signalRow(label: "기분은", options: ["흐림", "보통", "맑음"], value: $draftMood)
+            signalRow(label: Loc.str("에너지는"), options: [Loc.str("낮음"), Loc.str("보통"), Loc.str("높음")], value: $draftEnergy)
+            signalRow(label: Loc.str("기분은"), options: [Loc.str("흐림"), Loc.str("보통"), Loc.str("맑음")], value: $draftMood)
             if AppSettings.trackedSignals.sleep {
-                signalRow(label: "지난밤 잠은", options: ["뒤척임", "보통", "푹 잤어요"], value: $draftSleep)
+                signalRow(label: Loc.str("지난밤 잠은"), options: [Loc.str("뒤척임"), Loc.str("보통"), Loc.str("푹 잤어요")], value: $draftSleep)
             }
             if AppSettings.trackedSignals.appetite {
-                signalRow(label: "식욕은", options: ["없음", "보통", "좋음"], value: $draftAppetite)
+                signalRow(label: Loc.str("식욕은"), options: [Loc.str("없음"), Loc.str("보통"), Loc.str("좋음")], value: $draftAppetite)
             }
             // 「오늘 한 줄」 토글 배선(2026-08-20 감사 — CheckInCard와 동일 규칙)
             if AppSettings.trackedSignals.note {

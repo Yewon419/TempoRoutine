@@ -33,7 +33,7 @@ enum ScheduleReminder {
             let content = UNMutableNotificationContent()
             content.title = title
             content.body = if isAllDay {
-                reminderMinutes >= 1440 ? "내일 일정이에요." : "오늘 일정이에요."
+                reminderMinutes >= 1440 ? Loc.str("내일 일정이에요.") : Loc.str("오늘 일정이에요.")
             } else {
                 Loc.fmt("%1$@에 시작해요.", "\(date.formatted(Loc.shortTime))")
             }

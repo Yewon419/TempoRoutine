@@ -110,8 +110,8 @@ struct TimerLockBanner: View {
     }
 
     private var subtitle: String {
-        guard context.state.isRunning else { return "멈춤" }
-        return context.state.countsDown ? "타이머" : "스톱워치"
+        guard context.state.isRunning else { return Loc.str("멈춤") }
+        return context.state.countsDown ? Loc.str("타이머") : Loc.str("스톱워치")
     }
 
     @ViewBuilder

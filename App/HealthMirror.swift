@@ -112,15 +112,15 @@ final class HealthMirror {
         /// 사용자 안내 — 숫자 나열 대신 상태를 말한다
         var message: String {
             if saveFailed {
-                return "기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요."
+                return Loc.str("기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.")
             }
             if imported > 0 {
                 return Loc.fmt("건강 앱에서 생리 기록 %lld일을 가져왔어요.", imported)
             }
             if sourceCount > 0 {
-                return "새로 가져올 기록은 없었어요. 건강 앱의 기록은 이미 모두 반영돼 있어요."
+                return Loc.str("새로 가져올 기록은 없었어요. 건강 앱의 기록은 이미 모두 반영돼 있어요.")
             }
-            return "건강 앱에서 읽어올 생리 기록이 없었어요. 기록이 없거나 읽기 권한이 꺼져 있을 수 있어요."
+            return Loc.str("건강 앱에서 읽어올 생리 기록이 없었어요. 기록이 없거나 읽기 권한이 꺼져 있을 수 있어요.")
         }
 
         /// 읽기 권한 꺼짐이 유력한 경우에만 설정 이동 버튼을 붙인다(§5.7 — read 거부는 판별 불가)
@@ -132,8 +132,8 @@ final class HealthMirror {
     // ── read 병합 + 삭제 전파 ── 반환값 = 새로 가져온 건수(진단·사용자 피드백용, 2026-07-22)
     @discardableResult
     func sync(context: ModelContext, periodDays: [PeriodDay]) async -> Int {
-        guard linked else { lastSyncReport = "연동 꺼짐"; lastOutcome = .init(imported: 0, sourceCount: 0, saveFailed: false); return 0 }
-        guard available else { lastSyncReport = "건강 앱 사용 불가"; lastOutcome = .init(imported: 0, sourceCount: 0, saveFailed: false); return 0 }
+        guard linked else { lastSyncReport = Loc.str("연동 꺼짐"); lastOutcome = .init(imported: 0, sourceCount: 0, saveFailed: false); return 0 }
+        guard available else { lastSyncReport = Loc.str("건강 앱 사용 불가"); lastOutcome = .init(imported: 0, sourceCount: 0, saveFailed: false); return 0 }
         let anchor = loadAnchor()
         let result: (samples: [HKSample], deleted: [HKDeletedObject], anchor: HKQueryAnchor?) =
             await withCheckedContinuation { continuation in

@@ -489,19 +489,19 @@ struct RhythmView: View {
     // 날짜 약속 대신 가까운 마일스톤: 이번 계절 기록 3회(EnergyProfile.minSamples) → 네 계절 채우기.
     private var progressInfo: (progress: Double, title: String, body: String, label: String) {
         if snapshot.isColdStart {
-            return (0, "첫 패턴을 기다리는 중", "당신만의 패턴이 보이기 시작할 거예요.",
-                    "첫 생리일을 기록하면 시작돼요")
+            return (0, Loc.str("첫 패턴을 기다리는 중"), Loc.str("당신만의 패턴이 보이기 시작할 거예요."),
+                    Loc.str("첫 생리일을 기록하면 시작돼요"))
         }
         let goal = EnergyProfile.minSamples
         let curPhase = snapshot.phase(on: today)
-        let curName = curPhase.map { seasonMeta(for: $0).name } ?? "이번 계절"
+        let curName = curPhase.map { seasonMeta(for: $0).name } ?? Loc.str("이번 계절")
         let curCount = curPhase.map { min(goal, profile.sampleCount(for: $0)) } ?? 0
         let unlocked = unlockedPhases
         if unlocked.isEmpty {
             let body = curCount == 0
                 ? Loc.fmt("%1$@의 에너지를 세 번 기록하면, 이 계절의 첫 패턴이 보여요.", "\(curName)")
                 : Loc.fmt("%1$@의 에너지 기록이 %2$@번 쌓였어요. 세 번이면 이 계절의 첫 패턴이 보여요.", "\(curName)", "\(curCount)")
-            return (Double(curCount) / Double(goal), "첫 패턴을 기다리는 중", body,
+            return (Double(curCount) / Double(goal), Loc.str("첫 패턴을 기다리는 중"), body,
                     Loc.fmt("%1$@ 기록 %2$@ / %3$@", "\(curName)", "\(curCount)", "\(goal)"))
         }
         let names = unlocked.map { seasonMeta(for: $0).name }.joined(separator: "·")
@@ -510,7 +510,7 @@ struct RhythmView: View {
         if let phase = curPhase, profile.level(for: phase) == nil {
             body += Loc.fmt(" %1$@은 %2$@ / %3$@회째예요.", "\(curName)", "\(curCount)", "\(goal)")
         }
-        return (Double(unlocked.count) / 4.0, "패턴이 보이기 시작했어요", body,
+        return (Double(unlocked.count) / 4.0, Loc.str("패턴이 보이기 시작했어요"), body,
                 Loc.fmt("네 계절 중 %1$@", "\(unlocked.count)"))
     }
 
@@ -620,7 +620,7 @@ struct RhythmView: View {
         /// 낱장 렌더 허용(§3.5.1 개정 2026-08-18 — 개인 계절 길이·오늘 위치는 여전히 금지).
         var dayBadge: String {
             guard let r = recurrence else { return "" }
-            return r.spansWholePhase ? "매일" : Loc.fmt("%1$@일차", "\(r.dayOffset + 1)")
+            return r.spansWholePhase ? Loc.str("매일") : Loc.fmt("%1$@일차", "\(r.dayOffset + 1)")
         }
     }
 
@@ -935,6 +935,6 @@ struct RhythmView: View {
         .simultaneousGesture(quickDeleteGesture(routine.deleteTarget, into: $pendingDelete,
                                                 feedback: $confirmFeedback))
         .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
-        .accessibilityAction(named: "삭제") { pendingDelete = routine.deleteTarget }
+        .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = routine.deleteTarget }
     }
 }

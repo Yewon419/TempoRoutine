@@ -566,7 +566,7 @@ struct SeasonCalendarView: View {
                 }
         }
         .foregroundStyle(Ink.text)
-        .accessibilityLabel(noticeFeed.hasUnread ? "소식, 새 글 있음" : "소식")
+        .accessibilityLabel(noticeFeed.hasUnread ? Loc.str("소식, 새 글 있음") : Loc.str("소식"))
     }
 
     /// 이 달 트랙의 재생 위치(시안 §4.4 ③ 월 진행 바) — 지난 달 1, 미래 달 0, 이 달은 일/일수
@@ -991,7 +991,7 @@ struct SeasonCalendarView: View {
                     .accessibilityAddTraits(.isButton)
                     // 길게 누르기 대체 액션 — 각 폼팩터에서 탭이 안 가져간 쪽을 연다
                     // (compact: 탭=빠른 일정 → 대체=하루 상세 / regular: 탭=날짜 이동 → 대체=빠른 일정, 2026-08-10)
-                    .accessibilityAction(named: hSize == .regular ? "빠른 일정 추가" : "하루 상세 보기") {
+                    .accessibilityAction(named: hSize == .regular ? Loc.str("빠른 일정 추가") : Loc.str("하루 상세 보기")) {
                         if hSize == .regular {
                             quickAddDay = date
                             quickAddEnd = nil
@@ -1218,13 +1218,13 @@ struct SeasonCalendarView: View {
 
     // ── 계절 라인 (S0/S1/S2/S4 — §5.6.2) ──
     private var seasonLine: String {
-        guard let last = starts.max() else { return "첫 생리일을 기록하면 계절이 채워지기 시작할거예요" }
+        guard let last = starts.max() else { return Loc.str("첫 생리일을 기록하면 계절이 채워지기 시작할거예요") }
         let diff = cal.dateComponents([.day], from: last, to: today).day ?? 0
         if diff >= avgLength + TodayView.overdueGraceDays {
             return Loc.fmt("겨울 예상 · 예정일 %1$@일 지남", "\(diff - avgLength)")
         }
         guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
-            return "첫 생리일을 기록하면 계절이 채워지기 시작할거예요"
+            return Loc.str("첫 생리일을 기록하면 계절이 채워지기 시작할거예요")
         }
         // 관측 우선 유효 M + 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소)
         let m = effectiveM(on: today, projected: r.projected)
@@ -1232,8 +1232,8 @@ struct SeasonCalendarView: View {
         let meta = seasonMeta(for: phase)
         let spanStart = CyclePredictor.phaseSpans(cycleLength: avgLength, menstrualLength: m)
             .first { $0.phase == phase }?.startDay ?? 1
-        let hedge = starts.count == 1 ? "아마 " : ""
-        let projected = r.projected ? " · 예상" : ""
+        let hedge = starts.count == 1 ? Loc.str("아마 ") : ""
+        let projected = r.projected ? Loc.str(" · 예상") : ""
         return Loc.fmt("%1$@%2$@ %3$@일차%4$@", "\(hedge)", "\(meta.name)", "\(max(1, r.day - spanStart + 1))", "\(projected)")
     }
 
@@ -1284,8 +1284,8 @@ struct SeasonCalendarView: View {
             // "예상"은 유지: faded 시각 hedge가 전달되지 않는 채널이라 텍스트가 유일한 hedge(§5.6.2).
             parts.append(style.projected ? Loc.fmt("%1$@ 예상", "\(meta.name)") : meta.name)
         }
-        if recorded { parts.append("생리 기록") }
-        if predicted { parts.append("생리 예상") }
+        if recorded { parts.append(Loc.str("생리 기록")) }
+        if predicted { parts.append(Loc.str("생리 예상")) }
         return parts.joined(separator: ", ")
     }
 

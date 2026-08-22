@@ -13,15 +13,17 @@ enum CardKind: String, CaseIterable, Identifiable {
     case input = "Input"
     case output = "Output"
     var id: String { rawValue }
+    /// 표시는 번역을 거친다 — rawValue는 저장·식별 키(2026-08-22). Input/Output은 키 그대로 나온다.
+    var title: String { Loc.text(rawValue) }
 
     /// 구획 ⓘ 설명(2026-08-06 베타 피드백 — 체크인 행이 아니라 구획 제목 뒤).
     /// 문안 = 코치마크(§3.6 카드 정의의 사용자 언어)와 같은 계열.
     var info: String {
         switch self {
-        case .schedule: "약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요."
+        case .schedule: Loc.str("약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요.")
         // 「각」 앞에서 줄바꿈(2026-08-16 베타 피드백) — 온보딩 장에서 "각"만 첫 줄 끝에 걸렸다
-        case .input: "식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요."
-        case .output: "프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?"
+        case .input: Loc.str("식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요.")
+        case .output: Loc.str("프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?")
         }
     }
 }
@@ -166,13 +168,13 @@ struct DayDetailView: View {
     /// 전날·다음날 이동 바(2026-08-01 베타 피드백) — 화살표 + 가운데에 지금 보는 날짜
     private var dayNavBar: some View {
         HStack {
-            navArrow(systemName: "chevron.left", label: "전날") { move(by: -1) }
+            navArrow(systemName: "chevron.left", label: Loc.str("전날")) { move(by: -1) }
             Spacer()
             Text(day.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
                 .font(.almanacBody(.footnote, size: 13))
                 .foregroundStyle(Ink.text.opacity(0.6))
             Spacer()
-            navArrow(systemName: "chevron.right", label: "다음날") { move(by: 1) }
+            navArrow(systemName: "chevron.right", label: Loc.str("다음날")) { move(by: 1) }
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 10)
@@ -250,7 +252,7 @@ struct DayDetailView: View {
         guard let r = snapshot.daysUntilNextStart(on: day) else { return nil }
         let axis = AxisProfile(checkIns: checkIns, snapshot: snapshot)
         guard r <= axis.adoptedPreWindow else { return nil }
-        return "두 호르몬이 함께 낮아지는 시기라 몸과 마음이 예민해질 수 있어요."
+        return Loc.str("두 호르몬이 함께 낮아지는 시기라 몸과 마음이 예민해질 수 있어요.")
     }
 
     /// 애플 공휴일 캘린더(연동 시) 우선, 내장 테이블 폴백 — SeasonCalendarView와 같은 규칙
@@ -290,15 +292,15 @@ struct DayDetailView: View {
     }
 
     // ── 카드 껍데기 — 오늘 탭 section(kind:)과 같은 문법(표제 + 우상단 +) ──
-    private func cardShell(_ kind: CardKind, empty: Bool, emptyMessage: String = "아직 없어요",
+    private func cardShell(_ kind: CardKind, empty: Bool, emptyMessage: String = Loc.str("아직 없어요"),
                             @ViewBuilder rows: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             TicketFieldLabel(text: ticketFieldName(kind))   // 발권 필드명(시안 §3.3-④, 티켓만)
             HStack {
-                Text(kind.rawValue)
+                Text(kind.title)
                     .font(.almanac(size: 17, weight: .bold))
                     .foregroundStyle(Ink.text)
-                InfoBadge(title: kind.rawValue, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
+                InfoBadge(title: kind.title, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
                 Spacer()
                 Button {
                     lightFeedback += 1
@@ -309,7 +311,7 @@ struct DayDetailView: View {
                         .foregroundStyle(Ink.text.opacity(0.6))
                         .frame(width: 32, height: 32)
                 }
-                .accessibilityLabel(Loc.fmt("%1$@ 추가", "\(kind.rawValue)"))
+                .accessibilityLabel(Loc.fmt("%1$@ 추가", "\(kind.title)"))
             }
             if empty {
                 Text(emptyMessage)
@@ -392,7 +394,7 @@ struct DayDetailView: View {
                     .buttonStyle(.plain)
                     .simultaneousGesture(quickDeleteGesture(.schedule(item), into: $pendingDelete, feedback: $confirmFeedback))
                     .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
-                    .accessibilityAction(named: "삭제") { pendingDelete = .schedule(item) }
+                    .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .schedule(item) }
                 }
                 OverlayEventRows(day: day)      // EventKit read-only 오버레이(§3.6.1 — 미저장)
                 CalendarConnectRow()
@@ -525,8 +527,8 @@ struct DayDetailView: View {
                 }
                 .disabled(isFuture)   // 미래 완료 금지(원칙 4)
                 .simultaneousGesture(quickDeleteGesture(.input(row.item), into: $pendingDelete, feedback: $confirmFeedback))
-                .accessibilityValue(checked ? "완료" : "미완료")
-                .accessibilityAction(named: "삭제") { pendingDelete = .input(row.item) }
+                .accessibilityValue(checked ? Loc.str("완료") : Loc.str("미완료"))
+                .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .input(row.item) }
         }
     }
 
@@ -565,7 +567,7 @@ struct DayDetailView: View {
             if case .cycleAnchored = $0.schedule { return true }
             return false
         }
-        return hasColdBlocked ? "생리를 기록하면 계획이 보이기 시작해요." : "아직 없어요"
+        return hasColdBlocked ? Loc.str("생리를 기록하면 계획이 보이기 시작해요.") : Loc.str("아직 없어요")
     }
 
     private var outputCard: some View {
@@ -601,7 +603,7 @@ struct DayDetailView: View {
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
                 .simultaneousGesture(quickDeleteGesture(.output(row.item), into: $pendingDelete, feedback: $confirmFeedback))
-                .accessibilityAction(named: "삭제") { pendingDelete = .output(row.item) }
+                .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .output(row.item) }
             }
         }
     }
@@ -618,13 +620,13 @@ struct DayDetailView: View {
                 HStack(spacing: 10) {
                     Image(systemName: item.percent >= 1 ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(item.percent >= 1 ? Ink.text : Ink.text.opacity(0.35))
-                    Text(item.percent >= 1 ? "완료" : "체크")
+                    Text(item.percent >= 1 ? Loc.str("완료") : Loc.str("체크"))
                         .font(.footnote)
                         .foregroundStyle(Ink.text.opacity(item.percent >= 1 ? 1 : 0.6))
                     Spacer()
                 }
             }
-            .accessibilityValue(item.percent >= 1 ? "완료" : "미완료")
+            .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
         case .subtasks:
             let list = (item.subtasks ?? []).sorted { $0.order < $1.order }
             ForEach(list) { sub in
@@ -642,7 +644,7 @@ struct DayDetailView: View {
                         Spacer()
                     }
                 }
-                .accessibilityValue(sub.isDone ? "완료" : "미완료")
+                .accessibilityValue(sub.isDone ? Loc.str("완료") : Loc.str("미완료"))
             }
         case .sessions:
             SessionProgressControl(logged: item.loggedSessions,

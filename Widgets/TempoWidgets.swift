@@ -489,8 +489,8 @@ struct SeasonProvider: TimelineProvider {
     }
 
     private var sampleDay: WidgetDay {
-        WidgetDay(day: .now, season: "winter", title: "겨울", sub: "겨울 3일차",
-                  inline: "겨울 3일차", mood: "이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요.",
+        WidgetDay(day: .now, season: "winter", title: Loc.str("겨울"), sub: Loc.str("겨울 3일차"),
+                  inline: Loc.str("겨울 3일차"), mood: Loc.str("이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요."),
                   projected: false)
     }
 }
@@ -531,11 +531,11 @@ struct SeasonWidgetView: View {
                         .stroke(WInk.season(season), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
                         .frame(width: 16, height: 16)
                 }
-                Text(entry.day?.title ?? "템포루틴")
+                Text(entry.day?.title ?? Loc.str("템포루틴"))
                     .font(WFont.almanac(24, weight: .bold))
                     .foregroundStyle(WInk.season(entry.day?.season))
             }
-            Text(entry.day?.sub ?? "앱을 한 번 열면 채워져요")
+            Text(entry.day?.sub ?? Loc.str("앱을 한 번 열면 채워져요"))
                 .font(.footnote)
                 .foregroundStyle(WInk.text.opacity(entry.day?.projected == true ? 0.55 : 0.75))
             // 플레이리스트 = 미니 플레이어(시안 §4.4 ⑧) — 시크바 하나가 시그니처를 잇는다.
@@ -549,7 +549,7 @@ struct SeasonWidgetView: View {
             if let lines = entry.day?.schedules, !lines.isEmpty {
                 ForEach(Array(lines.prefix(2).enumerated()), id: \.offset) { _, line in
                     HStack(spacing: 5) {
-                        Text(line.time)
+                        Text(Loc.text(line.time))   // 「종일」 센티널 번역(시각 문자열은 키가 없어 그대로)
                             .font(.system(size: 10))
                             .foregroundStyle(WInk.text.opacity(0.5))
                         Text(line.title)
@@ -579,12 +579,12 @@ struct SeasonWidgetView: View {
                 .frame(width: 24, height: 24)
                 .opacity(entry.day?.season == nil ? 0.45 : 1)
         }
-        .accessibilityLabel(entry.day?.inline ?? "템포루틴")
+        .accessibilityLabel(entry.day?.inline ?? Loc.str("템포루틴"))
     }
 
     // 잠금화면 인라인 — "겨울 3일차"
     private var inline: some View {
-        Text(entry.day?.inline ?? "템포루틴")
+        Text(entry.day?.inline ?? Loc.str("템포루틴"))
     }
 }
 

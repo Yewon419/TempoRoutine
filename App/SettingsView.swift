@@ -195,14 +195,14 @@ struct SettingsView: View {
                             notificationDenied = !granted
                             guard granted else { testNoticeHint = nil; return }
                             let content = UNMutableNotificationContent()
-                            content.title = "테스트 알림이에요"
-                            content.body = "이 문구가 보이면 알림이 정상 동작하는 거예요."
+                            content.title = Loc.str("테스트 알림이에요")
+                            content.body = Loc.str("이 문구가 보이면 알림이 정상 동작하는 거예요.")
                             content.sound = .signature   // 시그니처 칼림바(2026-08-09)
                             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
                             try? await UNUserNotificationCenter.current().add(
                                 UNNotificationRequest(identifier: "test-notice",
                                                       content: content, trigger: trigger))
-                            testNoticeHint = "5초 뒤에 와요. 앱을 홈으로 내려두세요 — 앱이 떠 있으면 배너가 안 보여요."
+                            testNoticeHint = Loc.str("5초 뒤에 와요. 앱을 홈으로 내려두세요 — 앱이 떠 있으면 배너가 안 보여요.")
                         }
                     }
                     .foregroundStyle(Ink.text)
@@ -220,8 +220,8 @@ struct SettingsView: View {
                         .foregroundStyle(Ink.groundSub)
                 } footer: {
                     Text(notificationDenied
-                         ? "알림이 꺼져 있어요. 설정에서 알림을 켜면 다시 고를 수 있어요."
-                         : "브리핑은 일정 당일 아침 8시에, 생리 예측 알림은 예상일 전날과 당일에 한 번씩 알림이 가요.")
+                         ? Loc.str("알림이 꺼져 있어요. 설정에서 알림을 켜면 다시 고를 수 있어요.")
+                         : Loc.str("브리핑은 일정 당일 아침 8시에, 생리 예측 알림은 예상일 전날과 당일에 한 번씩 알림이 가요."))
                         .foregroundStyle(Ink.groundSub)
                 }
 
@@ -309,14 +309,14 @@ struct SettingsView: View {
                 // 앱 내 자기보고 설문(v1.6 §4) — 언제든 재진입. 웹 응답과 연결하지 않는다.
                 // (사전 설문 코드 섹션은 2026-08-09 사용자 결정으로 폐기 — 사전 설문 자체를 접음)
                 Section {
-                    Button(selfReports.isEmpty ? "리듬 설문 하기" : "리듬 설문 다시 하기") {
+                    Button(selfReports.isEmpty ? Loc.str("리듬 설문 하기") : Loc.str("리듬 설문 다시 하기")) {
                         lightFeedback += 1
                         showSelfReport = true
                     }
                     .foregroundStyle(Ink.text)
                 } footer: {
                     Text(selfReports.isEmpty
-                         ? "응답은 이 기기에만 저장돼요."
+                         ? Loc.str("응답은 이 기기에만 저장돼요.")
                          : Loc.fmt("마지막 응답 %1$@건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.", "\(selfReports.count)"))
                         .foregroundStyle(Ink.groundSub)
                 }
@@ -461,7 +461,7 @@ struct SettingsView: View {
             try data.write(to: url, options: .atomic)
             shareURL = url
         } catch {
-            message = "내보내기에 실패했어요. 다시 시도해 주세요."
+            message = Loc.str("내보내기에 실패했어요. 다시 시도해 주세요.")
         }
     }
 
@@ -473,11 +473,11 @@ struct SettingsView: View {
             let envelope = try ExportCodec.decode(try Data(contentsOf: url))
             let added = ExportImport.merge(envelope, into: modelContext, existing: store)
             if added > 0 { refreshDerivedSurfaces() }
-            message = added > 0 ? Loc.fmt("%lld건을 가져왔어요.", added) : "새로 가져올 기록이 없어요."
+            message = added > 0 ? Loc.fmt("%lld건을 가져왔어요.", added) : Loc.str("새로 가져올 기록이 없어요.")
         } catch ExportCodec.CodecError.newerVersion {
-            message = "이 백업은 지금 앱보다 새로운 버전이에요. 앱을 업데이트한 뒤 가져와 주세요."
+            message = Loc.str("이 백업은 지금 앱보다 새로운 버전이에요. 앱을 업데이트한 뒤 가져와 주세요.")
         } catch {
-            message = "가져올 수 없는 파일이에요."
+            message = Loc.str("가져올 수 없는 파일이에요.")
         }
     }
 
@@ -496,7 +496,7 @@ struct SettingsView: View {
                     let current = store
                     Task {
                         guard await mirror.requestAccess() else {
-                            message = "건강 앱 권한을 허용하지 않으면 연동할 수 없어요."
+                            message = Loc.str("건강 앱 권한을 허용하지 않으면 연동할 수 없어요.")
                             return
                         }
                         await mirror.sync(context: modelContext, periodDays: current.periodDays)
@@ -512,14 +512,14 @@ struct SettingsView: View {
     }
 
     private var healthCaption: String {
-        if !mirror.available { return "이 기기에선 건강 앱을 사용할 수 없습니다." }
+        if !mirror.available { return Loc.str("이 기기에선 건강 앱을 사용할 수 없습니다.") }
         if mirror.linked && mirror.writeAuthorized {
-            return "생리 기록이 건강 앱에도 저장돼요. 이 앱이 쓴 기록만 건강 앱에서 고칠 수 있어요."
+            return Loc.str("생리 기록이 건강 앱에도 저장돼요. 이 앱이 쓴 기록만 건강 앱에서 고칠 수 있어요.")
         }
         if mirror.linked {
-            return "가져올 기록이 없다면 읽기 권한이 꺼진 경우가 많아요. 아래 ‘건강 권한 설정 열기’를 눌러 템포루틴의 ‘생리’ 읽기를 켜주세요."
+            return Loc.str("가져올 기록이 없다면 읽기 권한이 꺼진 경우가 많아요. 아래 ‘건강 권한 설정 열기’를 눌러 템포루틴의 ‘생리’ 읽기를 켜주세요.")
         }
-        return "기록은 이 기기에만 저장됩니다."   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
+        return Loc.str("기록은 이 기기에만 저장됩니다.")   // 아이패드 지원 정합(2026-07-23, §3.10 개정과 동일 원칙)
     }
 
     /// 삭제·복원·가져오기 직후 파생 표면 재정렬(2026-08-20 감사) — 위젯 스냅샷·브리핑·예측·

@@ -65,10 +65,10 @@ struct ScheduleAddSheet: View {
     private static let repeatChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly, .yearly]
     /// 시간 지정 일정 — 시작 기준 N분 전
     private static let timedReminders: [(label: String, minutes: Int)] =
-        [("없음", -1), ("정시", 0), ("10분 전", 10), ("30분 전", 30), ("1시간 전", 60), ("1일 전", 1440)]
+        [(Loc.str("없음"), -1), (Loc.str("정시"), 0), (Loc.str("10분 전"), 10), (Loc.str("30분 전"), 30), (Loc.str("1시간 전"), 60), (Loc.str("1일 전"), 1440)]
     /// 하루종일 일정 — 기준 시각 오전 9시(ScheduleReminder.allDayHour)
     private static let allDayReminders: [(label: String, minutes: Int)] =
-        [("없음", -1), ("당일 아침", 0), ("전날 아침", 1440)]
+        [(Loc.str("없음"), -1), (Loc.str("당일 아침"), 0), (Loc.str("전날 아침"), 1440)]
 
     init(defaultDate: Date, editing: ScheduleItem? = nil) {
         self.defaultDate = defaultDate
@@ -226,7 +226,7 @@ struct ScheduleAddSheet: View {
                 // 하루종일 전환 시 알림 선택지가 달라짐 — 유효하지 않은 값은 없음으로
                 if !reminderChoices.contains(where: { $0.minutes == reminderMinutes }) { reminderMinutes = -1 }
             }
-            .navigationTitle(editing == nil ? "일정 추가" : "일정 수정")
+            .navigationTitle(editing == nil ? Loc.str("일정 추가") : Loc.str("일정 수정"))
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
@@ -692,7 +692,7 @@ struct InputAddSheet: View {
             } message: {
                 Text("체크 기록이 함께 지워져요. 되돌릴 수 없어요.")
             }
-            .navigationTitle(editing == nil ? "Input 추가" : "Input 수정")
+            .navigationTitle(editing == nil ? Loc.str("Input 추가") : Loc.str("Input 수정"))
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
@@ -984,7 +984,7 @@ struct OutputAddSheet: View {
             } message: {
                 Text("진행도가 함께 지워져요. 되돌릴 수 없어요.")
             }
-            .navigationTitle(editing == nil ? "Output 추가" : "Output 수정")
+            .navigationTitle(editing == nil ? Loc.str("Output 추가") : Loc.str("Output 수정"))
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
