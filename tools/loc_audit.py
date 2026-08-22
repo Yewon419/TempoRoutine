@@ -118,6 +118,42 @@ class AuditResult:
         return frozenset(merged)
 
 
+WRAPPERS: tuple[str, ...] = (
+    "Text(", "Button(", "Label(", "Toggle(", "Picker(", "Stepper(", "TextField(", "Section(",
+    "navigationTitle(", "alert(", "confirmationDialog(", "accessibilityLabel(", "accessibilityHint(",
+    "accessibilityValue(", "accessibilityAction(named: ", "Loc.str(", "Loc.fmt(", "Loc.text(", "Loc.key(",
+    "String(localized: ", "configurationDisplayName(", "description(", "LocalizedStringKey(", "Link(",
+    "DatePicker(", "ContentUnavailableView(", "searchable(", "CoachStep(title: ",
+)
+# 값 컨텍스트 판정에서 제외 — 저장 키·탐지 낱말·센티널·포맷 키(각 근거는 해당 소스 주석)
+VALUE_CTX_SKIP_FILES: frozenset[str] = frozenset({"QuickAdd.swift", "EventOverlay.swift", "Localization.swift",
+                                                  "TimerIntents.swift", "SignalPanel.swift"})
+VALUE_CTX_SKIP_TEXT: frozenset[str] = frozenset({"종일"})
+
+
+def is_value_context(lit: Literal, repo: Path) -> bool:
+    """리터럴이 번역 래퍼 없이 String 값으로 흐르는 자리인가."""
+    if lit.path.name in VALUE_CTX_SKIP_FILES or lit.text in VALUE_CTX_SKIP_TEXT:
+        return False
+    if not lit.path.is_relative_to(repo / "App") and not lit.path.is_relative_to(repo / "Widgets"):
+        return False
+    lines = lit.path.read_text(encoding="utf-8").split("
+")
+    if lit.line - 1 >= len(lines):
+        return False
+    line = lines[lit.line - 1]
+    if line.lstrip().startswith("case ") and "= \"" in line:   # enum rawValue = 저장 키
+        return False
+    raw = lit.text.replace("
+", "\n")
+    quoted = f'"{raw}"'
+    index = line.find(quoted)
+    if index < 0:
+        return False
+    before = line[:index].rstrip()
+    return not any(before.endswith(w) for w in WRAPPERS)
+
+
 def strip_swift_noise(source: str) -> list[tuple[int, str]]:
     """주석을 지우고 (줄번호, 문자열 리터럴) 목록을 낸다.
 
@@ -269,7 +305,14 @@ def main() -> int:
     total = len(result.literals)
     covered = total - len(uncovered)
 
+    # 값 컨텍스트(2026-08-22 3개국어 혼재 사고 후 신설): 카탈로그에 키가 있어도 switch·배열·삼항으로
+    # String을 만드는 자리는 조회를 안 한다. 「키 존재」만 세면 이 구멍이 안 보인다 — 따로 센다.
+    value_ctx = [lit for lit in result.literals if not lit.interpolated and is_value_context(lit, repo)]
     print(f"카탈로그 {len(result.catalogs)}장 · 키 {len(result.catalog_keys)}개")
+    if value_ctx:
+        print(f"⚠ 값 컨텍스트(래퍼 없이 String으로 흐르는 한글 리터럴): {len(value_ctx)}개 — Loc.str로 감쌀 것")
+        for lit in value_ctx[:10]:
+            print(f"     {lit.path.relative_to(repo).as_posix()}:{lit.line} {lit.text[:50]!r}")
     print(f"소스 한글 리터럴 {total}개 → 커버 {covered} / 미커버 {len(uncovered)}"
           f" (보간 없음 {len(plain)} · 보간 {len(interpolated)})")
     for language in languages:
