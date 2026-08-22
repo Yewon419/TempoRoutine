@@ -2830,6 +2830,29 @@
         }
       }
     },
+    "「다시 시작」을 누르면 앱이 닫혀요. 다시 열면 고른 언어로 열려요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tapping “Restart” closes the app. Open it again and it will be in the language you chose."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「再起動」を押すとAppが閉じます。もう一度開くと、選んだ言語で開きます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按“重新启动”会关闭 App。再次打开时会使用你选择的语言。"
+          }
+        }
+      }
+    },
     "가끔": {
       "extractionState": "manual",
       "localizations": {
@@ -6407,13 +6430,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "再スタート"
+            "value": "再起動"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "重新开始"
+            "value": "重新启动"
           }
         }
       }
@@ -11773,6 +11796,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择语言"
+          }
+        }
+      }
+    },
+    "언어를 바꾸려면 앱을 다시 시작해요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart to change the language"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語を変えるにはAppを再起動します"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改语言需要重新启动 App"
           }
         }
       }

@@ -26,6 +26,10 @@ struct SettingsView: View {
     @State private var shareURL: URL?
     @State private var showImporter = false
     @State private var showWipeConfirm = false
+    /// 언어 변경 대기값(2026-08-22 대표님 "언어 바꾸면 앱 재시작") — 피커는 이 값에 묶고, 확인을
+    /// 눌러야 저장·종료한다. @AppStorage에 직접 묶으면 종료 전에 루트 리빌드가 먼저 돌아 옛 언어
+    /// 조각이 스치고 무거운 재구성이 헛돈다.
+    @State private var pendingLanguage: String?
     @State private var message: String?
     @State private var messageOffersPermission = false   // 건강 읽기 권한 안내 알럿에만 설정 버튼(2026-08-01)
     @AppStorage("onboardingDone") private var onboardingDone = false   // 온보딩 다시 보기(2026-08-01)
@@ -159,10 +163,16 @@ struct SettingsView: View {
                     Text("매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!")
                         .foregroundStyle(Ink.groundSub)
                 }
-                // 언어(2026-08-22 베타 피드백) — 고르면 즉시 전환(루트 .id 리빌드).
+                // 언어(2026-08-22 베타 피드백) — 고르면 **앱을 닫고 다시 연다**(대표님 지시 "언어 바꾸면
+                // 앱 재시작"). iOS는 앱이 스스로 재실행할 수 없으므로 안내 → 종료(exit) → 사용자가 다시 연다.
+                // 런타임 전환(번들 덮어쓰기)도 살아 있지만 설정에선 쓰지 않는다 — 전 프로세스가 새
+                // 언어로 깨끗하게 뜨는 쪽을 택했다. 온보딩 0단계는 첫 화면이라 즉시 전환 유지.
                 // 이름은 각자의 언어로(endonym) — 지금 화면이 무슨 언어든 자기 언어를 찾을 수 있게.
                 Section {
-                    Picker(selection: $appLanguage) {
+                    Picker(selection: Binding(
+                        get: { pendingLanguage ?? appLanguage },
+                        set: { pendingLanguage = $0 == appLanguage ? nil : $0 }
+                    )) {
                         ForEach(AppLanguage.allCases) { lang in
                             if lang == .system {
                                 Text("기기 설정 따름").tag(lang.rawValue)
@@ -173,8 +183,18 @@ struct SettingsView: View {
                     } label: {
                         Text("언어").foregroundStyle(Ink.text)
                     }
-                    .onChange(of: appLanguage) { _, newValue in
-                        Loc.apply(AppLanguage(rawValue: newValue) ?? .system)
+                    .alert("언어를 바꾸려면 앱을 다시 시작해요",
+                           isPresented: Binding(get: { pendingLanguage != nil },
+                                                set: { if !$0 { pendingLanguage = nil } })) {
+                        Button("다시 시작") {
+                            guard let raw = pendingLanguage, let lang = AppLanguage(rawValue: raw) else { return }
+                            Loc.apply(lang)                    // appLanguage + AppleLanguages + App Group 저장
+                            UserDefaults.standard.synchronize() // 종료 직전 — 디스크 반영을 기다리지 않는다
+                            exit(0)
+                        }
+                        Button("취소", role: .cancel) { pendingLanguage = nil }
+                    } message: {
+                        Text("「다시 시작」을 누르면 앱이 닫혀요. 다시 열면 고른 언어로 열려요.")
                     }
                 }
 
