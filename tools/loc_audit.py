@@ -137,15 +137,13 @@ def is_value_context(lit: Literal, repo: Path) -> bool:
         return False
     if not lit.path.is_relative_to(repo / "App") and not lit.path.is_relative_to(repo / "Widgets"):
         return False
-    lines = lit.path.read_text(encoding="utf-8").split("
-")
+    lines = lit.path.read_text(encoding="utf-8").split("\n")
     if lit.line - 1 >= len(lines):
         return False
     line = lines[lit.line - 1]
     if line.lstrip().startswith("case ") and "= \"" in line:   # enum rawValue = 저장 키
         return False
-    raw = lit.text.replace("
-", "\n")
+    raw = lit.text.replace("\n", "\\n")
     quoted = f'"{raw}"'
     index = line.find(quoted)
     if index < 0:
