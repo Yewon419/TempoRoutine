@@ -332,6 +332,7 @@ struct TodayView: View {
                     }
                     .font(.almanacBody(.footnote, size: 13))
                     .skyInkShadow()   // 날씨 = 흰 구름 위 가독(2026-08-20)
+                    .groundHaze()     // 은필·기본 = 선화 위 안개(2026-08-22)
                     skyReadout        // 날씨 테마 전용 수치 줄(2026-08-20 사용자 요청)
                 }
                 Text(moodlineText ?? info.meta.moodline)
@@ -339,6 +340,7 @@ struct TodayView: View {
                     .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.88))
                     .padding(.top, 2)
                     .skyInkShadow()
+                    .groundHaze()   // 베타 "가을이에요 문구 뒤에도 뿌옇게"(2026-08-22)
                 // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백). 2026-08-02 교정: 캡슐 버튼+시트가
                 // 아니라 하루 상세와 같은 인라인 토글이다("이 스위치야") — 그 자리에서 켜고 끈다.
                 periodToggle

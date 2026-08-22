@@ -1019,6 +1019,7 @@ struct SeasonCalendarView: View {
                     .monospacedDigit()
                     .foregroundStyle(numberColor(date: date, seasonColor: style.color,
                                                  render: render, isToday: isToday))
+                    .skyInkShadow()   // 날씨 = 비·구름 위 숫자 가독(2026-08-22 베타)
                     // 과거 완료일 흐림 폐기(2026-08-16 베타 피드백 "체크인 완료일 회색글씨 빼고
                     // 일괄로 검정") — 2026-08-09에 씨앗 스티커 대체로 넣었던 0.38 감쇠를 걷는다.
                     // 숫자는 날짜를 읽는 것이고, 체크인 여부는 다른 표면이 말한다.
@@ -1269,6 +1270,7 @@ struct SeasonCalendarView: View {
             Text(meta.name)
                 .font(.system(size: 12, weight: .semibold, design: .serif))
                 .foregroundStyle(meta.color)
+                .skyInkShadow()
         }
     }
 

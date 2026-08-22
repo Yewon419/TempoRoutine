@@ -192,9 +192,45 @@ extension View {
     /// 흰 구름 위 흰 날짜·무드라인이 잠긴다). 표제 그림자(almanacDisplay)와 같은 색,
     /// 작은 활자라 반경만 줄임. 다른 테마는 무영향(.clear).
     func skyInkShadow() -> some View {
+        // 4/0.4 → 7/0.5(2026-08-22 베타 "글씨 뒤쪽에 약간 블러") — 비·구름 위 활자 뒤 어두운 할로
         shadow(color: ThemeStore.chrome.skyGround
-               ? Color(red: 4 / 255, green: 14 / 255, blue: 28 / 255).opacity(0.4) : .clear,
-               radius: 4, y: 1)
+               ? Color(red: 4 / 255, green: 14 / 255, blue: 28 / 255).opacity(0.5) : .clear,
+               radius: 7, y: 1)
+    }
+
+    /// 지면 위 활자 뒤 옅은 안개(2026-08-22 베타 "22 뒤에 뿌옇게 깐 것처럼 문구 뒤에도") — 선화·계절광이
+    /// 문구를 가로지르는 테마(은필·기본)에서만. 사진 지면은 흰 잉크, 하늘 지면은 그림자가 각자 담당한다.
+    func groundHaze() -> some View {
+        background {
+            if ThemeStore.chrome.texture == .motif,
+               !ThemeStore.chrome.photographicGround,
+               !ThemeStore.chrome.skyGround {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Ink.paper.opacity(0.62))
+                    .blur(radius: 12)
+                    .padding(.horizontal, -12)
+                    .padding(.vertical, -8)
+            }
+        }
+    }
+
+    /// 플레이리스트 카드 유리(2026-08-22) — 시스템 `glassEffect`는 두 변형 모두 실기기에서 기각됐다:
+    /// `.regular`는 재질 자체가 뿌옇고(틴트 0으로도 — 08-20 "여전히 안투명"), `.clear`는 **미디어 위
+    /// 전용이라 감광층을 깐다**(밝은 지면에선 회색 판 — 08-22 "리퀴드글래스라며"). 시안 §4.4 ⑥의
+    /// 공식(반투명 흰 그라데이션 + 4방 림 스펙큘러)으로 돌아간다 — 블러 없이 지면이 그대로 비치는 유리.
+    func playlistGlass(radius: CGFloat) -> some View {
+        background {
+            let shape: RoundedRectangle = RoundedRectangle(cornerRadius: radius, style: .continuous)
+            let fill: LinearGradient = LinearGradient(
+                colors: [Color.white.opacity(0.30), Color.white.opacity(0.10)],
+                startPoint: .topLeading, endPoint: .bottomTrailing)
+            let rim: LinearGradient = LinearGradient(
+                colors: [Color.white.opacity(0.80), Color.white.opacity(0.25)],
+                startPoint: .topLeading, endPoint: .bottomTrailing)
+            shape.fill(fill)
+                .overlay(shape.strokeBorder(rim, lineWidth: 1))
+                .shadow(color: Color.black.opacity(0.06), radius: 10, y: 4)
+        }
     }
 }
 
@@ -236,8 +272,8 @@ struct MilkGlass: ViewModifier {
             // 0으로 다 걷지 않는 이유 = 시안도 흰 기운을 남긴다("흰 계열" §4.4 ⑥).
             // .clear 변형(2026-08-20) — .regular는 무틴트여도 재질 자체가 뿌옇다(베타 피드백
             // "여전히 안투명", 틴트 0.2로도 재현). .clear가 미디어 지면용 고투명 유리.
-            content.glassEffect(.clear,
-                                in: RoundedRectangle(cornerRadius: radius == 16 ? 20 : radius))
+            // 2026-08-22: 시스템 글래스 기각(.regular 뿌옇음 · .clear 감광 회색 판) → 자체 유리
+            content.playlistGlass(radius: radius == 16 ? 20 : radius)
         } else if ThemeStore.chrome.engravedCards {
             // 활판(시안 §2.3-7-1) — 배경 없음. **눌린 것은 카드가 아니라 선 하나**다:
             // 어두운 윤곽선 위에 흰 윤곽선을 (1, 1.2) 어긋나게 얹는다(표제 음각과 같은 기법).
