@@ -95,3 +95,17 @@
   `nonisolated(unsafe)` + 근거 주석(ThemeStore 사례. @MainActor 격리는 정적 API 콜사이트
   전파 비용 따져보고). ② 단일 식(switch·if) 함수에 문장을 추가하면 암묵 반환이 깨진다 —
   `return switch`로 명시.
+- **로컬라이제이션 — 화면에 나갈 String을 만드는 자리는 예외 없이 `Loc.str`**(2026-08-22 실측: switch·배열·
+  삼항으로 만든 한글 리터럴 341개가 카탈로그에 키가 있어도 번역을 안 탔다 — "3개국어 혼재"). 조회 경로는
+  `Bundle.main` 클래스 덮어쓰기(`LocalizedBundle`) 하나로 모인다. `python tools/loc_audit.py`의
+  「값 컨텍스트」 지표가 0이어야 한다. 보간은 `Loc.fmt` + 명시 `%lld`/`%1$@` 키(네이티브 보간은 Windows에서
+  키를 실측할 수 없다 — 추출 생략 + Int도 `%@`).
+- **iOS 26 `Glass.clear`는 미디어 위 전용 — 밝은 지면에 감광층을 깔아 회색 판이 된다**(2026-08-22 실기기).
+  `.regular`는 재질 자체가 뿌옇다. 플레이리스트 카드는 자체 공식(`playlistGlass`)을 쓴다.
+- **루트 `.id` 리빌드(테마·언어 변경)마다 `.task`가 다시 돈다** — 시작 작업(HealthKit 동기화·위젯 발행·
+  알림 재예약·동기화 왕복)은 프로세스당 1회로 게이트(`RootTabView.bootstrapped`). 안 하면 "적용이 느리다".
+- **`UserDefaults(suiteName:)`을 핫 패스에서 매번 만들지 않는다** — 문자열 조회마다 생성했다가 렌더가 굼떴다
+  (2026-08-22). static let 1회.
+- **enum rawValue(한글)는 저장·식별 키다 — 표시에 쓰지 않는다**(SeasonAnchor「겨울」이 영어에서 "Repeats 겨울").
+  표시는 `title`/`seasonMeta(for:).name`. 비교도 이름이 아니라 `phase`로(번역되면 어긋난다).
+
