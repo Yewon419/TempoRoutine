@@ -435,6 +435,10 @@ struct TodayView: View {
                 .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
         }
         .tint(Ink.text)
+        // 라벨을 스위치 바로 앞에(2026-08-23 대표님 "오른쪽 버튼 앞에 바짝") — 전폭 Toggle은 라벨을
+        // 왼쪽 끝에 두고 사이를 비운다. fixedSize로 내용만큼 줄여 오른쪽으로 몬다.
+        .fixedSize()
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     // ── S0 / S4 상태 표면 ──
