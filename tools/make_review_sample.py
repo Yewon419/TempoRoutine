@@ -45,6 +45,151 @@ def day_str(date: dt.date) -> str:
     return date.strftime("%Y-%m-%d")
 
 
+def new_id(rng: random.Random) -> str:
+    return str(uuid.UUID(int=rng.getrandbits(128), version=4)).upper()
+
+
+KST = dt.timezone(dt.timedelta(hours=9))
+
+
+def at(date: dt.date, hour: int, minute: int = 0) -> dt.datetime:
+    """벽시계 시각은 KST로 적는다 — 봉투에는 `iso()`가 UTC로 바꿔 넣는다.
+    시각이 든 항목(반복 일정)은 여는 기기의 시간대만큼 밀려 보인다. 한국 사용자·대표님
+    실기기에서 자연스러운 쪽을 기준으로 잡았다(심사자 기기에선 그만큼 이동하지만, 날짜 키로
+    도는 기록·루틴·완료는 영향을 받지 않고 하루 안 순서도 그대로다)."""
+    return dt.datetime.combine(date, dt.time(hour, minute), tzinfo=KST)
+
+
+# ── 플래너 표면 ──
+# 심사가 언제 열리든 「오늘」이 채워져 있어야 한다. 그래서 단발 항목에 기대지 않는다:
+# 일정은 daily·weekly 반복, 루틴은 daily, 목표는 `.once`(완료까지 계속 표시)로 깔아 둔다.
+# 날짜가 박힌 항목(종일 여러 날 띠·디데이)은 캘린더 문법 시연용으로만 소수 둔다.
+
+def build_schedule(end: dt.date, start: dt.date, rng: random.Random) -> list[dict[str, object]]:
+    items: list[dict[str, object]] = []
+
+    def repeating(title: str, hour: int, minute: int, rule: str,
+                  reminder: int | None) -> dict[str, object]:
+        # 반복 일정의 date는 「첫 회차」 — 이후 회차는 앱이 rule로 펼친다.
+        return {
+            "id": new_id(rng),
+            "title": title,
+            "date": iso(at(start, hour, minute)),
+            "isAllDay": False,
+            "repeatRule": rule,
+            "createdAt": iso(at(start, 9)),
+            "endDate": iso(at(start, hour + 1, minute)),
+            "reminderMinutes": reminder,
+            "endDay": None,
+        }
+
+    items.append(repeating("아침 스트레칭", 7, 30, "daily", 10))
+    items.append(repeating("팀 회의", 10, 0, "weekly", 15))
+    items.append(repeating("요가 수업", 19, 30, "weekly", 30))
+
+    # 여러 날 종일 일정 — 캘린더의 기간 띠를 보여준다(종일은 endDay가 정본, endDate는 병기).
+    trip_start = end + dt.timedelta(days=5)
+    trip_end = end + dt.timedelta(days=7)
+    items.append({
+        "id": new_id(rng),
+        "title": "짧은 여행",
+        "date": day_str(trip_start),
+        "isAllDay": True,
+        "repeatRule": "none",
+        "createdAt": iso(at(start, 9)),
+        "endDate": iso(at(trip_end, 23, 59)),
+        "reminderMinutes": None,
+        "endDay": day_str(trip_end),
+    })
+    return items
+
+
+def build_inputs(start: dt.date, rng: random.Random) -> list[dict[str, object]]:
+    """매일의 루틴 — timeMinutes는 자정 기준 분(하루 안 시간순 정렬에 쓰인다)."""
+    rows = [
+        ("물 여덟 잔", "other", "daily", None),
+        ("아침 산책", "exercise", "daily", 8 * 60),
+        ("영양제", "other", "daily", 9 * 60),
+        ("저녁 스트레칭", "exercise", "daily", 21 * 60),
+        ("드라마 한 편", "media", "weekly", 22 * 60),
+    ]
+    return [{
+        "id": new_id(rng),
+        "title": title,
+        "category": category,
+        "schedule": {"type": rule},
+        "createdAt": iso(at(start, 9)),
+        "backfilled": False,
+        "timeMinutes": minutes,
+        "progressKind": None,
+        "targetSessions": None,
+        "targetSeconds": None,
+        "subtasks": None,
+    } for title, category, rule, minutes in rows]
+
+
+def build_outputs(end: dt.date, start: dt.date, rng: random.Random) -> list[dict[str, object]]:
+    """해내고 싶은 일 — 진행도 4종(퍼센트·체크리스트·횟수·타이머)을 한 눈에 보여준다."""
+
+    def base(title: str, kind: str, schedule: str = "once") -> dict[str, object]:
+        return {
+            "id": new_id(rng),
+            "title": title,
+            "schedule": {"type": schedule},
+            "progressKind": kind,
+            "subtasks": [],
+            "targetSessions": 0,
+            "loggedSessions": 0,
+            "percent": 0.0,
+            "createdAt": iso(at(start, 9)),
+            "targetDate": None,
+            "targetSeconds": None,
+            "elapsedSeconds": None,
+            "timeMinutes": None,
+        }
+
+    book = base("책 한 권 읽기", "percent")
+    book["percent"] = 0.45
+
+    resume = base("이력서 고치기", "subtasks")
+    resume["subtasks"] = [
+        {"id": new_id(rng), "title": "경력 정리", "isDone": True, "order": 0},
+        {"id": new_id(rng), "title": "포트폴리오 링크", "isDone": True, "order": 1},
+        {"id": new_id(rng), "title": "맞춤법 검토", "isDone": False, "order": 2},
+    ]
+    # 디데이 — 캘린더·오늘 탭의 목표일 표기를 보여준다
+    resume["targetDate"] = iso(at(end + dt.timedelta(days=10), 9))
+
+    running = base("달리기 스무 번", "sessions")
+    running["targetSessions"] = 20
+    running["loggedSessions"] = 8
+
+    focus = base("집중 25분", "timer", schedule="daily")
+    focus["targetSeconds"] = 25 * 60
+    focus["elapsedSeconds"] = 0.0
+
+    return [book, resume, running, focus]
+
+
+def build_completions(end: dt.date, inputs: list[dict[str, object]],
+                      rng: random.Random) -> list[dict[str, object]]:
+    """지난 3주의 루틴 체크 — 캘린더 완료 표시와 오늘 탭의 「해오던 흐름」을 만든다."""
+    rows: list[dict[str, object]] = []
+    daily = [item for item in inputs if item["schedule"] == {"type": "daily"}]
+    for back in range(21):
+        date = end - dt.timedelta(days=back)
+        for item in daily:
+            if rng.random() < 0.25:       # 빠진 날이 있어야 실제 기록처럼 보인다
+                continue
+            rows.append({
+                "id": new_id(rng),
+                "itemID": item["id"],
+                "occurredOn": day_str(date),
+                "completedAt": iso(at(date, 22)),
+            })
+    return rows
+
+
 def build(end: dt.date, rng: random.Random) -> dict[str, object]:
     start = end - dt.timedelta(days=CYCLE_LENGTH * CYCLES)
 
@@ -94,14 +239,19 @@ def build(end: dt.date, rng: random.Random) -> dict[str, object]:
         })
         earned_days.append(day_str(date))
 
+    schedule_items = build_schedule(end, start, rng)
+    input_items = build_inputs(start, rng)
+    output_items = build_outputs(end, start, rng)
+    completions = build_completions(end, input_items, rng)
+
     envelope: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
         "exportedAt": iso(dt.datetime.combine(end, dt.time(9, 0), tzinfo=dt.timezone.utc)),
         "periodDays": period_days,
-        "scheduleItems": [],
-        "inputItems": [],
-        "outputItems": [],
-        "completions": [],
+        "scheduleItems": schedule_items,
+        "inputItems": input_items,
+        "outputItems": output_items,
+        "completions": completions,
         "checkIns": check_ins,
         "trackedSignals": {"sleep": True, "pain": True, "appetite": True,
                            "note": True, "irritability": True},
@@ -134,8 +284,16 @@ def main() -> int:
     assert isinstance(ledger, dict)
     earned = ledger.get("earnedDays")
     assert isinstance(earned, list)
+    schedule_items = envelope["scheduleItems"]
+    input_items = envelope["inputItems"]
+    output_items = envelope["outputItems"]
+    completions = envelope["completions"]
+    assert isinstance(schedule_items, list) and isinstance(input_items, list)
+    assert isinstance(output_items, list) and isinstance(completions, list)
     print(f"기록 범위: {end - dt.timedelta(days=CYCLE_LENGTH * CYCLES)} ~ {end}")
     print(f"생리 기록 {len(period_days)}일 · 체크인 {len(check_ins)}건 · 씨앗 {len(earned)}개")
+    print(f"일정 {len(schedule_items)}건 · 루틴 {len(input_items)}건 · "
+          f"해내고 싶은 일 {len(output_items)}건 · 루틴 체크 {len(completions)}건")
     print(f"→ {args.out}")
     if len(earned) < SEED_THEME_PRICE:
         print("⚠ 씨앗이 테마 가격보다 적다 — 구매 시연이 안 된다", file=sys.stderr)

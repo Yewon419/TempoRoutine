@@ -4486,6 +4486,29 @@
         }
       }
     },
+    "고른 언어로 바로 바뀌어요. 혹시 옛 언어가 남아 있으면 앱을 완전히 닫았다 열어 주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app switches right away. If any old text is left over, close the app completely and open it again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すぐに切り替わります。前の言語が残っている場合は、Appを完全に閉じてから開き直してください。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会立即切换。如果仍有旧语言残留，请完全关闭 App 后重新打开。"
+          }
+        }
+      }
+    },
     "곧 겨울이에요": {
       "extractionState": "manual",
       "localizations": {
@@ -8603,6 +8626,29 @@
         }
       }
     },
+    "바꾸기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変更"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改"
+          }
+        }
+      }
+    },
     "반대로, 가장 안 좋은 때는 언제인가요": {
       "extractionState": "manual",
       "localizations": {
@@ -11819,6 +11865,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "更改语言需要重新启动 App"
+          }
+        }
+      }
+    },
+    "언어를 바꿀까요?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change the language?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語を変えますか？"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要更改语言吗？"
           }
         }
       }

@@ -163,10 +163,12 @@ struct SettingsView: View {
                     Text("매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!")
                         .foregroundStyle(Ink.groundSub)
                 }
-                // 언어(2026-08-22 베타 피드백) — 고르면 **앱을 닫고 다시 연다**(대표님 지시 "언어 바꾸면
-                // 앱 재시작"). iOS는 앱이 스스로 재실행할 수 없으므로 안내 → 종료(exit) → 사용자가 다시 연다.
-                // 런타임 전환(번들 덮어쓰기)도 살아 있지만 설정에선 쓰지 않는다 — 전 프로세스가 새
-                // 언어로 깨끗하게 뜨는 쪽을 택했다. 온보딩 0단계는 첫 화면이라 즉시 전환 유지.
+                // 언어(2026-08-22 베타 피드백) — 확인하면 **그 자리에서 바뀐다**(번들 덮어쓰기 +
+                // RootTabView `.id(…appLanguage)` 리빌드). 종전엔 `exit(0)`으로 앱을 닫았는데,
+                // 버튼으로 앱을 종료시키는 패턴은 심사 리젝 전례가 있어 1.0 제출 전 걷어냈다
+                // (2026-08-23). 설정 앱의 앱별 언어로 보내는 대안은 안 된다 — 시스템은 AppleLanguages만
+                // 건드리고 우리 `appLanguage` 키는 그대로라 앱이 계속 옛 언어를 본다.
+                // 온보딩 0단계도 같은 즉시 전환이다.
                 // 이름은 각자의 언어로(endonym) — 지금 화면이 무슨 언어든 자기 언어를 찾을 수 있게.
                 Section {
                     Picker(selection: Binding(
@@ -183,18 +185,16 @@ struct SettingsView: View {
                     } label: {
                         Text("언어").foregroundStyle(Ink.text)
                     }
-                    .alert("언어를 바꾸려면 앱을 다시 시작해요",
+                    .alert("언어를 바꿀까요?",
                            isPresented: Binding(get: { pendingLanguage != nil },
                                                 set: { if !$0 { pendingLanguage = nil } })) {
-                        Button("다시 시작") {
+                        Button("바꾸기") {
                             guard let raw = pendingLanguage, let lang = AppLanguage(rawValue: raw) else { return }
-                            Loc.apply(lang)                    // appLanguage + AppleLanguages + App Group 저장
-                            UserDefaults.standard.synchronize() // 종료 직전 — 디스크 반영을 기다리지 않는다
-                            exit(0)
+                            Loc.apply(lang)   // appLanguage + AppleLanguages + App Group 저장
                         }
                         Button("취소", role: .cancel) { pendingLanguage = nil }
                     } message: {
-                        Text("「다시 시작」을 누르면 앱이 닫혀요. 다시 열면 고른 언어로 열려요.")
+                        Text("고른 언어로 바로 바뀌어요. 혹시 옛 언어가 남아 있으면 앱을 완전히 닫았다 열어 주세요.")
                     }
                 }
 
