@@ -182,6 +182,29 @@ struct WPalette {
         accent: flat((0x22, 0x38, 0x4F))
     )
 
+    /// 활판 — 시안 SSOT §2.2 (앱 ThemePalette.letterpress 사본). 라이트/다크 동값(인쇄물).
+    /// ⚠ 겨울 = 블랙(생리 구간), 가을이 버밀리언을 승계한다 — 「다홍 = 생리 전용」은 이 테마에서 폐기.
+    /// glow* = 본색 동값(§2.2 — 밑줄이 곧 계절색).
+    static let letterpress = WPalette(
+        winter: flat((0x14, 0x12, 0x0F)),
+        spring: flat((0x6B, 0x8F, 0x2E)),
+        summer: flat((0x1B, 0x6B, 0x70)),
+        autumn: flat((0xB8, 0x42, 0x2F)),
+        text: flat((0x35, 0x32, 0x2E)),
+        paper: flat((0xEF, 0xED, 0xE6)),   // 웜 화이트 종이
+        coral: flat((0xB8, 0x42, 0x2F)),
+        record: flat((0xB8, 0x42, 0x2F)),
+        predictGray: flat((0x8C, 0x84, 0x74)),
+        holidayRed: flat((0xB8, 0x42, 0x2F)),
+        saturday: flat((0x3D, 0x5F, 0x9E)),
+        frost: flat((0xEF, 0xED, 0xE6)),
+        glowWinter: flat((0x14, 0x12, 0x0F)),
+        glowSpring: flat((0x6B, 0x8F, 0x2E)),
+        glowSummer: flat((0x1B, 0x6B, 0x70)),
+        glowAutumn: flat((0xB8, 0x42, 0x2F)),
+        accent: flat((0x35, 0x32, 0x2E))
+    )
+
     /// 날씨 — 시안 §5.2 (앱 ThemePalette.weather 사본). 잉크 화이트 · 계절 = 발광 파스텔,
     /// glow* = 본색 동값. 지면 색은 폴백 — 실제 지면은 WWidgetGround의 하늘 그라데이션.
     static let weather = WPalette(
@@ -245,6 +268,7 @@ enum WThemeStore {
         case "modern":   .modern(point: point)
         case "standard": .standard
         case "ticket":   .ticket
+        case "letterpress": .letterpress
         case "playlist": .playlist
         case "weather":  .weather
         default:         .plain     // 저장값 없음 = 새 설치 = 기본

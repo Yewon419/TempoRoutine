@@ -42,6 +42,10 @@ struct SeasonCalendarView: View {
     @State private var lightFeedback = 0        // 작은 햅틱(§4 — 월 이동·날짜 셀 탭. 셀 탭은 .selection→작은 승격, 2026-07-23 체감 피드백)
     // 체크인 완료일(2026-08-09) — 과거 완료일 숫자 흐림 표시의 근거 집합
     @State private var completedDays: Set<Date> = []
+    // 활판 월 표제 감량분(pt, 2026-08-23 실기기 대조) — 격자가 최소 높이를 못 받을 때만 >0.
+    // 시안 §2.3-10의 「6주 달은 112」를 기기 편차까지 확장: 빌드 462에서 8월(6주) 마지막 주가
+    // 통째로 잘렸다(격자 295pt < 필요 344pt). 상한(150/112)에서 부족분만큼만 내린다.
+    @State private var titleShrink: CGFloat = 0
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
@@ -295,7 +299,8 @@ struct SeasonCalendarView: View {
             monthCarousel
                 .coachAnchor(.calendarGrid)
             legend
-            Spacer(minLength: 0)
+            // ⚠ 뒤에 Spacer를 두지 않는다(2026-08-23) — 캐러셀(GeometryReader)과 남는 세로를
+            // 반씩 나눠 격자가 21pt 손해 봤다. 시안은 격자 하단 = 범례 상단(.cal-wrap flex).
         }
         .padding(20)
         // 가로 드래그 = 월 이동(손가락 추종). 셀 기간 선택과의 분리는 종전과 동일 —
@@ -382,6 +387,25 @@ struct SeasonCalendarView: View {
             .offset(x: -w + dragX)
         }
         .clipped()
+        // 격자 그릇 높이 = 표제 역산의 입력. 격자 자체(rows minHeight)는 그릇보다 커도 잘려서
+        // 그릇을 재야 한다 — gridSize는 넘친 뒤의 값이라 부족분을 못 본다.
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+            if ThemeStore.chrome.latinCalendarHeader { fitLetterpressTitle(carouselHeight: height) }
+        }
+    }
+
+    /// 활판 월 표제 상한 — 시안 §2.3-3·§2.3-10(5주 150 / 6주 112)
+    private var letterpressTitleCap: CGFloat { currentLayout.rowCount >= 6 ? 112 : 150 }
+    /// 실제 표제 크기 = 상한 − 감량분. 바닥 64 — 그 아래는 음각 선이 안 선다(§2.3-12 「크게 써야 선이 보인다」)
+    private var letterpressTitleSize: CGFloat { max(64, letterpressTitleCap - titleShrink) }
+
+    /// 표제 역산(2026-08-23). 격자 최소 = 행×54 + 행간 4. 부족하면 그만큼 표제를 줄이고 남으면
+    /// 상한까지 되돌린다. 표제 라인박스가 1.02×크기(고정 프레임)라 한 걸음에 수렴 — 0.5pt 이하는 무시.
+    private func fitLetterpressTitle(carouselHeight: CGFloat) {
+        let rows = CGFloat(currentLayout.rowCount)
+        let need = rows * minCellHeight + (rows - 1) * 4
+        let next = min(max(titleShrink + (need - carouselHeight) / 1.02, 0), letterpressTitleCap - 64)
+        if abs(next - titleShrink) > 0.5 { titleShrink = next }
     }
 
     @ViewBuilder
@@ -513,11 +537,12 @@ struct SeasonCalendarView: View {
                     Text(Self.latinMonthLabel(monthStart))
                         .font(.system(size: 13, design: .serif).italic())
                         .foregroundStyle(Ink.autumn)   // 버밀리언
-                    // §2.3-12: 월 150. 6주 달은 112(§2.3-10 — 조정 없이 48pt 넘친다)
+                    // §2.3-12: 월 150. 6주 달은 112(§2.3-10) — 기기가 더 좁으면 역산으로 더 내린다.
+                    // 라인박스는 시안 line-height 1.02로 못 박는다: 서체 기본 리딩(≈1.3em)을 두면
+                    // 112pt 표제가 146pt를 차지해 격자에서 34pt를 가져간다(빌드 462 실측).
                     almanacDisplay(String(format: "%02d", cal.component(.month, from: monthStart)),
-                                   size: (cal.range(of: .weekOfMonth, in: .month, for: monthStart)?.count ?? 5) >= 6
-                                         ? 112 : 150,
-                                   color: Ink.text)
+                                   size: letterpressTitleSize, color: Ink.text)
+                        .frame(height: letterpressTitleSize * 1.02)
                 }
             } else {
                 almanacDisplay(Loc.monthName(cal.component(.month, from: monthStart)), size: 58, color: Ink.text)
