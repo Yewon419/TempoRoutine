@@ -419,8 +419,6 @@ struct ThemeChrome {
     let dimsInDarkMode: Bool
     /// 항상 다크 외관으로 고정하는가
     let forcesDarkAppearance: Bool
-    /// 캘린더 상단에서 계절 라인을 거대 표제보다 위에
-    let seasonRowFirst: Bool
     /// 오늘 원을 accent로 채우는가(아니면 먹색)
     let todayCircleUsesAccent: Bool
     /// 기록일을 회색 원으로 표시하는가(형광펜 대신). 오늘·기록일 원 뒤 지면색 링도 함께 따라간다.
@@ -429,7 +427,7 @@ struct ThemeChrome {
     let boostsContrast: Bool
     /// 캘린더를 한 장의 발권물로 조판하는가(티켓, 시안 §3.4).
     /// 표제·계절 라인·도판·스텁이 150pt 고정 블록으로 묶이고, 그 아래 절취선에 노치가 뚫린다.
-    /// 기존 축(seasonRowFirst 등)으로는 표현할 수 없어 신설했다.
+    /// 기존 축으로는 표현할 수 없어 신설했다.
     let ticketChrome: Bool
     /// 지면이 사진(계절 유화)인가. true면 지면 위 보조 활자를 흰 계열로 올린다 —
     /// 기본 규칙(`Ink.text` 50~60%)은 사진 위에서 묻힌다(시안 §3.3-⑥).
@@ -513,7 +511,7 @@ extension ThemeChrome {
         typeFace: .gowun, texture: .motif, outlineDisplay: false,
         showsSeasonLight: true, neutralSeasonLight: false,
         dimsInDarkMode: true, forcesDarkAppearance: false,
-        seasonRowFirst: false, todayCircleUsesAccent: false,
+        todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         tintedTabBar: true, settingsList: .glass
@@ -525,7 +523,7 @@ extension ThemeChrome {
         typeFace: .system, texture: .none, outlineDisplay: false,
         showsSeasonLight: false, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
-        seasonRowFirst: false, todayCircleUsesAccent: false,
+        todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false
     )
@@ -537,7 +535,7 @@ extension ThemeChrome {
         typeFace: .system, texture: .none, outlineDisplay: false,
         showsSeasonLight: false, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
-        seasonRowFirst: false, todayCircleUsesAccent: false,
+        todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
         // 하단바 선택 탭만 포인트색으로 세운다(2026-08-17) — 겨울 구간이 아니면
         // 오늘 탭에 유채가 한 점도 안 보이던 문제를 여기서 푼다(시안 §1.2.1)
@@ -545,12 +543,12 @@ extension ThemeChrome {
     )
 
     /// 티켓 — 지면이 계절 유화라 대비 보정을 켜고, 계절광은 얹지 않는다(레퍼런스 지면은 평면).
-    /// `seasonRowFirst`는 false: 티켓 조판에서는 표제가 위, 계절 라인이 아래다.
+    /// 티켓 조판에서는 표제가 위, 계절 라인이 아래다(발권 정보 블록 안에서).
     static let ticket = ThemeChrome(
         typeFace: .pretendard, texture: .none, outlineDisplay: false,
         showsSeasonLight: false, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
-        seasonRowFirst: false, todayCircleUsesAccent: true,
+        todayCircleUsesAccent: true,
         circlesRecordedDays: false, boostsContrast: true,
         // photographicGround = 오늘·나의 템포만 유화(2026-08-18 2차 — "오늘 탭과 나의템포 탭
         // 배경에만 어둡게 처리한 유화 다시 넣어줘"). 설정·하루 상세는 흰 지면(뷰 분기 제거).
@@ -563,7 +561,7 @@ extension ThemeChrome {
         typeFace: .notoSerif, texture: .grain, outlineDisplay: false,
         showsSeasonLight: true, neutralSeasonLight: true,   // 계절광 = 무채 종이 음영(§2.2)
         dimsInDarkMode: false, forcesDarkAppearance: false,
-        seasonRowFirst: false, todayCircleUsesAccent: false,
+        todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         debossDisplay: true, hairlineSeasonBand: true, latinCalendarHeader: true,
@@ -577,7 +575,7 @@ extension ThemeChrome {
         typeFace: .system, texture: .none, outlineDisplay: false,
         showsSeasonLight: true, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
-        seasonRowFirst: false, todayCircleUsesAccent: false,
+        todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true,
@@ -591,7 +589,7 @@ extension ThemeChrome {
         typeFace: .system, texture: .none, outlineDisplay: false,
         showsSeasonLight: false, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: true,
-        seasonRowFirst: false, todayCircleUsesAccent: false,
+        todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: true,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         skyGround: true, tintedTabBar: true, settingsList: .glass

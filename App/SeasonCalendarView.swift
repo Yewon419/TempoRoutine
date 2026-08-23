@@ -277,21 +277,17 @@ struct SeasonCalendarView: View {
                 )
                 .coachAnchor(.calendarLog)
             } else {
-                // 좌상단 브랜드 표식(2026-08-09 사용자 지시) — 오늘 탭과 같은 자리·크기
+                // 상단 순서 = 시안 `.cal-wrap .season-row { order:-1 }` 전 테마 공통(2026-08-23 대표님
+                // "프로토타입 디자인대로"): 계절 줄·생리 기록 → 브랜드 표식·소식란 → 거대 표제·월 이동.
+                // 종전엔 포인트컬러 전용 분기(seasonRowFirst)였고 08-16 개편 뒤엔 전 테마가 표제 아래였다.
+                seasonHeaderRow
                 HStack {
                     BrandMark(diameter: 22, color: Ink.text.opacity(0.75))   // 오늘 탭과 동일 보정(2026-08-09 피드백)
                         .padding(.leading, 6)
                     Spacer()
+                    noticeButton
                 }
-                // 상단 순서(시안 §1.3-6, 모던 전용 분기 — 2026-07-29 사용자 결정):
-                // 모던 = 계절 라인·기록 버튼이 상단 제자리, 거대 표제는 그 아래
-                if ThemeStore.chrome.seasonRowFirst {
-                    seasonHeaderRow
-                    monthHeader
-                } else {
-                    monthHeader
-                    seasonHeaderRow
-                }
+                monthHeader
             }
             weekdayRow
             // 월 표면이 손가락을 따라 움직인다(2026-07-27 사용자 지시 — 인식 후 전환에서 추종으로).
@@ -563,7 +559,7 @@ struct SeasonCalendarView: View {
             } label: {
                 Image(systemName: "chevron.right").frame(width: 44, height: 44)
             }
-            noticeButton
+            // 소식란은 브랜드 표식 행 우측(시안 .cal-top) — 2026-08-23 이동
         }
         .foregroundStyle(Ink.text)
     }
