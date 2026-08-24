@@ -219,13 +219,33 @@ struct TipBubble: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
-            BubbleTail()
-                .fill(Ink.surface)
-                .frame(width: 18, height: 9)
-                .padding(.trailing, 14)
+            ZStack {
+                BubbleTail().fill(Ink.paper)
+                BubbleTail().fill(Ink.surface)
+            }
+            .frame(width: 18, height: 9)
+            .padding(.trailing, 14)
             card
         }
         .frame(maxWidth: 300, alignment: .trailing)
+    }
+
+    /// 말풍선 지면 — **불투명**이어야 한다(2026-08-24 베타 "커피 말풍선 왜 투명해").
+    /// 종전엔 `milkGlass()`를 썼는데 그건 **지면 위 콘텐츠 카드**용 재질이라 반투명이다
+    /// (은필 기준 `.ultraThinMaterial` + 흰 55%). 카드는 뒤가 지면이라 유리감이 성립하지만,
+    /// 이 말풍선은 스크롤되는 테마 목록 **위에 뜬 팝오버**라 뒤 글자가 그대로 비쳐 겹쳐 읽혔다.
+    /// 그래서 `Ink.paper`(불투명 지면)를 바닥에 깔고 그 위에 같은 카드 색을 얹는다.
+    /// 테마별 카드 문법(발권물·플레이리스트 유리·활판 음각)은 타지 않는다 — 떠 있는 것은
+    /// 지면과 같은 문법을 쓰면 안 된다.
+    private var bubbleGround: some View {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(Ink.paper)
+            .overlay { RoundedRectangle(cornerRadius: 16).fill(Ink.surface) }
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Ink.accent.opacity(0.18), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
     }
 
     private var card: some View {
@@ -240,7 +260,7 @@ struct TipBubble: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .milkGlass()
+        .background { bubbleGround }
     }
 
     private var message: String {
