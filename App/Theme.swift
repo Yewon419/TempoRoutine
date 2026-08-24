@@ -553,7 +553,10 @@ extension ThemeChrome {
         // photographicGround = 오늘·나의 템포만 유화(2026-08-18 2차 — "오늘 탭과 나의템포 탭
         // 배경에만 어둡게 처리한 유화 다시 넣어줘"). 설정·하루 상세는 흰 지면(뷰 분기 제거).
         ticketChrome: true, photographicGround: true, pointTabTint: false,
-        forcesLightAppearance: true, signalRing: .perforated
+        forcesLightAppearance: true, signalRing: .perforated,
+        // 하단바 = 발권물 흰 지면 고정(2026-08-25 베타 "하단바 색깔 흰색 고정" — 시스템 유리가
+        // 유화 어두운 구간을 샘플해 바가 검게 널뛰었다. 시안 §3.3-⑦)
+        tintedTabBar: true
     )
 
     /// 활판 v2 (시안 §2.3) — 선과 활자만. 음각 표제·헤어라인 밑줄·라틴 표기·활자 하단바.

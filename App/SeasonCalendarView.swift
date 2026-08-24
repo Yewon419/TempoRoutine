@@ -259,26 +259,26 @@ struct SeasonCalendarView: View {
                 // 티켓 = 화면 한 장이 발권물(시안 §3.4). 브랜드 표식은 스텁의 일련 조판이 대신한다.
                 ticketHeaderBlock
             } else if ThemeStore.chrome.playlistChrome {
-                // 플레이리스트 = 앨범 헤더(시안 §4.4 ③). 브랜드 표식·소식란은 상단 행 유지.
+                // 플레이리스트 = 레코드판(시안 §4.4 ③, 2026-08-25 확정). 브랜드 표식·소식란은
+                // 상단 행 유지 — 디스크는 헤더 background로 위로 넘쳐 상단 반노출이 된다.
                 HStack {
                     BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
                         .padding(.leading, 6)
                     Spacer()
                     noticeButton
                 }
-                PlaylistAlbumHeader(
+                PlaylistRecordHeader(
                     year: cal.component(.year, from: monthStart),
                     month: cal.component(.month, from: monthStart),
-                    monthProgress: playlistMonthProgress,
-                    seasonLine: seasonLine,
                     phase: currentPhase,
                     date: today,
+                    trackDay: playlistTrack.day,
+                    trackLength: playlistTrack.length,
+                    compact: currentLayout.rowCount >= 6,
                     onPrev: { lightFeedback += 1; shiftMonth(-1) },
                     onStop: { lightFeedback += 1; returnToTodayMonth() },
-                    onNext: { lightFeedback += 1; shiftMonth(1) },
-                    onLogTap: { showLogSheet = true }
+                    onNext: { lightFeedback += 1; shiftMonth(1) }
                 )
-                .coachAnchor(.calendarLog)
             } else {
                 // 상단 순서 = 시안 `.cal-wrap .season-row { order:-1 }` 전 테마 공통(2026-08-23 대표님
                 // "프로토타입 디자인대로"): 계절 줄·생리 기록 → 브랜드 표식·소식란 → 거대 표제·월 이동.
@@ -605,15 +605,17 @@ struct SeasonCalendarView: View {
         .accessibilityLabel(noticeFeed.hasUnread ? Loc.str("소식, 새 글 있음") : Loc.str("소식"))
     }
 
-    /// 이 달 트랙의 재생 위치(시안 §4.4 ③ 월 진행 바) — 지난 달 1, 미래 달 0, 이 달은 일/일수
-    private var playlistMonthProgress: Double {
-        let layout = currentLayout
-        guard let monthEnd = cal.date(byAdding: .day, value: layout.daysInMonth, to: layout.start) else {
-            return 0
+    /// 현재 계절 트랙의 재생 위치(시안 §4.4 ③) — 일차/계절 길이. 콜드 = (0, 0).
+    /// currentPhase와 같은 계산 경로(스냅샷 어긋남 방지 — CycleParams 경유 §5.6 규칙).
+    private var playlistTrack: (day: Int, length: Int) {
+        guard let r = CyclePredictor.cycleDay(of: today, periodStarts: starts, averageLength: avgLength) else {
+            return (0, 0)
         }
-        if today >= monthEnd { return 1 }
-        if today < layout.start { return 0 }
-        return Double(cal.component(.day, from: today)) / Double(layout.daysInMonth)
+        let m = effectiveM(on: today, projected: r.projected)
+        let phase = CyclePredictor.phaseForDay(r.day, cycleLength: avgLength, menstrualLength: m)
+        guard let span = CyclePredictor.phaseSpans(cycleLength: avgLength, menstrualLength: m)
+            .first(where: { $0.phase == phase }) else { return (0, 0) }
+        return (max(1, r.day - span.startDay + 1), span.length)
     }
 
     /// 정지 = 오늘 달로 되돌아오기(시안 §4.4 ③ 계약). 이미 오늘 달이면 아무 일 없음.
@@ -832,7 +834,9 @@ struct SeasonCalendarView: View {
         let render = renderCache[layout.start] ?? computeRender(layout)
         return VStack(spacing: 4) {
             ForEach(0..<layout.rowCount, id: \.self) { row in
-                HStack(spacing: 0) {
+                // ⚠ .top 정렬(2026-08-25 베타 "일정이 많아지면 계절 줄이 어긋나") — 기본 .center는
+                // 마크 수가 달라 키가 다른 셀을 세로 중앙에 놓아 숫자·계절 줄이 행마다 밀렸다.
+                HStack(alignment: .top, spacing: 0) {
                     ForEach(0..<7, id: \.self) { col in
                         cell(layout: layout, index: row * 7 + col, render: render,
                              interactive: interactive)
@@ -1319,6 +1323,23 @@ struct SeasonCalendarView: View {
             ForEach(CyclePhase.displayOrder, id: \.self) { legendItem($0) }   // 봄→여름→가을→겨울(2026-07-29 피드백)
             Spacer()
             // 「기록」 스와치 폐기(2026-08-01 베타 피드백) — 상단 「생리 기록」 버튼과 중복 안내였다
+            if ThemeStore.chrome.playlistChrome {
+                // 플리 = 생리 기록이 범례 줄 우측(시안 §4.4 ③ .pl-log — 헤더에서 하단으로)
+                Button {
+                    showLogSheet = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Circle().fill(Ink.record).frame(width: 7, height: 7)
+                        Text("생리 기록")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Ink.text)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+                }
+                .coachAnchor(.calendarLog)
+            }
         }
         // 티켓 = 달 이동 화살표가 같은 줄 양 끝에 얹힌다 — 항목이 화살표 자리까지 흐르면
         // 「봄」이 ‹ 뒤에 가려진다(2026-08-17 베타 피드백). 좌우를 화살표 폭만큼 비운다.

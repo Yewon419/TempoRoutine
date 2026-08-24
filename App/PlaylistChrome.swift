@@ -143,70 +143,104 @@ struct PlaylistPlayerCard: View {
     }
 }
 
-/// 앨범 헤더 — 캘린더 상단(시안 §4.4 ③). 좌측 조판(연도 극소 라벨 → 월 38 + 이전·정지·다음 →
-/// 월 진행 바 → 계절 라인 → 「생리 기록」) + 우측 커버 96pt. 월 = 앨범, 오늘 = 재생 위치.
-/// 정지 = **오늘 달로 되돌아오기**(계약). 히트 영역 44pt, 글리프만 작게 그린다(§4.7).
-struct PlaylistAlbumHeader: View {
+/// 캘린더 = 레코드판(시안 §4.4 ③, 2026-08-25 확정 — 「앨범 헤더」 대체).
+/// LP 상단 반노출·회전(플랫 — 명암 없음, 그루브 선만) + 진행 원호·도트(보이는 아래 반원에
+/// 좌→우 매핑) + 톤암 + 지면 직결 조판(글래스 없음). 컨트롤 ◀ ■ ▶ 하단 정가운데,
+/// 정지 = **오늘 달로 되돌아오기**(계약 유지). 히트 영역 44pt.
+/// ⚠ 디스크는 화면 위로 넘쳐 상태바 뒤까지 올라간다 — 시계 가독은 실기기 확인 큐.
+struct PlaylistRecordHeader: View {
     let year: Int
     let month: Int
-    /// 이 달 트랙의 재생 위치 — 오늘 이전 달 1, 미래 달 0, 이 달은 일/일수
-    let monthProgress: Double
-    let seasonLine: String
     let phase: CyclePhase?
     let date: Date
+    /// 현재 계절 트랙의 재생 위치 — 일차/계절 길이(§4.4 ③ 진행 원호·시크바 공용)
+    let trackDay: Int
+    let trackLength: Int
+    /// 6주 달 — 디스크 노출을 20pt 줄여 격자에 양보(활판 §2.3-10과 같은 축)
+    let compact: Bool
     let onPrev: () -> Void
     let onStop: () -> Void
     let onNext: () -> Void
-    let onLogTap: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var spinning = false
+
+    // 시안 §4.4 ③ 치수
+    private let discSize: CGFloat = 256
+    private let ringSize: CGFloat = 284
+    private let labelSize: CGFloat = 110
+
+    private var progress: Double {
+        trackLength > 0 ? min(1, Double(trackDay) / Double(trackLength)) : 0
+    }
+    private var meta: SeasonMeta { seasonMeta(for: phase ?? .menstrual) }
 
     var body: some View {
-        HStack(spacing: 14) {
-            main
-            cover
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity)
-        .milkGlass()
+        typeStack
+            .frame(maxWidth: .infinity)
+            .padding(.top, compact ? 84 : 104)   // 디스크 보이는 몫
+            .background(alignment: .top) {
+                discAssembly.offset(y: compact ? -206 : -186)
+            }
     }
 
-    private var main: some View {
-        VStack(alignment: .leading, spacing: 0) {
+    // ── 조판(지면 직결) — 2026 / 7월 / 가을 센터 스택 → 시크바 → 컨트롤 정가운데 ──
+    private var typeStack: some View {
+        VStack(spacing: 0) {
             Text(String(year))
                 .font(.system(size: 10, weight: .medium))
                 .kerning(1.8)
                 .foregroundStyle(Ink.dim)
-            HStack(alignment: .center, spacing: 2) {
-                Text(Loc.monthName(month))
-                    .font(.system(size: 38, weight: .semibold))
+            Text(Loc.monthName(month))
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(Ink.text)
+            if phase != nil {
+                Text(meta.name)
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Ink.text)
-                Spacer(minLength: 0)
-                navButton(action: onPrev, label: Loc.str("이전 달")) {
-                    PlaylistTriangle(pointsRight: false).fill(Ink.text)
-                        .frame(width: 9, height: 12)
-                }
-                navButton(action: onStop, label: Loc.str("오늘 달로")) {
-                    ZStack {
-                        Circle().stroke(Ink.text, lineWidth: 1.4)
-                        RoundedRectangle(cornerRadius: 1.5).fill(Ink.text)
-                            .frame(width: 9, height: 9)
-                    }
-                    .frame(width: 28, height: 28)
-                }
-                navButton(action: onNext, label: Loc.str("다음 달")) {
-                    PlaylistTriangle(pointsRight: true).fill(Ink.text)
-                        .frame(width: 9, height: 12)
-                }
+                    .padding(.top, 1)
             }
-            PlaylistSeekBar(progress: monthProgress, barHeight: 2, knobSize: 7)
+            seek
                 .padding(.top, 8)
-            Text(seasonLine)
-                .font(.caption)
-                .foregroundStyle(Ink.dim)
-                .padding(.top, 8)
-            logButton
-                .padding(.top, 8)
+            controls
+                .padding(.top, 2)
         }
-        .frame(maxWidth: .infinity)
+    }
+
+    private var seek: some View {
+        VStack(spacing: 4) {
+            PlaylistSeekBar(progress: progress, barHeight: 3, knobSize: 7)
+            HStack {
+                Text(Loc.fmt("%lld일차", trackDay))
+                Spacer()
+                Text(Loc.fmt("%lld일", trackLength))
+            }
+            .font(.caption)
+            .foregroundStyle(Ink.dim)
+        }
+        .frame(width: 242)
+        .opacity(phase == nil ? 0 : 1)   // 콜드 = 자리 유지, 값 없음
+    }
+
+    private var controls: some View {
+        HStack(spacing: 12) {
+            navButton(action: onPrev, label: Loc.str("이전 달")) {
+                PlaylistTriangle(pointsRight: false).fill(Ink.text)
+                    .frame(width: 11, height: 14)
+            }
+            navButton(action: onStop, label: Loc.str("오늘 달로")) {
+                ZStack {
+                    Circle().stroke(Ink.text, lineWidth: 1.4)
+                    RoundedRectangle(cornerRadius: 1.5).fill(Ink.text)
+                        .frame(width: 9, height: 9)
+                }
+                .frame(width: 28, height: 28)
+            }
+            navButton(action: onNext, label: Loc.str("다음 달")) {
+                PlaylistTriangle(pointsRight: true).fill(Ink.text)
+                    .frame(width: 11, height: 14)
+            }
+        }
     }
 
     private func navButton(action: @escaping () -> Void, label: String,
@@ -217,36 +251,92 @@ struct PlaylistAlbumHeader: View {
         .accessibilityLabel(label)
     }
 
-    private var logButton: some View {
-        Button(action: onLogTap) {
-            HStack(spacing: 5) {
-                Circle().fill(Ink.record).frame(width: 7, height: 7)
-                Text("생리 기록")
+    // ── 디스크 어셈블리 — 회전 디스크 + 고정 진행 링·도트 + 톤암 ──
+    private var discAssembly: some View {
+        ZStack {
+            disc
+            progressRing
+            progressDot
+        }
+        .frame(width: ringSize, height: ringSize)
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .topTrailing) { tonearm }
+        .allowsHitTesting(false)   // 브랜드 표식·소식란 탭을 가로채지 않게(배경 장식)
+        .accessibilityHidden(true)   // 장식 — 정보는 조판·시크바가 담당
+    }
+
+    private var disc: some View {
+        let day: Int = Calendar.current.component(.day, from: date)
+        return ZStack {
+            Circle().fill(Color(red: 0x20 / 255, green: 0x2B / 255, blue: 0x34 / 255))
+            // 그루브 — 흰 4.5% 동심원(시안 5px 주기 근사). 플랫: 광택·그림자 없음
+            ForEach(0..<14, id: \.self) { ring in
+                Circle().stroke(Color.white.opacity(0.045), lineWidth: 1.5)
+                    .frame(width: 122 + CGFloat(ring) * 9.5, height: 122 + CGFloat(ring) * 9.5)
             }
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(Ink.text)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+            // 라벨 = 계절 커버(원형) + 흰 링 — 계절색 면이 에셋 결손 폴백(§4.5)
+            Circle().fill(meta.glow)
+                .overlay {
+                    Image(PlaylistSpec.coverAsset(for: phase, day: day))
+                        .resizable()
+                        .scaledToFill()
+                }
+                .frame(width: labelSize, height: labelSize)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.white.opacity(0.8), lineWidth: 3))
+            Circle().fill(Color(red: 0xE6 / 255, green: 0xEA / 255, blue: 0xEE / 255))
+                .frame(width: 6, height: 6)
+        }
+        .frame(width: discSize, height: discSize)
+        .rotationEffect(.degrees(spinning ? 360 : 0))
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 26).repeatForever(autoreverses: false)) {
+                spinning = true
+            }
         }
     }
 
-    private var cover: some View {
-        let day: Int = Calendar.current.component(.day, from: date)
-        return RoundedRectangle(cornerRadius: 10)
-            .fill(phase.map { seasonMeta(for: $0).glow } ?? Ink.glowWinter)   // 콜드 = 겨울(티켓 전례)
-            .overlay {
-                Image(PlaylistSpec.coverAsset(for: phase, day: day))
-                    .resizable()
-                    .scaledToFill()
-            }
-            .frame(width: PlaylistSpec.albumCoverSize, height: PlaylistSpec.albumCoverSize)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay {
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            }
-            .accessibilityHidden(true)
+    // 진행 원호 — 디스크 위쪽이 화면 밖이라 보이는 아래 반원에 좌→우 매핑(시안 동일).
+    // trim은 3시에서 시계방향뿐이라 scaleEffect(x:-1)로 뒤집는다(시안 scaleX(-1)와 같은 수).
+    private var progressRing: some View {
+        ZStack {
+            Circle().trim(from: 0, to: progress * 0.5)
+                .stroke(Ink.text, lineWidth: 2)
+            Circle().trim(from: progress * 0.5, to: 0.5)
+                .stroke(Ink.text.opacity(0.18), lineWidth: 2)
+        }
+        .frame(width: ringSize, height: ringSize)
+        .scaleEffect(x: -1)
+    }
+
+    private var progressDot: some View {
+        Circle().fill(Ink.text)
+            .frame(width: 8, height: 8)
+            .background(Circle().fill(Color.white.opacity(0.9)).frame(width: 14, height: 14))
+            .offset(x: ringSize / 2)
+            .rotationEffect(.degrees(progress * 180))
+            .scaleEffect(x: -1)
+    }
+
+    // 톤암 — 우상단 피벗(반쯤 화면 밖) → 로드 40°로 그루브 위. 전부 플랫 단색(명암 없음)
+    private var tonearm: some View {
+        let rodGray = Color(red: 0x7A / 255, green: 0x87 / 255, blue: 0x94 / 255)
+        let headDark = Color(red: 0x39 / 255, green: 0x43 / 255, blue: 0x4D / 255)
+        return ZStack(alignment: .top) {
+            Capsule().fill(rodGray)
+                .frame(width: 5, height: 140)
+                .overlay(alignment: .bottom) {
+                    RoundedRectangle(cornerRadius: 4).fill(headDark)
+                        .frame(width: 11, height: 24)
+                        .offset(y: 14)
+                }
+                .rotationEffect(.degrees(40), anchor: UnitPoint(x: 0.5, y: 0.07))
+            Circle().fill(rodGray)
+                .frame(width: 28, height: 28)
+                .offset(y: -4)
+        }
+        .offset(x: 14, y: 62)
     }
 }
 

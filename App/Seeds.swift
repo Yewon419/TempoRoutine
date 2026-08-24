@@ -224,8 +224,13 @@ struct SeedBadge: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(Ink.surface, in: Capsule())
-        .overlay(Capsule().stroke(Ink.text.opacity(0.15), lineWidth: 1))
+        // 사진 지면(티켓) = 잉크 스크림 칩(2026-08-25 베타 "씨앗 안 보여, 너무 하얘서" —
+        // 흰 유화 구간에서 흰 칩·흰 글리프가 잠겼다). 그 외 테마는 종전 surface 칩.
+        .background(ThemeStore.chrome.photographicGround
+                    ? AnyShapeStyle(Color(red: 0x22 / 255, green: 0x38 / 255, blue: 0x4F / 255).opacity(0.45))
+                    : AnyShapeStyle(Ink.surface), in: Capsule())
+        .overlay(Capsule().stroke(ThemeStore.chrome.photographicGround
+                                  ? Color.white.opacity(0.35) : Ink.text.opacity(0.15), lineWidth: 1))
         .animation(.spring(response: 0.32, dampingFraction: 0.7), value: count)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Loc.fmt("씨앗 %lld개", count))
