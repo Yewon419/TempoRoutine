@@ -46,6 +46,9 @@ struct SeasonCalendarView: View {
     // 시안 §2.3-10의 「6주 달은 112」를 기기 편차까지 확장: 빌드 462에서 8월(6주) 마지막 주가
     // 통째로 잘렸다(격자 295pt < 필요 344pt). 상한(150/112)에서 부족분만큼만 내린다.
     @State private var titleShrink: CGFloat = 0
+    // 활판 인용문 양보(2026-08-24) — 표제가 바닥(64)까지 줄어도 격자가 모자라면 인용문이 내린다.
+    // 시안 .phone(844)엔 안전영역·홈 인디케이터가 없어 실기기가 항상 더 좁다(16차 전례).
+    @State private var lpQuoteHidden = false
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
@@ -288,6 +291,10 @@ struct SeasonCalendarView: View {
                     noticeButton
                 }
                 monthHeader
+                // 활판 = 표제 아래 계절 고전 인용문(시안 §2.3-5, 2026-08-24 "인앱에도")
+                if ThemeStore.chrome.latinCalendarHeader, !lpQuoteHidden {
+                    letterpressQuoteBlock
+                }
             }
             weekdayRow
             // 월 표면이 손가락을 따라 움직인다(2026-07-27 사용자 지시 — 인식 후 전환에서 추종으로).
@@ -397,10 +404,22 @@ struct SeasonCalendarView: View {
 
     /// 표제 역산(2026-08-23). 격자 최소 = 행×54 + 행간 4. 부족하면 그만큼 표제를 줄이고 남으면
     /// 상한까지 되돌린다. 표제 라인박스가 1.02×크기(고정 프레임)라 한 걸음에 수렴 — 0.5pt 이하는 무시.
+    /// 인용문 양보(2026-08-24): 표제가 바닥인데도 모자라면 인용문(≈85pt)을 내린다. 복귀는
+    /// 여유가 인용문 높이보다 확실히 클 때만(-110pt) — 히스테리시스로 왕복을 막는다.
     private func fitLetterpressTitle(carouselHeight: CGFloat) {
         let rows = CGFloat(currentLayout.rowCount)
         let need = rows * minCellHeight + (rows - 1) * 4
-        let next = min(max(titleShrink + (need - carouselHeight) / 1.02, 0), letterpressTitleCap - 64)
+        let deficit = need - carouselHeight
+        let ceiling = letterpressTitleCap - 64
+        if !lpQuoteHidden, titleShrink >= ceiling - 0.5, deficit > 0.5 {
+            lpQuoteHidden = true
+            return   // 다음 측정에서 재보정
+        }
+        if lpQuoteHidden, deficit < -110 {
+            lpQuoteHidden = false
+            return
+        }
+        let next = min(max(titleShrink + deficit / 1.02, 0), ceiling)
         if abs(next - titleShrink) > 0.5 { titleShrink = next }
     }
 
@@ -639,6 +658,45 @@ struct SeasonCalendarView: View {
 
     private static func latinMonthLabel(_ date: Date) -> String {
         latinMonthFormatter.string(from: date)
+    }
+
+    // ── 활판 인용문 블록(시안 §2.3-5) — 표제 아래, 계절 고전 문장 + 출처 + 룰 + 라틴 날짜 스탬프 ──
+    /// 스탬프 "28 July" — 캘린더 라틴 표기와 같은 en_US 고정
+    private static let latinDayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "d MMMM"
+        return formatter
+    }()
+
+    @ViewBuilder
+    private var letterpressQuoteBlock: some View {
+        // 콜드(기록 없음) = 계절이 없으니 인용문도 없다 — 블록째 생략
+        if let phase = currentPhase {
+            let six = currentLayout.rowCount >= 6   // §2.3-10 감량과 같은 축
+            let q = LetterpressQuotes.quote(for: phase, day: cal.component(.day, from: today))
+            let noteFont: Font = AlmanacFont.available
+                ? .custom("GowunBatang-Regular", size: six ? 13 : 15)
+                : .system(size: six ? 13 : 15, design: .serif)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("\(q.line1)\n\(q.line2)")
+                    .font(noteFont)
+                    .lineSpacing(six ? 3 : 5)                       // 시안 line-height 1.5/1.65 근사
+                    .foregroundStyle(Ink.holiday)                   // 버밀리언(시안 --holiday)
+                Text(q.source)
+                    .font(AlmanacFont.available ? .custom("GowunBatang-Regular", size: 10.5)
+                                                : .system(size: 10.5, design: .serif))
+                    .foregroundStyle(Ink.text.opacity(0.55))
+                    .padding(.top, 7)
+                Rectangle().fill(Ink.holiday)
+                    .frame(width: 22, height: 1)
+                    .padding(.vertical, six ? 6 : 9)
+                Text(Self.latinDayFormatter.string(from: today))    // 이탤릭은 시스템 세리프(라틴 라벨 전례)
+                    .font(.system(size: 11.5, design: .serif).italic())
+                    .kerning(0.35)
+                    .foregroundStyle(Ink.holiday.opacity(0.85))
+            }
+        }
     }
 
     private var weekdaySymbols: [String] {
