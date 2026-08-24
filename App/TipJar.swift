@@ -230,9 +230,8 @@ struct TipBubble: View {
 
     private var card: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("혼자 만들고 있어요")
-                .font(.almanac(size: 17, weight: .bold))
-                .foregroundStyle(Ink.text)
+            // 표제 없음(2026-08-24 대표님 지시 "제목 빼고 다 본문으로") — 제목·본문이 같은 말을
+            // 두 번 하던 자리다. 문구는 message 한 곳에서만 나온다.
             Text(message)
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.7))
@@ -248,7 +247,7 @@ struct TipBubble: View {
         if store.cups > 0 {
             return Loc.fmt("커피 %1$@잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!", "\(store.cups)")
         }
-        return Loc.str("광고도 구독도 없이 만들고 있어요.")
+        return Loc.str("광고도 구독도 안 넣고 혼자 개발하고 있어요")
     }
 
     @ViewBuilder
@@ -297,9 +296,9 @@ struct TipBubble: View {
     /// 상품이 잡히면 실제 가격, 시험 빌드면 값 없이 「시험용」 표기(진짜 결제로 오인하지 않게)
     private var buyLabel: String? {
         if let product = store.product {
-            return Loc.fmt("커피 한 잔 · %1$@", "\(product.displayPrice)")
+            return Loc.fmt("개발자에게 커피 사주기 · %1$@", "\(product.displayPrice)")
         }
-        return store.isFreeTrial ? Loc.str("커피 한 잔 (시험용)") : nil
+        return store.isFreeTrial ? Loc.str("개발자에게 커피 사주기 (시험용)") : nil
     }
 
     private func note(_ text: String) -> some View {

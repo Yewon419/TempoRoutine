@@ -4,7 +4,7 @@
 // - **스토어는 건드리지 않는다.** 단일 default.store 그대로 — SwiftData 멀티컨피그(2층 스토어)는
 //   실기기 영속화 결함으로 롤백됐고 그 방식은 재도전 금지(repo CLAUDE.md). 여기는 스토어 밖에서
 //   CKSyncEngine이 레코드만 미러하는 별도 층이다. 동기화가 죽어도 로컬 데이터는 무사하다.
-// - **동기 범위 = 일정·Input·Output(서브태스크 포함)·완료 기록·체크인.** 생리 기록(PeriodDay)은
+// - **동기 범위 = 일정·Input·Output(서브태스크 포함)·완료 기록·체크인·리듬 설문.** 생리 기록(PeriodDay)은
 //   절대 미동기(§5.2 — 우리 컨테이너에 건강 데이터 저장 금지, 기기 간 경로는 Apple 건강 앱 E2E).
 // - **페이로드 = 내보내기 DTO JSON 재사용**(§5.5.1 직렬화 검증본). 레코드 1개 = 아이템 1개,
 //   충돌 = last-writer-wins(서버 레코드 위에 최신 로컬 페이로드 재저장).
@@ -254,6 +254,16 @@ final class PlannerSync: NSObject {
                                 isBackfilled: item.isBackfilled ? true : nil,
                                 completedAt: item.completedAt))
         }
+        // 리듬 설문(2026-08-24 대표님 보고 "기기간 연동이 안 돼") — 종전 동기 범위 밖이라 두 번째
+        // 기기가 설문을 다시 권하고 답도 안 따라왔다. **새 레코드 타입을 만들지 않는다** —
+        // 새 타입은 CloudKit 콘솔 프로덕션 스키마 배포가 선행 조건이라(08-11 「오류 12」 실측)
+        // 코드만으로 못 켠다. 기존 TRItem에 접두사만 더한다.
+        let reports = (try? context.fetch(FetchDescriptor<SelfReportRecord>())) ?? []
+        for item in reports {
+            put("selfreport", item.id,
+                SelfReportDTO(id: item.id, answers: item.answers,
+                              completedAt: item.completedAt, sharedToServer: item.sharedToServer))
+        }
         // 씨앗 소비 원장 — 획득(체크인 completedAt)만 이어지고 소비는 기기마다 따로 놀던 결함(P-6)
         if let ledger = try? Self.payloadEncoder.encode(Seeds.ledger) {
             map[Self.ledgerRecordName] = ledger
@@ -457,6 +467,21 @@ final class PlannerSync: NSObject {
             if byDay == nil { context.insert(item) }
             return true
         }
+        if name.hasPrefix("selfreport_"), let dto = try? dec.decode(SelfReportDTO.self, from: payload) {
+            let existing = fetchOne(SelfReportRecord.self, id: dto.id, context: context)
+            let item = existing ?? SelfReportRecord(answers: dto.answers)
+            item.id = dto.id
+            item.answers = dto.answers
+            item.completedAt = dto.completedAt
+            item.sharedToServer = dto.sharedToServer
+            if existing == nil {
+                context.insert(item)
+                // 저쪽에서 답한 설문이 내려왔으면 이 기기에서 다시 권하지 않는다(권유 플래그는
+                // UserDefaults라 동기 대상이 아니다 — 내려온 사실로 대신 세운다)
+                SelfReportStore.hasPrompted = true
+            }
+            return true
+        }
         return false
     }
 
@@ -492,6 +517,11 @@ final class PlannerSync: NSObject {
             return true
         }
         if name.hasPrefix("checkin_"), let item = fetchOne(DailyCheckIn.self, id: uuid, context: context) {
+            context.delete(item)
+            return true
+        }
+        if name.hasPrefix("selfreport_"),
+           let item = fetchOne(SelfReportRecord.self, id: uuid, context: context) {
             context.delete(item)
             return true
         }
@@ -567,6 +597,7 @@ extension InputProgress: SyncIdentifiable { var syncID: UUID { id } }   // 2026-
 extension OutputItem: SyncIdentifiable { var syncID: UUID { id } }
 extension ItemCompletion: SyncIdentifiable { var syncID: UUID { id } }
 extension DailyCheckIn: SyncIdentifiable { var syncID: UUID { id } }
+extension SelfReportRecord: SyncIdentifiable { var syncID: UUID { id } }   // 2026-08-24
 
 // ── CKSyncEngine 델리게이트 ──
 

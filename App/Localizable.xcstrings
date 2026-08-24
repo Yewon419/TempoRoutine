@@ -3635,6 +3635,75 @@
         }
       }
     },
+    "개발자에게 커피 사주기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy the developer a coffee"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開発者にコーヒーをおごる"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请开发者喝杯咖啡"
+          }
+        }
+      }
+    },
+    "개발자에게 커피 사주기 (시험용)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy the developer a coffee (test)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開発者にコーヒーをおごる（テスト用）"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请开发者喝杯咖啡（测试用）"
+          }
+        }
+      }
+    },
+    "개발자에게 커피 사주기 · %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy the developer a coffee · %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開発者にコーヒーをおごる · %1$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请开发者喝杯咖啡 · %1$@"
+          }
+        }
+      }
+    },
     "개인정보 처리방침": {
       "extractionState": "manual",
       "localizations": {
@@ -4597,6 +4666,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "节假日"
+          }
+        }
+      }
+    },
+    "광고도 구독도 안 넣고 혼자 개발하고 있어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No ads, no subscriptions. I build this on my own."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "広告もサブスクも入れず、ひとりで開発しています"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有广告，没有订阅，我一个人在开发"
           }
         }
       }

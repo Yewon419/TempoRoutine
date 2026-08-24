@@ -187,7 +187,7 @@ struct ThemeShopView: View {
             TipMascot(diameter: 26, color: Ink.text, resting: tips.cups > 0)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("만드는 사람에게 커피 한 잔")
+        .accessibilityLabel("개발자에게 커피 사주기")
     }
 
     private func closeTip() {
