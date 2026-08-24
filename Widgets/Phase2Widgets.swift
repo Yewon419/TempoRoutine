@@ -68,9 +68,7 @@ struct WeekStripView: View {
     private var today: Date { cal.startOfDay(for: entry.date) }
 
     private var weekdaySymbols: [String] {
-        let symbols = cal.veryShortWeekdaySymbols
-        let shift = cal.firstWeekday - 1
-        return Array(symbols[shift...] + symbols[..<shift])
+        WInk.weekdaySymbols(cal)   // 활판 = 라틴 / 그 외 = 앱 언어(2026-08-24 §2.5.1)
     }
 
     var body: some View {
@@ -89,8 +87,8 @@ struct WeekStripView: View {
         let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
         return VStack(spacing: 8) {
             Text(weekdaySymbols[index])
-                .font(.system(size: 11))
-                .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.accent.opacity(0.8))   // 구조색(기본=winter 동값)
+                .font(WInk.weekdayFont(size: 11))
+                .foregroundStyle(WInk.weekdayInk(weekday, fallback: WInk.accent.opacity(0.8)))   // 구조색(기본=winter 동값) / 활판=버밀리언
             ZStack {
                 // 계절 = 숫자 아래 얇은 밑줄 띠(2026-07-28 4차 — 앱 캘린더와 동일)
                 if let season = day?.season {

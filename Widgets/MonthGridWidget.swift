@@ -63,9 +63,7 @@ struct MonthGridView: View {
     private var rowCount: Int { (leadingBlanks + daysInMonth + 6) / 7 }
 
     private var weekdaySymbols: [String] {
-        let symbols = cal.veryShortWeekdaySymbols
-        let shift = cal.firstWeekday - 1
-        return Array(symbols[shift...] + symbols[..<shift])
+        WInk.weekdaySymbols(cal)   // 활판 = 라틴 / 그 외 = 앱 언어(2026-08-24 §2.5.1)
     }
 
     var body: some View {
@@ -95,8 +93,8 @@ struct MonthGridView: View {
             ForEach(0..<7, id: \.self) { index in
                 let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
                 Text(weekdaySymbols[index])
-                    .font(.system(size: 10))
-                    .foregroundStyle(WInk.weekdayAccent(weekday) ?? WInk.accent.opacity(0.75))   // 구조색(기본=winter 동값)
+                    .font(WInk.weekdayFont(size: 10))
+                    .foregroundStyle(WInk.weekdayInk(weekday, fallback: WInk.accent.opacity(0.75)))   // 구조색(기본=winter 동값) / 활판=버밀리언
                     .frame(maxWidth: .infinity)
             }
         }

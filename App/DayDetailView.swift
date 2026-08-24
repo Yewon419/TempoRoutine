@@ -92,6 +92,17 @@ struct DayDetailView: View {
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var isFuture: Bool { day > today }
+
+    /// 활판 라틴 스탬프 `Tuesday, 28 July` — 캘린더 latinMonthFormatter와 같은 en_US 고정
+    private static let latinStampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "EEEE, d MMMM"
+        return formatter
+    }()
+    private static func latinStamp(_ date: Date) -> String {
+        latinStampFormatter.string(from: date)
+    }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
 
     var body: some View {
@@ -214,9 +225,17 @@ struct DayDetailView: View {
                 almanacDisplay("\(cal.component(.day, from: day))",
                                size: ThemeStore.chrome.debossDisplay ? 80 : 56,
                                color: Ink.text)
-                Text(day.formatted(Loc.dateTime.month().weekday(.wide)))
-                    .font(.system(.subheadline, design: .serif))
-                    .foregroundStyle(Ink.text.opacity(0.6))
+                if ThemeStore.chrome.latinCalendarHeader {
+                    // 활판 = 라틴 이탤릭 스탬프(시안 §2.5.1 종결, 2026-08-24) — 캘린더 `July 2026`
+                    // 라벨과 동형(같은 서체·버밀리언). 언어 무관 라틴 — 활판 조판 문법의 일부.
+                    Text(Self.latinStamp(day))
+                        .font(.system(size: 14, design: .serif).italic())
+                        .foregroundStyle(Ink.autumn)
+                } else {
+                    Text(day.formatted(Loc.dateTime.month().weekday(.wide)))
+                        .font(.system(.subheadline, design: .serif))
+                        .foregroundStyle(Ink.text.opacity(0.6))
+                }
             }
             // 공휴일·기념일 표기(2026-07-28) — 소스는 캘린더 셀과 동일(애플 캘린더 우선, 내장 폴백)
             let holidays = dayHolidays()

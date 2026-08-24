@@ -38,6 +38,11 @@ enum WFont {
         case "standard":
             guard available else { return .system(size: size, weight: weight, design: .serif) }
             return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
+        // 활판 = 시스템 세리프 얇게(2026-08-24 대표님 "폰트 못 바꾸면 일단 얇게" — §2.5.1 종결).
+        // Noto Serif KR·Bodoni는 위젯 번들에서 의도적으로 제외(24MB 이중 탑재 금지, project.yml)라
+        // 시안의 200 웨이트를 시스템 세리프 .light로 근사한다.
+        case "letterpress":
+            return .system(size: size, weight: .light, design: .serif)
         default:
             return .system(size: size, weight: weight)   // 기본 = 시스템 서체
         }
@@ -386,6 +391,24 @@ enum WInk {   // 위젯 타깃 내부 공용(Phase2Widgets가 함께 씀) — �
         case 7: saturday
         default: nil
         }
+    }
+
+    /// 요일 심볼(2026-08-24 §2.5.1 종결) — 활판 = 캘린더와 같은 소문자 라틴(§2.3-4).
+    /// 그 외 = 앱 언어. ⚠ 종전 `cal.veryShortWeekdaySymbols`는 기기 로케일이라
+    /// 위젯 언어 연동(빌드 446)에서 요일만 빠져 있었다 — 함께 교정.
+    static func weekdaySymbols(_ cal: Calendar) -> [String] {
+        let symbols = WThemeStore.key == "letterpress"
+            ? ["s", "m", "t", "w", "t", "f", "s"] : Loc.veryShortWeekdaySymbols(cal)
+        let shift = cal.firstWeekday - 1
+        return Array(symbols[shift...] + symbols[..<shift])
+    }
+    /// 요일 행 서체 — 활판만 세리프(라틴 소문자 문법)
+    static func weekdayFont(size: CGFloat) -> Font {
+        WThemeStore.key == "letterpress" ? .system(size: size, design: .serif) : .system(size: size)
+    }
+    /// 요일 행 잉크 — 활판 = 전행 버밀리언(§2.3-4, 날짜 숫자는 주말 관례색 유지), 그 외 = 종전 규칙
+    static func weekdayInk(_ weekday: Int, fallback: Color) -> Color {
+        WThemeStore.key == "letterpress" ? autumn : (weekdayAccent(weekday) ?? fallback)
     }
 
     static func season(_ key: String?) -> Color {
