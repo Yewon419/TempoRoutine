@@ -335,9 +335,11 @@ struct SettingsView: View {
                     }
                     .foregroundStyle(Ink.text)
                 } footer: {
+                    // 「이전 설문 확인」은 별도 화면 없이 다시 하기에 합쳐졌다(2026-08-24 대표님
+                    // 지시) — 다시 하기를 누르면 이전 응답이 채워진 채 열린다.
                     Text(selfReports.isEmpty
                          ? Loc.str("응답은 이 기기에만 저장돼요.")
-                         : Loc.fmt("마지막 응답 %1$@건이 이 기기에 저장돼 있어요. 다시 답하면 새 응답으로 갱신됩니다.", "\(selfReports.count)"))
+                         : Loc.str("다시 하기를 누르면 이전 응답이 채워진 채 열려요. 확인만 하고 닫아도 돼요."))
                         .foregroundStyle(Ink.groundSub)
                 }
 
@@ -428,7 +430,12 @@ struct SettingsView: View {
         )) { file in
             ActivityShareSheet(url: file.url)
         }
-        .sheet(isPresented: $showSelfReport) { SelfReportFlow().themeColorScheme() }
+        .sheet(isPresented: $showSelfReport) {
+            // 다시 하기 = 마지막 응답을 채워서 연다(동기화로 내려온 응답 포함 — completedAt 최신)
+            SelfReportFlow(previousAnswers: selfReports.max(by: { $0.completedAt < $1.completedAt })?
+                .answers ?? [:])
+                .themeColorScheme()
+        }
         // 테마 탭 시트 표시는 RootTabView 한 곳(2026-08-11) — 여기선 플래그만 세운다
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)

@@ -6556,6 +6556,29 @@
         }
       }
     },
+    "다시 하기를 누르면 이전 응답이 채워진 채 열려요. 확인만 하고 닫아도 돼요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retaking opens with your previous answers filled in. You can also just review and close."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "やり直すと前回の回答が入った状態で開きます。確認だけして閉じても大丈夫です。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新作答时会带着上次的回答打开。只看一眼再关掉也可以。"
+          }
+        }
+      }
+    },
     "다음": {
       "extractionState": "manual",
       "localizations": {
@@ -14096,6 +14119,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "上个月"
+          }
+        }
+      }
+    },
+    "이전 응답이 채워져 있어요. 넘기면서 확인하고, 바뀐 것만 고쳐주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your previous answers are filled in. Flip through to review, and change only what's different."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前回の回答が入っています。見返しながら、変わったところだけ直してください。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已填入上次的回答。翻看确认，只改有变化的部分就行。"
           }
         }
       }

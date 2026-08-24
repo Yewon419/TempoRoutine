@@ -17,9 +17,19 @@ struct SelfReportFlow: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var step = 0
-    @State private var answers: [String: String] = [:]
+    @State private var answers: [String: String]
     /// 제시 순서만 섞는다. 한 번 섞은 순서를 유지해야 화면을 오갈 때 문항이 튀지 않는다.
     @State private var symptomOrder: [SurveyQuestion] = SelfReportSurvey.symptomQuestions.shuffled()
+    /// 다시 하기로 열렸는가 — 인트로에 「이전 응답이 채워져 있어요」 안내를 띄우는 기준.
+    private let prefilled: Bool
+
+    /// 다시 하기(2026-08-24 대표님 지시 "이전 설문 확인을 설문 다시하기와 합쳐버리자") —
+    /// 이전 응답을 채운 채 연다. 결과 화면이 없는 앱이라(§ 파일 머리말) 이전 응답을 「보는」
+    /// 유일한 길이 곧 이 프리필이다. 빈 답이면 첫 설문과 동일하게 동작한다.
+    init(previousAnswers: [String: String] = [:]) {
+        _answers = State(initialValue: previousAnswers)
+        prefilled = !previousAnswers.isEmpty
+    }
 
     private var totalSteps: Int { 5 }
     /// 스크롤 리셋 대상(2026-08-12) — 장이 바뀌면 여기로 되돌린다.
@@ -124,6 +134,11 @@ struct SelfReportFlow: View {
             Text("응답은 이 기기에만 저장됩니다.")
                 .font(.footnote)
                 .foregroundStyle(Ink.text.opacity(0.5))
+            if prefilled {
+                Text("이전 응답이 채워져 있어요. 넘기면서 확인하고, 바뀐 것만 고쳐주세요.")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.5))
+            }
         }
     }
 
