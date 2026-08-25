@@ -655,6 +655,7 @@ struct SettingsView: View {
         // 인메모리 캐시 — UserDefaults만 비우면 남는 것들
         ThemeStore.apply(nil)          // 정적 팔레트 → 기본 테마
         TipStore.shared.resetForAppReset()
+        ThemeMedia.shared.purgeForReset()   // 온디맨드 미디어 캐시(2026-08-25)
 
         // 위젯 — 빈 스냅샷 발행(홈 화면 위젯이 옛 데이터를 계속 그리지 않게)
         WidgetBridge.publish(periodDays: [])

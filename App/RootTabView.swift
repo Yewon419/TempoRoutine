@@ -104,6 +104,8 @@ struct RootTabView: View {
         }
         .onChange(of: appTheme) { _, newValue in
             ThemeStore.apply(newValue)   // 설정의 선(先)apply 보완 벨트 — 외부 변경(백업 복원 등) 대비
+            // 테마 미디어 온디맨드(2026-08-25) — 적용 순간이 다운로드 트리거. 이미 있으면 no-op
+            ThemeMedia.shared.ensure(for: AppTheme(rawValue: newValue) ?? .plain)
             // 프록시를 리빌드 전에 갱신(2026-08-20) — onAppear에만 두면 새 UITabBar가 옛
             // 프록시로 먼저 만들어질 수 있다(테마 전환 직후 하단바만 이전 테마로 남던 증상)
             Self.applyTabBarAppearance()
@@ -177,6 +179,9 @@ struct RootTabView: View {
             CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
             DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
             PlannerSync.shared.kick()   // 기기 간 동기화(2026-08-10) — 실행 시 왕복
+            // 테마 미디어 온디맨드(2026-08-25) — 현재 테마 몫이 비어 있으면 받는다
+            // (테마 적용 시 실패했거나, 백업 복원으로 테마만 넘어온 경우의 회복 경로)
+            ThemeMedia.shared.ensureCurrent()
         }
         .onChange(of: onboardingDone) { _, done in
             if done { ThemeTrial.beginIfNeeded() }   // 신규 = 온보딩 완료 시각부터 7일
