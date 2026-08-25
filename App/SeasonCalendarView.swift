@@ -419,9 +419,15 @@ struct SeasonCalendarView: View {
             if !lpCellTight { lpCellTight = true; return }        // ② 셀 48
             if !lpQuoteHidden { lpQuoteHidden = true; return }    // ③ 인용문(최후)
         }
-        if lpQuoteHidden, deficit < -110 { lpQuoteHidden = false; return }
-        if lpCellTight, !lpQuoteHidden, deficit < -60 { lpCellTight = false; return }
-        let next = min(max(titleShrink + deficit / 1.02, 0), ceiling)
+        // 회복은 양보의 역순 — 인용문 → 셀 → 표제. 임계는 각 단계가 되돌려 받을 비용보다 크게 잡아
+        // 왕복을 막는다(인용문 ≈80~98pt / 셀 = 행×6).
+        if lpQuoteHidden, deficit < -95 { lpQuoteHidden = false; return }
+        if lpCellTight, !lpQuoteHidden, deficit < -50 { lpCellTight = false; return }
+        // ⚠ 양보가 걸려 있으면 그 단계가 되찾을 몫(reserve)을 **표제보다 먼저** 떼어 둔다(2026-08-25).
+        // 종전엔 아래 한 줄이 남는 여유를 늘 먼저 먹어 deficit가 0 근처에 붙었고, 그래서 인용문
+        // 복귀 임계에 영영 못 닿았다 — 한 번 숨은 인용문이 5주 달로 넘어가도 안 돌아오던 뿌리.
+        let reserve: CGFloat = lpQuoteHidden ? 95 : (lpCellTight ? 50 : 0)
+        let next = min(max(titleShrink + (deficit + reserve) / 1.02, 0), ceiling)
         if abs(next - titleShrink) > 0.5 { titleShrink = next }
     }
 
@@ -682,27 +688,34 @@ struct SeasonCalendarView: View {
         if let phase = currentPhase {
             let six = currentLayout.rowCount >= 6   // §2.3-10 감량과 같은 축
             let q = LetterpressQuotes.quote(for: phase, day: cal.component(.day, from: today))
+            // 6주 달 압축(2026-08-25 대표님 결정 "6주 달 인용문 압축") — 8월 실측에서 양보 사다리가
+            // ①표제 −48 ②셀 48을 다 쓰고도 3pt가 모자라 인용문이 통째로 내려갔다. 인용문의 실제
+            // 세로 비용은 블록 높이(≈86)가 아니라 **부모 VStack 간격 12를 더한 98**이고, 그 12가
+            // 판정 경계에서 결정타였다. 6주 달에서만 본문 12·줄간격 1·여백 축소 + 앞뒤 간격 6으로
+            // 약 24pt를 돌려준다(5주 달은 시안 값 그대로).
             let noteFont: Font = AlmanacFont.available
-                ? .custom("GowunBatang-Regular", size: six ? 13 : 15)
-                : .system(size: six ? 13 : 15, design: .serif)
+                ? .custom("GowunBatang-Regular", size: six ? 12 : 15)
+                : .system(size: six ? 12 : 15, design: .serif)
             VStack(alignment: .leading, spacing: 0) {
                 Text("\(q.line1)\n\(q.line2)")
                     .font(noteFont)
-                    .lineSpacing(six ? 3 : 5)                       // 시안 line-height 1.5/1.65 근사
+                    .lineSpacing(six ? 1 : 5)                       // 시안 line-height 1.5/1.65 근사(6주는 압축)
                     .foregroundStyle(Ink.holiday)                   // 버밀리언(시안 --holiday)
                 Text(q.source)
                     .font(AlmanacFont.available ? .custom("GowunBatang-Regular", size: 10.5)
                                                 : .system(size: 10.5, design: .serif))
                     .foregroundStyle(Ink.text.opacity(0.55))
-                    .padding(.top, 7)
+                    .padding(.top, six ? 4 : 7)
                 Rectangle().fill(Ink.holiday)
                     .frame(width: 22, height: 1)
-                    .padding(.vertical, six ? 6 : 9)
+                    .padding(.vertical, six ? 4 : 9)
                 Text(Self.latinDayFormatter.string(from: today))    // 이탤릭은 시스템 세리프(라틴 라벨 전례)
                     .font(.system(size: 11.5, design: .serif).italic())
                     .kerning(0.35)
                     .foregroundStyle(Ink.holiday.opacity(0.85))
             }
+            // 표제와 인용문은 한 덩어리다 — 6주 달에선 열 간격 12를 6으로 당긴다(위아래 각 6pt).
+            .padding(.vertical, six ? -6 : 0)
         }
     }
 
