@@ -184,8 +184,26 @@ struct SeasonCalendarView: View {
             } else {
                 calendarColumn()
             }
+            // 플리 = LP 상단 덮개(2026-08-25 대표님 "LP판 상단부가 안예뻐서 하얀 바로 덮어버리자").
+            // 디스크는 화면 위로 넘쳐 잘리는데 그 잘린 테가 상태바와 겹쳐 지저분했다. 흰 바를
+            // 맨 위에 얹으면 디스크가 **바 아래에서 솟은 것**으로 읽히고, 확인 큐의
+            // 「상태바 시계가 디스크 위에서 읽히는지」도 같이 해소된다.
+            // 덮는 높이 = 안전영역(상태바 밴드)까지. 더 내리려면 `playlistTopBarDrop`만 올린다.
+            if ThemeStore.chrome.playlistChrome {
+                VStack(spacing: 0) {
+                    // 색을 `background`로 깐다 — 고정 높이 프레임에 `ignoresSafeArea`를 직접 걸면
+                    // 뷰가 안 늘어나 상태바 밴드가 안 칠해진다(유연한 배경만 확장된다).
+                    Color.clear
+                        .frame(height: playlistTopBarDrop)
+                        .background(Color.white.ignoresSafeArea(edges: .top))
+                    Spacer(minLength: 0)
+                }
+            }
         }
     }
+
+    /// LP 덮개가 안전영역 아래로 더 내려오는 몫(pt). 0 = 상태바 밴드까지만.
+    private let playlistTopBarDrop: CGFloat = 0
 
     /// 빠른 일정 = 시트가 아니라 키보드 위에 붙는 바(2026-08-01 사용자 지시) — 뒤 캘린더가 그대로 보인다.
     @ViewBuilder
