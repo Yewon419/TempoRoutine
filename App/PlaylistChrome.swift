@@ -268,10 +268,14 @@ struct PlaylistRecordHeader: View {
     private var disc: some View {
         let day: Int = Calendar.current.component(.day, from: date)
         return ZStack {
-            Circle().fill(Color(red: 0x20 / 255, green: 0x2B / 255, blue: 0x34 / 255))
-            // 그루브 — 흰 4.5% 동심원(시안 5px 주기 근사). 플랫: 광택·그림자 없음
+            // 흰 판(2026-08-26 대표님 "LP판이랑 바깥라인 진행도 바 하얗게"). 종전 #202B34 폐기.
+            // ⚠ 흰 지면·흰 영상 위에서 판이 사라지지 않게 극세 잉크 테두리를 남긴다 —
+            // 없으면 실루엣이 통째로 증발한다(색만 바꾸면 판이 안 읽힌다).
+            Circle().fill(Color.white)
+                .overlay(Circle().stroke(Ink.text.opacity(0.12), lineWidth: 1))
+            // 그루브 — 흰 판이 됐으니 잉크 6%로 뒤집는다(흰 4.5%는 흰 판에서 안 보인다)
             ForEach(0..<14, id: \.self) { ring in
-                Circle().stroke(Color.white.opacity(0.045), lineWidth: 1.5)
+                Circle().stroke(Ink.text.opacity(0.06), lineWidth: 1.5)
                     .frame(width: 122 + CGFloat(ring) * 9.5, height: 122 + CGFloat(ring) * 9.5)
             }
             // 라벨 = 계절 커버(원형) + 흰 링 — 계절색 면이 에셋 결손 폴백(§4.5)
@@ -284,7 +288,8 @@ struct PlaylistRecordHeader: View {
                 .frame(width: labelSize, height: labelSize)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.8), lineWidth: 3))
-            Circle().fill(Color(red: 0xE6 / 255, green: 0xEA / 255, blue: 0xEE / 255))
+            // 스핀들 — 흰 판에서 지면색(#E6EAEE)은 안 보인다. 잉크로 뒤집는다
+            Circle().fill(Ink.text.opacity(0.35))
                 .frame(width: 6, height: 6)
         }
         .frame(width: discSize, height: discSize)
@@ -300,16 +305,18 @@ struct PlaylistRecordHeader: View {
     // 진행 원호 — 디스크 위쪽이 화면 밖이라 보이는 아래 반원에 좌→우 매핑(시안 동일).
     // trim은 3시에서 시계방향뿐이라 scaleEffect(x:-1)로 뒤집는다(시안 scaleX(-1)와 같은 수).
     private var progressRing: some View {
+        // 흰 원호(2026-08-26 대표님 지시) — 지나온 몫은 흰색 100%, 남은 몫은 흰색 35%.
         ZStack {
             Circle().trim(from: 0, to: progress * 0.5)
-                .stroke(Ink.text, lineWidth: 2)
+                .stroke(Color.white, lineWidth: 2)
             Circle().trim(from: progress * 0.5, to: 0.5)
-                .stroke(Ink.text.opacity(0.18), lineWidth: 2)
+                .stroke(Color.white.opacity(0.35), lineWidth: 2)
         }
         .frame(width: ringSize, height: ringSize)
         .scaleEffect(x: -1)
     }
 
+    // 도트만 잉크로 남긴다 — 원호가 흰색이 된 이상 현재 위치를 짚는 건 이 점 하나뿐이다.
     private var progressDot: some View {
         Circle().fill(Ink.text)
             .frame(width: 8, height: 8)
