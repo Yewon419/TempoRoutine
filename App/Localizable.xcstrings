@@ -5176,6 +5176,29 @@
         }
       }
     },
+    "기록, 씨앗과 구매한 테마, 설정, iCloud 동기화 기록까지 전부 지우고 처음부터 시작해요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erases everything — records, seeds and purchased themes, settings, and iCloud sync data — and starts over."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録、タネと購入したテーマ、設定、iCloud同期データまですべて消して、最初からやり直します。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "抹掉所有内容：记录、种子和已购主题、设置以及 iCloud 同步数据，然后从头开始。"
+          }
+        }
+      }
+    },
     "기록된 %1$@주기 %2$@~%3$@일": {
       "extractionState": "manual",
       "localizations": {
@@ -7269,6 +7292,29 @@
         }
       }
     },
+    "되돌릴 수 없어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This can't be undone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "元に戻せません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此操作无法撤销。"
+          }
+        }
+      }
+    },
     "두 호르몬이 함께 낮아지는 시기라 몸과 마음이 예민해질 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -8185,6 +8231,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "删除所有记录"
+          }
+        }
+      }
+    },
+    "모든 기록과 함께 씨앗, 구매한 테마, 설정, iCloud 동기화 기록이 지워지고 온보딩부터 다시 시작해요. 건강 앱에 쓴 기록은 지우지 않아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All records will be erased along with seeds, purchased themes, settings and iCloud sync data, and onboarding starts again. Data written to the Health app is not deleted."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべての記録とともに、タネ・購入したテーマ・設定・iCloud同期データが消え、オンボーディングからやり直します。ヘルスケアAppに書き込んだ記録は消しません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有记录连同种子、已购主题、设置和 iCloud 同步数据都会被抹掉，并重新开始引导。写入健康 App 的记录不会被删除。"
           }
         }
       }
@@ -11754,6 +11823,29 @@
         }
       }
     },
+    "앱 초기화": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset App"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appをリセット"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置 App"
+          }
+        }
+      }
+    },
     "앱에서 쓸 언어를 골라 주세요.": {
       "extractionState": "manual",
       "localizations": {
@@ -11773,6 +11865,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "请选择 App 使用的语言。"
+          }
+        }
+      }
+    },
+    "앱을 초기화할까요?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset the app?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appをリセットしますか？"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要重置 App 吗？"
           }
         }
       }
@@ -14928,6 +15043,29 @@
         }
       }
     },
+    "전부 지우고 처음부터": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erase Everything and Start Over"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべて消して最初から"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部抹掉，从头开始"
+          }
+        }
+      }
+    },
     "전시 보러 가기": {
       "extractionState": "manual",
       "localizations": {
@@ -14970,6 +15108,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "它的意义在于看出起伏和波动，而不是绝对数值。"
+          }
+        }
+      }
+    },
+    "정말 초기화할까요?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Really reset?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本当にリセットしますか？"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确定要重置吗？"
           }
         }
       }
@@ -16373,6 +16534,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "重置"
+          }
+        }
+      }
+    },
+    "초기화 마무리 대기 — iCloud 연결 후 다시 열어주세요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset not finished — open the app again once iCloud is reachable"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リセット未完了 — iCloudに接続してからもう一度開いてください"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置尚未完成，请连接 iCloud 后再次打开"
           }
         }
       }

@@ -99,6 +99,33 @@ final class PlannerSync: NSObject {
         }
     }
 
+    /// 앱 초기화가 존 삭제에 실패한 채 끝났다는 표시(오프라인 등) — 다음 start()가 동기화
+    /// 전에 존부터 지운다. 안 그러면 재온보딩 후 첫 왕복이 옛 기록을 통째로 내려받는다.
+    static let purgePendingKey = "plannerSyncPurgePending"
+
+    /// 앱 초기화(2026-08-25 대표님 지시) — CloudKit 존을 통째로 지우고 엔진·상태 파일을 내린다.
+    /// 레코드 개별 삭제가 아니라 존 삭제인 이유: 로컬 상태 파일 없이도 서버 쪽을 한 번에 비우는
+    /// 유일한 원자적 수단이고, 존은 다음 start()가 다시 만든다(zoneSaved 플래그 제거로).
+    /// 반환 = 서버 존까지 지웠는가. 실패면 purgePendingKey를 세워 다음 start()가 재시도한다.
+    func purgeForReset() async -> Bool {
+        engine = nil
+        running = false
+        try? FileManager.default.removeItem(at: engineStateURL)
+        try? FileManager.default.removeItem(at: syncedURL)
+        synced = [:]
+        recordCache = [:]
+        pendingPayloads = [:]
+        let ck = CKContainer(identifier: Self.containerID)
+        do {
+            _ = try await ck.privateCloudDatabase.modifyRecordZones(saving: [], deleting: [zone])
+            UserDefaults.standard.removeObject(forKey: Self.purgePendingKey)
+            return true
+        } catch {
+            UserDefaults.standard.set(true, forKey: Self.purgePendingKey)
+            return false
+        }
+    }
+
     private func start() async {
         guard engine == nil, container != nil else { return }
         let ck = CKContainer(identifier: Self.containerID)
@@ -107,6 +134,15 @@ final class PlannerSync: NSObject {
         guard accountAvailable else {
             lastReport = Loc.str("iCloud 계정 없음 — 로그인하면 이어져요")
             return
+        }
+        // 초기화가 남긴 미완 존 삭제(위 purgeForReset 실패 경로) — 동기화보다 먼저.
+        // 실패하면 엔진을 안 올린다: 옛 기록을 내려받느니 이번 실행은 동기화를 쉰다.
+        if UserDefaults.standard.bool(forKey: Self.purgePendingKey) {
+            guard (try? await ck.privateCloudDatabase.modifyRecordZones(saving: [], deleting: [zone])) != nil else {
+                lastReport = Loc.str("초기화 마무리 대기 — iCloud 연결 후 다시 열어주세요")
+                return
+            }
+            UserDefaults.standard.removeObject(forKey: Self.purgePendingKey)
         }
         var stateSerialization: CKSyncEngine.State.Serialization?
         if let data = try? Data(contentsOf: engineStateURL) {

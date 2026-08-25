@@ -26,6 +26,8 @@ struct SettingsView: View {
     @State private var shareURL: URL?
     @State private var showImporter = false
     @State private var showWipeConfirm = false
+    @State private var showResetConfirm = false
+    @State private var showResetFinalConfirm = false
     /// 언어 변경 대기값(2026-08-22 대표님 "언어 바꾸면 앱 재시작") — 피커는 이 값에 묶고, 확인을
     /// 눌러야 저장·종료한다. @AppStorage에 직접 묶으면 종료 전에 루트 리빌드가 먼저 돌아 옛 언어
     /// 조각이 스치고 무거운 재구성이 헛돈다.
@@ -374,6 +376,17 @@ struct SettingsView: View {
                         .foregroundStyle(Ink.danger)
                 }
 
+                // 앱 초기화(2026-08-25 대표님 지시 "모든 기록 삭제가 앱 초기화가 아니네") —
+                // 기록 삭제와 분리해 둔다: 기록만 지우는 경로(undo 있음)는 살리고, 이건
+                // 새 설치와 동일한 리셋(undo 없음·확인 2단)이다.
+                Section {
+                    Button("앱 초기화", role: .destructive) { showResetConfirm = true }
+                        .foregroundStyle(Ink.danger)
+                } footer: {
+                    Text("기록, 씨앗과 구매한 테마, 설정, iCloud 동기화 기록까지 전부 지우고 처음부터 시작해요.")
+                        .foregroundStyle(Ink.groundSub)
+                }
+
                 // ── 하늘 상태 스위처(날씨 테마 전용, 2026-08-19) — WeatherKit 연결(Phase ②)
                 // 전까지의 확인용. 시간대 고정까지 합쳐 12상태를 시각과 무관하게 확인한다.
                 if ThemeStore.chrome.skyGround {
@@ -449,6 +462,19 @@ struct SettingsView: View {
         } message: {
             // §5.7: 이 앱이 쓴 것만 지움 — 타 앱·건강앱 원본은 건강 앱에서
             Text("이 기기의 생리·컨디션·계획 기록이 모두 지워져요. 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.")
+        }
+        // 초기화 확인 2단(undo가 없어서) — 1단 = 지워지는 것 명시, 2단 = 최종 확인
+        .confirmationDialog("앱을 초기화할까요?", isPresented: $showResetConfirm, titleVisibility: .visible) {
+            Button("초기화", role: .destructive) { showResetFinalConfirm = true }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("모든 기록과 함께 씨앗, 구매한 테마, 설정, iCloud 동기화 기록이 지워지고 온보딩부터 다시 시작해요. 건강 앱에 쓴 기록은 지우지 않아요.")
+        }
+        .alert("정말 초기화할까요?", isPresented: $showResetFinalConfirm) {
+            Button("전부 지우고 처음부터", role: .destructive) { Task { await resetApp() } }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("되돌릴 수 없어요.")
         }
         .alert("데이터", isPresented: Binding(get: { message != nil },
                                           set: { if !$0 { message = nil; messageOffersPermission = false } })) {
@@ -586,6 +612,50 @@ struct SettingsView: View {
                 withAnimation { undoSnapshot = nil }
             }
         }
+    }
+
+    /// 앱 초기화(2026-08-25) — 새 설치와 동일한 상태로. 순서가 계약이다:
+    /// ① 알림 전부 취소 ② CloudKit 존 삭제(실패해도 진행 — 아래 ⑤에서 플래그로 이월)
+    /// ③ 로컬 스토어 전량 삭제 ④ UserDefaults(표준+App Group) 전량 삭제 ⑤ 존 삭제 실패 시
+    /// purgePending 재기록(④가 지웠으므로 ④ 뒤여야 한다) ⑥ 파생 표면 리셋.
+    /// 건강 앱 기록은 안 지운다 — 앱을 삭제해도 건강 앱 데이터는 남는 것과 같은 경계.
+    /// undo 없음(확인 2단이 그 자리를 대신한다). exit(0) 재시작도 안 쓴다(심사 리스크로 제거
+    /// 이력) — onboardingDone 제거가 루트 fullScreenCover를 즉시 되살린다.
+    private func resetApp() async {
+        undoDismissTask?.cancel()
+        undoSnapshot = nil
+
+        let center = UNUserNotificationCenter.current()
+        center.removeAllPendingNotificationRequests()
+
+        let zonePurged = await PlannerSync.shared.purgeForReset()
+
+        HealthMirror.resetImportState()
+        ExportImport.wipeAll(store, context: modelContext)
+        try? modelContext.save()
+
+        // UserDefaults — 앱이 쓴 도메인만 지운다. removePersistentDomain은 @AppStorage에
+        // 키별 변경 통지가 안 가는 수가 있어 키 단위로 지운다(onboardingDone 제거 →
+        // 루트 fullScreenCover가 이 통지로 온보딩을 되살린다).
+        let standard = UserDefaults.standard
+        if let bundleID = Bundle.main.bundleIdentifier,
+           let domain = standard.persistentDomain(forName: bundleID) {
+            for key in domain.keys { standard.removeObject(forKey: key) }
+        }
+        if let group = UserDefaults(suiteName: WidgetShared.appGroupID),
+           let domain = group.persistentDomain(forName: WidgetShared.appGroupID) {
+            for key in domain.keys { group.removeObject(forKey: key) }
+        }
+        if !zonePurged {
+            standard.set(true, forKey: PlannerSync.purgePendingKey)
+        }
+
+        // 인메모리 캐시 — UserDefaults만 비우면 남는 것들
+        ThemeStore.apply(nil)          // 정적 팔레트 → 기본 테마
+        TipStore.shared.resetForAppReset()
+
+        // 위젯 — 빈 스냅샷 발행(홈 화면 위젯이 옛 데이터를 계속 그리지 않게)
+        WidgetBridge.publish(periodDays: [])
     }
 
     private func undoWipe() {

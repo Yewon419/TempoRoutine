@@ -145,6 +145,14 @@ final class TipStore {
         status = .thanks
     }
 
+    /// 앱 초기화(2026-08-25) — UserDefaults는 밖에서 비우므로 여기선 인메모리만 맞춘다.
+    /// 안 맞추면 재온보딩 후에도 말풍선이 옛 잔 수를 계속 말한다(싱글턴은 리셋으로 안 죽는다).
+    func resetForAppReset() {
+        cups = 0
+        counted = []
+        rest()
+    }
+
     private func record(_ id: UInt64) {
         let key = String(id)
         guard !counted.contains(key) else { return }
