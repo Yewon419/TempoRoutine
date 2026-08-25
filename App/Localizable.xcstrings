@@ -13709,6 +13709,29 @@
         }
       }
     },
+    "이 기기의 생리·컨디션·계획 기록이 모두 지워지고, 건강 앱 연동은 꺼져요(켜 두면 건강 앱 기록을 곧바로 다시 가져와요). 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All period, condition and planner records on this device will be erased, and Health app syncing turns off (leaving it on would immediately re-import your Health records). The Health option deletes only records this app wrote to Health; originals from other apps can be deleted in the Health app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末の生理・体調・プランの記録がすべて消え、ヘルスケア連携はオフになります（オンのままだとヘルスケアの記録をすぐ再取得します）。ヘルスケアのオプションはこのAppが書き込んだ記録だけを消します。他のAppの元データはヘルスケアAppで削除できます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备上的经期、状态和计划记录将全部抹掉，健康 App 同步会关闭（若保持开启，会立即重新导入健康记录）。健康选项只删除本 App 写入健康的记录；其他 App 的原始数据可在健康 App 中删除。"
+          }
+        }
+      }
+    },
     "이 답들이 매달 비슷한가요": {
       "extractionState": "manual",
       "localizations": {

@@ -38,6 +38,8 @@ struct SettingsView: View {
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
     @State private var undoSnapshot: ExportEnvelopeV1?
+    /// 삭제 직전 건강 연동 상태(2026-08-25) — undo가 기록과 함께 연동도 되돌린다
+    @State private var undoWasLinked = false
     @State private var undoDismissTask: Task<Void, Never>?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 연동 토글, 확정 아님)
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
@@ -463,7 +465,7 @@ struct SettingsView: View {
             Button("취소", role: .cancel) {}
         } message: {
             // §5.7: 이 앱이 쓴 것만 지움 — 타 앱·건강앱 원본은 건강 앱에서
-            Text("이 기기의 생리·컨디션·계획 기록이 모두 지워져요. 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.")
+            Text("이 기기의 생리·컨디션·계획 기록이 모두 지워지고, 건강 앱 연동은 꺼져요(켜 두면 건강 앱 기록을 곧바로 다시 가져와요). 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.")
         }
         // 초기화 확인 2단(undo가 없어서) — 1단 = 지워지는 것 명시, 2단 = 최종 확인
         .confirmationDialog("앱을 초기화할까요?", isPresented: $showResetConfirm, titleVisibility: .visible) {
@@ -604,6 +606,11 @@ struct SettingsView: View {
             let uuids = periodDays.filter { $0.origin == .appAuthored }.compactMap(\.healthKitUUID)
             Task { await mirror.deleteSamples(uuids: uuids) }
         }
+        // 연동 중지(2026-08-25 베타 "좀있으면 다시 불러와") — 안 끄면 앵커 리셋 탓에 다음
+        // 동기화가 건강 앱 기록을 **전부 초기 가져오기**해서, 지운 생리 기록이 금방 되살아난다.
+        // undo가 연동 상태도 되돌리도록 종전 값을 스냅샷 옆에 잡아 둔다.
+        undoWasLinked = mirror.linked
+        mirror.linked = false
         HealthMirror.resetImportState()   // 앵커·툼스톤 리셋 — 재연동이 초기 가져오기가 되도록(2026-07-23)
         ExportImport.wipeAll(store, context: modelContext)
         refreshDerivedSurfaces()
@@ -632,6 +639,7 @@ struct SettingsView: View {
 
         let zonePurged = await PlannerSync.shared.purgeForReset()
 
+        mirror.linked = false   // 인메모리 싱글턴 — defaults만 비우면 true로 남아 재가져온다
         HealthMirror.resetImportState()
         ExportImport.wipeAll(store, context: modelContext)
         try? modelContext.save()
@@ -664,6 +672,7 @@ struct SettingsView: View {
     private func undoWipe() {
         guard let snapshot = undoSnapshot else { return }
         undoDismissTask?.cancel()
+        mirror.linked = undoWasLinked   // 연동도 삭제 전 상태로(2026-08-25)
         // 전량 삭제 직후라 기존 셋이 비어 있어 스냅샷 전체가 재삽입된다(UUID 보존)
         ExportImport.merge(snapshot, into: modelContext, existing: store)
         refreshDerivedSurfaces()
