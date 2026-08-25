@@ -246,14 +246,14 @@ struct MilkGlass: ViewModifier {
     func body(content: Content) -> some View {
         if ThemeStore.chrome.ticketChrome, let stub {
             // 발권물(시안 §3.3-②) — 스텁 자리를 본문에서 비우고, 윤곽을 V홈까지 도려낸다.
-            // 하단 18pt = 카드 간격을 시안 34로(컨테이너 spacing 16과 합산, 2026-08-14 실측 —
-            // 16 간격에서는 위 카드의 아래 V홈과 아래 카드의 위 V홈이 마주 봐 하나로 뭉친다).
+            // ⚠ 하단 +18은 여기 두지 않는다(2026-08-25 베타 "간격이 왜 다 다른 것이며" —
+            // 스텁 유무(빈 카드 = 스텁 nil)에 따라 16/34로 갈라졌다). 간격 34 균일화는
+            // 카드 스택 호출부(.ticketCardGap)가 전 카드에 일괄로 건다.
             content
                 .padding(.trailing, TicketSpec.stubWidth + 8)
                 .background(TicketSpec.ticketPaper)
                 .overlay(alignment: .trailing) { TicketCardStub(value: stub) }
                 .clipShape(TicketCardShape())
-                .padding(.bottom, 18)
         } else if ThemeStore.chrome.ticketChrome {
             // 스텁 없는 카드도 발권 지면(시안 .card 기본 — radius 4·그림자·유리 재질 없음).
             // 종전엔 둥근 유리 카드가 발권물과 섞여 지면이 두 문법으로 갈렸다(2026-08-17 피드백).
@@ -311,6 +311,12 @@ extension View {
     /// `stub`을 주면 티켓 테마에서만 발권물 문법(우측 스텁·V홈)으로 갈아탄다(시안 §3.3-②).
     func milkGlass(radius: CGFloat = 16, stub: String? = nil) -> some View {
         modifier(MilkGlass(radius: radius, stub: stub))
+    }
+
+    /// 티켓 카드 간격 보정(2026-08-25) — 컨테이너 spacing 16과 합산해 시안 34.
+    /// 스텁 유무와 무관하게 스택의 전 카드에 일괄로 건다(V홈 마주 봄 뭉침 방지 겸용).
+    func ticketCardGap() -> some View {
+        padding(.bottom, ThemeStore.chrome.ticketChrome ? 18 : 0)
     }
 
     /// 책력 괘선 — 항목 구분(§4 조판). 구조색(기본=은필 동값, 모던=흰색)

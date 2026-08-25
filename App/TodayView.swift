@@ -171,7 +171,7 @@ struct TodayView: View {
                                 section(kind: .output) { outputSection }
                             }
                             .frame(maxWidth: .infinity)
-                            CheckInCard(day: today).frame(width: 360)
+                            CheckInCard(day: today).ticketCardGap().frame(width: 360)
                         }
                     } else {
                         if !snapshot.isColdStart {
@@ -179,7 +179,7 @@ struct TodayView: View {
                             section(kind: .input) { inputSection }
                             section(kind: .output) { outputSection }
                         }
-                        CheckInCard(day: today)
+                        CheckInCard(day: today).ticketCardGap()
                     }
                 }
                 .padding(20)   // 상단 추가 여백 없음 — 캘린더 탭과 로고 높이 통일(2026-08-18 베타 피드백)
@@ -409,7 +409,18 @@ struct TodayView: View {
             Spacer()
         }
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        // 사진 지면(티켓) = 발권지 불투명 바(2026-08-25 베타 "상단 가을 바가 너무 어둡다" —
+        // ultraThin이 어두운 유화를 그대로 비쳤다). 그 외 테마는 종전 재질.
+        .background {
+            if ThemeStore.chrome.photographicGround {
+                TicketSpec.ticketPaper.ignoresSafeArea(edges: .top)
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(Ink.text.opacity(0.12)).frame(height: 1)   // 경계 극세 괘선(§3.3-⑦ 동조)
+                    }
+            } else {
+                Rectangle().fill(.ultraThinMaterial).ignoresSafeArea(edges: .top)
+            }
+        }
         .opacity(isCollapsed ? 1 : 0)
         .allowsHitTesting(false)
     }
@@ -512,6 +523,7 @@ struct TodayView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass(stub: ticketStub(for: kind))
+        .ticketCardGap()   // 티켓 간격 34 균일화(2026-08-25 베타)
         .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)
     }
 

@@ -344,6 +344,7 @@ struct DayDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .milkGlass(stub: ticketStub(kind))
+        .ticketCardGap()   // 티켓 간격 균일화(2026-08-25)
     }
 
     /// 티켓 스텁에 세울 «핵심 값 하나»(시안 §3.3-③) — 오늘 탭 ticketStub(for:)과 같은 규칙.
