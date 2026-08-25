@@ -24,7 +24,7 @@ struct PlaylistVideoGround: View {
             Ink.paper.ignoresSafeArea()   // 로드 전·에셋 결손 폴백 = 지면색
             switch phase {
             case .menstrual:
-                if let url = Bundle.main.url(forResource: "playlist-winter-bg", withExtension: "png"),
+                if let url = ThemeMedia.shared.localURL(named: "playlist-winter-bg.png"),
                    let image = UIImage(contentsOfFile: url.path) {
                     Image(uiImage: image)
                         .resizable()
@@ -44,6 +44,8 @@ struct PlaylistVideoGround: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+        // 온디맨드 다운로드 완료 시 재생성 — AVPlayer는 만들 때의 URL에 묶인다(ThemeMedia 계약)
+        .id(ThemeMedia.shared.revision)
     }
 }
 
@@ -65,8 +67,8 @@ private struct PlaylistLoopVideo: UIViewRepresentable {
     func makeUIView(context: Context) -> PlayerView {
         let view = PlayerView()
         view.playerLayer.videoGravity = .resizeAspectFill
-        guard let url = Bundle.main.url(forResource: name, withExtension: "mp4") else {
-            return view   // 에셋 결손 = 지면색 폴백(§4.5 계약)
+        guard let url = ThemeMedia.shared.localURL(named: name + ".mp4") else {
+            return view   // 미수신·결손 = 지면색 폴백(§4.5 계약 — 다운로드 완료 시 .id(revision)가 재생성)
         }
         // 무음 재생이 사용자의 음악을 끊지 않게 — ambient + mixWithOthers
         try? AVAudioSession.sharedInstance().setCategory(.ambient, options: .mixWithOthers)
