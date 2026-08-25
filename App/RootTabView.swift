@@ -25,6 +25,7 @@ struct RootTabView: View {
     @Query private var inputProgresses: [InputProgress]   // 위젯 진행 라벨(2026-08-20)
     @Query private var checkIns: [DailyCheckIn]   // 씨앗 획득 원장 백필(2026-08-20)
     @AppStorage("onboardingDone") private var onboardingDone = false
+    @State private var showLaunchSplash = !LaunchSplashGate.shown
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
     /// 포인트색(2026-08-17) — 아래 `.id`에 함께 태운다. 테마 키만 보면 포인트색 변경이
     /// 리빌드를 못 일으켜, 이미 그려진 화면이 옛 색으로 남았다("되었다 안 되었다" 베타 보고 —
@@ -47,6 +48,12 @@ struct RootTabView: View {
     /// 테마·언어 변경 = 루트 `.id` 리빌드인데, 그때마다 `.task`가 다시 돌아 이 무거운 묶음이
     /// 통째로 재실행됐다 — "적용이 조금씩 느리다"(2026-08-22 베타)의 본체. 쓰기는 메인뿐.
     nonisolated(unsafe) private static var bootstrapped = false
+
+    private func dismissLaunchSplash() {
+        guard showLaunchSplash else { return }
+        LaunchSplashGate.shown = true
+        withAnimation(.easeOut(duration: 0.4)) { showLaunchSplash = false }
+    }
 
     var body: some View {
         TabView(selection: $rootTab) {
@@ -116,6 +123,28 @@ struct RootTabView: View {
         .sheet(isPresented: $showThemeShop) { ThemeShopView().themeColorScheme() }
         // 체험 종료 선택 시트(2026-08-19) — 선택 전 닫기 불가(TrialEndSheet 쪽 interactiveDismissDisabled)
         .sheet(isPresented: $showTrialEnd) { TrialEndSheet { showTrialEnd = false }.themeColorScheme() }
+        // 콜드 런치 스플래시(2026-08-25 대표님 "앱 다시 켤 때 로딩화면") — 프로세스당 1회, 무음
+        // 1.1s·탭 스킵. 온보딩(첫 실행)은 자체 스플래시(사운드 포함)가 있어 여기선 건너뛴다.
+        // 루트 .id 리빌드(테마·언어 변경)엔 게이트가 재등장을 막는다.
+        .overlay {
+            if showLaunchSplash, onboardingDone {
+                ZStack {
+                    SplashGround(phase: CycleSnapshot(periodDays: periodDays)
+                        .phase(on: Calendar.current.startOfDay(for: .now)))
+                    BrandLogo(diameter: 72, color: SplashGround.pictorial ? .white : Ink.text)
+                }
+                .transition(.opacity)
+                .contentShape(Rectangle())
+                .onTapGesture { dismissLaunchSplash() }
+                .task {
+                    try? await Task.sleep(nanoseconds: 1_100_000_000)
+                    dismissLaunchSplash()
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("템포루틴")
+                .accessibilityHint(Loc.str("탭하면 건너뜁니다"))
+            }
+        }
         // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow().themeColorScheme()

@@ -159,10 +159,12 @@ struct OnboardingFlow: View {
     // 로고를 띄우고 시그니처 사운드를 한 번 낸다. 탭하면 즉시 건너뛴다.
     private var splash: some View {
         ZStack {
-            Ink.paper.ignoresSafeArea()
+            // 그림 배경 테마 = 제 지면 + 스크림 + 흰 심볼(2026-08-25 대표님). 첫 실행(기본 테마)은 종전 단색.
+            SplashGround(phase: CycleSnapshot(periodDays: periodDays)
+                .phase(on: Calendar.current.startOfDay(for: .now)))
             // 108 → 72(2026-08-03 베타 피드백 "글씨 너무 커"): 워드마크 크기는 외경에 비례하고
             // (0.8965배) 108이면 4글자 폭이 화면 폭을 거의 채운다. 비율 SSOT(build_final.py)는 불변.
-            BrandLogo(diameter: 72)
+            BrandLogo(diameter: 72, color: SplashGround.pictorial ? .white : Ink.text)
                 .opacity(splashLogoIn ? 1 : 0)
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.7), value: splashLogoIn)
         }

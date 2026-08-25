@@ -11,6 +11,7 @@
 // 성립하고 다른 배경에 올리면 밝은 원반이 그대로 드러난다(2026-07-27 결정).
 
 import SwiftUI
+import TempoCore   // SplashGround의 CyclePhase(2026-08-25)
 
 struct BrandLogo: View {
     var diameter: CGFloat = 96
@@ -124,4 +125,42 @@ struct BrandMark: View {
             BrandMark(diameter: 18)
         }
     }
+}
+
+
+// ── 스플래시 지면(2026-08-25 대표님 "배경 있으면 그 배경을 어둡게 깔고 심볼을 흰색으로") ──
+// 그림 배경 테마(은필 = 계절광·선화, 티켓 = 유화, 플리 = 계절 영상)는 제 지면 + 어두운 스크림 +
+// 흰 심볼. 단색 테마는 종전 지면색 + 잉크 심볼. 날씨는 하늘 상태 의존이라 일단 단색(미결).
+struct SplashGround: View {
+    let phase: CyclePhase?
+
+    /// 그림 배경 테마인가 — 심볼 색(흰색) 분기와 짝
+    static var pictorial: Bool {
+        ThemeStore.chrome.photographicGround || ThemeStore.chrome.videoGround
+            || ThemeStore.current == .standard
+    }
+
+    var body: some View {
+        ZStack {
+            if ThemeStore.chrome.photographicGround {
+                TicketGround(phase: phase)
+            } else if ThemeStore.chrome.videoGround {
+                PlaylistVideoGround()
+            } else if ThemeStore.current == .standard {
+                Ink.paper.ignoresSafeArea()
+                SeasonLight(phase: phase)
+            } else {
+                Ink.paper.ignoresSafeArea()
+            }
+            if Self.pictorial {
+                Color.black.opacity(0.42).ignoresSafeArea()   // 어두운 스크림 — 흰 심볼 가독
+            }
+        }
+    }
+}
+
+/// 콜드 런치 스플래시 게이트 — 프로세스당 1회. 루트 `.id` 리빌드(테마·언어)에 다시 안 뜬다.
+/// 쓰기는 메인 한정(루트 뷰 문맥) — ThemeStore 전례.
+enum LaunchSplashGate {
+    nonisolated(unsafe) static var shown = false
 }
