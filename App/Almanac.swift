@@ -316,7 +316,8 @@ extension View {
     /// 티켓 카드 간격 보정(2026-08-25) — 컨테이너 spacing 16과 합산해 시안 34.
     /// 스텁 유무와 무관하게 스택의 전 카드에 일괄로 건다(V홈 마주 봄 뭉침 방지 겸용).
     func ticketCardGap() -> some View {
-        padding(.bottom, ThemeStore.chrome.ticketChrome ? 18 : 0)
+        // 34 → 24(2026-08-25 베타 "간격만 좀 좁혀줘"). V홈 마주 봄 뭉침(16 간격)은 24에서도 안 남
+        padding(.bottom, ThemeStore.chrome.ticketChrome ? 8 : 0)
     }
 
     /// 책력 괘선 — 항목 구분(§4 조판). 구조색(기본=은필 동값, 모던=흰색)

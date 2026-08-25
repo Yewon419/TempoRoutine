@@ -429,6 +429,8 @@ struct SettingsView: View {
             ZStack {
                 if ThemeStore.chrome.skyGround {
                     WeatherSky()   // 날씨 = 오늘의 하늘(시안 §5.3-1)
+                } else if ThemeStore.chrome.videoGround {
+                    PlaylistVideoGround()   // 플리 = 계절 배경 영상(§4.4 ⑪)
                 } else {
                     Ink.paper
                     SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: .now)), motif: .open)

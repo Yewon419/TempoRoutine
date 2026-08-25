@@ -472,6 +472,8 @@ struct ThemeChrome {
     /// 지면 = 오늘의 하늘: 화면 지면을 SkySpec 그라데이션(ZStack 최하층)으로 교체.
     /// 캘린더만 얇은 다크 베일 14%를 덧깐다(격자 흰 숫자 대비 — §5.3-1)
     var skyGround = false
+    /// 지면 = 계절 배경 영상(플리, 시안 §4.4 ⑪ 2026-08-25 — 봄·여름·가을 루프 영상, 겨울 정지 이미지)
+    var videoGround = false
 
     // ── 신호 링 문법(2026-08-20 시안 — 리듬 탭 신호 패널 링 게이지 테마 분기) ──
     /// 링 트랙 재질. `.plain` = 종전 원형(기본·은필·포인트컬러·날씨 — 포인트컬러는
@@ -582,7 +584,7 @@ extension ThemeChrome {
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
         playlistChrome: true, liquidGlassCards: true, saturatedSeasonLight: true,
-        forcesLightAppearance: true, signalRing: .vinyl,
+        forcesLightAppearance: true, videoGround: true, signalRing: .vinyl,
         tintedTabBar: true, settingsList: .glass
     )
 

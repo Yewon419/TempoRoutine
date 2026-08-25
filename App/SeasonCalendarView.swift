@@ -46,9 +46,11 @@ struct SeasonCalendarView: View {
     // 시안 §2.3-10의 「6주 달은 112」를 기기 편차까지 확장: 빌드 462에서 8월(6주) 마지막 주가
     // 통째로 잘렸다(격자 295pt < 필요 344pt). 상한(150/112)에서 부족분만큼만 내린다.
     @State private var titleShrink: CGFloat = 0
-    // 활판 인용문 양보(2026-08-24) — 표제가 바닥(64)까지 줄어도 격자가 모자라면 인용문이 내린다.
-    // 시안 .phone(844)엔 안전영역·홈 인디케이터가 없어 실기기가 항상 더 좁다(16차 전례).
+    // 활판 양보 사다리(2026-08-25 개정 — 베타 "고전소설 문구 어디 들어간거야": 6주 달에서 인용문이
+    // 통째로 숨었다): ① 표제 150/112→64 ② 셀 최소 54→48 ③ 인용문 숨김(최후). 시안 .phone(844)엔
+    // 안전영역·홈 인디케이터가 없어 실기기가 항상 더 좁다(16차 전례).
     @State private var lpQuoteHidden = false
+    @State private var lpCellTight = false
 
     // v16 확정: 개방형·풀하이트 — 그리드가 남은 세로를 균등 분할(grid-auto-rows: 1fr).
     // 고정 셀 높이 폐기, 최소 높이만 보장(일정 글줄 노출 여지 — 프로토 min-height 54px).
@@ -159,6 +161,8 @@ struct SeasonCalendarView: View {
             // ⚠ 날씨 = 하늘 + 다크 베일 14%(시안 §5.3-1 — 낮 하늘 위 격자 흰 숫자 대비).
             if ThemeStore.chrome.skyGround {
                 WeatherSky(veil: 0.14)
+            } else if ThemeStore.chrome.videoGround {
+                PlaylistVideoGround()   // 플리 = 계절 배경 영상(§4.4 ⑪ — 캘린더도 같은 지면)
             } else {
                 (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
                     .ignoresSafeArea()
@@ -408,20 +412,21 @@ struct SeasonCalendarView: View {
     /// 여유가 인용문 높이보다 확실히 클 때만(-110pt) — 히스테리시스로 왕복을 막는다.
     private func fitLetterpressTitle(carouselHeight: CGFloat) {
         let rows = CGFloat(currentLayout.rowCount)
-        let need = rows * minCellHeight + (rows - 1) * 4
+        let need = rows * effMinCellHeight + (rows - 1) * 4
         let deficit = need - carouselHeight
         let ceiling = letterpressTitleCap - 64
-        if !lpQuoteHidden, titleShrink >= ceiling - 0.5, deficit > 0.5 {
-            lpQuoteHidden = true
-            return   // 다음 측정에서 재보정
+        if titleShrink >= ceiling - 0.5, deficit > 0.5 {
+            if !lpCellTight { lpCellTight = true; return }        // ② 셀 48
+            if !lpQuoteHidden { lpQuoteHidden = true; return }    // ③ 인용문(최후)
         }
-        if lpQuoteHidden, deficit < -110 {
-            lpQuoteHidden = false
-            return
-        }
+        if lpQuoteHidden, deficit < -110 { lpQuoteHidden = false; return }
+        if lpCellTight, !lpQuoteHidden, deficit < -60 { lpCellTight = false; return }
         let next = min(max(titleShrink + deficit / 1.02, 0), ceiling)
         if abs(next - titleShrink) > 0.5 { titleShrink = next }
     }
+
+    /// 격자 셀 최소 높이 — 활판 양보 ②단계에서만 48로 준다(다른 테마는 항상 54)
+    private var effMinCellHeight: CGFloat { lpCellTight ? 48 : minCellHeight }
 
     @ViewBuilder
     private func sidePanel(_ offsetMonths: Int, width: CGFloat) -> some View {
@@ -843,7 +848,7 @@ struct SeasonCalendarView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .frame(minHeight: minCellHeight, maxHeight: .infinity)   // 풀하이트 균등 분할
+                .frame(minHeight: effMinCellHeight, maxHeight: .infinity)   // 풀하이트 균등 분할(활판 양보 ② 반영)
                 .overlay(alignment: .topLeading) { bandRow(row: row, bars: render.bands.bars) }
             }
         }

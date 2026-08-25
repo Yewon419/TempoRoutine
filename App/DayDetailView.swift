@@ -110,6 +110,8 @@ struct DayDetailView: View {
             // 티켓 = 흰 지면(2026-08-18 2차 — 유화는 오늘·나의 템포만)
             if ThemeStore.chrome.skyGround {
                 WeatherSky()   // 날씨 = 오늘의 하늘(시안 §5.3-1 — 하루 상세도 하늘 지면)
+            } else if ThemeStore.chrome.videoGround {
+                PlaylistVideoGround()   // 플리 = 계절 배경 영상(§4.4 ⑪)
             } else {
                 Ink.paper.ignoresSafeArea()
                 SeasonLight(phase: snapshot.phase(on: day))

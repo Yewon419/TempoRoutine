@@ -153,17 +153,26 @@ struct TodayView: View {
                 TicketGround(phase: snapshot.phase(on: today))   // 계절 유화 + 스크림(시안 §3)
             } else if ThemeStore.chrome.skyGround {
                 WeatherSky()   // 날씨 = 오늘의 하늘(시안 §5.3-1)
+            } else if ThemeStore.chrome.videoGround {
+                PlaylistVideoGround()   // 플리 = 계절 배경 영상(시안 §4.4 ⑪, 2026-08-25)
             } else {
                 Ink.paper.ignoresSafeArea()
                 SeasonLight(phase: snapshot.phase(on: today))   // 계절광(§4) — 지면 위 고정 빛
             }
+            // 플리 오늘 탭 3단계(시안 §4.4 ⑫, 폰 전용) — s0: 플레이어 단독 센터.
+            // 탭/스와이프 → s1(카드), 리스트 바닥에서 한 번 더 → s2(체크인). 되감기 = 맨 위에서 당김.
+            if ThemeStore.chrome.playlistChrome, hSize != .regular, plStage == 0,
+               !snapshot.isColdStart, todayInfo != nil {
+                playlistStageZero
+            } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     largeHeader
                     stateSurfaces
                     if showNoticeCard { noticePermissionCard }
-                    if hSize == .regular && !snapshot.isColdStart {
-                        // 아이패드: 3구획 좌열 + 체크인 우측 레일(2026-07-23)
+                    if hSize == .regular {
+                        // 아이패드: 3구획 좌열 + 체크인 우측 레일(2026-07-23).
+                        // 콜드에도 연다(2026-08-25 베타 "계절 기록 전에도 일정·인풋·아웃풋 열어둬")
                         HStack(alignment: .top, spacing: 16) {
                             VStack(spacing: 16) {
                                 section(kind: .schedule) { scheduleSection }
@@ -174,12 +183,14 @@ struct TodayView: View {
                             CheckInCard(day: today).ticketCardGap().frame(width: 360)
                         }
                     } else {
-                        if !snapshot.isColdStart {
-                            section(kind: .schedule) { scheduleSection }
-                            section(kind: .input) { inputSection }
-                            section(kind: .output) { outputSection }
+                        // 콜드에도 연다(2026-08-25 베타) — 콜드 안내(stateSurfaces)와 공존
+                        section(kind: .schedule) { scheduleSection }
+                        section(kind: .input) { inputSection }
+                        section(kind: .output) { outputSection }
+                        // 플리 3단계: 체크인은 s2에서만(시안 §4.4 ⑫). 다른 테마·아이패드는 항상
+                        if !(ThemeStore.chrome.playlistChrome && hSize != .regular && plStage < 2) {
+                            CheckInCard(day: today).ticketCardGap()
                         }
-                        CheckInCard(day: today).ticketCardGap()
                     }
                 }
                 .padding(20)   // 상단 추가 여백 없음 — 캘린더 탭과 로고 높이 통일(2026-08-18 베타 피드백)
@@ -205,7 +216,17 @@ struct TodayView: View {
             }
             .coordinateSpace(name: "todayScroll")
             .scrollDismissesKeyboard(.interactively)   // 스크롤로도 키보드 닫힘
+            // 3단계 전환 — 바닥 넘김(+48) = s1→s2, 맨 위 당김(−64) = 한 단계 되감기(쿨다운 0.5s)
+            .onScrollGeometryChange(for: [Double].self) { g in
+                [g.contentOffset.y + g.contentInsets.top,
+                 g.contentOffset.y + g.containerSize.height - g.contentSize.height - g.contentInsets.bottom]
+            } action: { _, v in
+                guard ThemeStore.chrome.playlistChrome, hSize != .regular, v.count == 2 else { return }
+                if plStage == 1, v[1] > 48 { plAdvance(2) }
+                else if plStage > 0, v[0] < -64 { plAdvance(plStage - 1) }
+            }
             compactBar
+            }
         }
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet().themeColorScheme() }
         // 테마 탭 시트 표시는 RootTabView 한 곳 — 진입점이 둘(여기·설정)이라 각자 띄우면
@@ -400,6 +421,46 @@ struct TodayView: View {
     }
 
     // ── 컬랩싱 헤더: 컴팩트 바 층 ──
+    // ── 플리 오늘 탭 3단계(시안 §4.4 ⑫) — 진입·테마 전환마다 s0으로 복귀(루트 .id 리빌드) ──
+    @State private var plStage = 0
+    @State private var plStageAt = Date.distantPast
+
+    private func plAdvance(_ to: Int) {
+        guard Date.now.timeIntervalSince(plStageAt) > 0.5 else { return }   // 관성 두 단계 건너뜀 방지
+        plStageAt = .now
+        withAnimation(.easeOut(duration: 0.3)) { plStage = min(2, max(0, to)) }
+    }
+
+    /// s0 — 플레이어 단독 센터 + 힌트 셰브런. 탭 또는 세로 스와이프로 s1.
+    private var playlistStageZero: some View {
+        VStack(spacing: 0) {
+            HStack {
+                BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
+                    .padding(.leading, 6)
+                Spacer()
+                SeedBadge(count: Seeds.available(checkIns))
+            }
+            Spacer()
+            if let info = todayInfo {
+                PlaylistPlayerCard(meta: info.meta, dayInCycle: info.dayInCycle,
+                                   cycleLength: snapshot.averageLength,
+                                   phase: snapshot.phase(on: today), date: today)
+                    .onTapGesture { plAdvance(1) }
+            }
+            Image(systemName: "chevron.down")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(Ink.text.opacity(0.45))
+                .padding(.top, 18)
+            Spacer()
+        }
+        .padding(20)
+        .contentShape(Rectangle())
+        .gesture(DragGesture(minimumDistance: 20).onEnded { v in
+            if abs(v.translation.height) > 30 { plAdvance(1) }
+        })
+        .accessibilityAction(named: Loc.str("전체 보기")) { plAdvance(2) }
+    }
+
     private var compactBar: some View {
         HStack {
             Spacer()
