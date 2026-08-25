@@ -20,32 +20,39 @@ struct PlaylistVideoGround: View {
     }
 
     var body: some View {
-        ZStack {
-            Ink.paper.ignoresSafeArea()   // 로드 전·에셋 결손 폴백 = 지면색
-            switch phase {
-            case .menstrual:
-                if let url = ThemeMedia.shared.localURL(named: "playlist-winter-bg.png"),
-                   let image = UIImage(contentsOfFile: url.path) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .ignoresSafeArea()
+        // ⚠ scaledToFill을 ZStack에 직접 두면 레이아웃 프레임까지 커진다(TicketGround 전례 —
+        // 2026-08-25 베타 "캘린더 확대 버그"의 뿌리: 겨울 정지 이미지가 화면 폭을 밀어냈다).
+        // Color.clear가 제안 크기를 정확히 차지하고 콘텐츠는 overlay로만(레이아웃 무영향).
+        Color.clear
+            .overlay {
+                ZStack {
+                    Ink.paper   // 로드 전·에셋 결손 폴백 = 지면색
+                    switch phase {
+                    case .menstrual:
+                        if let url = ThemeMedia.shared.localURL(named: "playlist-winter-bg.png"),
+                           let image = UIImage(contentsOfFile: url.path) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                        }
+                    case .follicular:
+                        PlaylistLoopVideo(name: "playlist-spring-bg", paused: reduceMotion)
+                    case .ovulation:
+                        PlaylistLoopVideo(name: "playlist-summer-bg", paused: reduceMotion)
+                    case .luteal:
+                        PlaylistLoopVideo(name: "playlist-autumn-bg", paused: reduceMotion)
+                    }
+                    // 가독 베일(2026-08-25 베타 "가독성 개선 모색") — 영상 노이즈 위 잉크 활자 가독.
+                    // 흰 베일이라 탁함(어두운 스크림) 계열과 다르다. 시안 검토엔 없던 실기기 보정.
+                    Color.white.opacity(0.22)
                 }
-            case .follicular:
-                PlaylistLoopVideo(name: "playlist-spring-bg", paused: reduceMotion)
-                    .ignoresSafeArea()
-            case .ovulation:
-                PlaylistLoopVideo(name: "playlist-summer-bg", paused: reduceMotion)
-                    .ignoresSafeArea()
-            case .luteal:
-                PlaylistLoopVideo(name: "playlist-autumn-bg", paused: reduceMotion)
-                    .ignoresSafeArea()
             }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-        // 온디맨드 다운로드 완료 시 재생성 — AVPlayer는 만들 때의 URL에 묶인다(ThemeMedia 계약)
-        .id(ThemeMedia.shared.revision)
+            .clipped()
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+            // 온디맨드 다운로드 완료 시 재생성 — AVPlayer는 만들 때의 URL에 묶인다(ThemeMedia 계약)
+            .id(ThemeMedia.shared.revision)
     }
 }
 
@@ -78,7 +85,7 @@ private struct PlaylistLoopVideo: UIViewRepresentable {
         view.looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
         view.playerLayer.player = player
         view.player = player
-        if !paused { player.play() }
+        if !paused { player.rate = 0.5 }   // 재생 배속 0.5(2026-08-25 베타 "좀 더 천천히") — 재인코딩 불요
         return view
     }
 
@@ -86,7 +93,7 @@ private struct PlaylistLoopVideo: UIViewRepresentable {
         if paused {
             view.player?.pause()
         } else if view.player?.rate == 0 {
-            view.player?.play()
+            view.player?.rate = 0.5
         }
     }
 }
