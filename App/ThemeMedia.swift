@@ -27,8 +27,10 @@ final class ThemeMedia {
 
     /// 테마 → 필요한 에셋 파일명. 새 미디어 테마는 여기 한 줄 + 릴리스 업로드가 전부다.
     private static let manifest: [AppTheme: [String]] = [
-        .playlist: ["playlist-spring-bg.mp4", "playlist-summer-bg.mp4",
-                    "playlist-autumn-bg.mp4", "playlist-winter-bg.png"],
+        // -v2 = 2026-08-25 업스케일본(Kling 원본 960²를 2K로 올린 뒤 팬·크로스페이드 재적용).
+        // 구 파일명은 릴리스에 그대로 둔다 — 갱신은 이름으로만(위 계약).
+        .playlist: ["playlist-spring-bg-v2.mp4", "playlist-summer-bg-v2.mp4",
+                    "playlist-autumn-bg-v2.mp4", "playlist-winter-bg.png"],
     ]
 
     /// 파일이 새로 내려앉을 때마다 +1 — 영상 뷰는 `.id(revision)`으로 재생성해 새 파일을 문다

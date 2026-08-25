@@ -36,11 +36,11 @@ struct PlaylistVideoGround: View {
                                 .scaledToFill()
                         }
                     case .follicular:
-                        PlaylistLoopVideo(name: "playlist-spring-bg", paused: reduceMotion)
+                        PlaylistLoopVideo(name: "playlist-spring-bg-v2", paused: reduceMotion)
                     case .ovulation:
-                        PlaylistLoopVideo(name: "playlist-summer-bg", paused: reduceMotion)
+                        PlaylistLoopVideo(name: "playlist-summer-bg-v2", paused: reduceMotion)
                     case .luteal:
-                        PlaylistLoopVideo(name: "playlist-autumn-bg", paused: reduceMotion)
+                        PlaylistLoopVideo(name: "playlist-autumn-bg-v2", paused: reduceMotion)
                     }
                     // 가독 베일(2026-08-25 베타 "가독성 개선 모색") — 영상 노이즈 위 잉크 활자 가독.
                     // 흰 베일이라 탁함(어두운 스크림) 계열과 다르다. 시안 검토엔 없던 실기기 보정.
