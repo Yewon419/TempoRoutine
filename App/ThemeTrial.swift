@@ -46,6 +46,15 @@ enum ThemeTrial {
     static var isResolved: Bool { UserDefaults.standard.bool(forKey: resolvedKey) }
     static func resolve() { UserDefaults.standard.set(true, forKey: resolvedKey) }
 
+    /// 앱 평가 요청을 이미 했는가(2026-08-25 대표님 지시 "체험 끝나면 앱 평가해달라는 팝업").
+    /// 기기별 1회 — 체험 종료는 한 번뿐이고, 반복 요청은 애플이 어차피 막는다(연 3회 상한).
+    static let reviewAskedKey = "themeTrialReviewAsked"
+    static var reviewAsked: Bool { UserDefaults.standard.bool(forKey: reviewAskedKey) }
+    static func markReviewAsked() { UserDefaults.standard.set(true, forKey: reviewAskedKey) }
+
+    /// 체험이 실제로 있었고 끝났는가 — 평가 요청 조건(선택 시트 여부와 무관).
+    static var hasEnded: Bool { start != nil && !isActive }
+
     /// 종료 시트를 띄울 조건 — 체험이 실제로 있었고, 끝났고, 아직 안 골랐을 때.
     /// 은필 기보유(구매·승계) 생략 판정은 호출부(RootTabView)가 Seeds와 조합한다.
     static var needsResolution: Bool {

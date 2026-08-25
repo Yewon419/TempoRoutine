@@ -4,6 +4,7 @@
 import SwiftUI
 import SwiftData
 import UIKit   // 하단바 지면·라벨색은 UITabBarAppearance로만 잡힌다(티켓, 2026-08-16)
+import StoreKit   // 체험 종료 뒤 앱 평가 요청(2026-08-25)
 
 /// 루트 탭 식별자 — 리빌드를 건너 살아남아야 해서 문자열로 저장한다(§8.1 탭 순서).
 enum RootTab: String {
@@ -17,6 +18,7 @@ enum RootTab: String {
 struct RootTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.requestReview) private var requestReview
     @Query private var periodDays: [PeriodDay]
     @Query(sort: \ScheduleItem.date) private var schedules: [ScheduleItem]   // 위젯 스냅샷용(Phase 2)
     @Query(sort: \InputItem.createdAt) private var inputs: [InputItem]        // 오늘 카드 위젯(2026-07-27)
@@ -48,6 +50,21 @@ struct RootTabView: View {
     /// 테마·언어 변경 = 루트 `.id` 리빌드인데, 그때마다 `.task`가 다시 돌아 이 무거운 묶음이
     /// 통째로 재실행됐다 — "적용이 조금씩 느리다"(2026-08-22 베타)의 본체. 쓰기는 메인뿐.
     nonisolated(unsafe) private static var bootstrapped = false
+
+    /// 체험 종료 뒤 시스템 평가 프롬프트 1회(2026-08-25 대표님 지시). 7일을 다 써 본 사람에게
+    /// 묻는 자리라 맥락이 맞다 — 기능을 막거나 보상을 걸지 않는다(심사 지침 1.1.7).
+    /// ⚠ 표시 여부·횟수는 애플이 정한다(연 3회 상한). **TestFlight·개발 빌드에선 안 뜬다** —
+    /// 실기기 확인이 앱스토어 빌드에서만 가능하다는 뜻이라 여기 적어 둔다.
+    private func askForReviewAfterTrial() {
+        guard onboardingDone, ThemeTrial.hasEnded, !ThemeTrial.reviewAsked else { return }
+        ThemeTrial.markReviewAsked()   // 프롬프트가 안 떠도 다시 묻지 않는다(애플 상한과 같은 태도)
+        let review = requestReview
+        Task { @MainActor in
+            // 시트 닫힘·탭 전환 애니메이션과 겹치면 시스템 팝업이 씹힌다
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            review()
+        }
+    }
 
     private func dismissLaunchSplash() {
         guard showLaunchSplash else { return }
@@ -124,7 +141,13 @@ struct RootTabView: View {
         // 시트는 자기 presentation — 위 preferredColorScheme이 닿지 않아 루트마다 강제(2026-08-20)
         .sheet(isPresented: $showThemeShop) { ThemeShopView().themeColorScheme() }
         // 체험 종료 선택 시트(2026-08-19) — 선택 전 닫기 불가(TrialEndSheet 쪽 interactiveDismissDisabled)
-        .sheet(isPresented: $showTrialEnd) { TrialEndSheet { showTrialEnd = false }.themeColorScheme() }
+        .sheet(isPresented: $showTrialEnd) {
+            TrialEndSheet {
+                showTrialEnd = false
+                askForReviewAfterTrial()   // 테마를 고른 직후 — 7일을 다 써 본 자리(2026-08-25)
+            }
+            .themeColorScheme()
+        }
         // 콜드 런치 스플래시(2026-08-25 대표님 "앱 다시 켤 때 로딩화면") — 프로세스당 1회, 무음
         // 1.1s·탭 스킵. 온보딩(첫 실행)은 자체 스플래시(사운드 포함)가 있어 여기선 건너뛴다.
         // 루트 .id 리빌드(테마·언어 변경)엔 게이트가 재등장을 막는다.
@@ -157,15 +180,22 @@ struct RootTabView: View {
             if onboardingDone { ThemeTrial.beginIfNeeded() }
             // 체험 종료 판정 — 시트는 고를 게 있을 때만: 은필 미보유이거나, 미보유 테마를
             // 적용 중일 때. 은필 기보유 + 보유 테마 사용 중이면 조용히 종결(고를 게 없다).
+            var trialSheetOpening = showTrialEnd
             if onboardingDone, ThemeTrial.needsResolution {
                 let current = AppTheme(rawValue: appTheme) ?? .plain
                 let currentOwned = current.seedPrice == nil || Seeds.owned.contains(current.rawValue)
                 if !Seeds.owned.contains(AppTheme.standard.rawValue) || !currentOwned {
                     showTrialEnd = true
+                    trialSheetOpening = true
                 } else {
                     ThemeTrial.resolve()
                 }
             }
+            // 시트가 안 뜨는 경로(조용한 종결·이미 종결된 기존 사용자)에서도 한 번은 묻는다.
+            // 시트가 떴으면 그 닫힘 콜백이 맡는다 — 시트 위에 시스템 팝업을 겹치지 않게.
+            // ⚠ 판정에 `showTrialEnd`를 다시 읽지 않는다 — 방금 쓴 @State는 같은 갱신 주기에서
+            // 옛 값이 나올 수 있어 로컬 플래그로 잇는다.
+            if !trialSheetOpening { askForReviewAfterTrial() }
             // 아래는 프로세스당 1회 — 리빌드(테마·언어 변경)에서는 건너뛴다. 테마는 자기 onChange가
             // 위젯을 재발행하고, 언어도 아래 onChange(of: appLanguage)가 맡는다.
             guard !Self.bootstrapped else { return }
