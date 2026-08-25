@@ -9339,6 +9339,29 @@
         }
       }
     },
+    "비우기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除"
+          }
+        }
+      }
+    },
     "빠른 일정 추가": {
       "extractionState": "manual",
       "localizations": {
@@ -16837,6 +16860,52 @@
         }
       }
     },
+    "캐시 비우기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear cache"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュを削除"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除缓存"
+          }
+        }
+      }
+    },
+    "캐시를 비울까요?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear the cache?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュを削除しますか？"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要清除缓存吗？"
+          }
+        }
+      }
+    },
     "캘린더": {
       "extractionState": "manual",
       "localizations": {
@@ -17224,6 +17293,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "主题"
+          }
+        }
+      }
+    },
+    "테마 배경 영상처럼 내려받은 파일만 지워요. 기록은 그대로예요. 지금 쓰는 테마의 파일은 필요해지면 다시 받아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only downloaded files, such as theme background videos, are removed. Your records stay as they are. Files for the theme you're using are downloaded again when they're needed."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマの背景動画など、ダウンロードしたファイルだけを削除します。記録はそのままです。使用中のテーマのファイルは、必要になったときに再びダウンロードされます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅删除已下载的文件，例如主题背景视频。您的记录不受影响。正在使用的主题所需的文件会在需要时重新下载。"
           }
         }
       }

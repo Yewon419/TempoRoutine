@@ -28,6 +28,10 @@ struct SettingsView: View {
     @State private var showWipeConfirm = false
     @State private var showResetConfirm = false
     @State private var showResetFinalConfirm = false
+    /// 테마 미디어 캐시(2026-08-25 대표님 지시 "설정에 캐시삭제 기능도") — 파일 시스템을 훑는
+    /// 값이라 렌더마다 읽지 않는다. 설정 진입·삭제 직후에만 재계산한다.
+    @State private var showCachePurgeConfirm = false
+    @State private var cacheBytes = 0
     /// 언어 변경 대기값(2026-08-22 대표님 "언어 바꾸면 앱 재시작") — 피커는 이 값에 묶고, 확인을
     /// 눌러야 저장·종료한다. @AppStorage에 직접 묶으면 종료 전에 루트 리빌드가 먼저 돌아 옛 언어
     /// 조각이 스치고 무거운 재구성이 헛돈다.
@@ -354,6 +358,20 @@ struct SettingsView: View {
                         .foregroundStyle(Ink.text)
                     Button("백업 가져오기") { showImporter = true }
                         .foregroundStyle(Ink.text)
+                    // 캐시 비우기(2026-08-25) — 온디맨드 테마 미디어. 기록이 아니라 재다운로드
+                    // 가능한 파생물이라 파괴적 섹션이 아니라 데이터 섹션에 둔다(확인 1단).
+                    Button {
+                        showCachePurgeConfirm = true
+                    } label: {
+                        HStack {
+                            Text("캐시 비우기")
+                            Spacer()
+                            Text(Self.byteText(cacheBytes))
+                                .foregroundStyle(Ink.groundSub)
+                        }
+                    }
+                    .foregroundStyle(Ink.text)
+                    .disabled(cacheBytes == 0)
                     // 심사 지침 5.1.1(i)은 ASC 메타데이터뿐 아니라 **앱 안에서도** 처리방침에
                     // 닿을 수 있기를 요구한다(2026-08-12). 데이터 섹션에 두는 이유 = 내보내기·
                     // 삭제와 같은 "내 기록이 어디 있나" 맥락.
@@ -457,6 +475,15 @@ struct SettingsView: View {
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)
         }
+        .confirmationDialog("캐시를 비울까요?", isPresented: $showCachePurgeConfirm, titleVisibility: .visible) {
+            Button("비우기", role: .destructive) {
+                ThemeMedia.shared.purge()
+                cacheBytes = ThemeMedia.shared.cachedBytes
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("테마 배경 영상처럼 내려받은 파일만 지워요. 기록은 그대로예요. 지금 쓰는 테마의 파일은 필요해지면 다시 받아요.")
+        }
         .confirmationDialog("모든 기록을 삭제할까요?", isPresented: $showWipeConfirm, titleVisibility: .visible) {
             Button("기록만 삭제", role: .destructive) { wipeAll(includeHealth: false) }
             if periodDays.contains(where: { $0.origin == .appAuthored }) {
@@ -490,6 +517,12 @@ struct SettingsView: View {
             Text(message ?? "")
         }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .task { cacheBytes = ThemeMedia.shared.cachedBytes }
+    }
+
+    /// 캐시 크기 표기 — 숫자·단위라 카탈로그 키가 아니다(로케일은 포매터가 맡는다).
+    private static func byteText(_ bytes: Int) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
     }
 
     // ── undo 토스트 ──
@@ -663,7 +696,7 @@ struct SettingsView: View {
         // 인메모리 캐시 — UserDefaults만 비우면 남는 것들
         ThemeStore.apply(nil)          // 정적 팔레트 → 기본 테마
         TipStore.shared.resetForAppReset()
-        ThemeMedia.shared.purgeForReset()   // 온디맨드 미디어 캐시(2026-08-25)
+        ThemeMedia.shared.purge()   // 온디맨드 미디어 캐시(2026-08-25)
 
         // 위젯 — 빈 스냅샷 발행(홈 화면 위젯이 옛 데이터를 계속 그리지 않게)
         WidgetBridge.publish(periodDays: [])

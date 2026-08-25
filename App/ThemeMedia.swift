@@ -89,8 +89,20 @@ final class ThemeMedia {
         ensure(for: ThemeStore.current)
     }
 
-    /// 앱 초기화(2026-08-25) — 캐시 전량 삭제. 재다운로드 가능하므로 확인 없이 지운다.
-    func purgeForReset() {
+    /// 캐시가 지금 쓰는 바이트 — 설정 「캐시 비우기」 표기용. 번들 에셋은 지울 수 없으니 안 센다.
+    /// 파일 시스템을 훑으므로 렌더 경로에서 부르지 말 것(설정 진입·삭제 직후에만 재계산).
+    var cachedBytes: Int {
+        guard let items = try? FileManager.default.contentsOfDirectory(
+            at: dir, includingPropertiesForKeys: [.fileSizeKey]) else { return 0 }
+        return items.reduce(0) { sum, url in
+            sum + ((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+        }
+    }
+
+    /// 캐시 전량 삭제 — 앱 초기화(2026-08-25)와 설정 「캐시 비우기」(2026-08-25 대표님 지시)의
+    /// 공통 경로. 기록이 아니라 **재다운로드 가능한 파생물**이라 undo가 없다. 지금 쓰는 테마 몫은
+    /// 지면이 다시 필요해질 때 `ensure`가 받아 온다 — 여기서 곧바로 다시 받지는 않는다.
+    func purge() {
         try? FileManager.default.removeItem(at: dir)
         revision += 1
     }
