@@ -432,6 +432,10 @@ struct TodayView: View {
     // ── 플리 오늘 탭 3단계(시안 §4.4 ⑫) — 진입·테마 전환마다 s0으로 복귀(루트 .id 리빌드) ──
     @State private var plStage = 0
     @State private var plStageAt = Date.distantPast
+    /// s0 스와이프 추종분(2026-08-26 베타 "여기 스와이프 부드럽게 처리") — 종전엔 손을 뗄 때
+    /// 단계가 툭 바뀌기만 해서 화면이 손가락을 안 따라왔다. 손을 떼면 @GestureState가 스스로
+    /// 0으로 돌아가며 제자리 스프링백이 된다(임계 미달 시).
+    @GestureState private var plDragY: CGFloat = 0
 
     private func plAdvance(_ to: Int) {
         guard Date.now.timeIntervalSince(plStageAt) > 0.5 else { return }   // 관성 두 단계 건너뜀 방지
@@ -463,9 +467,22 @@ struct TodayView: View {
         }
         .padding(20)
         .contentShape(Rectangle())
-        .gesture(DragGesture(minimumDistance: 20).onEnded { v in
-            if abs(v.translation.height) > 30 { plAdvance(1) }
-        })
+        // 추종 = 이동 절반만 따라간다(고무줄). 임계를 넘기면 손을 뗄 때 s1로.
+        .offset(y: plDragY * 0.5)
+        .opacity(1 - min(0.3, abs(plDragY) / 300))
+        .gesture(
+            DragGesture(minimumDistance: 8)
+                .updating($plDragY) { value, state, transaction in
+                    state = value.translation.height
+                    transaction.animation = nil   // 추종 구간은 애니메이션 없이 즉시
+                }
+                .onEnded { v in
+                    // 던지듯 짧게 넘겨도 열리게 예측 이동량을 함께 본다
+                    if abs(v.translation.height) > 30 || abs(v.predictedEndTranslation.height) > 90 {
+                        plAdvance(1)
+                    }
+                }
+        )
         .accessibilityAction(named: Loc.str("전체 보기")) { plAdvance(2) }
     }
 
