@@ -737,6 +737,29 @@
         }
       }
     },
+    "%1$@ 으로 보내주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please write to %1$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 宛にお送りください。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请发送至 %1$@。"
+          }
+        }
+      }
+    },
     "%1$@ 잠은 %2$@에 가장 포근하고 %3$@에 가장 뒤척인 걸로 기록됐어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -3723,6 +3746,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "请开发者喝杯咖啡 · %1$@"
+          }
+        }
+      }
+    },
+    "개발자에게 피드백 보내기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send feedback to the developer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開発者にフィードバックを送る"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向开发者发送反馈"
           }
         }
       }
@@ -8212,6 +8258,29 @@
         }
       }
     },
+    "메일 앱을 열 수 없어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail can't be opened"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メールアプリを開けません"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法打开邮件应用"
+          }
+        }
+      }
+    },
     "메일함 체크": {
       "extractionState": "manual",
       "localizations": {
@@ -9059,6 +9128,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择视图"
+          }
+        }
+      }
+    },
+    "보내기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送"
           }
         }
       }
@@ -17500,6 +17592,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "TempoRoutine · 契合你身体的节奏"
+          }
+        }
+      }
+    },
+    "템포루틴 피드백": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine feedback"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テンポルーティン フィードバック"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TempoRoutine 反馈"
           }
         }
       }

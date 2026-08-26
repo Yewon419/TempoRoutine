@@ -4,6 +4,7 @@
 // ("아무와도 공유하지 않아요")와 비충돌. 씨앗 뿌리기 = 공지에 seeds 필드, 공지 id별 1회 수령(§3.8.1).
 // 진입 = 캘린더 탭 우상단 확성기 아이콘(미읽음 점 표시).
 
+import MessageUI
 import SwiftUI
 import SwiftData
 
@@ -82,9 +83,19 @@ final class NoticeFeed {
 // ── 소식 화면 — SNS 형식 카드 피드 ──
 struct NoticesView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     private var feed = NoticeFeed.shared
     /// 수령 상태는 씨앗 원장 — 생 UserDefaults 읽기는 무효화가 안 걸려서 방송 카운터를 지켜본다
     @AppStorage(Seeds.revisionKey) private var seedRevision = 0
+    // 개발자에게 피드백 보내기(2026-08-26 베타 "탭 하단부에 메세지 보내는 칸 같은거")
+    @State private var feedbackText = ""
+    @State private var showMailComposer = false
+    @State private var showMailFallback = false
+    @FocusState private var feedbackFocused: Bool
+
+    private var trimmedFeedback: String {
+        feedbackText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     var body: some View {
         NavigationStack {
@@ -109,6 +120,7 @@ struct NoticesView: View {
                 }
                 .refreshable { await feed.refresh(force: true) }
             }
+            .safeAreaInset(edge: .bottom) { feedbackBar }
             .navigationTitle("소식")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -117,9 +129,68 @@ struct NoticesView: View {
                 }
             }
         }
+        .sheet(isPresented: $showMailComposer) {
+            FeedbackMailComposer(text: trimmedFeedback) { sent in
+                showMailComposer = false
+                if sent { feedbackText = "" }   // 보냈으면 비운다 — 취소했으면 쓰던 글을 남긴다
+            }
+            .ignoresSafeArea()
+        }
+        .alert("메일 앱을 열 수 없어요", isPresented: $showMailFallback) {
+            Button("확인") {}
+        } message: {
+            Text(Loc.fmt("%1$@ 으로 보내주세요.", FeedbackMail.address))
+        }
         .task {
             await feed.refresh(force: true)
             feed.markAllSeen()
+        }
+    }
+
+    /// 소식 하단 입력 바 — 메시지 앱 문법(대표님 레퍼런스). 우리 서버로 보내는 게 아니라
+    /// 메일 앱을 열어 사용자가 직접 보낸다(§5.2 무서버 경계 유지).
+    private var feedbackBar: some View {
+        HStack(alignment: .bottom, spacing: 10) {
+            TextField("개발자에게 피드백 보내기", text: $feedbackText, axis: .vertical)
+                .lineLimit(1...4)
+                .font(.subheadline)
+                .foregroundStyle(Ink.text)
+                .focused($feedbackFocused)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(Ink.paper, in: Capsule())
+                .overlay(Capsule().stroke(Ink.text.opacity(0.15), lineWidth: 1))
+            Button {
+                sendFeedback()
+            } label: {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Ink.paper)
+                    .frame(width: 34, height: 34)
+                    .background(Ink.text, in: Circle())
+            }
+            .disabled(trimmedFeedback.isEmpty)
+            .opacity(trimmedFeedback.isEmpty ? 0.35 : 1)
+            .accessibilityLabel(Loc.str("보내기"))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background {
+            Ink.frost.ignoresSafeArea()
+                .overlay(alignment: .top) { Rectangle().fill(Ink.text.opacity(0.10)).frame(height: 1) }
+        }
+    }
+
+    private func sendFeedback() {
+        guard !trimmedFeedback.isEmpty else { return }
+        feedbackFocused = false
+        if MFMailComposeViewController.canSendMail() {
+            showMailComposer = true
+        } else if let url = FeedbackMail.mailtoURL(trimmedFeedback) {
+            // 메일 앱이 없어도 다른 메일 클라이언트가 mailto를 물 수 있다
+            openURL(url) { opened in if !opened { showMailFallback = true } }
+        } else {
+            showMailFallback = true
         }
     }
 
