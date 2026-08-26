@@ -162,8 +162,9 @@ struct SeasonCalendarView: View {
             if ThemeStore.chrome.skyGround {
                 WeatherSky(veil: 0.14)
             } else if ThemeStore.chrome.videoGround {
-                // 캘린더만 흐린 지면(2026-08-26 베타) — 격자가 영상 디테일과 안 겹치게
-                PlaylistVideoGround(blurRadius: 16)
+                // 캘린더만 흐린 지면(2026-08-26 베타) — 격자가 영상 디테일과 안 겹치게.
+                // 16 → 8(같은 날 "블러 절반으로" 판정)
+                PlaylistVideoGround(blurRadius: 8)
             } else {
                 (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
                     .ignoresSafeArea()
@@ -586,6 +587,7 @@ struct SeasonCalendarView: View {
                     Text(Self.latinMonthLabel(monthStart))
                         .font(.system(size: 13, design: .serif).italic())
                         .foregroundStyle(Ink.autumn)   // 버밀리언
+                        .padding(.top, -10)   // 표제 블록을 살짝 올린다(2026-08-26 베타 "좀만 높이 올려")
                     // §2.3-12: 월 150. 6주 달은 112(§2.3-10) — 기기가 더 좁으면 역산으로 더 내린다.
                     // 라인박스는 시안 line-height 1.02로 못 박는다: 서체 기본 리딩(≈1.3em)을 두면
                     // 112pt 표제가 146pt를 차지해 격자에서 34pt를 가져간다(빌드 462 실측).

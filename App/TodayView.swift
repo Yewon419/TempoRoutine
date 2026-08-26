@@ -187,12 +187,10 @@ struct TodayView: View {
                         section(kind: .schedule) { scheduleSection }
                         section(kind: .input) { inputSection }
                         section(kind: .output) { outputSection }
-                        // 플리 3단계: 체크인은 s2에서만(시안 §4.4 ⑫). 다른 테마·아이패드는 항상
-                        if !(ThemeStore.chrome.playlistChrome && hSize != .regular && plStage < 2) {
-                            CheckInCard(day: today).ticketCardGap()
-                        } else if ThemeStore.chrome.playlistChrome, hSize != .regular, plStage == 1 {
-                            playlistCheckInHint
-                        }
+                        // 체크인 = 항상 Output 아래(2026-08-26 대표님 "슬라이드 없이 아웃풋 아래
+                        // 바로 달아줘" — 플리 s2 단계 폐기. "한 다섯번 스크롤해야" 열리던 전환 자체가
+                        // 은유보다 비쌌다). 플리는 s0(플레이어 단독)→s1(전체)만 남는다.
+                        CheckInCard(day: today).ticketCardGap()
                     }
                 }
                 .padding(20)   // 상단 추가 여백 없음 — 캘린더 탭과 로고 높이 통일(2026-08-18 베타 피드백)
@@ -218,34 +216,13 @@ struct TodayView: View {
             }
             .coordinateSpace(name: "todayScroll")
             .scrollDismissesKeyboard(.interactively)   // 스크롤로도 키보드 닫힘
-            // 기본값(.automatic)은 **내용이 화면에 다 들어오면 바운스를 끈다** — 카드가 빈 계정에선
-            // 바닥 넘김(+48)이 발생할 수가 없었다(2026-08-26 베타 "오늘의 체크인이 안뜸"의 절반).
-            // 플리·폰에서만 항상 바운스로 열어 제스처 경로를 살린다.
-            .scrollBounceBehavior(
-                ThemeStore.chrome.playlistChrome && hSize != .regular ? .always : .automatic,
-                axes: .vertical)
-            // 3단계 전환 — 바닥 넘김(+48) = s1→s2, 맨 위 당김(−64) = 한 단계 되감기(쿨다운 0.5s)
-            .onScrollGeometryChange(for: [Double].self) { g in
-                [g.contentOffset.y + g.contentInsets.top,
-                 g.contentOffset.y + g.containerSize.height - g.contentSize.height - g.contentInsets.bottom]
-            } action: { _, v in
-                guard ThemeStore.chrome.playlistChrome, hSize != .regular, v.count == 2 else { return }
-                // 바닥 근처 판정 — 내용이 화면보다 짧으면 v[1]이 항상 양수라 자동으로 참
-                plNearBottom = v[1] > -24
-                if plStage == 1, v[1] > 24 { plAdvance(2) }
-                else if plStage > 0, v[0] < -64 { plAdvance(plStage - 1) }
+            // 플리 s1 → s0 되감기 = 맨 위 당김(−64). s2는 폐기(2026-08-26) — 체크인은 상시.
+            .onScrollGeometryChange(for: Double.self) { g in
+                g.contentOffset.y + g.contentInsets.top
+            } action: { _, top in
+                guard ThemeStore.chrome.playlistChrome, hSize != .regular else { return }
+                if plStage == 1, top < -64 { plAdvance(0) }
             }
-            // 오버스크롤(+24)은 고무줄 저항 탓에 실제 손가락으론 훨씬 길게 끌어야 나온다
-            // (2026-08-26 베타 — 빌드 500에서 "슬라이드가 안돼"의 뿌리, 종전 +48). 지오메트리와
-            // 별개로 **바닥 근처에서의 위로 드래그**를 직접 읽어 같은 전환을 건다. 스크롤과
-            // 동시 인식이라 목록 스크롤은 그대로 동작한다.
-            .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { v in
-                guard ThemeStore.chrome.playlistChrome, hSize != .regular,
-                      plStage == 1, plNearBottom else { return }
-                if v.translation.height < -40 || v.predictedEndTranslation.height < -120 {
-                    plAdvance(2)
-                }
-            })
             compactBar
             }
         }
@@ -449,14 +426,11 @@ struct TodayView: View {
     /// 단계가 툭 바뀌기만 해서 화면이 손가락을 안 따라왔다. 손을 떼면 @GestureState가 스스로
     /// 0으로 돌아가며 제자리 스프링백이 된다(임계 미달 시).
     @GestureState private var plDragY: CGFloat = 0
-    /// s1 스크롤이 바닥 근처인가(2026-08-26 베타 "체크인까지 슬라이드가 안돼") — 오버스크롤
-    /// 지오메트리 대신 손가락 드래그를 직접 판정하기 위한 위치 상태
-    @State private var plNearBottom = false
 
     private func plAdvance(_ to: Int) {
         guard Date.now.timeIntervalSince(plStageAt) > 0.5 else { return }   // 관성 두 단계 건너뜀 방지
         plStageAt = .now
-        withAnimation(.easeOut(duration: 0.3)) { plStage = min(2, max(0, to)) }
+        withAnimation(.easeOut(duration: 0.3)) { plStage = min(1, max(0, to)) }   // s2 폐기(2026-08-26)
     }
 
     /// s0 — 플레이어 단독 센터 + 힌트 셰브런. 탭 또는 세로 스와이프로 s1.
@@ -499,26 +473,7 @@ struct TodayView: View {
                     }
                 }
         )
-        .accessibilityAction(named: Loc.str("전체 보기")) { plAdvance(2) }
-    }
-
-    /// s1 리스트 끝 힌트(2026-08-26 베타 "오늘의 체크인이 안뜸"). 카드가 비어 리스트가 화면보다
-    /// 짧으면 스크롤 자체가 없어 「바닥에서 한 번 더 넘김」이 성립하지 않는다 — 빈 계정에서
-    /// 체크인에 **도달할 방법이 없었다**. 탭으로도 열리는 길을 리스트 끝에 둔다(s0 셰브런과 같은 어휘).
-    private var playlistCheckInHint: some View {
-        Button { plAdvance(2) } label: {
-            VStack(spacing: 6) {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 17, weight: .medium))
-                Text("오늘의 체크인")
-                    .font(.caption)
-            }
-            .foregroundStyle(Ink.text.opacity(0.45))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+        .accessibilityAction(named: Loc.str("전체 보기")) { plAdvance(1) }
     }
 
     private var compactBar: some View {
