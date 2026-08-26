@@ -390,6 +390,26 @@ struct SettingsView: View {
                     .foregroundStyle(Ink.groundSub)
                 }
 
+                // ⚠ 임시 확인용(2026-08-26 대표님 "7일 무료체험 끝나는 거 확인하려고" — 확인 끝나면
+                // 이 섹션째 걷을 것, 테스트 알림 문구 전례): 체험 시작을 8일 전으로 되돌리고 종료
+                // 시트·평가 요청 플래그를 리셋한다. 판정은 RootTabView .task라 재실행이 필요하다.
+                Section {
+                    Button(Loc.str("테마 체험 종료 시뮬레이션")) {
+                        let defaults = UserDefaults.standard
+                        defaults.set(
+                            Calendar.current.date(byAdding: .day, value: -(ThemeTrial.lengthDays + 1),
+                                                  to: .now),
+                            forKey: ThemeTrial.startKey)
+                        defaults.removeObject(forKey: ThemeTrial.resolvedKey)
+                        defaults.removeObject(forKey: ThemeTrial.reviewAskedKey)
+                        message = Loc.str("체험이 끝난 상태로 되돌렸어요. 앱을 완전히 종료했다가 다시 열면 종료 시트가 떠요. 은필을 이미 갖고 있고 보유 테마를 쓰는 중이면 시트 없이 조용히 끝나요.")
+                    }
+                    .foregroundStyle(Ink.text)
+                } footer: {
+                    Text(Loc.str("확인용 임시 버튼이에요. 확인이 끝나면 제거할게요."))
+                        .foregroundStyle(Ink.groundSub)
+                }
+
                 // 파괴적 액션 — 분리 배치(§8.2.6)
                 Section {
                     Button("모든 기록 삭제", role: .destructive) { showWipeConfirm = true }
