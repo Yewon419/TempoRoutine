@@ -15135,6 +15135,29 @@
         }
       }
     },
+    "전체 보기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See all"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべて表示"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看全部"
+          }
+        }
+      }
+    },
     "절댓값보다는 오르내림과 편차를 알아보는 데 의미를 가집니다.": {
       "extractionState": "manual",
       "localizations": {
