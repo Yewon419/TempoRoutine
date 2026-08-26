@@ -159,8 +159,8 @@ struct TodayView: View {
                 Ink.paper.ignoresSafeArea()
                 SeasonLight(phase: snapshot.phase(on: today))   // 계절광(§4) — 지면 위 고정 빛
             }
-            // 플리 오늘 탭 3단계(시안 §4.4 ⑫, 폰 전용) — s0: 플레이어 단독 센터.
-            // 탭/스와이프 → s1(카드), 리스트 바닥에서 한 번 더 → s2(체크인). 되감기 = 맨 위에서 당김.
+            // 플리 오늘 탭 2단계(시안 §4.4 ⑫, 폰 전용 — 2026-08-26 s2 폐기): s0 = 플레이어 단독
+            // 센터, 탭/스와이프 → s1 = 전체(체크인 포함). 되감기 = 맨 위에서 당김.
             if ThemeStore.chrome.playlistChrome, hSize != .regular, plStage == 0,
                !snapshot.isColdStart, todayInfo != nil {
                 playlistStageZero
