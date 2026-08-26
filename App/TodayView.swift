@@ -190,6 +190,8 @@ struct TodayView: View {
                         // 플리 3단계: 체크인은 s2에서만(시안 §4.4 ⑫). 다른 테마·아이패드는 항상
                         if !(ThemeStore.chrome.playlistChrome && hSize != .regular && plStage < 2) {
                             CheckInCard(day: today).ticketCardGap()
+                        } else if ThemeStore.chrome.playlistChrome, hSize != .regular, plStage == 1 {
+                            playlistCheckInHint
                         }
                     }
                 }
@@ -216,6 +218,12 @@ struct TodayView: View {
             }
             .coordinateSpace(name: "todayScroll")
             .scrollDismissesKeyboard(.interactively)   // 스크롤로도 키보드 닫힘
+            // 기본값(.automatic)은 **내용이 화면에 다 들어오면 바운스를 끈다** — 카드가 빈 계정에선
+            // 바닥 넘김(+48)이 발생할 수가 없었다(2026-08-26 베타 "오늘의 체크인이 안뜸"의 절반).
+            // 플리·폰에서만 항상 바운스로 열어 제스처 경로를 살린다.
+            .scrollBounceBehavior(
+                ThemeStore.chrome.playlistChrome && hSize != .regular ? .always : .automatic,
+                axes: .vertical)
             // 3단계 전환 — 바닥 넘김(+48) = s1→s2, 맨 위 당김(−64) = 한 단계 되감기(쿨다운 0.5s)
             .onScrollGeometryChange(for: [Double].self) { g in
                 [g.contentOffset.y + g.contentInsets.top,
@@ -459,6 +467,25 @@ struct TodayView: View {
             if abs(v.translation.height) > 30 { plAdvance(1) }
         })
         .accessibilityAction(named: Loc.str("전체 보기")) { plAdvance(2) }
+    }
+
+    /// s1 리스트 끝 힌트(2026-08-26 베타 "오늘의 체크인이 안뜸"). 카드가 비어 리스트가 화면보다
+    /// 짧으면 스크롤 자체가 없어 「바닥에서 한 번 더 넘김」이 성립하지 않는다 — 빈 계정에서
+    /// 체크인에 **도달할 방법이 없었다**. 탭으로도 열리는 길을 리스트 끝에 둔다(s0 셰브런과 같은 어휘).
+    private var playlistCheckInHint: some View {
+        Button { plAdvance(2) } label: {
+            VStack(spacing: 6) {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 17, weight: .medium))
+                Text("오늘의 체크인")
+                    .font(.caption)
+            }
+            .foregroundStyle(Ink.text.opacity(0.45))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var compactBar: some View {
