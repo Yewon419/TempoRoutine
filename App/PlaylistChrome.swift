@@ -266,8 +266,7 @@ struct PlaylistRecordHeader: View {
     }
 
     private var disc: some View {
-        let day: Int = Calendar.current.component(.day, from: date)
-        return ZStack {
+        ZStack {
             // 흰 판(2026-08-26 대표님 "LP판이랑 바깥라인 진행도 바 하얗게"). 종전 #202B34 폐기.
             // ⚠ 흰 지면·흰 영상 위에서 판이 사라지지 않게 극세 잉크 테두리를 남긴다 —
             // 없으면 실루엣이 통째로 증발한다(색만 바꾸면 판이 안 읽힌다).
@@ -278,15 +277,10 @@ struct PlaylistRecordHeader: View {
                 Circle().stroke(Ink.text.opacity(0.06), lineWidth: 1.5)
                     .frame(width: 122 + CGFloat(ring) * 9.5, height: 122 + CGFloat(ring) * 9.5)
             }
-            // 라벨 = 계절 커버(원형) + 흰 링 — 계절색 면이 에셋 결손 폴백(§4.5)
-            Circle().fill(meta.glow)
-                .overlay {
-                    Image(PlaylistSpec.coverAsset(for: phase, day: day))
-                        .resizable()
-                        .scaledToFill()
-                }
+            // 라벨 = 계절색 원만(2026-08-26 베타 "레코드판 가운데의 사진은 빼" — 커버 사진 은퇴).
+            // 흰 판 위에서 계절을 말하는 유일한 색면이라 glow가 아니라 본색을 쓴다.
+            Circle().fill(meta.color)
                 .frame(width: labelSize, height: labelSize)
-                .clipShape(Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.8), lineWidth: 3))
             // 스핀들 — 흰 판에서 지면색(#E6EAEE)은 안 보인다. 잉크로 뒤집는다
             Circle().fill(Ink.text.opacity(0.35))

@@ -230,9 +230,22 @@ struct TodayView: View {
                  g.contentOffset.y + g.containerSize.height - g.contentSize.height - g.contentInsets.bottom]
             } action: { _, v in
                 guard ThemeStore.chrome.playlistChrome, hSize != .regular, v.count == 2 else { return }
-                if plStage == 1, v[1] > 48 { plAdvance(2) }
+                // 바닥 근처 판정 — 내용이 화면보다 짧으면 v[1]이 항상 양수라 자동으로 참
+                plNearBottom = v[1] > -24
+                if plStage == 1, v[1] > 24 { plAdvance(2) }
                 else if plStage > 0, v[0] < -64 { plAdvance(plStage - 1) }
             }
+            // 오버스크롤(+24)은 고무줄 저항 탓에 실제 손가락으론 훨씬 길게 끌어야 나온다
+            // (2026-08-26 베타 — 빌드 500에서 "슬라이드가 안돼"의 뿌리, 종전 +48). 지오메트리와
+            // 별개로 **바닥 근처에서의 위로 드래그**를 직접 읽어 같은 전환을 건다. 스크롤과
+            // 동시 인식이라 목록 스크롤은 그대로 동작한다.
+            .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { v in
+                guard ThemeStore.chrome.playlistChrome, hSize != .regular,
+                      plStage == 1, plNearBottom else { return }
+                if v.translation.height < -40 || v.predictedEndTranslation.height < -120 {
+                    plAdvance(2)
+                }
+            })
             compactBar
             }
         }
@@ -436,6 +449,9 @@ struct TodayView: View {
     /// 단계가 툭 바뀌기만 해서 화면이 손가락을 안 따라왔다. 손을 떼면 @GestureState가 스스로
     /// 0으로 돌아가며 제자리 스프링백이 된다(임계 미달 시).
     @GestureState private var plDragY: CGFloat = 0
+    /// s1 스크롤이 바닥 근처인가(2026-08-26 베타 "체크인까지 슬라이드가 안돼") — 오버스크롤
+    /// 지오메트리 대신 손가락 드래그를 직접 판정하기 위한 위치 상태
+    @State private var plNearBottom = false
 
     private func plAdvance(_ to: Int) {
         guard Date.now.timeIntervalSince(plStageAt) > 0.5 else { return }   // 관성 두 단계 건너뜀 방지

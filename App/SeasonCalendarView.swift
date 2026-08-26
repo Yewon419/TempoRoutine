@@ -430,6 +430,9 @@ struct SeasonCalendarView: View {
     /// 인용문 양보(2026-08-24): 표제가 바닥인데도 모자라면 인용문(≈85pt)을 내린다. 복귀는
     /// 여유가 인용문 높이보다 확실히 클 때만(-110pt) — 히스테리시스로 왕복을 막는다.
     private func fitLetterpressTitle(carouselHeight: CGFloat) {
+        // 첫 레이아웃 패스의 설익은 높이(수십 pt)로 사다리가 한 번에 ③까지 내려가던 것 차단
+        // (2026-08-26 베타 "여전히 안뜨고" 원인 ① — 스플래시·전환 중 과도기 값은 판정에 안 쓴다).
+        guard carouselHeight > 150 else { return }
         let rows = CGFloat(currentLayout.rowCount)
         let need = rows * effMinCellHeight + (rows - 1) * 4
         let deficit = need - carouselHeight
@@ -438,16 +441,17 @@ struct SeasonCalendarView: View {
             if !lpCellTight { lpCellTight = true; return }        // ② 셀 48
             if !lpQuoteHidden { lpQuoteHidden = true; return }    // ③ 인용문(최후)
         }
-        // 회복은 양보의 역순 — 인용문 → 셀 → 표제. 임계는 각 단계가 되돌려 받을 비용보다 크게 잡아
-        // 왕복을 막는다(인용문 ≈80~98pt / 셀 = 행×6).
-        if lpQuoteHidden, deficit < -95 { lpQuoteHidden = false; return }
+        // 회복은 양보의 역순 — 인용문 → 셀 → 표제. 인용문 복귀 임계 = 실제 비용 + 여유:
+        // 6주 달은 압축 조판(§2.3-5)이라 ≈78pt(임계 82), 5주 달은 ≈98pt(임계 102).
+        // (2026-08-26 원인 ② — 종전 임계 -95는 압축 전 비용 기준이라, 15 Pro 8월의 정착 여유
+        // -90을 5pt 차이로 영영 못 넘었다. 한 번 숨으면 끝이던 뿌리.)
+        let quoteCost: CGFloat = rows >= 6 ? 82 : 102
+        if lpQuoteHidden, deficit < -quoteCost { lpQuoteHidden = false; return }
         if lpCellTight, !lpQuoteHidden, deficit < -50 { lpCellTight = false; return }
-        // ⚠ 양보가 걸려 있으면 그 단계가 되찾을 몫(reserve)을 **표제보다 먼저** 떼어 둔다(2026-08-25).
-        // 종전엔 아래 한 줄이 남는 여유를 늘 먼저 먹어 deficit가 0 근처에 붙었고, 그래서 인용문
-        // 복귀 임계에 영영 못 닿았다 — 한 번 숨은 인용문이 5주 달로 넘어가도 안 돌아오던 뿌리.
-        let reserve: CGFloat = lpQuoteHidden ? 95 : (lpCellTight ? 50 : 0)
-        let next = min(max(titleShrink + (deficit + reserve) / 1.02, 0), ceiling)
-        if abs(next - titleShrink) > 0.5 { titleShrink = next }
+        let next = min(max(titleShrink + deficit / 1.02, 0), ceiling)
+        // 양보가 걸린 동안 표제는 줄어들 수만 있다 — 회복이 여유를 먼저 먹으면 위 임계에 못 닿는다
+        let clamped = (lpQuoteHidden || lpCellTight) ? max(next, titleShrink) : next
+        if abs(clamped - titleShrink) > 0.5 { titleShrink = clamped }
     }
 
     /// 격자 셀 최소 높이 — 활판 양보 ②단계에서만 48로 준다(다른 테마는 항상 54)
