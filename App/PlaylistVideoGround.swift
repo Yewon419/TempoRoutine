@@ -11,6 +11,11 @@ import SwiftUI
 import TempoCore
 
 struct PlaylistVideoGround: View {
+    /// 지면 흐리기(2026-08-26 베타 "캘린더 탭만 배경 블러처리") — 캘린더만 >0.
+    /// 격자는 숫자·밑줄·띠가 촘촘해서 영상 디테일(벚꽃·물결)이 그대로 비치면 서로 먹는다.
+    /// 오늘 탭은 카드가 면을 이미 덮어 흐리기가 필요 없다 — 0으로 둔다.
+    var blurRadius: CGFloat = 0
+
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -46,6 +51,8 @@ struct PlaylistVideoGround: View {
                     // 흰 베일이라 탁함(어두운 스크림) 계열과 다르다. 시안 검토엔 없던 실기기 보정.
                     Color.white.opacity(0.22)
                 }
+                // opaque: true — 기본 블러는 가장자리를 투명으로 물려 테두리가 비친다
+                .blur(radius: blurRadius, opaque: true)
             }
             .clipped()
             .ignoresSafeArea()

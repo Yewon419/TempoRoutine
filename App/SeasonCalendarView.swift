@@ -162,7 +162,8 @@ struct SeasonCalendarView: View {
             if ThemeStore.chrome.skyGround {
                 WeatherSky(veil: 0.14)
             } else if ThemeStore.chrome.videoGround {
-                PlaylistVideoGround()   // 플리 = 계절 배경 영상(§4.4 ⑪ — 캘린더도 같은 지면)
+                // 캘린더만 흐린 지면(2026-08-26 베타) — 격자가 영상 디테일과 안 겹치게
+                PlaylistVideoGround(blurRadius: 16)
             } else {
                 (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
                     .ignoresSafeArea()
