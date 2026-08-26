@@ -273,7 +273,10 @@ extension ThemePalette {
     ///    색이 빠진 계절). 생리 시그널(`record`)은 레드 유지 — 겨울 밑줄과 기록 점이 갈린다.
     static let playlist = ThemePalette(
         winter: .flat(0x5D, 0x68, 0x74),      // 무채 — 색이 빠진 계절
-        spring: .flat(0x4C, 0x8A, 0x56),
+        // 봄 = 분홍(2026-08-26 대표님 "봄 분홍으로 바꿔줘") — 벚꽃 지면·커버와 계열을 맞춘다.
+        // 종전 잎 그린 #4C8A56은 봄 영상이 벚꽃으로 확정되며 지면과 어긋났다.
+        // ⚠ 생리 레드(#BE514B)와 안 붙게 마젠타 쪽으로 민다 — 시그널이 섞이면 안 된다.
+        spring: .flat(0xCC, 0x6B, 0x92),
         summer: .flat(0x2C, 0x7C, 0x96),
         autumn: .flat(0xB0, 0x70, 0x3A),
         text: .flat(0x24, 0x31, 0x3D),        // 블루그레이 지면 위 잉크
@@ -287,7 +290,7 @@ extension ThemePalette {
         saturday: .flat(0x4E, 0x6C, 0x8A),
         frost: .flat(0xEA, 0xED, 0xF1),
         glowWinter: .flat(0x6E, 0x7A, 0x87),
-        glowSpring: .flat(0x5E, 0x9C, 0x68),
+        glowSpring: .flat(0xDB, 0x84, 0xA6),   // 밑줄은 본색에서 한 단 물러선다
         glowSummer: .flat(0x3E, 0x8D, 0xA6),
         glowAutumn: .flat(0xC0, 0x82, 0x4A),
         surface: Color.white.opacity(0.34),   // 글래스 면 — 카드 재질은 liquidGlassCards가 담당
