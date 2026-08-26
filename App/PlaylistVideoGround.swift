@@ -63,7 +63,53 @@ struct PlaylistVideoGround: View {
     }
 }
 
-/// 번들 mp4 무한 루프 — AVPlayerLooper + AVPlayerLayer(cover 크롭)
+/// 계절 영상 공유 플레이어 풀(2026-08-26 대표님 "탭 옮길 때마다 영상 초기화되는거 수정") —
+/// 탭을 옮기면 TabView가 지면 뷰를 파괴·재생성하고, 플레이어가 뷰 소유라 매번 0초부터 다시
+/// 시작했다. 플레이어를 뷰 밖 풀에 두고 뷰는 붙였다 뗄 뿐 — 재생 위치가 탭·화면을 건너 이어진다.
+@MainActor
+final class PlaylistPlayerPool {
+    static let shared = PlaylistPlayerPool()
+
+    private struct Entry {
+        let player: AVQueuePlayer
+        let looper: AVPlayerLooper   // 참조 유지용 — 놓으면 루프가 끊긴다
+        let revision: Int
+        var attached: Int
+    }
+    private var entries: [String: Entry] = [:]
+
+    /// 이름의 공유 플레이어를 얻고 참조를 센다. 파일 미수신 = nil(지면색 폴백 계약 유지).
+    /// ThemeMedia.revision이 갈리면(온디맨드 갱신·캐시 비우기) 낡은 파일에 묶인 플레이어를
+    /// 버리고 새로 만든다 — 이름이 같아도 내용물이 다를 수 있는 유일한 경로가 revision이다.
+    func acquire(_ name: String) -> AVQueuePlayer? {
+        let revision = ThemeMedia.shared.revision
+        if var entry = entries[name], entry.revision == revision {
+            entry.attached += 1
+            entries[name] = entry
+            return entry.player
+        }
+        guard let url = ThemeMedia.shared.localURL(named: name + ".mp4") else { return nil }
+        // 무음 재생이 사용자의 음악을 끊지 않게 — ambient + mixWithOthers
+        try? AVAudioSession.sharedInstance().setCategory(.ambient, options: .mixWithOthers)
+        let player = AVQueuePlayer()
+        player.isMuted = true
+        player.preventsDisplaySleepDuringVideoPlayback = false
+        let looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
+        entries[name] = Entry(player: player, looper: looper, revision: revision, attached: 1)
+        return player
+    }
+
+    /// 참조 반납 — 붙은 뷰가 0이면 멈춘다(테마 이탈 뒤 안 보이는 재생이 배터리를 먹지 않게).
+    /// 위치는 플레이어에 남아 다음 acquire가 이어 튼다.
+    func release(_ name: String) {
+        guard var entry = entries[name] else { return }
+        entry.attached = max(0, entry.attached - 1)
+        entries[name] = entry
+        if entry.attached == 0 { entry.player.pause() }
+    }
+}
+
+/// mp4 무한 루프 지면 — 플레이어는 풀 소유, 뷰는 AVPlayerLayer로 붙기만 한다(cover 크롭)
 private struct PlaylistLoopVideo: UIViewRepresentable {
     let name: String
     let paused: Bool
@@ -74,33 +120,33 @@ private struct PlaylistLoopVideo: UIViewRepresentable {
             // layerClass 재정의라 다운캐스트가 항상 성립한다
             layer as? AVPlayerLayer ?? AVPlayerLayer()
         }
-        var looper: AVPlayerLooper?
-        var player: AVQueuePlayer?
+        var attachedName: String?
     }
 
     func makeUIView(context: Context) -> PlayerView {
         let view = PlayerView()
         view.playerLayer.videoGravity = .resizeAspectFill
-        guard let url = ThemeMedia.shared.localURL(named: name + ".mp4") else {
-            return view   // 미수신·결손 = 지면색 폴백(§4.5 계약 — 다운로드 완료 시 .id(revision)가 재생성)
+        if let player = PlaylistPlayerPool.shared.acquire(name) {
+            view.playerLayer.player = player
+            view.attachedName = name
+            // 재생 배속 0.5(2026-08-25 베타 "좀 더 천천히") — 재인코딩 불요
+            if !paused, player.rate == 0 { player.rate = 0.5 }
         }
-        // 무음 재생이 사용자의 음악을 끊지 않게 — ambient + mixWithOthers
-        try? AVAudioSession.sharedInstance().setCategory(.ambient, options: .mixWithOthers)
-        let player = AVQueuePlayer()
-        player.isMuted = true
-        player.preventsDisplaySleepDuringVideoPlayback = false
-        view.looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
-        view.playerLayer.player = player
-        view.player = player
-        if !paused { player.rate = 0.5 }   // 재생 배속 0.5(2026-08-25 베타 "좀 더 천천히") — 재인코딩 불요
         return view
     }
 
     func updateUIView(_ view: PlayerView, context: Context) {
+        guard let player = view.playerLayer.player else { return }
         if paused {
-            view.player?.pause()
-        } else if view.player?.rate == 0 {
-            view.player?.rate = 0.5
+            player.pause()
+        } else if player.rate == 0 {
+            player.rate = 0.5
+        }
+    }
+
+    static func dismantleUIView(_ view: PlayerView, coordinator: ()) {
+        if let name = view.attachedName {
+            PlaylistPlayerPool.shared.release(name)
         }
     }
 }
