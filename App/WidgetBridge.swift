@@ -13,6 +13,9 @@ enum WidgetBridge {
                         inputs: [InputItem] = [], outputs: [OutputItem] = [],
                         completions: [ItemCompletion] = [],
                         inputProgresses: [InputProgress] = []) {
+        // 개발자 모드(2026-08-27) — dev 스토어 기준 발행이 홈 화면 실위젯을 덮지 않게 중앙 차단.
+        // 모드를 나가면 다음 발행(시작 .task·백그라운드 진입)이 실데이터로 되살린다.
+        guard !DevMode.active else { return }
         guard let url = WidgetShared.snapshotURL else { return }   // App Group 미프로비저닝이면 조용히 통과
         let cal = Calendar.current
         let today = cal.startOfDay(for: .now)

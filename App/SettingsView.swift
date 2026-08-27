@@ -423,12 +423,27 @@ struct SettingsView: View {
                 // 앱 초기화(2026-08-25 대표님 지시 "모든 기록 삭제가 앱 초기화가 아니네") —
                 // 기록 삭제와 분리해 둔다: 기록만 지우는 경로(undo 있음)는 살리고, 이건
                 // 새 설치와 동일한 리셋(undo 없음·확인 2단)이다.
-                Section {
-                    Button("앱 초기화", role: .destructive) { showResetConfirm = true }
-                        .foregroundStyle(Ink.danger)
-                } footer: {
-                    Text("기록, 씨앗과 구매한 테마, 설정, iCloud 동기화 기록까지 전부 지우고 처음부터 시작해요.")
-                        .foregroundStyle(Ink.groundSub)
+                // ⚠ 개발자 모드에선 숨긴다(2026-08-27) — 이 버튼은 실 UserDefaults·CloudKit 존까지
+                // 지우는 실초기화라, dev에서 누르면 "분리된 모드"라는 전제가 깨진다.
+                if !DevMode.active {
+                    Section {
+                        Button("앱 초기화", role: .destructive) { showResetConfirm = true }
+                            .foregroundStyle(Ink.danger)
+                    } footer: {
+                        Text("기록, 씨앗과 구매한 테마, 설정, iCloud 동기화 기록까지 전부 지우고 처음부터 시작해요.")
+                            .foregroundStyle(Ink.groundSub)
+                    }
+                } else {
+                    // 개발자 모드 종료(커맨드와 같은 토글) — 스크린샷에 안 걸리게 배너 대신 여기만
+                    Section {
+                        Button(Loc.str("개발자 모드 종료")) {
+                            DevMode.toggle()
+                        }
+                        .foregroundStyle(Ink.text)
+                    } footer: {
+                        Text(Loc.str("지금은 개발자 모드예요. 기록과 분리된 스토어를 쓰고 있고, 동기화·건강 연동·위젯·알림은 쉬는 중이에요."))
+                            .foregroundStyle(Ink.groundSub)
+                    }
                 }
 
                 // ── 하늘 상태 스위처(날씨 테마 전용, 2026-08-19) — WeatherKit 연결(Phase ②)

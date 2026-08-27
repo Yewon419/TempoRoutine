@@ -91,6 +91,8 @@ struct NoticesView: View {
     @State private var feedbackText = ""
     @State private var showMailComposer = false
     @State private var showMailFallback = false
+    /// 개발자 모드 토글 알럿(2026-08-27) — nil = 닫힘, 값 = 토글 후 상태
+    @State private var devToggled: Bool?
     @FocusState private var feedbackFocused: Bool
 
     private var trimmedFeedback: String {
@@ -135,6 +137,15 @@ struct NoticesView: View {
                 if sent { feedbackText = "" }   // 보냈으면 비운다 — 취소했으면 쓰던 글을 남긴다
             }
             .ignoresSafeArea()
+        }
+        .alert(devToggled == true ? Loc.str("개발자 모드를 켰어요") : Loc.str("개발자 모드를 껐어요"),
+               isPresented: Binding(get: { devToggled != nil },
+                                    set: { if !$0 { devToggled = nil } })) {
+            Button("확인") { devToggled = nil }
+        } message: {
+            Text(devToggled == true
+                 ? Loc.str("기록과 분리된 빈 스토어로 열려요. 모든 테마가 열려 있고, 동기화·건강 연동·위젯·알림은 쉬어요. 끄려면 같은 커맨드를 다시 보내거나 설정 맨 아래를 쓰세요.")
+                 : Loc.str("원래 기록으로 돌아왔어요."))
         }
         .alert("메일 앱을 열 수 없어요", isPresented: $showMailFallback) {
             Button("확인") {}
@@ -183,6 +194,14 @@ struct NoticesView: View {
 
     private func sendFeedback() {
         guard !trimmedFeedback.isEmpty else { return }
+        // 개발자 모드 커맨드(2026-08-27, DevMode.swift) — 피드백이 아니라 토글이다.
+        // 컨테이너 교체(루트 리빌드)는 앱 씬의 @AppStorage 관찰이 받아서 처리한다.
+        if trimmedFeedback == DevMode.command {
+            feedbackText = ""
+            feedbackFocused = false
+            devToggled = DevMode.toggle()
+            return
+        }
         feedbackFocused = false
         if MFMailComposeViewController.canSendMail() {
             showMailComposer = true

@@ -30,7 +30,9 @@ enum Seeds {
         else { return false }
         record.completedAt = .now
         let awarded = isAwarded(record)
-        if awarded { recordEarned(day: record.day) }   // 획득 원장(2026-08-20) — 행이 지워져도 남는다
+        // 개발자 모드(2026-08-27) — dev 스토어의 체크인이 실씨앗 원장(UserDefaults 공유)을 벌면
+        // 안 된다. 도장(completedAt)은 dev 스토어 안이라 무해, 원장 기입만 막는다.
+        if awarded, !DevMode.active { recordEarned(day: record.day) }
         return awarded
     }
 

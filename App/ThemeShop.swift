@@ -241,7 +241,8 @@ struct ThemeShopView: View {
     }
 
     private func isPlanted(_ theme: AppTheme) -> Bool {
-        theme.seedPrice == nil || Seeds.owned.contains(theme.rawValue)
+        // 개발자 모드 = 전 테마 개방(2026-08-27) — 스크린샷·시연용. 원장은 안 건드린다.
+        DevMode.active || theme.seedPrice == nil || Seeds.owned.contains(theme.rawValue)
     }
 
     private func themeCard(_ theme: AppTheme) -> some View {

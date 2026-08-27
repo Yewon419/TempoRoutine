@@ -181,7 +181,7 @@ struct RootTabView: View {
             // 체험 종료 판정 — 시트는 고를 게 있을 때만: 은필 미보유이거나, 미보유 테마를
             // 적용 중일 때. 은필 기보유 + 보유 테마 사용 중이면 조용히 종결(고를 게 없다).
             var trialSheetOpening = showTrialEnd
-            if onboardingDone, ThemeTrial.needsResolution {
+            if onboardingDone, ThemeTrial.needsResolution, !DevMode.active {
                 let current = AppTheme(rawValue: appTheme) ?? .plain
                 let currentOwned = current.seedPrice == nil || Seeds.owned.contains(current.rawValue)
                 // 기본도 유료(2026-08-27 가격 개편) — 시트는 기본/은필 중 하나를 0원으로 주는
@@ -199,11 +199,15 @@ struct RootTabView: View {
             // 시트가 떴으면 그 닫힘 콜백이 맡는다 — 시트 위에 시스템 팝업을 겹치지 않게.
             // ⚠ 판정에 `showTrialEnd`를 다시 읽지 않는다 — 방금 쓴 @State는 같은 갱신 주기에서
             // 옛 값이 나올 수 있어 로컬 플래그로 잇는다.
-            if !trialSheetOpening { askForReviewAfterTrial() }
+            if !trialSheetOpening, !DevMode.active { askForReviewAfterTrial() }
             // 아래는 프로세스당 1회 — 리빌드(테마·언어 변경)에서는 건너뛴다. 테마는 자기 onChange가
             // 위젯을 재발행하고, 언어도 아래 onChange(of: appLanguage)가 맡는다.
             guard !Self.bootstrapped else { return }
             Self.bootstrapped = true
+            // 개발자 모드(2026-08-27, DevMode.swift) — 아래 시작 작업은 전부 정지: 건강·동기화는
+            // 실데이터를 만지고, 위젯 발행·알림 재예약은 dev의 빈 스토어 기준으로 실표면을
+            // 덮는다(빈 재예약 = 실알림 취소). 백필도 dev 체크인이 실원장을 벌면 안 되니 막는다.
+            guard !DevMode.active else { return }
             // 씨앗 획득 원장 백필(2026-08-20) — 원장 도입 전 획득(행 파생)을 1회 옮겨 적는다(멱등)
             Seeds.backfillEarnedLedger(checkIns)
             await HealthMirror.shared.sync(context: modelContext, periodDays: periodDays)
@@ -221,6 +225,7 @@ struct RootTabView: View {
             if done { ThemeTrial.beginIfNeeded() }   // 신규 = 온보딩 완료 시각부터 7일
         }
         .onChange(of: scenePhase) { _, phase in
+            guard !DevMode.active else { return }   // 개발자 모드 — 실데이터·실표면 경로 전부 정지
             if phase == .active {
                 let current = periodDays
                 Task { await HealthMirror.shared.sync(context: modelContext, periodDays: current) }
@@ -239,6 +244,7 @@ struct RootTabView: View {
         }
         // 앵커가 움직이면 사분면 경계도, 예측일도 통째로 움직인다 — 생리 기록 변화는 즉시 재스케줄.
         .onChange(of: periodDays.map(\.day)) { _, _ in
+            guard !DevMode.active else { return }   // dev 기록으로 실알림을 다시 걸지 않는다
             CoverageReminder.reschedule(periodDays: periodDays, context: modelContext)
             DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)
         }

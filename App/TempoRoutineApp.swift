@@ -31,6 +31,23 @@ struct TempoRoutineApp: App {
         }
     }()
 
+    /// 개발자 모드 스토어(2026-08-27, DevMode.swift 머리말) — 같은 스키마, 다른 파일.
+    /// static let이라 dev 모드를 켜기 전엔 만들어지지 않는다. 동기화(PlannerSync)는 실컨테이너에만
+    /// 붙어 있어 이 스토어의 데이터는 어디로도 안 나간다.
+    static let devContainer: ModelContainer = {
+        let schema = Schema([PeriodDay.self, ScheduleItem.self, InputItem.self,
+                             InputSubtask.self, InputProgress.self,
+                             OutputItem.self, OutputSubtask.self, ItemCompletion.self,
+                             DailyCheckIn.self, SelfReportRecord.self])
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let config = ModelConfiguration(url: base.appendingPathComponent("dev-store.sqlite"))
+        do {
+            return try ModelContainer(for: schema, configurations: config)
+        } catch {
+            fatalError("개발자 스토어 열기 실패: \(error)")
+        }
+    }()
+
     init() {
         // 팔레트 캐시는 첫 렌더 전에 확정돼야 한다(Ink가 정적 캐시를 읽는다 — Theme.swift)
         // 앱 언어 선택 복원(2026-08-21) — 팔레트와 같은 이유로 첫 렌더 전에 확정한다
@@ -57,6 +74,7 @@ struct TempoRoutineApp: App {
         }
         // 수동 생성 컨테이너는 autosave 명시(repo CLAUDE.md 2026-07-23 실측)
         Self.container.mainContext.autosaveEnabled = true
+        if DevMode.active { Self.devContainer.mainContext.autosaveEnabled = true }
         PlannerSync.shared.configure(container: Self.container)
         // 잠금화면 타이머 버튼의 실행부 등록(2026-08-14). 인텐트는 앱 프로세스에서 도는데,
         // 앱이 꺼져 있었다면 이 init과 perform()의 순서가 보장되지 않는다 — 먼저 도착한
@@ -72,12 +90,17 @@ struct TempoRoutineApp: App {
         UserDefaults.standard.set(false, forKey: RootTab.themeShopKey)
     }
 
+    /// 개발자 모드 관찰 — 소식란 커맨드(//dev)가 이 키를 토글하면 씬이 재평가돼 컨테이너가
+    /// 갈아끼워진다. `.id`가 루트를 통째로 다시 세운다(테마·언어 리빌드와 같은 문법).
+    @AppStorage(DevMode.key) private var devModeActive = false
+
     var body: some Scene {
         WindowGroup {
             RootTabView()
+                .id(devModeActive)
             // 다크 = 적응형 토큰으로 대응(Ink — 2026-07-20 사용자 결정). 정식 다크 테마는 미학 패스.
         }
-        .modelContainer(Self.container)
+        .modelContainer(devModeActive ? Self.devContainer : Self.container)
         // 앱 스위처 가림(§5.7 P0). **`.inactive`부터 덮는다** — 스냅샷은 백그라운드 진입 시점에
         // 찍히지만, 스위처를 띄우는 동안(비활성) 카드에 실제 화면이 그대로 보인다. 그 사이 기기를
         // 건네주면 가린 의미가 없다. 대가로 시스템 권한 시트가 뜰 때도 잠깐 표지가 스친다 —
