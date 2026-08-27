@@ -184,7 +184,11 @@ struct RootTabView: View {
             if onboardingDone, ThemeTrial.needsResolution {
                 let current = AppTheme(rawValue: appTheme) ?? .plain
                 let currentOwned = current.seedPrice == nil || Seeds.owned.contains(current.rawValue)
-                if !Seeds.owned.contains(AppTheme.standard.rawValue) || !currentOwned {
+                // 기본도 유료(2026-08-27 가격 개편) — 시트는 기본/은필 중 하나를 0원으로 주는
+                // 소유의 뿌리다. 둘 다 미보유거나, 미보유 테마를 쓰는 중이면 띄운다.
+                let ownsBase = Seeds.owned.contains(AppTheme.plain.rawValue)
+                    || Seeds.owned.contains(AppTheme.standard.rawValue)
+                if !ownsBase || !currentOwned {
                     showTrialEnd = true
                     trialSheetOpening = true
                 } else {

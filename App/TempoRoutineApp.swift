@@ -43,11 +43,17 @@ struct TempoRoutineApp: App {
         WxState.apply(conditionRaw: UserDefaults.standard.string(forKey: WxState.conditionKey),
                       daypartRaw: UserDefaults.standard.string(forKey: WxState.daypartKey))
         WxState.loadReadout()   // 기온·강수 마지막 값(2026-08-20) — 3시간 넘으면 읽는 쪽이 감춘다
-        // 기본 테마 교체 승계(2026-08-12): 은필이 씨앗 테마로 내려가면서, 종전에 은필·모던을
-        // 쓰던 설치는 쓰던 지면이 갑자기 잠긴다. **저장값이 있다 = 기존 설치**이므로 그 테마를
-        // 낸 값 0으로 보유 처리한다. 새 설치는 키가 없어 승계가 돌지 않는다.
-        if let saved = savedTheme.flatMap(AppTheme.init(rawValue:)), saved.seedPrice != nil {
-            Seeds.grandfather(saved)
+        // 가격 개편 승계(2026-08-27, 대표님 결정 "적용 중인 테마만 승계") — 전 테마 유료화로
+        // 기존 설치의 지면이 잠기지 않게, 업데이트 후 **첫 실행 1회만** 적용 중 테마를 0원
+        // 보유 처리한다. ⚠ 종전(2026-08-12 은필 전례)엔 매 실행 돌았는데, 전 테마 유료화
+        // 뒤엔 그게 「체험 중 적용 → 재실행 = 공짜 소유」 구멍이 된다 — 1회성 플래그로 봉인.
+        // 새 설치는 첫 실행에 저장값이 없어(온보딩 전) 아무것도 승계되지 않고 플래그만 선다.
+        let pricingMigratedKey = "themePricingV2Migrated"
+        if !UserDefaults.standard.bool(forKey: pricingMigratedKey) {
+            UserDefaults.standard.set(true, forKey: pricingMigratedKey)
+            if let saved = savedTheme.flatMap(AppTheme.init(rawValue:)), saved.seedPrice != nil {
+                Seeds.grandfather(saved)
+            }
         }
         // 수동 생성 컨테이너는 autosave 명시(repo CLAUDE.md 2026-07-23 실측)
         Self.container.mainContext.autosaveEnabled = true
