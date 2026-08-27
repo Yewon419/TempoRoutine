@@ -259,7 +259,9 @@ struct SettingsView: View {
                 Section {
                     Toggle("건강 앱과 연동", isOn: healthBinding)
                         .tint(Ink.text)
-                        .disabled(!mirror.available)
+                        // 개발자 모드(2026-08-27) — 연동을 켜면 실건강 기록이 dev 스토어로 흘러
+                        // 들어와 "본인 기록 없는 화면"이라는 전제가 깨진다. 잠근다.
+                        .disabled(!mirror.available || DevMode.active)
                         .onChange(of: mirror.linked) { _, _ in lightFeedback += 1 }
                     if mirror.available {
                         // 읽기 권한 재요청은 애플이 막음(§5.7) — 설정 앱 원탭 이동이 최선(2026-07-24)
