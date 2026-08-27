@@ -163,8 +163,8 @@ struct SeasonCalendarView: View {
                 WeatherSky(veil: 0.14)
             } else if ThemeStore.chrome.videoGround {
                 // 캘린더만 흐린 지면(2026-08-26 베타) — 격자가 영상 디테일과 안 겹치게.
-                // 16 → 8(같은 날 "블러 절반으로" 판정)
-                PlaylistVideoGround(blurRadius: 8)
+                // 16 → 8 → 4(2026-08-27 "블러 0.5배" 판정)
+                PlaylistVideoGround(blurRadius: 4)
             } else {
                 (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
                     .ignoresSafeArea()

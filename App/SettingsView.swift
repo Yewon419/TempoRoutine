@@ -31,6 +31,8 @@ struct SettingsView: View {
     /// 테마 미디어 캐시(2026-08-25 대표님 지시 "설정에 캐시삭제 기능도") — 파일 시스템을 훑는
     /// 값이라 렌더마다 읽지 않는다. 설정 진입·삭제 직후에만 재계산한다.
     @State private var showCachePurgeConfirm = false
+    /// 체험 종료 시트 직접 표시(임시 확인용) — 재실행 판정 경유 안 함
+    @State private var showTrialEndSim = false
     @State private var cacheBytes = 0
     /// 언어 변경 대기값(2026-08-22 대표님 "언어 바꾸면 앱 재시작") — 피커는 이 값에 묶고, 확인을
     /// 눌러야 저장·종료한다. @AppStorage에 직접 묶으면 종료 전에 루트 리빌드가 먼저 돌아 옛 언어
@@ -391,8 +393,10 @@ struct SettingsView: View {
                 }
 
                 // ⚠ 임시 확인용(2026-08-26 대표님 "7일 무료체험 끝나는 거 확인하려고" — 확인 끝나면
-                // 이 섹션째 걷을 것, 테스트 알림 문구 전례): 체험 시작을 8일 전으로 되돌리고 종료
-                // 시트·평가 요청 플래그를 리셋한다. 판정은 RootTabView .task라 재실행이 필요하다.
+                // 이 섹션째 걷을 것): 종료 시트를 **그 자리에서 직접** 띄운다. 1차판(백데이트 후
+                // 재실행 판정 경유)은 "아예 안돼"였다 — 판정에 「은필 보유 + 보유 테마 사용 중 =
+                // 조용 종결」 게이트가 있어, 테마를 다 사둔 개발 기기에선 시트가 뜰 수 없었다.
+                // 백데이트·플래그 리셋은 유지(시트 안 카피·재실행 경로도 종료 상태로 맞춰 둔다).
                 Section {
                     Button(Loc.str("테마 체험 종료 시뮬레이션")) {
                         let defaults = UserDefaults.standard
@@ -402,7 +406,7 @@ struct SettingsView: View {
                             forKey: ThemeTrial.startKey)
                         defaults.removeObject(forKey: ThemeTrial.resolvedKey)
                         defaults.removeObject(forKey: ThemeTrial.reviewAskedKey)
-                        message = Loc.str("체험이 끝난 상태로 되돌렸어요. 앱을 완전히 종료했다가 다시 열면 종료 시트가 떠요. 은필을 이미 갖고 있고 보유 테마를 쓰는 중이면 시트 없이 조용히 끝나요.")
+                        showTrialEndSim = true
                     }
                     .foregroundStyle(Ink.text)
                 } footer: {
@@ -494,6 +498,9 @@ struct SettingsView: View {
         // 테마 탭 시트 표시는 RootTabView 한 곳(2026-08-11) — 여기선 플래그만 세운다
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)
+        }
+        .sheet(isPresented: $showTrialEndSim) {
+            TrialEndSheet { showTrialEndSim = false }.themeColorScheme()
         }
         .confirmationDialog("캐시를 비울까요?", isPresented: $showCachePurgeConfirm, titleVisibility: .visible) {
             Button("비우기", role: .destructive) {
