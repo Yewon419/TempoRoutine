@@ -281,6 +281,14 @@ struct SeasonCalendarView: View {
         VStack(alignment: .leading, spacing: 12) {
             if ThemeStore.chrome.ticketChrome {
                 // 티켓 = 화면 한 장이 발권물(시안 §3.4). 브랜드 표식은 스텁의 일련 조판이 대신한다.
+                // 티켓은 발권 정보 블록이 상단을 다 쓰고 `.cal-top`(브랜드 표식·소식란)을
+                // 숨긴다(시안 §3.5) — 그 바람에 **소식란 진입점이 통째로 사라져 있었다**
+                // (2026-08-27 베타 "티켓 테마엔 공지가 없네"). 발권 블록 위 우측에 확성기만 얹는다.
+                HStack {
+                    Spacer()
+                    noticeButton
+                }
+                .padding(.bottom, -12)   // 발권 블록과 붙여 상단 150pt 계약을 안 흔든다
                 ticketHeaderBlock
             } else if ThemeStore.chrome.playlistChrome {
                 // 플레이리스트 = 레코드판(시안 §4.4 ③, 2026-08-25 확정). 브랜드 표식·소식란은

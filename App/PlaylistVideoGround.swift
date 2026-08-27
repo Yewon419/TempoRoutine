@@ -99,6 +99,12 @@ final class PlaylistPlayerPool {
         return player
     }
 
+    /// 참조 증가 없이 현재 플레이어만 조회 — 레이어 소유권 회복용(아래 계약 참조).
+    func player(named name: String) -> AVQueuePlayer? {
+        guard let entry = entries[name], entry.revision == ThemeMedia.shared.revision else { return nil }
+        return entry.player
+    }
+
     /// 참조 반납 — 붙은 뷰가 0이면 멈춘다(테마 이탈 뒤 안 보이는 재생이 배터리를 먹지 않게).
     /// 위치는 플레이어에 남아 다음 acquire가 이어 튼다.
     func release(_ name: String) {
@@ -136,7 +142,13 @@ private struct PlaylistLoopVideo: UIViewRepresentable {
     }
 
     func updateUIView(_ view: PlayerView, context: Context) {
-        guard let player = view.playerLayer.player else { return }
+        // ⚠ **AVPlayer는 레이어 하나에만 그려진다**(2026-08-27 베타 — 빌드 509 이후 플리 지면이
+        // 통째로 빈 지면색이던 뿌리). 오늘·캘린더 두 화면이 같은 공유 플레이어를 쓰는데, 나중에
+        // 만들어진 레이어가 소유권을 가져가면 먼저 있던 레이어는 빈 채로 남는다. 종전 구현은
+        // `view.playerLayer.player`가 nil이면 즉시 return이라 한 번 뺏긴 화면이 영영 안 돌아왔다.
+        // 보이는 뷰가 갱신마다 소유권을 되찾는다 — 안 보이는 쪽은 어차피 화면 밖이다.
+        guard let player = PlaylistPlayerPool.shared.player(named: name) else { return }
+        if view.playerLayer.player !== player { view.playerLayer.player = player }
         if paused {
             player.pause()
         } else if player.rate == 0 {

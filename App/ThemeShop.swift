@@ -422,7 +422,15 @@ struct ThemeShopView: View {
     /// 샌드박스 시험 빌드에서는 등록 전에도 무료 시험 버튼이 뜬다(커피 팁 전례).
     @ViewBuilder
     private func passBuyButton(_ theme: AppTheme) -> some View {
-        if let product = passStore.product(for: theme) {
+        if passStore.purchasing == theme {
+            // 결제 시트가 뜨기까지의 공백을 비워 두지 않는다(2026-08-27 베타 — 커피와 같은 뿌리)
+            HStack(spacing: 7) {
+                ProgressView().controlSize(.small).tint(Ink.text.opacity(0.5))
+                Text(Loc.str("결제 창을 여는 중이에요"))
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.55))
+            }
+        } else if let product = passStore.product(for: theme) {
             Button {
                 lightFeedback += 1
                 buyPass(theme)

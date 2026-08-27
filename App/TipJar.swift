@@ -288,10 +288,13 @@ struct TipBubble: View {
             note(Loc.str("잠시만요"))
         case .unavailable:
             note(Loc.str("지금은 준비 중이에요"))
+        // 스피너 동반(2026-08-27 베타 "커피 결제까지 시간이 너무 오래걸린다 … 구매가 씹힌건가
+        // 불안") — 애플 결제 시트가 뜨기까지의 공백은 우리가 못 줄인다. 대신 **도는 것**을 보여
+        // 준다: 글자만 있으면 멈춘 화면과 구분이 안 된다.
         case .purchasing:
-            note(Loc.str("결제 창을 여는 중이에요"))
+            busyNote(Loc.str("결제 창을 여는 중이에요"))
         case .pending:
-            note(Loc.str("승인을 기다리는 중이에요"))
+            busyNote(Loc.str("승인을 기다리는 중이에요"))
         case .thanks:
             Label("잘 마실게요", systemImage: "checkmark")
                 .font(.footnote.weight(.semibold))
@@ -303,6 +306,14 @@ struct TipBubble: View {
             }
         case .ready:
             buyButton
+        }
+    }
+
+    /// 진행 중 표시 — 문구 + 작은 스피너
+    private func busyNote(_ text: String) -> some View {
+        HStack(spacing: 7) {
+            ProgressView().controlSize(.small).tint(Ink.text.opacity(0.5))
+            note(text)
         }
     }
 
