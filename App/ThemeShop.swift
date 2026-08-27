@@ -57,6 +57,11 @@ struct ThemeShopView: View {
     @State private var plantCandidate: AppTheme?   // 확인 다이얼로그 대상
     @State private var sprout: AppTheme?           // 새싹 축하 연출 중인 카드
     @State private var plantedAlert: AppTheme?     // 성공 알럿(연출 뒤 한 박자 늦게)
+    // 테마 패스(₩5,000 IAP, 2026-08-27 Phase 2)
+    @State private var passStore = ThemePassStore.shared
+    @State private var purchasedByPass = false     // 성공 알럿 문구 분기(씨앗 vs 결제)
+    @State private var passFailedAlert = false
+    @State private var restoreResult: Int?         // 복원 결과 알럿(nil = 닫힘)
     @State private var celebrateTick = 0           // 성공 햅틱
     // 커피 한 잔(2026-08-11) — 우상단 캐릭터 + 말풍선. 씨앗 트랙 밖의 팁이다(§3.8).
     private var tips = TipStore.shared
@@ -90,6 +95,17 @@ struct ThemeShopView: View {
                         Text("씨앗은 하루 체크인을 완성하면 하나씩 모여요.")
                             .font(.caption)
                             .foregroundStyle(Ink.text.opacity(0.45))
+                        // 구매 복원(2026-08-27) — 비소모품(₩5,000 패스)의 심사 요구 버튼.
+                        // 기기 교체·재설치 후 애플 결제 소유를 원장에 되새긴다.
+                        Button(Loc.str("구매 복원")) {
+                            lightFeedback += 1
+                            Task { @MainActor in
+                                restoreResult = await ThemePassStore.shared.restore()
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.45))
+                        .underline()
                     }
                     .padding(20)
                     .centeredColumn(640)
@@ -108,7 +124,7 @@ struct ThemeShopView: View {
         // 첫 진입 안내(2026-08-12 사용자 지시) — 잔액이 무엇인지, 구매와 적용이 왜 따로인지.
         // NavigationStack 바깥에 붙여 시트 전체(툴바 포함)를 덮는다.
         .coachOverlay(id: .themeShop, steps: CoachSteps.themeShop)
-        .task { await tips.load() }
+        .task { await tips.load(); await passStore.load() }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sensoryFeedback(.success, trigger: celebrateTick)
         // 구매 확인(2026-08-09) — 씨앗을 쓰는 확정 액션이라 한 번 묻는다(§8.2.6 확인 문법)
@@ -134,10 +150,21 @@ struct ThemeShopView: View {
             Button("지금 적용하기") { apply(theme) }
             Button("나중에") { plantedAlert = nil }
         } message: { theme in
-            Text(Loc.fmt("씨앗 %lld개를 썼어요.", theme.seedPrice ?? 0))
+            Text(purchasedByPass ? Loc.str("결제가 완료됐어요.")
+                                 : Loc.fmt("씨앗 %lld개를 썼어요.", theme.seedPrice ?? 0))
         }
         .sheet(item: $previewing) { theme in
             ThemePreviewScreen(theme: theme)
+        }
+        .alert("결제를 끝내지 못했어요", isPresented: $passFailedAlert) {
+            Button("확인") {}
+        } message: {
+            Text("결제가 이루어지지 않았어요. 잠시 뒤에 다시 시도해 주세요.")
+        }
+        .alert(restoreResult.map { $0 > 0 ? Loc.str("구매를 복원했어요.") : Loc.str("복원할 구매가 없어요.") } ?? "",
+               isPresented: Binding(get: { restoreResult != nil },
+                                    set: { if !$0 { restoreResult = nil } })) {
+            Button("확인") { restoreResult = nil }
         }
         // 날씨 위치 게이트(2026-08-19) — 시스템 설정의 위치 허가로 보낸다
         .alert("위치 허가가 필요해요", isPresented: $showWeatherLocationAlert) {
@@ -353,35 +380,81 @@ struct ThemeShopView: View {
                 }
             }
         } else if let price = theme.seedPrice {
-            if available >= price {
-                Button {
-                    lightFeedback += 1
-                    plantCandidate = theme   // 구입 확인 다이얼로그(2026-08-09)
-                } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                if available >= price {
+                    Button {
+                        lightFeedback += 1
+                        plantCandidate = theme   // 구입 확인 다이얼로그(2026-08-09)
+                    } label: {
+                        HStack(spacing: 6) {
+                            SeedGlyph()
+                                .fill(Ink.paper)
+                                .frame(width: 8, height: 11)
+                                .rotationEffect(.degrees(16))
+                            Text(Loc.fmt("씨앗 %lld개로 구매", price))
+                                .font(.footnote.weight(.semibold))
+                        }
+                        .foregroundStyle(Ink.paper)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 9)
+                        .background(Ink.text, in: Capsule())
+                    }
+                } else {
+                    // 재촉 금지(§7) — 사실만: 몇 개가 더 필요한지
                     HStack(spacing: 6) {
                         SeedGlyph()
-                            .fill(Ink.paper)
+                            .fill(Ink.text.opacity(0.4))
                             .frame(width: 8, height: 11)
                             .rotationEffect(.degrees(16))
-                        Text(Loc.fmt("씨앗 %lld개로 구매", price))
-                            .font(.footnote.weight(.semibold))
+                        Text(Loc.fmt("씨앗 %1$lld개로 구매할 수 있어요 · 지금 %2$lld개", price, available))
+                            .font(.footnote)
+                            .foregroundStyle(Ink.text.opacity(0.55))
                     }
-                    .foregroundStyle(Ink.paper)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 9)
-                    .background(Ink.text, in: Capsule())
                 }
-            } else {
-                // 재촉 금지(§7) — 사실만: 몇 개가 더 필요한지
-                HStack(spacing: 6) {
-                    SeedGlyph()
-                        .fill(Ink.text.opacity(0.4))
-                        .frame(width: 8, height: 11)
-                        .rotationEffect(.degrees(16))
-                    Text(Loc.fmt("씨앗 %1$lld개로 구매할 수 있어요 · 지금 %2$lld개", price, available))
-                        .font(.footnote)
-                        .foregroundStyle(Ink.text.opacity(0.55))
-                }
+                passBuyButton(theme)
+            }
+        }
+    }
+
+    /// ₩5,000 테마 패스(2026-08-27 Phase 2) — 프리미엄 3종에만, 씨앗 경로와 병기.
+    /// 상품이 안 잡히면(콘솔 미등록·네트워크) 씨앗 경로만 남는다 — 가짜 가격을 띄우지 않는다.
+    /// 샌드박스 시험 빌드에서는 등록 전에도 무료 시험 버튼이 뜬다(커피 팁 전례).
+    @ViewBuilder
+    private func passBuyButton(_ theme: AppTheme) -> some View {
+        if let product = passStore.product(for: theme) {
+            Button {
+                lightFeedback += 1
+                buyPass(theme)
+            } label: {
+                Text(Loc.fmt("%1$@으로 구매", product.displayPrice))
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.55))
+                    .underline()
+            }
+            .disabled(passStore.purchasing != nil)
+        } else if passStore.trialAvailable(for: theme) {
+            Button {
+                lightFeedback += 1
+                buyPass(theme)
+            } label: {
+                Text(Loc.str("₩5,000으로 구매 (시험 · 무료)"))   // 샌드박스 전용 — 카탈로그 미수록(한국어 고정)
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.55))
+                    .underline()
+            }
+        }
+    }
+
+    private func buyPass(_ theme: AppTheme) {
+        Task { @MainActor in
+            switch await ThemePassStore.shared.buy(theme) {
+            case .done:
+                purchasedByPass = true
+                celebrate(theme)
+            case .failed:
+                passFailedAlert = true
+            case .cancelled, .pending:
+                break   // 취소는 조용히, 승인 대기는 통과 시 updates 리스너가 소유를 적는다
             }
         }
     }
@@ -415,6 +488,12 @@ struct ThemeShopView: View {
     private func plant(_ theme: AppTheme) {
         guard let price = theme.seedPrice,
               Seeds.plant(theme, price: price, checkIns: checkIns) else { return }
+        purchasedByPass = false   // 성공 알럿 문구 = 씨앗
+        celebrate(theme)
+    }
+
+    /// 구매 성공 연출(새싹 + 성공 햅틱 + 한 박자 뒤 알럿) — 씨앗·₩5,000 패스 공용
+    private func celebrate(_ theme: AppTheme) {
         celebrateTick += 1
         withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.55)) {
             sprout = theme

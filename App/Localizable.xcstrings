@@ -1266,6 +1266,29 @@
         }
       }
     },
+    "%1$@으로 구매": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy for %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@で購入"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以 %1$@ 购买"
+          }
+        }
+      }
+    },
     "%1$@의 에너지 기록이 %2$@번 쌓였어요. 세 번이면 이 계절의 첫 패턴이 보여요.": {
       "extractionState": "manual",
       "localizations": {
@@ -4417,6 +4440,52 @@
         }
       }
     },
+    "결제가 완료됐어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payment complete."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "決済が完了しました。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支付已完成。"
+          }
+        }
+      }
+    },
+    "결제가 이루어지지 않았어요. 잠시 뒤에 다시 시도해 주세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The payment didn't go through. Please try again in a moment."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "決済が行われませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支付未完成。请稍后再试。"
+          }
+        }
+      }
+    },
     "결제를 끝내지 못했어요": {
       "extractionState": "manual",
       "localizations": {
@@ -4850,6 +4919,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "多云"
+          }
+        }
+      }
+    },
+    "구매 복원": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore purchases"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "購入を復元"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复购买"
+          }
+        }
+      }
+    },
+    "구매를 복원했어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchases restored."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "購入を復元しました。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已恢复购买。"
           }
         }
       }
@@ -9220,6 +9335,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "一般"
+          }
+        }
+      }
+    },
+    "복원할 구매가 없어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No purchases to restore."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "復元できる購入がありません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可恢复的购买项目。"
           }
         }
       }

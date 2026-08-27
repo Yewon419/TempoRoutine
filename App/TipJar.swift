@@ -75,6 +75,9 @@ final class TipStore {
         updatesTask = Task {
             for await update in Transaction.updates {
                 guard case .verified(let transaction) = update else { continue }
+                // 커피만 센다(2026-08-27) — 테마 패스가 생기면서 상품이 여럿이 됐다. 필터 없이는
+                // 테마 결제가 커피 잔으로 집계된다. 다른 상품의 finish는 제 스토어(ThemePass)가 한다.
+                guard transaction.productID == Self.productID else { continue }
                 await transaction.finish()
                 record(transaction.id)
             }
