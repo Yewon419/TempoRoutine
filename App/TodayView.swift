@@ -437,10 +437,19 @@ struct TodayView: View {
     private var playlistStageZero: some View {
         VStack(spacing: 0) {
             HStack {
-                BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
+                // 지면 보정·진입점을 일반 오늘 탭과 동형으로(2026-08-28 전체 점검) — s0는 별도
+                // 뷰 트리라 배지가 **탭 안 되는 표시**로만 있었다. 다른 화면에선 테마 탭 진입점이다.
+                BrandMark(diameter: 22, color: Ink.onGround(Ink.text.opacity(0.75), white: 0.8))
                     .padding(.leading, 6)
                 Spacer()
-                SeedBadge(count: Seeds.available(checkIns))
+                Button {
+                    lightFeedback += 1
+                    showThemeShop = true
+                } label: {
+                    SeedBadge(count: Seeds.available(checkIns))
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("테마 화면을 엽니다")
             }
             Spacer()
             if let info = todayInfo {

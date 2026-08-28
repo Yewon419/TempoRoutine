@@ -14,6 +14,8 @@ enum ScheduleReminder {
     /// 거부 상태면 조용히 스킵(§8.1 상태 어휘 — 에러 상태를 만들지 않음, 재촉 금지).
     static func schedule(id: UUID, title: String, date: Date, isAllDay: Bool,
                          repeatRule: ScheduleRepeat, reminderMinutes: Int) {
+        // 개발자 모드 — dev에서 만든 일정이 실기기 알림을 울리지 않게(2026-08-28 전체 점검)
+        guard !DevMode.active else { return }
         guard reminderMinutes >= 0 else { return }
         Task {
             let center = UNUserNotificationCenter.current()

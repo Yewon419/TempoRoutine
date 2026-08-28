@@ -46,6 +46,10 @@ enum CoverageReminder {
     /// 부분 갱신은 앵커가 움직였을 때 지난 계산의 잔재를 남긴다.
     /// 체크인은 여기서 직접 읽는다 — 루트 뷰에 @Query를 하나 더 다는 것보다 재렌더가 적다.
     static func reschedule(periodDays: [PeriodDay], context: ModelContext) {
+        // 개발자 모드(2026-08-28 전체 점검) — **중앙 게이트**. 이 함수는 cancelAll()로 시작하므로
+        // dev의 빈 스토어로 부르면 사용자의 실알림이 통째로 취소된다. 호출부를 쫓지 않고 여기서
+        // 막는다(WidgetBridge.publish와 같은 문법). 모드를 나가면 다음 재예약이 되살린다.
+        guard !DevMode.active else { return }
         cancelAll()
         guard isOn else { return }
         let checkIns = (try? context.fetch(FetchDescriptor<DailyCheckIn>())) ?? []

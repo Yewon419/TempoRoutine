@@ -162,11 +162,15 @@ final class PlannerSync: NSObject {
 
     /// 앱 활성·백그라운드 진입에서 부른다 — diff 큐잉 + 즉시 왕복
     func kick() {
+        // 개발자 모드(2026-08-28 전체 점검) — 중앙 게이트. dev 스토어의 레코드를 클라우드로
+        // 올리거나 실기기 변경을 dev로 당겨오면 "분리된 모드" 전제가 깨진다.
+        guard !DevMode.active else { return }
         guard Self.isEnabled else { return }
         Task { await syncNow() }
     }
 
     func syncNow() async {
+        guard !DevMode.active else { return }   // 설정 「지금 동기화」도 같은 게이트
         // 수동 「지금 동기화」 자가 회복(2026-08-11 실기기 — 패드가 "동기화 꺼짐" 리포트에 갇힘):
         // 토글이 꺼져 있으면 켜고 시작한다 — 버튼을 눌렀다는 것 자체가 켜겠다는 의사다.
         if !Self.isEnabled {

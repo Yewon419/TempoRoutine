@@ -64,6 +64,10 @@ enum DailyNotices {
     }
 
     static func reschedule(periodDays: [PeriodDay], schedules: [ScheduleItem]) {
+        // 개발자 모드(2026-08-28 전체 점검) — **중앙 게이트**. 이 함수는 cancelAll()로 시작하므로
+        // dev의 빈 스토어로 부르면 사용자의 실알림이 통째로 취소된다. 호출부를 쫓지 않고 여기서
+        // 막는다(WidgetBridge.publish와 같은 문법). 모드를 나가면 다음 재예약이 되살린다.
+        guard !DevMode.active else { return }
         cancelAll()
         let requests = buildRequests(periodDays: periodDays, schedules: schedules)
         guard !requests.isEmpty else { return }

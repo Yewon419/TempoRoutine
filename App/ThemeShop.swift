@@ -62,6 +62,7 @@ struct ThemeShopView: View {
     @State private var purchasedByPass = false     // 성공 알럿 문구 분기(씨앗 vs 결제)
     @State private var passFailedAlert = false
     @State private var restoreResult: Int?         // 복원 결과 알럿(nil = 닫힘)
+    @State private var restoring = false           // 복원 대기(AppStore.sync는 수 초 걸린다)
     @State private var celebrateTick = 0           // 성공 햅틱
     // 커피 한 잔(2026-08-11) — 우상단 캐릭터 + 말풍선. 씨앗 트랙 밖의 팁이다(§3.8).
     private var tips = TipStore.shared
@@ -97,15 +98,28 @@ struct ThemeShopView: View {
                             .foregroundStyle(Ink.text.opacity(0.45))
                         // 구매 복원(2026-08-27) — 비소모품(₩5,000 패스)의 심사 요구 버튼.
                         // 기기 교체·재설치 후 애플 결제 소유를 원장에 되새긴다.
-                        Button(Loc.str("구매 복원")) {
-                            lightFeedback += 1
-                            Task { @MainActor in
-                                restoreResult = await ThemePassStore.shared.restore()
+                        // AppStore.sync()는 계정 확인 때문에 수 초 걸린다 — 누른 뒤 아무 반응이
+                        // 없으면 씹힌 걸로 읽힌다(2026-08-27 결제 대기 피드백과 같은 뿌리).
+                        if restoring {
+                            HStack(spacing: 7) {
+                                ProgressView().controlSize(.small).tint(Ink.text.opacity(0.45))
+                                Text(Loc.str("구매를 확인하는 중이에요"))
+                                    .font(.caption)
+                                    .foregroundStyle(Ink.text.opacity(0.45))
                             }
+                        } else {
+                            Button(Loc.str("구매 복원")) {
+                                lightFeedback += 1
+                                restoring = true
+                                Task { @MainActor in
+                                    restoreResult = await ThemePassStore.shared.restore()
+                                    restoring = false
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundStyle(Ink.text.opacity(0.45))
+                            .underline()
                         }
-                        .font(.caption)
-                        .foregroundStyle(Ink.text.opacity(0.45))
-                        .underline()
                     }
                     .padding(20)
                     .centeredColumn(640)

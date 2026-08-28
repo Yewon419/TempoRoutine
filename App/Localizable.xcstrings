@@ -4969,6 +4969,29 @@
         }
       }
     },
+    "구매를 확인하는 중이에요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking your purchases"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "購入を確認しています"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在确认购买"
+          }
+        }
+      }
+    },
     "국군의 날": {
       "extractionState": "manual",
       "localizations": {

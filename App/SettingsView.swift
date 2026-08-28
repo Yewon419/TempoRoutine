@@ -679,7 +679,11 @@ struct SettingsView: View {
     private func wipeAll(includeHealth: Bool) {
         undoDismissTask?.cancel()
         let snapshot = ExportImport.buildEnvelope(from: store)
-        if includeHealth {
+        // 개발자 모드(2026-08-28 전체 점검) — dev 스토어를 비우는 건 dev 안의 일이지만, 아래
+        // 건강 부수효과(샘플 삭제·연동 끄기·앵커 리셋)는 **실계정 상태**를 건드린다. dev에서
+        // 기록을 지웠다고 사용자의 건강 연동이 꺼지면 안 된다.
+        let touchesHealth = !DevMode.active
+        if includeHealth, touchesHealth {
             let uuids = periodDays.filter { $0.origin == .appAuthored }.compactMap(\.healthKitUUID)
             Task { await mirror.deleteSamples(uuids: uuids) }
         }
@@ -687,8 +691,10 @@ struct SettingsView: View {
         // 동기화가 건강 앱 기록을 **전부 초기 가져오기**해서, 지운 생리 기록이 금방 되살아난다.
         // undo가 연동 상태도 되돌리도록 종전 값을 스냅샷 옆에 잡아 둔다.
         undoWasLinked = mirror.linked
-        mirror.linked = false
-        HealthMirror.resetImportState()   // 앵커·툼스톤 리셋 — 재연동이 초기 가져오기가 되도록(2026-07-23)
+        if touchesHealth {
+            mirror.linked = false
+            HealthMirror.resetImportState()   // 앵커·툼스톤 리셋 — 재연동이 초기 가져오기가 되도록(2026-07-23)
+        }
         ExportImport.wipeAll(store, context: modelContext)
         refreshDerivedSurfaces()
         withAnimation { undoSnapshot = snapshot }
