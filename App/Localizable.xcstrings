@@ -5820,25 +5820,25 @@
         }
       }
     },
-    "기본": {
+    "심플": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Basic"
+            "value": "Simple"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ベーシック"
+            "value": "シンプル"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "基础"
+            "value": "简约"
           }
         }
       }
@@ -5866,25 +5866,25 @@
         }
       }
     },
-    "기본 테마.": {
+    "심플 테마.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The Basic theme."
+            "value": "The Simple theme."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ベーシックのテーマです。"
+            "value": "シンプルのテーマです。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "基础主题。"
+            "value": "简约主题。"
           }
         }
       }

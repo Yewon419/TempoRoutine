@@ -31,7 +31,7 @@ extension AppTheme {
 
     var shopCaption: String {
         switch self {
-        case .plain: Loc.str("기본 테마.")
+        case .plain: Loc.str("심플 테마.")
         case .standard: Loc.str("은필과 종이. 계절이 빛으로 스며드는 지면이에요.")
         case .modern: Loc.str("기본 지면에 다홍 한 점. 계절은 밝기로 갈려요.")
         case .ticket: Loc.str("색면 위에 놓인 한 장의 티켓. 일상을 여행처럼.")

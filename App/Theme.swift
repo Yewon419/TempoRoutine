@@ -10,8 +10,9 @@ import TempoCore
 import UIKit
 
 enum AppTheme: String, CaseIterable, Identifiable {
-    /// 기본(2026-08-12) — Apple 기본 UI 계열. 장식을 벗고 정보만 남긴 지면.
-    /// ⚠ `allCases` 순서 = 테마 탭 카드 순서. 기본이 맨 위다.
+    /// 심플(2026-08-12, 2026-08-30 표시명 「기본」→「심플」) — Apple 기본 UI 계열. 장식을
+    /// 벗고 정보만 남긴 지면. rawValue는 `plain` 그대로 둔다 — 바꾸면 기존 설치의 저장값이 깨진다.
+    /// ⚠ `allCases` 순서 = 테마 탭 카드 순서. 심플이 맨 위다.
     case plain
     /// 은필 — 종전 기본. 2026-08-12부터 씨앗 구매 테마로 내려왔다(MASTER §3.8.1 트랙 분리).
     /// rawValue는 `standard` 그대로 둔다 — 바꾸면 기존 설치의 저장값이 깨진다.
@@ -36,7 +37,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .plain: Loc.str("기본")
+        case .plain: Loc.str("심플")
         case .standard: Loc.str("은필")
         case .modern: Loc.str("포인트컬러")
         case .ticket: Loc.str("티켓")
