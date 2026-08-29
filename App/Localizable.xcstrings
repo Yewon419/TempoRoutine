@@ -944,25 +944,25 @@
         }
       }
     },
-    "%1$@%2$@ %3$@일차%4$@": {
+    "%1$@ %2$@일차%3$@": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@%2$@ Day %3$@%4$@"
+            "value": "%1$@ Day %2$@%3$@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@%2$@ %3$@日目%4$@"
+            "value": "%1$@ %2$@日目%3$@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@%2$@ 第%3$@天%4$@"
+            "value": "%1$@ 第%2$@天%3$@"
           }
         }
       }
@@ -11750,29 +11750,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "小腹或腰部不舒服"
-          }
-        }
-      }
-    },
-    "아마 ": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probably "
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "たぶん "
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "大概 "
           }
         }
       }

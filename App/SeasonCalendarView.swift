@@ -1363,9 +1363,8 @@ struct SeasonCalendarView: View {
         let meta = seasonMeta(for: phase)
         let spanStart = CyclePredictor.phaseSpans(cycleLength: avgLength, menstrualLength: m)
             .first { $0.phase == phase }?.startDay ?? 1
-        let hedge = starts.count == 1 ? Loc.str("아마 ") : ""
         let projected = r.projected ? Loc.str(" · 예상") : ""
-        return Loc.fmt("%1$@%2$@ %3$@일차%4$@", "\(hedge)", "\(meta.name)", "\(max(1, r.day - spanStart + 1))", "\(projected)")
+        return Loc.fmt("%1$@ %2$@일차%3$@", "\(meta.name)", "\(max(1, r.day - spanStart + 1))", "\(projected)")
     }
 
     // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
