@@ -73,18 +73,38 @@ enum DevSampleData {
             }
         }
 
-        // 체크인 — 계절 프로필 + 지터. 빠진 날(~15%)이 있어야 실기록처럼 보인다.
+        // 한 줄 일기 표본(2026-08-30 대표님 "일기도 좀 추가해줘") — 사용자 데이터 표본이라
+        // 번역 대상이 아니다(loc_audit VALUE_CTX_SKIP_FILES 등재). 계절 순서(겨울→봄→여름→가을)로
+        // 도는 체크인 흐름에 맞춰 4개씩 묶었다.
+        let notes: [[String]] = [
+            ["따뜻한 물 끓여 마시고 일찍 누웠다", "오늘은 무리하지 않기로 했다",
+             "핫팩 붙이고 좋아하는 노래만 들었다", "이불 밖은 위험한 날"],
+            ["산책하다가 마음이 좀 가벼워졌다", "미뤄둔 메일을 다 정리했다. 개운하다",
+             "새로 산 책을 반이나 읽었다", "괜히 뭐든 할 수 있을 것 같은 날"],
+            ["오랜만에 친구를 만나 실컷 웃었다", "일이 술술 풀려서 신났다",
+             "저녁 노을이 예뻐서 한참 봤다", "에너지가 넘쳐서 방 청소까지 했다"],
+            ["일찍 자야겠다. 몸이 무겁다", "커피 대신 캐모마일을 골랐다",
+             "나한테 너그러워지기로 한 날", "조용한 하루. 나쁘지 않았다"],
+        ]
+
+        // 체크인 — 계절 프로필 + 지터. 빠진 날(~15%)·일기 있는 날(~22%)이 섞여야 실기록처럼 보인다.
         var checkIns: [DailyCheckInDTO] = []
+        var noteCursor = [0, 0, 0, 0]
         for offset in 0...totalDays {
             if Int.random(in: 0..<100, using: &rng) < 15 { continue }
             let phaseDay = offset % cycleLength
-            let (energy, mood, sleep): (Int, Int, Int) = switch phaseDay {
-            case ..<5: (2, 2, 3)      // 겨울(월경)
-            case ..<13: (4, 4, 4)     // 봄
-            case ..<18: (5, 5, 4)     // 여름
-            default: (3, 3, 3)        // 가을
+            let (season, energy, mood, sleep): (Int, Int, Int, Int) = switch phaseDay {
+            case ..<5: (0, 2, 2, 3)      // 겨울(월경)
+            case ..<13: (1, 4, 4, 4)     // 봄
+            case ..<18: (2, 5, 5, 4)     // 여름
+            default: (3, 3, 3, 3)        // 가을
             }
             let jitter = [-1, 0, 0, 1][Int.random(in: 0..<4, using: &rng)]
+            var note: String?
+            if Int.random(in: 0..<100, using: &rng) < 22 {
+                note = notes[season][noteCursor[season] % notes[season].count]
+                noteCursor[season] += 1
+            }
             let date = day(offset)
             let stamped = at(date, 21, 30)
             checkIns.append(DailyCheckInDTO(
@@ -92,7 +112,7 @@ enum DevSampleData {
                 energy: max(1, min(5, energy + jitter)),
                 mood: max(1, min(5, mood + jitter)),
                 sleep: max(1, min(5, sleep + jitter)),
-                pain: nil, appetite: max(1, min(5, energy)), note: nil,
+                pain: nil, appetite: max(1, min(5, energy)), note: note,
                 createdAt: stamped, completedAt: stamped))
         }
 
