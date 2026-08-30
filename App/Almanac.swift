@@ -48,6 +48,28 @@ enum ThemeFont {
     }()
 }
 
+/// 플리 라틴 각인 서체 — Geist(SIL OFL, App/Fonts 번들) 3웨이트(2026-08-30 대표님 "플리
+/// 영어폰트 다 geist로"). 소비처 = 트랙명·NOW PLAYING·연도·캘린더 숫자(라틴 전용 —
+/// 한글은 Noto Serif가 담당). 위젯 타깃 제외(project.yml — 활판 Noto 전례).
+enum GeistFont {
+    static let available: Bool = {
+        ["Geist-Regular", "Geist-Medium", "Geist-SemiBold"].allSatisfy { name in
+            guard let url = Bundle.main.url(forResource: name, withExtension: "otf") else { return false }
+            return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
+    }()
+}
+
+extension Font {
+    /// 플리 라틴 각인 전용 — 등록 실패 시 시스템 산세리프 폴백(종전 문법과 동일 무게)
+    static func geist(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        guard GeistFont.available else { return .system(size: size, weight: weight) }
+        let name = weight == .semibold || weight == .bold ? "Geist-SemiBold"
+                 : weight == .medium ? "Geist-Medium" : "Geist-Regular"
+        return .custom(name, size: size)
+    }
+}
+
 extension Font {
     /// 거대 표제·책력 조판 전용. 본문은 시스템 서체 유지(프로토: 표제=Gowun Batang, 본문=산세리프).
     /// 모던 = Pretendard(표제 600, 시안 §1.3-3 — Gowun 세리프 대체), 등록 실패 시 시스템 폴백

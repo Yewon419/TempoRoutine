@@ -60,8 +60,9 @@ struct PlaylistPlayerCard: View {
     private var main: some View {
         VStack(alignment: .leading, spacing: 0) {
             kicker
-            Text(meta.name)
-                .font(.system(size: 30, weight: .semibold))
+            // 트랙명 = 영어 각인 + Geist(2026-08-30 — LP 문법에서 여기만 영어 유지)
+            Text(verbatim: playlistTrackName(for: meta.phase))
+                .font(.geist(size: 30, weight: .semibold))
                 .foregroundStyle(Ink.text)   // 트랙명 = 잉크 — 색은 커버가 담당(§4.3)
                 .padding(.top, 6)
             // 부제 = 날짜만. 종전엔 의학 단계명(「배란기 · …」)이 앞에 붙어 있었는데
@@ -92,7 +93,7 @@ struct PlaylistPlayerCard: View {
         HStack(spacing: 8) {
             // 레코드판 문법의 라틴 각인 — 카피가 아니라 디자인 요소다(번역 대상 아님)
             Text(verbatim: "NOW PLAYING")
-                .font(.system(size: 10, weight: .medium))
+                .font(.geist(size: 10, weight: .medium))
                 .kerning(1.8)
                 .foregroundStyle(Ink.dim)
             Rectangle().fill(Ink.text.opacity(0.22))
@@ -188,15 +189,15 @@ struct PlaylistRecordHeader: View {
     private var typeStack: some View {
         VStack(spacing: 0) {
             Text(String(year))
-                .font(.system(size: 10, weight: .medium))
+                .font(.geist(size: 10, weight: .medium))
                 .kerning(1.8)
                 .foregroundStyle(Ink.dim)
             Text(Loc.monthName(month))
                 .font(.system(size: 26, weight: .semibold))
                 .foregroundStyle(Ink.text)
-            if phase != nil {
-                Text(meta.name)
-                    .font(.system(size: 15, weight: .semibold))
+            if let phase {
+                Text(verbatim: playlistTrackName(for: phase))
+                    .font(.geist(size: 15, weight: .semibold))
                     .foregroundStyle(Ink.text)
                     .padding(.top, 1)
             }

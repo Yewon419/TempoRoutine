@@ -231,6 +231,9 @@ private struct RingGauge: View {
     @State private var drawn: Double = 0
     @State private var bounce = false
     @State private var tapFeedback = 0
+    /// 플리 전용 음표 팝(2026-08-30 대표님 "플리 이런 특이한 테마는 음표가 나온다던지") —
+    /// 탭마다 +1, id 교체로 음표 뷰가 새로 태어나 떠오르며 사라진다.
+    @State private var noteBurst = 0
 
     private var target: Double { Double(value ?? 0) / 100 }
 
@@ -254,6 +257,12 @@ private struct RingGauge: View {
         }
         .frame(width: 54, height: 54)
         .scaleEffect(bounce ? 1.08 : 1)
+        .overlay(alignment: .top) {
+            if noteBurst > 0 {
+                NoteRise(color: meta.color)
+                    .id(noteBurst)   // 탭마다 새 인스턴스 — onAppear 애니메이션 재생
+            }
+        }
         .contentShape(Circle())
         .onTapGesture { replay() }
         .onAppear { animateIn() }
@@ -271,7 +280,9 @@ private struct RingGauge: View {
         tapFeedback += 1
         guard !reduceMotion else { return }
         animateIn()
+        // 테마별 반응(2026-08-30 대표님) — 공통 = 살짝 튐, 플리(레코드판) = 음표가 떠오른다
         withAnimation(.spring(response: 0.18, dampingFraction: 0.5)) { bounce = true }
+        if ThemeStore.chrome.signalRing == .vinyl { noteBurst += 1 }
         Task {
             try? await Task.sleep(nanoseconds: 140_000_000)
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { bounce = false }
@@ -333,6 +344,24 @@ private struct RingGauge: View {
     }
 }
 
+/// 레코드판 탭 음표(2026-08-30) — 링 위로 떠오르며 사라진다. id 교체로 재생되는 1회성 뷰.
+private struct NoteRise: View {
+    let color: Color
+    @State private var risen = false
+
+    var body: some View {
+        Image(systemName: "music.note")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(color)
+            .offset(y: risen ? -30 : -4)
+            .opacity(risen ? 0 : 1)
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.7)) { risen = true }
+            }
+    }
+}
+
 extension SignalPanel {
 
     // ── 일차 곡선 (2026-08-30 — 주기 일차 축 실데이터 곡선, 온보딩 EnergyWave의 실측판) ──
@@ -382,32 +411,55 @@ extension SignalPanel {
         top + CGFloat((5 - mean) / 4) * (bottom - top)   // 1...5 → bottom...top
     }
 
+    /// 연속 같은 계절 점들의 묶음 — 선·점을 계절 잉크로 칠하는 단위(2026-08-30 베타
+    /// "그래프 선이랑 점에도 색 넣어줘"). 묶음 사이 다리 구간은 뒤 계절 색이 잇는다.
+    private var curveRuns: [(phase: CyclePhase, points: [DayCurvePoint])] {
+        var runs: [(phase: CyclePhase, points: [DayCurvePoint])] = []
+        for point in dayCurve {
+            let phase = CyclePredictor.phaseForDay(point.day, cycleLength: cycleLength,
+                                                   menstrualLength: menstrualLength)
+            if runs.last?.phase == phase {
+                runs[runs.count - 1].points.append(point)
+            } else {
+                runs.append((phase, [point]))
+            }
+        }
+        return runs
+    }
+
     @ViewBuilder
     private func curvePath(width: CGFloat, top: CGFloat, bottom: CGFloat) -> some View {
         let dashed = dayCurve.count <= Self.curveDashedMaxDays
         let style = StrokeStyle(lineWidth: 1.4, lineCap: .round,
                                 dash: dashed ? [4, 4] : [])
-        Path { p in
-            for (i, point) in dayCurve.enumerated() {
-                let at = CGPoint(x: curveX(point.day, width: width),
-                                 y: curveY(point.mean, top: top, bottom: bottom))
-                if i == 0 { p.move(to: at) } else { p.addLine(to: at) }
+        let runs = curveRuns
+        ForEach(Array(runs.enumerated()), id: \.offset) { index, run in
+            Path { p in
+                // 앞 묶음 마지막 점에서 이어 그린다 — 색만 갈리고 선은 끊기지 않는다
+                let lead = index > 0 ? [runs[index - 1].points.last].compactMap { $0 } : []
+                for (i, point) in (lead + run.points).enumerated() {
+                    let at = CGPoint(x: curveX(point.day, width: width),
+                                     y: curveY(point.mean, top: top, bottom: bottom))
+                    if i == 0 { p.move(to: at) } else { p.addLine(to: at) }
+                }
             }
+            .stroke(seasonMeta(for: run.phase).color.opacity(0.85), style: style)
         }
-        .stroke(Ink.text.opacity(0.75), style: style)
     }
 
     @ViewBuilder
     private func curveDots(width: CGFloat, top: CGFloat, bottom: CGFloat) -> some View {
         let r: CGFloat = 2
-        Path { p in
-            for point in dayCurve {
-                let at = CGPoint(x: curveX(point.day, width: width),
-                                 y: curveY(point.mean, top: top, bottom: bottom))
-                p.addEllipse(in: CGRect(x: at.x - r, y: at.y - r, width: r * 2, height: r * 2))
+        ForEach(curveRuns, id: \.phase) { run in
+            Path { p in
+                for point in run.points {
+                    let at = CGPoint(x: curveX(point.day, width: width),
+                                     y: curveY(point.mean, top: top, bottom: bottom))
+                    p.addEllipse(in: CGRect(x: at.x - r, y: at.y - r, width: r * 2, height: r * 2))
+                }
             }
+            .fill(seasonMeta(for: run.phase).color)
         }
-        .fill(Ink.text.opacity(0.85))
     }
 
     /// 계절 밑줄 띠 — 캘린더의 숫자 아래 직각 밑줄 문법(§8.1)을 x축에 눕힌 것

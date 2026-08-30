@@ -65,10 +65,17 @@ struct SeasonMeta {
     let lever: String      // Output 계절 레버 카피 (§3.6 — 허락 톤, 프로토 v70 확정)
 }
 
-/// 플리 = 계절명 영어 고정(2026-08-30 대표님 지시 — 트랙명 문법. ja·zh에도 영어,
-/// 활판 라틴 스탬프 전례). 다른 테마는 종전 번역 그대로.
-private func seasonName(_ localized: String, en english: String) -> String {
-    ThemeStore.chrome.playlistChrome ? english : localized
+/// 플리 계절명 영어는 하루 만에 축소(2026-08-30 — "아 여긴 그냥 한국말로 해"·"하단부
+/// 봄여름가을겨울도 그냥 한글"): 서술·범례·라벨 전부 한글 복귀, 영어는 **캘린더 LP 트랙명
+/// 한 곳만** 남는다(`playlistTrackName`). 전역 헬퍼로 갈랐다가 문장 혼용("Summer에")과
+/// 라벨 줄바꿈 파손이 났던 자리.
+func playlistTrackName(for phase: CyclePhase) -> String {
+    switch phase {
+    case .menstrual: "Winter"
+    case .follicular: "Spring"
+    case .ovulation: "Summer"
+    case .luteal: "Autumn"
+    }
 }
 
 func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
@@ -79,22 +86,22 @@ func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     // 사용자 표면 금지인데 필드가 있으니 플레이리스트 이식이 부제에 갖다 썼다 —
     // 없으면 같은 사고가 구조적으로 불가능하다. 단계가 필요하면 `phase`(CyclePhase)를 쓸 것.
     case .menstrual:
-        SeasonMeta(phase: .menstrual, name: seasonName(Loc.str("겨울"), en: "Winter"),
+        SeasonMeta(phase: .menstrual, name: Loc.str("겨울"),
                    color: Ink.winter, glow: Ink.glowWinter,
                    moodline: Loc.str("이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요."),
                    lever: Loc.str("오늘은 천천히 이어가볼까요?"))
     case .follicular:
-        SeasonMeta(phase: .follicular, name: seasonName(Loc.str("봄"), en: "Spring"),
+        SeasonMeta(phase: .follicular, name: Loc.str("봄"),
                    color: Ink.spring, glow: Ink.glowSpring,
                    moodline: Loc.str("봄이에요. 가볍게 시작해보기 좋은 때예요."),
                    lever: Loc.str("시동 거는 주기예요. 가볍게 시작해도 좋아요."))
     case .ovulation:
-        SeasonMeta(phase: .ovulation, name: seasonName(Loc.str("여름"), en: "Summer"),
+        SeasonMeta(phase: .ovulation, name: Loc.str("여름"),
                    color: Ink.summer, glow: Ink.glowSummer,
                    moodline: Loc.str("여름이에요. 하고 싶은 만큼 빛나도 좋아요."),
                    lever: Loc.str("마음껏 몰입해도 좋아요."))
     case .luteal:
-        SeasonMeta(phase: .luteal, name: seasonName(Loc.str("가을"), en: "Autumn"),
+        SeasonMeta(phase: .luteal, name: Loc.str("가을"),
                    color: Ink.autumn, glow: Ink.glowAutumn,
                    moodline: Loc.str("가을이에요. 스스로를 돌아보는 시간을 가져봐요."),
                    lever: Loc.str("조금 더 해볼 수 있나요? 무리하지는 말아요."))
@@ -360,7 +367,9 @@ struct TodayView: View {
                     .groundHaze()     // 은필·기본 = 선화 위 안개(2026-08-22)
                     skyReadout        // 날씨 테마 전용 수치 줄(2026-08-20 사용자 요청)
                 }
-                Text(moodlineText ?? info.meta.moodline)
+                // 문장 단위 줄바꿈(2026-08-30 베타 "겨울이에요 어쩌구 그냥 다 문장 단위로 줄바꿈")
+                // — 프로토 .stc 문법의 앱 이식. 마침표+공백 = 문장 경계(전 언어 카피가 이 규약).
+                Text((moodlineText ?? info.meta.moodline).replacingOccurrences(of: ". ", with: ".\n"))
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.88))
                     .padding(.top, 2)

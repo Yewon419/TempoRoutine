@@ -86,9 +86,9 @@ struct BrandMark: View {
 
     private static let gapHalf: CGFloat = 0.0331   // BrandLogo와 동값(12시 끊김)
     private static let strokeRatio: CGFloat = 0.07
-    /// 0.085 → 0.12(2026-08-30 베타 "선 두께랑 점 크기가 거의 똑같아서 그냥 동그라미같다") —
-    /// 소형에선 점이 획과 구분돼야 심볼 포인트가 산다. 확대 보정 원칙은 파일 상단 주석 그대로.
-    private static let dotRatio: CGFloat = 0.12
+    /// 0.12 시도 후 원복(2026-08-30 — "동그라미같다" 대응으로 키웠다가 앱 스위처 가림 표지에서
+    /// "로고 바꾼거 더이상해요" 재보고. 커진 점이 브랜드 원비율과 어긋나 보인다 — 원래 값 유지)
+    private static let dotRatio: CGFloat = 0.085
 
     private var stroke: CGFloat { diameter * Self.strokeRatio }
 
