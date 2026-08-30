@@ -33,7 +33,7 @@ extension AppTheme {
         switch self {
         case .plain: Loc.str("심플 테마.")
         case .standard: Loc.str("은필과 종이. 계절이 빛으로 스며드는 지면이에요.")
-        case .modern: Loc.str("기본 지면에 다홍 한 점. 계절은 밝기로 갈려요.")
+        case .modern: Loc.str("기본 지면에 단색 한 점. 계절은 밝기로 갈려요.")
         case .ticket: Loc.str("색면 위에 놓인 한 장의 티켓. 일상을 여행처럼.")
         case .letterpress: Loc.str("종이에 눌러 새긴 하루. 잉크 없는 음각의 물성.")
         case .playlist: Loc.str("지금 재생 중인 계절. 하루가 트랙처럼 흘러요.")

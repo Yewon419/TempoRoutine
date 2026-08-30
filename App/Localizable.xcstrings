@@ -5820,29 +5820,6 @@
         }
       }
     },
-    "기본 지면에 다홍 한 점. 계절은 밝기로 갈려요.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One scarlet dot on the basic ground. Seasons are told apart by brightness."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ベーシックな地に朱色をひと点。季節は明るさで分かれます。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "基础底色上一点朱红。季节以明暗区分。"
-          }
-        }
-      }
-    },
     "심플 테마.": {
       "extractionState": "manual",
       "localizations": {
@@ -18834,6 +18811,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "一集治愈系剧"
+          }
+        }
+      }
+    },
+    "기본 지면에 단색 한 점. 계절은 밝기로 갈려요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One accent dot on the basic ground. Seasons are told apart by brightness."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ベーシックな地にひと色をひと点。季節は明るさで分かれます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基础底色上一点单色。季节以明暗区分。"
           }
         }
       }
