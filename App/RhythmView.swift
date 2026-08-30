@@ -366,11 +366,12 @@ struct RhythmView: View {
             let top: CGFloat = labelRoom + 4
             let bottom = h - 6
             let span = CGFloat(max(hi - lo, 1))
-            func x(_ index: Int) -> CGFloat {
+            // ⚠ ViewBuilder 클로저 안 func 선언은 컴파일 불가(CI 33304712113) — let 클로저로
+            let x: (Int) -> CGFloat = { index in
                 lengths.count == 1 ? w / 2
                     : 8 + CGFloat(index) / CGFloat(lengths.count - 1) * (w - 16)
             }
-            func y(_ value: Int) -> CGFloat {
+            let y: (Int) -> CGFloat = { value in
                 hi == lo ? (top + bottom) / 2
                     : bottom - CGFloat(value - lo) / span * (bottom - top)
             }
