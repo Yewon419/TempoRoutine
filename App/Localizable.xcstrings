@@ -15825,6 +15825,52 @@
         }
       }
     },
+    "주기 일차별 평균 · 기록상 패턴이에요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Average by cycle day · a pattern in your records"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "周期日ごとの平均 · 記録から見えるパターンです"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按周期天数的平均 · 是记录中的规律"
+          }
+        }
+      }
+    },
+    "%1$@ 주기 일차별 평균 곡선 · 일차 %2$@곳 기록": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ average curve by cycle day · logged on %2$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の周期日ごとの平均曲線 · %2$@日分の記録"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@按周期天数的平均曲线 · 已记录%2$@天"
+          }
+        }
+      }
+    },
     "주기가 보통\n며칠쯤인가요?": {
       "extractionState": "manual",
       "localizations": {

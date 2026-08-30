@@ -113,4 +113,52 @@ final class RhythmEngineTests: XCTestCase {
         XCTAssertEqual(RhythmEngine.cyclesWithData(signal: .energy, samples: invalid,
                                                    periodStarts: starts), 0)
     }
+
+    /// 일차 곡선 — 같은 일차의 여러 주기 표본은 평균, 일차 오름차순 정렬.
+    func testDayCurveBucketsByCycleDay() {
+        let samples = [
+            SignalSample(day: day(base, 0), energy: 2, mood: 3, sleep: nil),        // 1주기 1일차
+            SignalSample(day: day(base, 28), energy: 4, mood: 3, sleep: nil),       // 2주기 1일차
+            SignalSample(day: day(base, 15), energy: 5, mood: 4, sleep: nil),       // 1주기 16일차
+        ]
+        let curve = RhythmEngine.dayCurve(signal: .energy, samples: samples,
+                                          periodStarts: starts, averageLength: 28)
+        XCTAssertEqual(curve.map(\.day), [1, 16])
+        XCTAssertEqual(curve.first?.mean, 3.0)          // (2+4)/2
+        XCTAssertEqual(curve.first?.sampleCount, 2)
+        XCTAssertEqual(curve.last?.mean, 5.0)
+    }
+
+    /// projected 표본(마지막 시작 + 평균 길이 초과)은 곡선에 들지 않는다 — summaries와 동일 계약.
+    func testDayCurveExcludesProjectedAndOverflow() {
+        let samples = [
+            SignalSample(day: day(base, 56 + 30), energy: 5, mood: 5, sleep: nil),  // 예측 투영 구간
+            SignalSample(day: day(base, 1), energy: 3, mood: 3, sleep: nil),
+        ]
+        let curve = RhythmEngine.dayCurve(signal: .energy, samples: samples,
+                                          periodStarts: starts, averageLength: 28)
+        XCTAssertEqual(curve.map(\.day), [2])
+    }
+
+    /// 늦어진 주기 꼬리(실주기 안이지만 일차 > 평균 길이)는 x축 밖 — 버린다.
+    func testDayCurveDropsDaysBeyondAverageLength() {
+        // 1주기가 실측 32일이라면(starts 0, 32) 29~32일차 표본은 자리가 없다
+        let longStarts = [base, day(base, 32)]
+        let samples = [SignalSample(day: day(base, 30), energy: 4, mood: 4, sleep: nil)]  // 31일차
+        let curve = RhythmEngine.dayCurve(signal: .energy, samples: samples,
+                                          periodStarts: longStarts, averageLength: 28)
+        XCTAssertTrue(curve.isEmpty)
+    }
+
+    /// 옵션 신호(sleep) nil 행은 그 신호 곡선에 들지 않는다.
+    func testDayCurveSkipsNilOptionalSignal() {
+        let samples = [
+            SignalSample(day: day(base, 1), energy: 3, mood: 3, sleep: nil),
+            SignalSample(day: day(base, 2), energy: 3, mood: 3, sleep: 4),
+        ]
+        let curve = RhythmEngine.dayCurve(signal: .sleep, samples: samples,
+                                          periodStarts: starts, averageLength: 28)
+        XCTAssertEqual(curve.map(\.day), [3])
+        XCTAssertEqual(curve.first?.mean, 4.0)
+    }
 }

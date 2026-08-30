@@ -44,6 +44,19 @@ public struct SignalSample: Equatable, Sendable {
     }
 }
 
+/// 주기 일차 버킷 평균 한 점 — 일차 축 곡선(§8.2.5, 2026-08-30)의 입력.
+public struct DayCurvePoint: Equatable, Sendable {
+    public let day: Int          // 1-indexed 주기 일차
+    public let mean: Double
+    public let sampleCount: Int
+
+    public init(day: Int, mean: Double, sampleCount: Int) {
+        self.day = day
+        self.mean = mean
+        self.sampleCount = sampleCount
+    }
+}
+
 /// §5.6.3 계약 그대로.
 public struct PhaseSignalSummary: Equatable, Sendable {
     public let phase: CyclePhase
@@ -91,6 +104,29 @@ public enum RhythmEngine {
                                    mean: Double(acc.sum) / Double(acc.count),
                                    sampleCount: acc.count)
             }
+        }
+    }
+
+    /// 주기 일차별 버킷 평균 — 일차 축 곡선의 입력. 필터·도출은 `summaries`와 동일 의미론
+    /// (energy·mood 유효 행만 · projected 제외 · 해당 신호 1...5만). 일차가 averageLength를
+    /// 넘는 표본(늦어진 주기 꼬리)은 버린다 — x축이 1...averageLength라 자리가 없다.
+    public static func dayCurve(signal: SignalKind, samples: [SignalSample],
+                                periodStarts: [Date], averageLength: Int) -> [DayCurvePoint] {
+        guard averageLength > 0 else { return [] }
+        var buckets: [Int: (sum: Int, count: Int)] = [:]
+        for sample in samples {
+            guard (1...5).contains(sample.energy), (1...5).contains(sample.mood),
+                  let value = sample.value(of: signal), (1...5).contains(value),
+                  let r = CyclePredictor.cycleDay(of: sample.day, periodStarts: periodStarts,
+                                                  averageLength: averageLength),
+                  !r.projected, (1...averageLength).contains(r.day) else { continue }
+            let cur = buckets[r.day] ?? (0, 0)
+            buckets[r.day] = (cur.sum + value, cur.count + 1)
+        }
+        return buckets.sorted { $0.key < $1.key }.map {
+            DayCurvePoint(day: $0.key,
+                          mean: Double($0.value.sum) / Double($0.value.count),
+                          sampleCount: $0.value.count)
         }
     }
 

@@ -15,6 +15,15 @@ struct SignalPanel: View {
     let topPhases: [CyclePhase]      // 완료 주기별 argmax(오래된 것부터) — 일관성 서술의 입력
     let completedCycles: Int
     let currentPhase: CyclePhase?
+    // ── 일차 곡선 입력(2026-08-30 — 온보딩 인트로 B 곡선의 실데이터판) ──
+    let dayCurve: [DayCurvePoint]
+    let currentCycleDay: Int?        // 「지금」 헤어라인(범위 밖·nil이면 생략)
+    let cycleLength: Int
+    let menstrualLength: Int
+
+    /// 곡선 임계 — 표본 있는 일차 3곳부터 표시, 8곳 이하는 점선(저신뢰 표기, 대표님 결정 2026-08-30)
+    private static let curveMinDays = 3
+    private static let curveDashedMaxDays = 8
 
     private var bySignal: [PhaseSignalSummary] { summaries.filter { $0.signal == signal } }
     private var narratable: Bool { RhythmEngine.narratable(summaries, signal: signal) }
@@ -155,6 +164,11 @@ struct SignalPanel: View {
                 stats
             }
 
+            // 일차 곡선 — narratable과 별개 게이트(계절 비교는 안 돼도 일차 3곳이면 선은 그린다)
+            if dayCurve.count >= Self.curveMinDays {
+                curveSection
+            }
+
             if let consistencyLine {
                 Text(consistencyLine)
                     .font(.footnote)
@@ -273,6 +287,106 @@ struct SignalPanel: View {
             .trim(from: 0, to: max(0.02, progress))   // 0이어도 씨앗만큼은 보이게
             .stroke(color.opacity(opacity), style: style)
             .rotationEffect(.degrees(-90))   // 12시부터 차오른다
+    }
+
+    // ── 일차 곡선 (2026-08-30 — 주기 일차 축 실데이터 곡선, 온보딩 EnergyWave의 실측판) ──
+    // 표본 있는 일차끼리만 직선 연결 + 점 — 없는 일차를 보간해 그리면 없는 데이터를 단정한다.
+    // 8곳 이하 = 점선(저신뢰), 9곳부터 실선. 바닥에 계절 밑줄 띠(캘린더 밑줄 문법)와
+    // 오늘 일차 헤어라인. 추세 서술 카피는 두지 않는다(§7 — 선은 기록, 해석은 사용자 몫).
+    private var curveSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            curveCanvas
+                .frame(height: 96)
+            HStack {
+                Text(Loc.fmt("%lld일차", 1))
+                Spacer()
+                Text(Loc.fmt("%lld일차", cycleLength))
+            }
+            .font(.caption2)
+            .foregroundStyle(Ink.text.opacity(0.4))
+            Text(Loc.str("주기 일차별 평균 · 기록상 패턴이에요"))
+                .font(.caption)
+                .foregroundStyle(Ink.text.opacity(0.5))
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Loc.fmt("%1$@ 주기 일차별 평균 곡선 · 일차 %2$@곳 기록",
+                                    "\(titleName)", "\(dayCurve.count)"))
+    }
+
+    private var curveCanvas: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let plotBottom = h - 10       // 아래 10pt = 계절 띠 몫
+            let inset: CGFloat = 4        // 곡선 상하 숨통
+            ZStack(alignment: .topLeading) {
+                seasonBand(width: w, y: h - 2)
+                nowHairline(width: w, bottom: plotBottom)
+                curvePath(width: w, top: inset, bottom: plotBottom - inset)
+                curveDots(width: w, top: inset, bottom: plotBottom - inset)
+            }
+        }
+    }
+
+    private func curveX(_ day: Int, width: CGFloat) -> CGFloat {
+        (CGFloat(day) - 0.5) / CGFloat(max(cycleLength, 1)) * width
+    }
+
+    private func curveY(_ mean: Double, top: CGFloat, bottom: CGFloat) -> CGFloat {
+        top + CGFloat((5 - mean) / 4) * (bottom - top)   // 1...5 → bottom...top
+    }
+
+    @ViewBuilder
+    private func curvePath(width: CGFloat, top: CGFloat, bottom: CGFloat) -> some View {
+        let dashed = dayCurve.count <= Self.curveDashedMaxDays
+        let style = StrokeStyle(lineWidth: 1.4, lineCap: .round,
+                                dash: dashed ? [4, 4] : [])
+        Path { p in
+            for (i, point) in dayCurve.enumerated() {
+                let at = CGPoint(x: curveX(point.day, width: width),
+                                 y: curveY(point.mean, top: top, bottom: bottom))
+                if i == 0 { p.move(to: at) } else { p.addLine(to: at) }
+            }
+        }
+        .stroke(Ink.text.opacity(0.75), style: style)
+    }
+
+    @ViewBuilder
+    private func curveDots(width: CGFloat, top: CGFloat, bottom: CGFloat) -> some View {
+        let r: CGFloat = 2
+        Path { p in
+            for point in dayCurve {
+                let at = CGPoint(x: curveX(point.day, width: width),
+                                 y: curveY(point.mean, top: top, bottom: bottom))
+                p.addEllipse(in: CGRect(x: at.x - r, y: at.y - r, width: r * 2, height: r * 2))
+            }
+        }
+        .fill(Ink.text.opacity(0.85))
+    }
+
+    /// 계절 밑줄 띠 — 캘린더의 숫자 아래 직각 밑줄 문법(§8.1)을 x축에 눕힌 것
+    @ViewBuilder
+    private func seasonBand(width: CGFloat, y: CGFloat) -> some View {
+        let spans = CyclePredictor.phaseSpans(cycleLength: cycleLength,
+                                              menstrualLength: menstrualLength)
+        ForEach(spans, id: \.startDay) { span in
+            let x0 = (CGFloat(span.startDay) - 1) / CGFloat(max(cycleLength, 1)) * width
+            let bw = CGFloat(span.length) / CGFloat(max(cycleLength, 1)) * width
+            Rectangle()
+                .fill(seasonMeta(for: span.phase).color.opacity(0.75))
+                .frame(width: max(bw - 1, 0), height: 3)
+                .position(x: x0 + bw / 2, y: y)
+        }
+    }
+
+    @ViewBuilder
+    private func nowHairline(width: CGFloat, bottom: CGFloat) -> some View {
+        if let d = currentCycleDay, (1...cycleLength).contains(d) {
+            Rectangle()
+                .fill(Ink.text.opacity(0.18))
+                .frame(width: 1, height: bottom)
+                .position(x: curveX(d, width: width), y: bottom / 2)
+        }
     }
 
     // ── ④ 하이라이트 스탯 2행 ──

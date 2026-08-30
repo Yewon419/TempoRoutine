@@ -447,7 +447,17 @@ struct RhythmView: View {
                         completedCycles: RhythmEngine.cyclesWithData(signal: signal,
                                                                      samples: signalSamples,
                                                                      periodStarts: snapshot.starts),
-                        currentPhase: snapshot.phase(on: today))
+                        currentPhase: snapshot.phase(on: today),
+                        // 일차 곡선(2026-08-30) — 오늘 일차는 projected여도 헤어라인 용도라 무해
+                        dayCurve: RhythmEngine.dayCurve(signal: signal,
+                                                        samples: signalSamples,
+                                                        periodStarts: snapshot.starts,
+                                                        averageLength: snapshot.averageLength),
+                        currentCycleDay: CyclePredictor.cycleDay(of: today,
+                                                                 periodStarts: snapshot.starts,
+                                                                 averageLength: snapshot.averageLength)?.day,
+                        cycleLength: snapshot.averageLength,
+                        menstrualLength: snapshot.menstrualLength)
         }
     }
 
