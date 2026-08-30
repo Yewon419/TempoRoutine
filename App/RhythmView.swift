@@ -276,6 +276,8 @@ struct RhythmView: View {
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
                     .fixedSize(horizontal: false, vertical: true)
+                densityBars(density: density, peak: top.value)
+                    .padding(.vertical, 4)
                 Text(Loc.fmt("마친 기록 %1$@건 기준", "\(completions.count)"))
                     .font(.caption)
                     .foregroundStyle(Ink.text.opacity(0.45))
@@ -284,6 +286,34 @@ struct RhythmView: View {
             .padding(16)
             .milkGlass()
         }
+    }
+
+    /// 계절별 밀도 막대(2026-08-30 베타 "하단 기록 너무 심심하게 생겨서 안볼것같아") —
+    /// 상대 길이만 그린다. 숫자·백분율 미표시 원칙(§7 재촉 금지) 유지.
+    private func densityBars(density: [CyclePhase: Double], peak: Double) -> some View {
+        VStack(spacing: 6) {
+            ForEach(CyclePhase.displayOrder, id: \.self) { phase in
+                let meta = seasonMeta(for: phase)
+                HStack(spacing: 8) {
+                    SeasonGlyph(phase: phase, size: 11)
+                    Text(meta.name)
+                        .font(.almanacBody(.caption, size: 11))
+                        .foregroundStyle(meta.color)
+                        .frame(width: 34, alignment: .leading)
+                    GeometryReader { geo in
+                        let fraction = peak > 0 ? (density[phase] ?? 0) / peak : 0
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Ink.text.opacity(0.07))
+                            Capsule().fill(meta.color.opacity(0.75))
+                                .frame(width: max(geo.size.width * fraction,
+                                                  density[phase] == nil ? 0 : 5))
+                        }
+                    }
+                    .frame(height: 6)
+                }
+            }
+        }
+        .accessibilityHidden(true)   // 서술·각주가 이미 내용을 말한다
     }
 
     // ── 주기 길이 (2026-08-13) ──
@@ -312,6 +342,9 @@ struct RhythmView: View {
                 Text(Loc.fmt("최근 주기 %1$@일", "\(last)"))
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
+                lengthSpark(lengths: Array(lengths.suffix(8)), lo: lo, hi: hi)
+                    .frame(height: 40)
+                    .padding(.vertical, 4)
                 Text(lo == hi ? Loc.fmt("기록된 %1$@주기 모두 %2$@일", "\(lengths.count)", "\(lo)")
                               : Loc.fmt("기록된 %1$@주기 %2$@~%3$@일", "\(lengths.count)", "\(lo)", "\(hi)"))
                     .font(.caption)
@@ -321,6 +354,51 @@ struct RhythmView: View {
             .padding(16)
             .milkGlass()
         }
+    }
+
+    /// 주기 길이 점·선 스파크(2026-08-30 베타 — 하단 카드 시각 보강). 최근 8주기, 값 라벨은
+    /// 6개 이하일 때만(그 위는 겹친다). 추세 해석은 여전히 안 붙인다(§7).
+    private func lengthSpark(lengths: [Int], lo: Int, hi: Int) -> some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let labelRoom: CGFloat = lengths.count <= 6 ? 14 : 0
+            let top: CGFloat = labelRoom + 4
+            let bottom = h - 6
+            let span = CGFloat(max(hi - lo, 1))
+            func x(_ index: Int) -> CGFloat {
+                lengths.count == 1 ? w / 2
+                    : 8 + CGFloat(index) / CGFloat(lengths.count - 1) * (w - 16)
+            }
+            func y(_ value: Int) -> CGFloat {
+                hi == lo ? (top + bottom) / 2
+                    : bottom - CGFloat(value - lo) / span * (bottom - top)
+            }
+            ZStack(alignment: .topLeading) {
+                Path { p in
+                    for (i, v) in lengths.enumerated() {
+                        let at = CGPoint(x: x(i), y: y(v))
+                        if i == 0 { p.move(to: at) } else { p.addLine(to: at) }
+                    }
+                }
+                .stroke(Ink.text.opacity(0.35), style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
+                Path { p in
+                    for (i, v) in lengths.enumerated() {
+                        p.addEllipse(in: CGRect(x: x(i) - 2.5, y: y(v) - 2.5, width: 5, height: 5))
+                    }
+                }
+                .fill(Ink.text.opacity(0.8))
+                if labelRoom > 0 {
+                    ForEach(Array(lengths.enumerated()), id: \.offset) { i, v in
+                        Text("\(v)")
+                            .font(.system(size: 10).monospacedDigit())
+                            .foregroundStyle(Ink.text.opacity(0.55))
+                            .position(x: x(i), y: y(v) - 12)
+                    }
+                }
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     // ── 예측 오차 자가 표시 (2026-08-18) ──
@@ -346,6 +424,9 @@ struct RhythmView: View {
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
                     .fixedSize(horizontal: false, vertical: true)
+                errorDots(errors: errors)
+                    .frame(height: 34)
+                    .padding(.vertical, 2)
                 Text("기록된 시작일과 그때까지의 예측을 비교한 값")
                     .font(.caption)
                     .foregroundStyle(Ink.text.opacity(0.45))
@@ -354,6 +435,32 @@ struct RhythmView: View {
             .padding(16)
             .milkGlass()
         }
+    }
+
+    /// 예측 오차 점 배치(2026-08-30 베타 — 하단 카드 시각 보강). 가운데 괘선 = 예측한 날,
+    /// 점의 위(빠름)/아래(늦음) 거리 = 오차 일수(±4일 클램프). 해석 카피는 붙이지 않는다.
+    private func errorDots(errors: [Int]) -> some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let mid = geo.size.height / 2
+            let step: CGFloat = 5
+            ZStack {
+                Rectangle()
+                    .fill(Ink.text.opacity(0.15))
+                    .frame(width: w, height: 1)
+                    .position(x: w / 2, y: mid)
+                ForEach(Array(errors.enumerated()), id: \.offset) { i, error in
+                    let x = errors.count == 1 ? w / 2
+                        : 10 + CGFloat(i) / CGFloat(errors.count - 1) * (w - 20)
+                    let clamped = CGFloat(max(-4, min(4, error)))
+                    Circle()
+                        .fill(error == 0 ? Ink.text.opacity(0.85) : Ink.text.opacity(0.55))
+                        .frame(width: 6, height: 6)
+                        .position(x: x, y: mid + clamped * step)
+                }
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     /// 생리 전 저컨디션 윈도우(§5.3 층 2 `P`) 서술. MASTER가 「나의 사계 가을 서사」를 P의
