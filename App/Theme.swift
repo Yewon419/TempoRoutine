@@ -512,9 +512,11 @@ struct ThemeChrome {
 }
 
 extension ThemeChrome {
-    /// 은필 — 종전 「모던이 아닌」 경로와 동값(픽셀 변화 0 원칙)
+    /// 은필 — 종전 「모던이 아닌」 경로와 동값(픽셀 변화 0 원칙).
+    /// 서체만 예외: Gowun → Noto Serif KR(2026-08-30 대표님 지시. 활판과 같은 .notoSerif
+    /// 경로 = 표제 Light 300 · 본문급 Light/Medium. ⚠ 위젯은 Noto 미번들(24MB)이라 Gowun 유지)
     static let silverpoint = ThemeChrome(
-        typeFace: .gowun, texture: .motif, outlineDisplay: false,
+        typeFace: .notoSerif, texture: .motif, outlineDisplay: false,
         showsSeasonLight: true, neutralSeasonLight: false,
         dimsInDarkMode: true, forcesDarkAppearance: false,
         todayCircleUsesAccent: false,
