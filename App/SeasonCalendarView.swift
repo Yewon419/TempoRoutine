@@ -1237,6 +1237,14 @@ struct SeasonCalendarView: View {
     private func numberFont(isToday: Bool) -> Font {
         switch ThemeStore.chrome.typeFace {
         case .notoSerif:
+            // 은필 = Gowun 숫자 유지(2026-08-30 대표님 "은필 숫자는 롤백" — .notoSerif 전환의
+            // 동반 변화만 되돌린다. Bodoni는 활판·플리의 라틴 숫자 문법)
+            if ThemeStore.current == .standard {
+                guard AlmanacFont.available else {
+                    return .system(size: 14, weight: isToday ? .bold : .semibold, design: .serif)
+                }
+                return .custom(isToday ? "GowunBatang-Bold" : "GowunBatang-Regular", size: 14)
+            }
             // 활판 소형 숫자(§2.3-11) = Bodoni Moda 400, 오늘만 500. named instance 실패 시 세리프 폴백
             guard LetterpressFont.available else {
                 return .system(size: 14, weight: isToday ? .medium : .regular, design: .serif)
