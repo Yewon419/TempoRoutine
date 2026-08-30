@@ -43,6 +43,8 @@
 - SwiftUI 뷰 한 식에 shape+fill+frame+overlay+offset을 다 몰면 "unable to type-check this
   expression in reasonable time"으로 빌드가 깨진다(2026-07-25 실측). 지역 상수에 타입을 명시하고
   하위 뷰 함수로 쪼갤 것 — Windows에선 컴파일이 안 돌아 CI 한 바퀴를 버리게 된다.
+  **RootTabView body는 모디파이어 체인이 이미 한계선**(2026-08-30 실측: `.task` 1개 추가로 초과,
+  CI 33289665318) — 새 시작 작업은 모디파이어를 늘리지 말고 기존 `.task`/`.onChange` 블록 안에 합칠 것.
 - 익스텐션 추가 시 cloud signing은 새 번들 ID·App Group을 자동 등록하지 못한다(2026-07-27 실측:
   "Authentication failed" + "No profiles"). 번들 ID·capability는 ASC API로 대행 가능하지만
   **App Group 생성·번들 연결은 공개 API에 없다**(/v1/appGroups=404) — 개발자 포털 수동(또는
