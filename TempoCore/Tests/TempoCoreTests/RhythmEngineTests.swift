@@ -150,6 +150,18 @@ final class RhythmEngineTests: XCTestCase {
         XCTAssertTrue(curve.isEmpty)
     }
 
+    /// 주기 길이 조정 반영 — averageLength 30이면 30일차까지 곡선 영역(28 기준이면 버려졌을 표본).
+    func testDayCurveFollowsAdjustedCycleLength() {
+        let starts30 = [base, day(base, 30), day(base, 60)]
+        let samples = [SignalSample(day: day(base, 29), energy: 4, mood: 4, sleep: nil)]  // 30일차
+        let curve30 = RhythmEngine.dayCurve(signal: .energy, samples: samples,
+                                            periodStarts: starts30, averageLength: 30)
+        XCTAssertEqual(curve30.map(\.day), [30])
+        let curve28 = RhythmEngine.dayCurve(signal: .energy, samples: samples,
+                                            periodStarts: starts30, averageLength: 28)
+        XCTAssertTrue(curve28.isEmpty, "28 기준 x축엔 30일차 자리가 없다")
+    }
+
     /// 옵션 신호(sleep) nil 행은 그 신호 곡선에 들지 않는다.
     func testDayCurveSkipsNilOptionalSignal() {
         let samples = [

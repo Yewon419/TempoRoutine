@@ -107,6 +107,34 @@ final class CyclePredictorTests: XCTestCase {
         XCTAssertEqual(CyclePredictor.phaseSpans(cycleLength: 28, menstrualLength: 99)[0].length, 10)
     }
 
+    // T2c 계절 일수 조정 전 그리드(2026-08-30) — n 15...40 × m 0...12(338조합) 불변식 5종.
+    // 파이썬 미러 검사와 동일: ① 합 == n ② 전 구간 ≥1일 ③ 연속(간극·겹침 없음)
+    // ④ 겨울 = 클램프된 m(짧은 주기 양보 미발동 시) ⑤ 매 일차가 정확히 1구간에 배정.
+    func testT2c_phaseSpanGridInvariants() {
+        for n in 15...40 {
+            for mRaw in 0...12 {
+                let spans = CyclePredictor.phaseSpans(cycleLength: n, menstrualLength: mRaw)
+                XCTAssertEqual(spans.map(\.length).reduce(0, +), n, "n=\(n) m=\(mRaw) 합")
+                XCTAssertTrue(spans.allSatisfy { $0.length >= 1 }, "n=\(n) m=\(mRaw) 0일 구간")
+                var cursor = 1
+                for span in spans {
+                    XCTAssertEqual(span.startDay, cursor, "n=\(n) m=\(mRaw) \(span.phase) 연속성")
+                    cursor = span.startDay + span.length
+                }
+                let mClamped = min(max(mRaw, 1), 10)
+                if (n - 14) - mClamped >= 1 {   // 짧은 주기 양보 미발동 조건
+                    XCTAssertEqual(spans[0].length, mClamped, "n=\(n) m=\(mRaw) 겨울 = m")
+                }
+                for d in 1...n {
+                    let hits = spans.filter { d >= $0.startDay && d < $0.startDay + $0.length }
+                    XCTAssertEqual(hits.count, 1, "n=\(n) m=\(mRaw) d=\(d) 배정")
+                    XCTAssertEqual(CyclePredictor.phaseForDay(d, cycleLength: n, menstrualLength: mRaw),
+                                   hits.first?.phase, "n=\(n) m=\(mRaw) d=\(d) phaseForDay 정합")
+                }
+            }
+        }
+    }
+
     // T5 phaseForDay(28)
     func testT5PhaseForDay() {
         XCTAssertEqual(CyclePredictor.phaseForDay(1,  cycleLength: 28), .menstrual, "T5 day1 menstrual")
