@@ -581,9 +581,10 @@ extension ThemeChrome {
     )
 
     /// 플레이리스트 (시안 §4.4) — 계절광은 켜되 진한 파스텔로, 카드는 리퀴드 글래스로.
-    /// 표제 활자는 시스템 산세리프(시안 트랙명 문법 — weight 600 계열).
+    /// 표제 활자 = Noto Serif KR(2026-08-30 대표님 지시, 은필과 같은 .notoSerif 경로 —
+    /// 구 시스템 산세리프 트랙명 문법 폐기. ⚠ 캘린더 숫자도 이 경로의 짝 Bodoni로 갈린다).
     static let playlist = ThemeChrome(
-        typeFace: .system, texture: .none, outlineDisplay: false,
+        typeFace: .notoSerif, texture: .none, outlineDisplay: false,
         showsSeasonLight: true, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
         todayCircleUsesAccent: false,

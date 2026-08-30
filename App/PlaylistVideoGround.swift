@@ -47,12 +47,16 @@ struct PlaylistVideoGround: View {
                     case .luteal:
                         PlaylistLoopVideo(name: "playlist-autumn-bg-v2", paused: reduceMotion)
                     }
+                    // 지면 흐리기(캘린더 전용) — ⚠ SwiftUI `.blur`는 AVPlayerLayer(영상)에
+                    // 안 먹는다(2026-08-30 뿌리 확인 — 겨울 정지 이미지만 흐려지고 영상 계절은
+                    // 그대로라 "블러 조정 안됐는데?"가 반복됐다). UIVisualEffectView 실블러로 교체.
+                    if blurRadius > 0 {
+                        LiveBlur(radius: blurRadius)
+                    }
                     // 가독 베일(2026-08-25 베타 "가독성 개선 모색") — 영상 노이즈 위 잉크 활자 가독.
                     // 흰 베일이라 탁함(어두운 스크림) 계열과 다르다. 시안 검토엔 없던 실기기 보정.
                     Color.white.opacity(0.22)
                 }
-                // opaque: true — 기본 블러는 가장자리를 투명으로 물려 테두리가 비친다
-                .blur(radius: blurRadius, opaque: true)
             }
             .clipped()
             .ignoresSafeArea()
@@ -60,6 +64,38 @@ struct PlaylistVideoGround: View {
             .accessibilityHidden(true)
             // 온디맨드 다운로드 완료 시 재생성 — AVPlayer는 만들 때의 URL에 묶인다(ThemeMedia 계약)
             .id(ThemeMedia.shared.revision)
+    }
+}
+
+/// 영상 위 실블러(2026-08-30) — UIBlurEffect를 UIViewPropertyAnimator에 걸고 진행률로
+/// 세기를 잡는 표준 기법. radius/30 근사(light 스타일 최대 반경 ~30pt). 애니메이터는
+/// coordinator가 쥔다 — 놓으면 효과가 풀리고, dismantle에서 stop 안 하면 누수 경고가 뜬다.
+private struct LiveBlur: UIViewRepresentable {
+    let radius: CGFloat
+
+    final class Coordinator {
+        var animator: UIViewPropertyAnimator?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        let view = UIVisualEffectView(effect: nil)
+        view.isUserInteractionEnabled = false
+        let animator = UIViewPropertyAnimator(duration: 1, curve: .linear)
+        animator.addAnimations { view.effect = UIBlurEffect(style: .light) }
+        animator.pausesOnCompletion = true
+        animator.fractionComplete = min(max(radius / 30, 0), 1)
+        context.coordinator.animator = animator
+        return view
+    }
+
+    func updateUIView(_ view: UIVisualEffectView, context: Context) {
+        context.coordinator.animator?.fractionComplete = min(max(radius / 30, 0), 1)
+    }
+
+    static func dismantleUIView(_ view: UIVisualEffectView, coordinator: Coordinator) {
+        coordinator.animator?.stopAnimation(true)
     }
 }
 
