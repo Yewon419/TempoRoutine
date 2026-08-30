@@ -124,3 +124,13 @@
   소유권을 가져가고 먼저 있던 화면은 빈 채로 남는다(2026-08-27 플리 지면 실종). 공유 풀을 쓸
   땐 보이는 뷰가 `updateUIView`에서 소유권을 되찾아야 한다 — `player == nil`이면 return 하는
   구현은 한 번 뺏기면 영영 복구되지 않는다.
+- **SwiftUI `.blur`는 AVPlayerLayer(영상)에 적용되지 않는다**(2026-08-30 — "블러 조정
+  안됐는데?" 3회 반복의 뿌리: 겨울 정지 이미지만 흐려지고 영상 계절은 늘 선명했다). 영상 위
+  흐림은 UIVisualEffectView + UIViewPropertyAnimator 진행률(radius/30 근사, `LiveBlur`)로.
+- **ViewBuilder 클로저(GeometryReader 등) 안에 `func` 선언 불가** — "closure containing a
+  declaration cannot be used with result builder"로 컴파일이 깨진다(2026-08-30 CI 한 바퀴).
+  좌표 변환 같은 지역 함수는 `let` 클로저로.
+- **ASC 신규 IAP는 생성+가격+현지화만으론 MISSING_METADATA** — 「사용 가능 여부(지역)」
+  설정과 「심사 스크린샷」까지 채워야 READY_TO_SUBMIT(2026-08-30 테마 패스 3종 실측).
+  ₩5,000 같은 비표준 티어는 가격 목록의 「추가 가격 보기」에만 있다. 특정 국가 고정가는
+  가격 변경 예약 → 사용자 설정 → 국가 선택 → 지금 바로 적용 경로.
