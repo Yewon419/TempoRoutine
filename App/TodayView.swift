@@ -403,24 +403,41 @@ struct TodayView: View {
     /// 좁은 폭에서 두 줄로 접히도록 HStack이 아니라 이어붙인 Text 하나로 둔다.
     @ViewBuilder
     private var skyReadout: some View {
-        // wxStamp는 값이 아니라 「갱신 신호」다 — 물고 있어야 실측이 들어온 순간 이 줄이 뜬다
-        if ThemeStore.chrome.skyGround, wxStamp > 0, let wx = WxState.readout {
-            let now: Int = Int(wx.currentC.rounded())
-            let high: Int = Int(wx.highC.rounded())
-            let low: Int = Int(wx.lowC.rounded())
-            let chance: Int = Int((wx.precipitationChance * 100).rounded())
-            let precip: String = Loc.str(wx.precipitationIsSnow ? Loc.str("눈") : Loc.str("비"))
-            let lead: Text = Text(Loc.fmt("지금 %lld°", now)).foregroundStyle(Ink.text.opacity(0.95))
-            let tail: String = Loc.fmt("최고 %1$lld° 최저 %2$lld°", high, low)
-                + " · " + Loc.fmt("%1$@ %2$lld%%", precip, chance)
-            let rest: Text = Text(verbatim: " · " + tail).foregroundStyle(Ink.text.opacity(0.7))
-            (lead + rest)
-                .font(.almanacBody(.footnote, size: 13))
+        if ThemeStore.chrome.skyGround {
+            VStack(alignment: .leading, spacing: 3) {
+                // wxStamp는 값이 아니라 「갱신 신호」다 — 물고 있어야 실측이 들어온 순간 이 줄이 뜬다
+                if wxStamp > 0, let wx = WxState.readout {
+                    let now: Int = Int(wx.currentC.rounded())
+                    let high: Int = Int(wx.highC.rounded())
+                    let low: Int = Int(wx.lowC.rounded())
+                    let chance: Int = Int((wx.precipitationChance * 100).rounded())
+                    let precip: String = Loc.str(wx.precipitationIsSnow ? Loc.str("눈") : Loc.str("비"))
+                    let lead: Text = Text(Loc.fmt("지금 %lld°", now)).foregroundStyle(Ink.text.opacity(0.95))
+                    let tail: String = Loc.fmt("최고 %1$lld° 최저 %2$lld°", high, low)
+                        + " · " + Loc.fmt("%1$@ %2$lld%%", precip, chance)
+                    let rest: Text = Text(verbatim: " · " + tail).foregroundStyle(Ink.text.opacity(0.7))
+                    (lead + rest)
+                        .font(.almanacBody(.footnote, size: 13))
+                        .skyInkShadow()
+                        // 접근성 라벨은 String을 받는 오버로드라 로컬라이즈 경로가 아니다 — Text로 넘긴다
+                        .accessibilityLabel(Text(verbatim: Loc.fmt(
+                            Loc.str("지금 %1$lld도, 최고 %2$lld도, 최저 %3$lld도, %4$@ 올 확률 %5$lld퍼센트"),
+                            now, high, low, precip, chance)))
+                }
+                // ── Apple Weather 표기(2026-08-30, 1.0 리젝 5.2.5 대응) ──
+                // WeatherKit 계약: 날씨 데이터가 보이는 자리에  Weather 상표 + 법적 출처 링크.
+                // 하늘 지면 자체가 날씨 데이터 렌더라 수치 줄 유무와 무관하게 상시 표기.
+                // 문구는 Apple 규격 명칭이라 번역하지 않는다(카탈로그 제외 대상).
+                Link(destination: URL(string: "https://weatherkit.apple.com/legal-attribution.html")!) {
+                    Text(verbatim: "\u{F8FF} Weather")
+                        .font(.system(size: 11, weight: .medium))
+                    + Text(verbatim: "  ·  Other data sources")
+                        .font(.system(size: 11))
+                }
+                .foregroundStyle(Ink.text.opacity(0.55))
                 .skyInkShadow()
-                // 접근성 라벨은 String을 받는 오버로드라 로컬라이즈 경로가 아니다 — Text로 넘긴다
-                .accessibilityLabel(Text(verbatim: Loc.fmt(
-                    Loc.str("지금 %1$lld도, 최고 %2$lld도, 최저 %3$lld도, %4$@ 올 확률 %5$lld퍼센트"),
-                    now, high, low, precip, chance)))
+                .accessibilityLabel(Text(verbatim: "Apple Weather legal attribution"))
+            }
         }
     }
 
