@@ -153,13 +153,25 @@ struct RootTabView: View {
         // 루트 .id 리빌드(테마·언어 변경)엔 게이트가 재등장을 막는다.
         .overlay {
             if showLaunchSplash, onboardingDone {
-                // 대표님 제작 정적 이미지(2026-08-30, App/Assets.xcassets/LaunchSplash) — 테마별
-                // SplashGround 배경 분기 대신 전 테마 공통. 라이트/다크는 애셋 luminosity로 갈린다.
-                Image("LaunchSplash")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
+                // 대표님 제작 정적 이미지(2026-08-30, App/Assets.xcassets/LaunchSplash). 그림 배경
+                // 테마(은필·티켓·플리)는 제 지면 + 스크림 위에 로고·심볼만(SplashLogo, 밝은 판) —
+                // 전 테마 동일 이미지가 테마 정체성을 지우던 것의 교정(2026-08-30 대표님 지시).
+                ZStack {
+                    if SplashGround.pictorial {
+                        SplashGround(phase: CycleSnapshot(periodDays: periodDays)
+                            .phase(on: Calendar.current.startOfDay(for: .now)))
+                        Image("SplashLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 148)
+                    } else {
+                        Image("LaunchSplash")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .ignoresSafeArea()
+                    }
+                }
+                .transition(.opacity)
                 .contentShape(Rectangle())
                 .onTapGesture { dismissLaunchSplash() }
                 .task {
