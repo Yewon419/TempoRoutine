@@ -27,6 +27,23 @@ enum DevSampleData {
     @MainActor
     static func seedIfNeeded(context: ModelContext) {
         guard DevMode.active, !UserDefaults.standard.bool(forKey: seededKey) else { return }
+        // v1 표본(플래너 포함)을 받았던 스토어는 통째로 걷어내고 v2로 간다(2026-08-30 베타
+        // "일정에서 아침 스트레칭 안빠졌는데?" — 표본 개정은 새 주입에만 적용돼 구 데이터가
+        // 남았다). dev 스토어는 표본 전용이라 전체 삭제가 안전하다. wipeAll의
+        // ScheduleReminder.cancel은 dev 일정이 실알림에 등록된 적 없어 무해.
+        if UserDefaults.standard.bool(forKey: "devSampleSeeded") {
+            let store = StoreArrays(
+                periodDays: (try? context.fetch(FetchDescriptor<PeriodDay>())) ?? [],
+                schedules: (try? context.fetch(FetchDescriptor<ScheduleItem>())) ?? [],
+                inputs: (try? context.fetch(FetchDescriptor<InputItem>())) ?? [],
+                outputs: (try? context.fetch(FetchDescriptor<OutputItem>())) ?? [],
+                completions: (try? context.fetch(FetchDescriptor<ItemCompletion>())) ?? [],
+                checkIns: (try? context.fetch(FetchDescriptor<DailyCheckIn>())) ?? [],
+                inputProgresses: (try? context.fetch(FetchDescriptor<InputProgress>())) ?? [],
+                selfReports: (try? context.fetch(FetchDescriptor<SelfReportRecord>())) ?? [])
+            ExportImport.wipeAll(store, context: context)
+            UserDefaults.standard.removeObject(forKey: "devSampleSeeded")
+        }
         // 이미 뭔가 있으면(수동 임포트·직접 기록) 섞지 않는다 — 플래그만 세운다
         let existing = (try? context.fetchCount(FetchDescriptor<DailyCheckIn>())) ?? 0
         guard existing == 0 else {
