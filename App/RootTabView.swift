@@ -187,9 +187,10 @@ struct RootTabView: View {
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
             OnboardingFlow().themeColorScheme()
         }
-        // dev 자체 표본(2026-08-30) — dev 진입 리빌드마다 돌지만 플래그·빈 스토어 게이트로 1회만
-        .task { DevSampleData.seedIfNeeded(context: modelContext) }
         .task {
+            // dev 자체 표본(2026-08-30) — 리빌드마다 돌지만 플래그·빈 스토어 게이트로 1회만.
+            // ⚠ 별도 .task 모디파이어로 얹으면 body 타입체크 한계 초과(CI 33289665318 실측).
+            DevSampleData.seedIfNeeded(context: modelContext)
             // 테마 7일 체험 시작(2026-08-19) — 기존 설치는 업데이트 후 첫 실행이 곧 시작.
             // 신규는 온보딩이 덮여 있는 동안 기록하지 않는다(완료 시 아래 onChange가 잡는다).
             if onboardingDone { ThemeTrial.beginIfNeeded() }
