@@ -205,24 +205,7 @@ struct SignalPanel: View {
         let value = summary(for: phase).map { scaled($0.mean) }
         let isNow = phase == currentPhase
         return VStack(spacing: 8) {
-            ZStack {
-                // 표본 없는 단계 = 트랙만 옅게(§5.6.3 미표시 원칙)
-                ringTrack(seasonColor: meta.color)
-                if let value {
-                    ringFill(color: meta.color, progress: Double(value) / 100)
-                }
-                // 레코드판은 중앙 숫자 없음(2026-08-20 베타 피드백 — 원판 위 숫자가 은유를 깬다.
-                // 시안 §4.4-⑩도 무숫자). 값은 아래 스탯 2행이 담당, VoiceOver는 서술 라벨 담당.
-                if ThemeStore.chrome.signalRing != .vinyl {
-                    // 현재 계절 = 원 안 숫자를 계절색·볼드로(2026-08-22 베타 — 「지금」 텍스트 태그 대체).
-                    // 값 없음(「—」)은 현재 계절이어도 옅게 둔다.
-                    Text(value.map(String.init) ?? "—")
-                        .font(.caption.weight(isNow && value != nil ? .bold : .regular))
-                        .monospacedDigit()
-                        .foregroundStyle(isNow && value != nil ? meta.color : Ink.text.opacity(value == nil ? 0.35 : 0.7))
-                }
-            }
-            .frame(width: 54, height: 54)
+            RingGauge(meta: meta, value: value, isNow: isNow)
             HStack(spacing: 3) {
                 SeasonGlyph(phase: phase)
                 Text(meta.name)
@@ -233,6 +216,66 @@ struct SignalPanel: View {
             // (시안 v69의 색맹 담보는 숫자 볼드·계절명 볼드가 이어받는다 — 색만으로 구분하지 않는다)
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// 링 게이지 한 칸(2026-08-30 대표님 "동그라미들 누를 때 애니메이션 추가") — 등장 시 채움 호가
+/// 스프링으로 차오르고, 탭하면 다시 차오르며 살짝 튄다(+가벼운 햅틱). 칸마다 @State가 필요해
+/// 뷰로 분리 — reduce motion은 즉시 완성 상태·탭 무동작(햅틱만).
+private struct RingGauge: View {
+    let meta: SeasonMeta
+    let value: Int?          // 0~100, nil = 표본 없음
+    let isNow: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var drawn: Double = 0
+    @State private var bounce = false
+    @State private var tapFeedback = 0
+
+    private var target: Double { Double(value ?? 0) / 100 }
+
+    var body: some View {
+        ZStack {
+            // 표본 없는 단계 = 트랙만 옅게(§5.6.3 미표시 원칙)
+            ringTrack(seasonColor: meta.color)
+            if value != nil {
+                ringFill(color: meta.color, progress: drawn)
+            }
+            // 레코드판은 중앙 숫자 없음(2026-08-20 베타 피드백 — 원판 위 숫자가 은유를 깬다.
+            // 시안 §4.4-⑩도 무숫자). 값은 아래 스탯 2행이 담당, VoiceOver는 서술 라벨 담당.
+            if ThemeStore.chrome.signalRing != .vinyl {
+                // 현재 계절 = 원 안 숫자를 계절색·볼드로(2026-08-22 베타 — 「지금」 텍스트 태그 대체).
+                // 값 없음(「—」)은 현재 계절이어도 옅게 둔다.
+                Text(value.map(String.init) ?? "—")
+                    .font(.caption.weight(isNow && value != nil ? .bold : .regular))
+                    .monospacedDigit()
+                    .foregroundStyle(isNow && value != nil ? meta.color : Ink.text.opacity(value == nil ? 0.35 : 0.7))
+            }
+        }
+        .frame(width: 54, height: 54)
+        .scaleEffect(bounce ? 1.08 : 1)
+        .contentShape(Circle())
+        .onTapGesture { replay() }
+        .onAppear { animateIn() }
+        .task(id: value) { animateIn() }   // 신호 칩 전환으로 값이 갈리면 다시 차오른다
+        .sensoryFeedback(.impact(weight: .light), trigger: tapFeedback)
+    }
+
+    private func animateIn() {
+        guard !reduceMotion else { drawn = target; return }
+        drawn = 0
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) { drawn = target }
+    }
+
+    private func replay() {
+        tapFeedback += 1
+        guard !reduceMotion else { return }
+        animateIn()
+        withAnimation(.spring(response: 0.18, dampingFraction: 0.5)) { bounce = true }
+        Task {
+            try? await Task.sleep(nanoseconds: 140_000_000)
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { bounce = false }
+        }
     }
 
     // ── 링 트랙·채움 테마 분기(시안: 티켓 §3.3-⑧ / 활판 §2.3-14 / 플레이리스트 §4.4-⑩,
@@ -259,7 +302,7 @@ struct SignalPanel: View {
                 Circle().fill(Color.flatRGB(0x24, 0x31, 0x3D)).frame(width: 45, height: 45)
                 Circle().stroke(groove, lineWidth: 1.1).frame(width: 35, height: 35)
                 Circle().stroke(groove, lineWidth: 1.1).frame(width: 25, height: 25)
-                Circle().fill(seasonColor).frame(width: 6, height: 6)
+                Circle().fill(meta.color).frame(width: 6, height: 6)
                 Circle().stroke(Ink.text.opacity(0.14), lineWidth: 4)
             }
         }
@@ -288,6 +331,9 @@ struct SignalPanel: View {
             .stroke(color.opacity(opacity), style: style)
             .rotationEffect(.degrees(-90))   // 12시부터 차오른다
     }
+}
+
+extension SignalPanel {
 
     // ── 일차 곡선 (2026-08-30 — 주기 일차 축 실데이터 곡선, 온보딩 EnergyWave의 실측판) ──
     // 표본 있는 일차끼리만 직선 연결 + 점 — 없는 일차를 보간해 그리면 없는 데이터를 단정한다.
