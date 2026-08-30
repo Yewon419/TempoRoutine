@@ -88,7 +88,9 @@ struct BrandMark: View {
     private static let strokeRatio: CGFloat = 0.07
     /// 0.12 시도 후 원복(2026-08-30 — "동그라미같다" 대응으로 키웠다가 앱 스위처 가림 표지에서
     /// "로고 바꾼거 더이상해요" 재보고. 커진 점이 브랜드 원비율과 어긋나 보인다 — 원래 값 유지)
-    private static let dotRatio: CGFloat = 0.085
+    /// 점 중심이 프레임 상단 가장자리라 점 반지름(diameter × 이 값)만큼 프레임 위로 넘친다 —
+    /// bounds로 자르는 컨테이너(툴바 아이템)에 넣을 땐 이 몫을 채워야 한다(TipMascot 참조).
+    static let dotRatio: CGFloat = 0.085
 
     private var stroke: CGFloat { diameter * Self.strokeRatio }
 

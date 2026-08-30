@@ -185,6 +185,10 @@ struct TipMascot: View {
             BrandMark(diameter: diameter, color: color)
             eyes
         }
+        // 정수리 점은 BrandMark 프레임 위로 점 반지름만큼 넘친다(점 중심 = 링 바깥 가장자리).
+        // 툴바 아이템은 라벨 bounds로 잘라 점 윗부분이 평평하게 날아갔다(2026-08-30 베타
+        // "개발자 아이콘 위쪽이 잘린듯?") — 넘치는 몫을 위 여백으로 채워 bounds 안에 넣는다.
+        .padding(.top, diameter * BrandMark.dotRatio)
         .rotationEffect(.degrees(tilt), anchor: .bottom)
         // 화면에 뜨고 한 박자 뒤 첫 인사, 이후 6초마다 짧게. 계속 흔들면 배경 소음이 된다.
         // 루프를 통째로 이 클로저 안에 둔다 — 뷰 메서드로 쪼개면 Swift 6에서 격리가 갈린다.
