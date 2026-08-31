@@ -389,6 +389,7 @@ struct TodayView: View {
                             // 꺾였다(2026-08-22 베타). 한 줄 고정 + 축소 허용 — 한국어 2자는 무영향.
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
+                            .seasonTitleTap()   // B1(2026-08-31) — 티켓 스탬프·날씨 파문(그 외 무반응)
                         Spacer(minLength: 0)
                         todayDateStamp
                     }
@@ -439,6 +440,7 @@ struct TodayView: View {
         ZStack(alignment: .topTrailing) {
             LetterpressSeasonLogotype(phase: phase)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .seasonTitleTap()   // B1(2026-08-31) — 활판 프레스 반응
             todayDateStamp
                 .padding(.top, LetterpressLogotype.stampTop(for: phase))
         }
@@ -540,7 +542,8 @@ struct TodayView: View {
             if let info = todayInfo {
                 PlaylistPlayerCard(meta: info.meta, dayInCycle: info.dayInCycle,
                                    cycleLength: snapshot.averageLength,
-                                   phase: snapshot.phase(on: today), date: today)
+                                   phase: snapshot.phase(on: today), date: today,
+                                   noteTapEnabled: false)   // s0 = 카드 탭이 전체 열기(B1 음표 끔)
                     .onTapGesture { plAdvance(1) }
             }
             Image(systemName: "chevron.down")

@@ -42,6 +42,11 @@ struct PlaylistPlayerCard: View {
     let cycleLength: Int
     let phase: CyclePhase?
     let date: Date
+    /// B1(2026-08-31) 트랙명 탭 음표 — s0 호출부는 끈다(카드 전체 탭 제스처 보호)
+    var noteTapEnabled = true
+
+    @State private var noteTick = 0
+    @State private var noteHaptic = 0
 
     private var progress: Double {
         Double(dayInCycle) / Double(max(cycleLength, 1))
@@ -68,6 +73,19 @@ struct PlaylistPlayerCard: View {
                 .tracking(0.6)
                 .foregroundStyle(Ink.text)   // 트랙명 = 잉크 — 색은 커버가 담당(§4.3)
                 .padding(.top, 6)
+                // B1(2026-08-31) — 트랙명 탭 = 음표(링 탭 음표의 오늘 탭 판본).
+                // s0에선 끈다: 카드 전체 탭 = 전체 열기 제스처를 안쪽 탭이 가로채면 안 된다.
+                .overlay(alignment: .top) {
+                    if noteTick > 0 { TrackNoteFX(color: meta.color).id(noteTick) }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    guard noteTapEnabled else { return }
+                    Achievements.shared.unlock(.seasonTap)
+                    noteTick += 1
+                    noteHaptic += 1
+                }
+                .sensoryFeedback(.impact(weight: .light), trigger: noteHaptic)
             // 부제 = 날짜만. 종전엔 의학 단계명(「배란기 · …」)이 앞에 붙어 있었는데
             // MASTER 개정 M-1c의 「의학 단계명은 사용자 표면 금지」 위반이었다(2026-08-20).
             // 계절명은 바로 위 30px 표제가 이미 말한다 — 부제에 다시 넣지 않는다.
