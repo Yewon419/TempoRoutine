@@ -312,6 +312,19 @@ struct MilkGlass: ViewModifier {
             }
         } else {
             content.background { surface }
+                .overlay { wetLayer }
+        }
+    }
+
+    /// 날씨 카드 이펙트(§5.3-8·9, 2026-08-31) — 비 = 유리 맺힘·상단 튀김, 눈 = 상단 쌓임.
+    /// 날씨 테마 + 비/눈일 때만 얹는다(조건 반영 시점 = 하늘과 같은 "다음 등장부터").
+    @ViewBuilder
+    private var wetLayer: some View {
+        if ThemeStore.chrome.skyGround {
+            let condition = WxState.condition
+            if condition == .rain || condition == .snow {
+                WeatherCardWetLayer(radius: radius, condition: condition)
+            }
         }
     }
 
