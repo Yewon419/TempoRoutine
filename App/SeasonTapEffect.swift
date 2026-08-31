@@ -93,13 +93,14 @@ private struct TicketStampFX: View {
     @State private var shown = false
     @State private var gone = false
     private let red = Color.flatRGB(0xA9, 0x32, 0x26)
+    /// 검표 도장 문구 = 한국어 고정(활판 인용문 §2.3-5와 같은 규약 — 인쇄물의 일부, 번역 안 함)
+    private let stampText = "확인"
 
     var body: some View {
         ZStack {
             Circle().stroke(red, lineWidth: 2.5).frame(width: 58, height: 58)
             Circle().stroke(red, lineWidth: 1).frame(width: 48, height: 48)
-            // 검표 도장 문구 = 한국어 고정(활판 인용문 §2.3-5와 같은 규약 — 인쇄물의 일부)
-            Text(verbatim: "확인")
+            Text(verbatim: stampText)
                 .font(.system(size: 15, weight: .heavy))
                 .foregroundStyle(red)
         }

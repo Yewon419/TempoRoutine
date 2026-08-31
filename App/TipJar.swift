@@ -178,14 +178,23 @@ struct TipMascot: View {
     var color: Color = Ink.text
     /// 이미 커피를 받았으면 흔들지 않는다
     var resting: Bool = false
+    /// 잠(B2, 2026-08-31) — 길게 눌러 재운 상태(호출부 소유). 눈 감김 + zzz + 흔들기 정지
+    var asleep: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var tilt: Double = 0
+
+    /// 심야(23시~6시) = 졸린 눈(반쯤 감김) + 흔들기 정지 — 마운트 시각 기준(분 단위 추적은 과함)
+    private let drowsy: Bool = {
+        let hour = Calendar.current.component(.hour, from: .now)
+        return hour >= 23 || hour < 6
+    }()
 
     var body: some View {
         ZStack {
             BrandMark(diameter: diameter, color: color)
             eyes
+            if asleep { SleepZs(color: color, diameter: diameter) }
         }
         // 정수리 점은 BrandMark 프레임 위로 점 반지름만큼 넘친다(점 중심 = 링 바깥 가장자리).
         // 툴바 아이템은 라벨 bounds로 잘라 점 윗부분이 평평하게 날아갔다(2026-08-30 베타
@@ -194,9 +203,10 @@ struct TipMascot: View {
         .rotationEffect(.degrees(tilt), anchor: .bottom)
         // 화면에 뜨고 한 박자 뒤 첫 인사, 이후 6초마다 짧게. 계속 흔들면 배경 소음이 된다.
         // 루프를 통째로 이 클로저 안에 둔다 — 뷰 메서드로 쪼개면 Swift 6에서 격리가 갈린다.
-        .task(id: resting) {
-            guard !reduceMotion, !resting else {
-                // 커피를 받는 순간 흔들다 멈추면 기울어진 채로 굳는다 — 바로 세운다
+        .task(id: resting || asleep) {
+            // 잠·심야 졸음(B2)·커피 수령·reduce motion — 전부 흔들기 정지
+            guard !reduceMotion, !resting, !asleep, !drowsy else {
+                // 흔들다 멈추면 기울어진 채로 굳는다 — 바로 세운다
                 withAnimation(.easeOut(duration: 0.2)) { tilt = 0 }
                 return
             }
@@ -221,10 +231,53 @@ struct TipMascot: View {
         .offset(y: diameter * 0.03)
     }
 
+    /// 눈 — 잠 = 감은 선, 심야 = 반쯤 감긴 타원, 평소 = 동그란 점(B2, 2026-08-31)
+    @ViewBuilder
     private func eye(_ size: CGFloat) -> some View {
-        Circle()
-            .fill(color)
-            .frame(width: size, height: size)
+        if asleep {
+            Capsule()
+                .fill(color)
+                .frame(width: size * 1.5, height: max(1, size * 0.35))
+        } else if drowsy {
+            Ellipse()
+                .fill(color)
+                .frame(width: size, height: size * 0.55)
+                .offset(y: size * 0.2)
+        } else {
+            Circle()
+                .fill(color)
+                .frame(width: size, height: size)
+        }
+    }
+}
+
+/// 잠든 캐릭터 위 zzz(B2) — 작은 z 두 개가 시차를 두고 떠오르길 반복
+private struct SleepZs: View {
+    let color: Color
+    let diameter: CGFloat
+    @State private var float = false
+
+    var body: some View {
+        ZStack {
+            z(size: 7, x: diameter * 0.55, delay: 0)
+            z(size: 5, x: diameter * 0.78, delay: 0.6)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: false)) {
+                float = true
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func z(size: CGFloat, x: CGFloat, delay: Double) -> some View {
+        Text(verbatim: "z")
+            .font(.system(size: size, weight: .bold, design: .rounded))
+            .foregroundStyle(color.opacity(float ? 0 : 0.8))
+            .offset(x: x, y: float ? -diameter * 0.75 : -diameter * 0.3)
+            .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: false).delay(delay),
+                       value: float)
     }
 }
 

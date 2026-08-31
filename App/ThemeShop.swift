@@ -67,6 +67,7 @@ struct ThemeShopView: View {
     // 커피 한 잔(2026-08-11) — 우상단 캐릭터 + 말풍선. 씨앗 트랙 밖의 팁이다(§3.8).
     private var tips = TipStore.shared
     @State private var showTip = false
+    @State private var mascotAsleep = false   // B2(2026-08-31) — 길게 눌러 재운 상태(세션 한정)
     /// 미리보기 시트(2026-08-18 사용자 지시) — 하드코딩 목업 화면
     @State private var previewing: AppTheme?
     /// 날씨 위치 게이트(2026-08-19) — 거부 시 적용 차단 + 설정 안내
@@ -238,20 +239,37 @@ struct ThemeShopView: View {
     }
 
     private var mascotButton: some View {
-        Button {
-            lightFeedback += 1
-            if showTip {
-                closeTip()
-            } else {
-                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.78)) {
-                    showTip = true
+        // Button → 제스처 조합(B2, 2026-08-31) — 길게 누르면 재운다(히든 업적 「쉿, 자는 중」).
+        // Button 라벨의 내부 롱프레스는 탭과 경합해 뗄 때 탭까지 발화한다 — 탭·롱프레스를
+        // 같은 층에 직접 단다(plain 버튼이라 시각 손실 없음).
+        TipMascot(diameter: 26, color: Ink.text, resting: tips.cups > 0, asleep: mascotAsleep)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                lightFeedback += 1
+                if mascotAsleep {
+                    // 자는 친구를 탭하면 깨어난다 — 말풍선은 다음 탭부터
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { mascotAsleep = false }
+                    return
+                }
+                if showTip {
+                    closeTip()
+                } else {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.78)) {
+                        showTip = true
+                    }
                 }
             }
-        } label: {
-            TipMascot(diameter: 26, color: Ink.text, resting: tips.cups > 0)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("개발자에게 커피 사주기")
+            .onLongPressGesture(minimumDuration: 0.6) {
+                lightFeedback += 1
+                if showTip { closeTip() }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    mascotAsleep.toggle()
+                }
+                if mascotAsleep { Achievements.shared.unlock(.mascotNap) }
+            }
+            .accessibilityLabel("개발자에게 커피 사주기")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(Loc.str("길게 누르면 재울 수 있어요"))
     }
 
     private func closeTip() {

@@ -6531,6 +6531,28 @@
         }
       }
     },
+    "길게 누르면 재울 수 있어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long-press to put it to sleep"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "長押しで寝かせられます"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "长按可以让它入睡"
+          }
+        }
+      }
+    },
     "깊은 새벽에 체크인을 완성했어요": {
       "localizations": {
         "en": {
