@@ -615,7 +615,8 @@ extension ThemeChrome {
     /// 날씨 (시안 §5.3) — 지면 = 하늘, 계절광 없음(하늘이 빛 담당). 하늘 위 대비 보정을 켠다.
     /// 외관 = **라이트 고정**(2026-08-31 대표님 "카드 색은 진하게 유지하되 라이트모드로") —
     /// 시트·설정·키보드 같은 시스템 표면은 밝게, 다크 글래스 카드는 재질에만 다크 환경을
-    /// 흘려 유지한다(`skyGlassScheme`). 종전 다크 고정은 시스템 표면까지 어둡게 끌었다.
+    /// 얹어 유지한다(`Color.skyGlassDim` — env 강제 1안 기각 이력은 그 주석).
+    /// 종전 다크 고정은 시스템 표면까지 어둡게 끌었다.
     static let weather = ThemeChrome(
         typeFace: .system, texture: .none, outlineDisplay: false,
         showsSeasonLight: false, neutralSeasonLight: false,
