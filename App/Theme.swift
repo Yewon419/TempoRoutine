@@ -397,6 +397,19 @@ extension View {
         preferredColorScheme(ThemeStore.chrome.forcesDarkAppearance ? .dark
                              : ThemeStore.chrome.forcesLightAppearance ? .light : nil)
     }
+
+    /// 날씨(skyGround) 다크 글래스 재질 유지(2026-08-31 대표님 "카드 색은 진하게 유지하되
+    /// 라이트모드로") — 외관은 라이트 고정으로 바뀌었지만 카드·설정 행 같은 유리 재질은
+    /// 다크 글래스 문법(§5.3-2)이다. 시스템 재질(.ultraThinMaterial)은 colorScheme만 보므로
+    /// **재질을 그리는 서브트리에만** 다크 환경을 흘린다. 다른 테마는 무영향.
+    @ViewBuilder
+    func skyGlassScheme() -> some View {
+        if ThemeStore.chrome.skyGround {
+            environment(\.colorScheme, .dark)
+        } else {
+            self
+        }
+    }
 }
 
 // ── 팔레트 밖의 테마 결정 (2026-08-12) ──
@@ -595,15 +608,18 @@ extension ThemeChrome {
         tintedTabBar: true, settingsList: .glass
     )
 
-    /// 날씨 (시안 §5.3) — 지면 = 하늘, 계절광 없음(하늘이 빛 담당). 밤 하늘이 곧 다크라
-    /// 항상 다크 외관 고정(모던 `preferredColorScheme` 전례). 하늘 위 대비 보정을 켠다.
+    /// 날씨 (시안 §5.3) — 지면 = 하늘, 계절광 없음(하늘이 빛 담당). 하늘 위 대비 보정을 켠다.
+    /// 외관 = **라이트 고정**(2026-08-31 대표님 "카드 색은 진하게 유지하되 라이트모드로") —
+    /// 시트·설정·키보드 같은 시스템 표면은 밝게, 다크 글래스 카드는 재질에만 다크 환경을
+    /// 흘려 유지한다(`skyGlassScheme`). 종전 다크 고정은 시스템 표면까지 어둡게 끌었다.
     static let weather = ThemeChrome(
         typeFace: .system, texture: .none, outlineDisplay: false,
         showsSeasonLight: false, neutralSeasonLight: false,
-        dimsInDarkMode: false, forcesDarkAppearance: true,
+        dimsInDarkMode: false, forcesDarkAppearance: false,
         todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: true,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
+        forcesLightAppearance: true,
         skyGround: true, tintedTabBar: true, settingsList: .glass
     )
 }

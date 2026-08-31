@@ -142,7 +142,8 @@ struct SettingsView: View {
     private static var themedRowGround: AnyView? {
         switch ThemeStore.chrome.settingsList {
         case .system: nil
-        case .glass: AnyView(Rectangle().fill(.ultraThinMaterial).overlay { Ink.surface })
+        case .glass: AnyView(Rectangle().fill(.ultraThinMaterial).overlay { Ink.surface }
+            .skyGlassScheme())   // 날씨 = 라이트 외관에서도 행 재질은 다크 글래스(2026-08-31)
         case .bare: AnyView(Color.clear)
         }
     }

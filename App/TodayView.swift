@@ -536,6 +536,7 @@ struct TodayView: View {
                     }
             } else {
                 Rectangle().fill(.ultraThinMaterial).ignoresSafeArea(edges: .top)
+                    .skyGlassScheme()   // 날씨 = 라이트 외관에서도 다크 글래스(2026-08-31)
             }
         }
         .opacity(isCollapsed ? 1 : 0)

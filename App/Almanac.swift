@@ -325,6 +325,7 @@ struct MilkGlass: ViewModifier {
                 RoundedRectangle(cornerRadius: radius)
                     .stroke(Ink.accent.opacity(0.18), lineWidth: 1)   // 구조색 테두리(기본=은필 동값)
             }
+            .skyGlassScheme()   // 날씨 = 라이트 외관에서도 카드 재질은 다크 글래스(§5.3-2)
     }
 }
 
