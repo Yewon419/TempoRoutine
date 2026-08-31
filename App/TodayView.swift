@@ -340,6 +340,7 @@ struct TodayView: View {
                 } else {
                     // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
                     // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
+                    // 표식 행과의 갭 +6(2026-08-31 베타 "겨울 저거 위에 갭 조금더 줘")
                     HStack(alignment: .firstTextBaseline, spacing: 12) {
                         // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
                         almanacDisplay(info.meta.name,
@@ -353,6 +354,7 @@ struct TodayView: View {
                         Spacer(minLength: 0)
                         todayDateStamp
                     }
+                    .padding(.top, 6)
                     HStack(spacing: 6) {
                         // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
                         // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.

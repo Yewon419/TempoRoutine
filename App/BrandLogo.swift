@@ -114,10 +114,13 @@ struct BrandMark: View {
 
     private var dot: some View {
         let size: CGFloat = diameter * Self.dotRatio * 2
+        // 점 중심 = 획 중앙선(2026-08-31 베타 "점 위치가 선 중앙에 안온다" ×2 — 테마 시트·가림
+        // 표지). 종전 -diameter/2(링 바깥 가장자리 = 로고 SSOT 비율)는 소형에서 점이 선 위에
+        // 떠 보인다 — BrandMark만 교정, BrandLogo·마케팅 로고는 SSOT 유지(불일치 별도 보고).
         return Circle()
             .fill(color)
             .frame(width: size, height: size)
-            .offset(y: -diameter / 2)
+            .offset(y: -(diameter - stroke) / 2)
     }
 }
 
