@@ -227,10 +227,20 @@ struct OutlineText: View {
     }
 }
 
-/// 거대 표제 공용 진입점 — 모던 = 아웃라인, 그 외(및 폰트 미등록) = 솔리드 almanac
+/// 거대 표제 공용 진입점 — 모던 = 아웃라인, 그 외(및 폰트 미등록) = 솔리드 almanac.
+/// `inkDeboss` = 활판 음각을 지면색 대신 **잉크색**으로(2026-08-31 — 오늘 탭 로고타입과
+/// 캘린더 월 표제만. 하루 상세·리듬 표제는 종전 지면색 각인 유지).
 @ViewBuilder
-func almanacDisplay(_ text: String, size: CGFloat, color: Color) -> some View {
-    if ThemeStore.chrome.debossDisplay {
+func almanacDisplay(_ text: String, size: CGFloat, color: Color, inkDeboss: Bool = false) -> some View {
+    if ThemeStore.chrome.debossDisplay, inkDeboss {
+        // 잉크 + 눌린 자국 — 실제 활판 인쇄 문법(로고타입과 동일 처리)
+        Text(text)
+            .font(.almanac(size: size, weight: .regular))
+            .foregroundStyle(LetterpressLogotype.ink)
+            .shadow(color: Color(red: 66 / 255, green: 38 / 255, blue: 22 / 255).opacity(0.42),
+                    radius: 0.8, x: -1, y: -1)
+            .shadow(color: .white.opacity(0.95), radius: 1, x: 1, y: 1.4)
+    } else if ThemeStore.chrome.debossDisplay {
         // 활판 음각(시안 §2.3-1): 잉크 없는 종이색 활자 + 극세 그림자 2겹.
         // 어두운 선은 상좌(그늘진 벽), 흰 선은 하우(빛 받는 벽) — 원본 실측이 음각이다.
         // 한글은 어두운 광을 .52로 올린다(§2.3-12 — 획이 얇아 .44로는 밝은 구간에 잠긴다).

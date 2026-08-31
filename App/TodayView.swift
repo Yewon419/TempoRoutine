@@ -338,6 +338,10 @@ struct TodayView: View {
                                        cycleLength: snapshot.averageLength,
                                        phase: snapshot.phase(on: today), date: today)
                 } else {
+                    if ThemeStore.chrome.debossDisplay {
+                        // 활판 = 계절 로고타입(시안 §2.3, 2026-08-31) — 한글 음각 표제를 대체한다
+                        letterpressHeadline(phase: info.meta.phase)
+                    } else {
                     // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
                     // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
                     // 표식 행과의 갭 +6(2026-08-31 베타 "겨울 저거 위에 갭 조금더 줘")
@@ -355,6 +359,7 @@ struct TodayView: View {
                         todayDateStamp
                     }
                     .padding(.top, 6)
+                    }
                     HStack(spacing: 6) {
                         // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
                         // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
@@ -394,6 +399,18 @@ struct TodayView: View {
     }
 
     /// 오늘 날짜 도장 — 하루 상세(§8.2.3)와 같은 문법, 계절명에 눌리지 않게 44px
+    /// 활판 표제 — 계절 로고타입 + 날짜 스탬프. 스탬프는 계절이 비우는 자리에 앉는다
+    /// (시안 stampTop: 가을만 첫 행이 폭을 다 써서 M 행 옆으로 내린다).
+    private func letterpressHeadline(phase: CyclePhase) -> some View {
+        ZStack(alignment: .topTrailing) {
+            LetterpressSeasonLogotype(phase: phase)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            todayDateStamp
+                .padding(.top, LetterpressLogotype.stampTop(for: phase))
+        }
+        .padding(.top, 6)
+    }
+
     private var todayDateStamp: some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
             Text("\(Calendar.current.component(.day, from: today))")

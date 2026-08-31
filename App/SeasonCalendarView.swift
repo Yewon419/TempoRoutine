@@ -599,8 +599,10 @@ struct SeasonCalendarView: View {
                     // §2.3-12: 월 150. 6주 달은 112(§2.3-10) — 기기가 더 좁으면 역산으로 더 내린다.
                     // 라인박스는 시안 line-height 1.02로 못 박는다: 서체 기본 리딩(≈1.3em)을 두면
                     // 112pt 표제가 146pt를 차지해 격자에서 34pt를 가져간다(빌드 462 실측).
+                    // 잉크 음각(2026-08-31 대표님 "그 컬러를 캘린더탭 숫자에도") — 오늘 탭
+                    // 계절 로고타입과 한 문법으로 묶인다(잉크값 = LetterpressLogotype.ink)
                     almanacDisplay(String(format: "%02d", cal.component(.month, from: monthStart)),
-                                   size: letterpressTitleSize, color: Ink.text)
+                                   size: letterpressTitleSize, color: Ink.text, inkDeboss: true)
                         .frame(height: letterpressTitleSize * 1.02)
                 }
             } else {
