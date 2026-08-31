@@ -817,9 +817,9 @@ struct ThemePreviewScreen: View {
         case .gowun:
             return AlmanacFont.available ? .custom("GowunBatang-Bold", size: size)
                                          : .system(size: size, weight: .bold, design: .serif)
-        case .suit:
-            return SuitFont.available ? .custom("SUIT-Medium", size: size)
-                                      : .system(size: size, weight: .medium)
+        case .playlistSans:
+            return PlaylistFont.available ? .custom("GmarketSansLight", size: size)
+                                          : .system(size: size, weight: .light)
         case .system:
             return .system(size: size, weight: .semibold)
         }
@@ -865,9 +865,9 @@ struct ThemePreview: View {
         case .gowun:
             return AlmanacFont.available ? .custom("GowunBatang-Bold", size: 22)
                                          : .system(size: 22, weight: .bold, design: .serif)
-        case .suit:
-            return SuitFont.available ? .custom("SUIT-Medium", size: 22)
-                                      : .system(size: 22, weight: .medium)
+        case .playlistSans:
+            return PlaylistFont.available ? .custom("GmarketSansLight", size: 22)
+                                          : .system(size: 22, weight: .light)
         case .system:
             return .system(size: 22, weight: .semibold)
         }

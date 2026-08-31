@@ -420,7 +420,7 @@ extension View {
 // 뒤집어 각 테마가 스스로 답하게 한다.
 struct ThemeChrome {
     /// 표제·책력 표기 서체 계열. `.system`은 번들 서체를 쓰지 않는다.
-    enum TypeFace { case gowun, pretendard, system, notoSerif /* 활판·은필 = Noto Serif KR(한글) + Bodoni Moda(라틴 숫자) */, suit /* 플리(2026-08-31) — 라틴 각인은 Geist 유지 */ }
+    enum TypeFace { case gowun, pretendard, system, notoSerif /* 활판·은필 = Noto Serif KR(한글) + Bodoni Moda(라틴 숫자) */, playlistSans /* 플리(2026-08-31) — 표제 Gmarket·본문 IBM Plex, 라틴 각인 Geist 유지 */ }
     /// 지면 질감. `.none`은 아무것도 얹지 않는다.
     enum Texture { case motif, dotGrid, none, grain /* 활판 = 종이 그레인 타일 */ }
 
@@ -597,8 +597,8 @@ extension ThemeChrome {
     /// 표제 활자 = Noto Serif KR(2026-08-30 대표님 지시, 은필과 같은 .notoSerif 경로 —
     /// 구 시스템 산세리프 트랙명 문법 폐기. ⚠ 캘린더 숫자도 이 경로의 짝 Bodoni로 갈린다).
     static let playlist = ThemeChrome(
-        // .notoSerif → .suit(2026-08-31 대표님 — SUIT/WantedSans 시안 비교 후 SUIT 확정)
-        typeFace: .suit, texture: .none, outlineDisplay: false,
+        // .notoSerif → .playlistSans(2026-08-31 대표님 — 4종 비교 판정: 표제 Gmarket·본문 IBM Plex)
+        typeFace: .playlistSans, texture: .none, outlineDisplay: false,
         showsSeasonLight: true, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
         todayCircleUsesAccent: false,

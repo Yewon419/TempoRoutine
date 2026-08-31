@@ -1264,8 +1264,8 @@ struct SeasonCalendarView: View {
                 return .system(size: 14, weight: isToday ? .bold : .semibold, design: .serif)
             }
             return .custom(isToday ? "GowunBatang-Bold" : "GowunBatang-Regular", size: 14)
-        case .suit:
-            // 플리 숫자 = Geist 유지(2026-08-30 "플리 영어폰트 다 geist로" — 본문 SUIT 전환과 무관)
+        case .playlistSans:
+            // 플리 숫자 = Geist 유지(2026-08-30 "플리 영어폰트 다 geist로" — 본문 서체 전환과 무관)
             return .geist(size: 14, weight: isToday ? .medium : .regular)
         case .system:
             return .system(size: 14, weight: isToday ? .bold : .semibold)

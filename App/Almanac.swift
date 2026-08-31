@@ -48,12 +48,16 @@ enum ThemeFont {
     }()
 }
 
-/// 플리 본문 서체 — SUIT(SIL OFL, App/Fonts 번들) 3웨이트(2026-08-31 대표님 — Noto Serif KR
-/// 은퇴, SUIT/WantedSans 시안 비교 후 SUIT 확정). 위젯 타깃 제외(Gowun 유지).
-enum SuitFont {
+/// 플리 서체(2026-08-31 대표님 — 4종 비교 페이지 판정 "제목이나 표제는 지마켓, 세세한 글씨는
+/// IBM"): 표제 = Gmarket Sans(Light, 강조 Medium) / 본문·세부 = IBM Plex Sans KR(Regular,
+/// 강조 Medium). 라틴 각인 = Geist 유지. 전부 OFL. 같은 날 중간 확정이던 SUIT는 이 판정으로
+/// 대체(번들 제거). 위젯 타깃 제외(Gowun 유지). PostScript 이름은 fontTools name(6) 실측값.
+enum PlaylistFont {
     static let available: Bool = {
-        ["SUIT-Regular", "SUIT-Medium", "SUIT-SemiBold"].allSatisfy { name in
-            guard let url = Bundle.main.url(forResource: name, withExtension: "otf") else { return false }
+        let files = [("GmarketSansLight", "otf"), ("GmarketSansMedium", "otf"),
+                     ("IBMPlexSansKR-Regular", "ttf"), ("IBMPlexSansKR-Medium", "ttf")]
+        return files.allSatisfy { name, ext in
+            guard let url = Bundle.main.url(forResource: name, withExtension: ext) else { return false }
             return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
     }()
@@ -103,12 +107,12 @@ extension Font {
                 return .system(size: size, weight: weight, design: .serif)
             }
             return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
-        case .suit:
-            // 플리(2026-08-31) — Pretendard 문법 미러(표제 = Medium, 강조 = SemiBold)
-            guard SuitFont.available else {
-                return .system(size: size, weight: weight == .bold ? .semibold : .medium)
+        case .playlistSans:
+            // 플리 표제 = Gmarket Sans(2026-08-31) — 얇은 기하 골격이 표제 몫, 강조만 Medium
+            guard PlaylistFont.available else {
+                return .system(size: size, weight: weight == .bold ? .medium : .light)
             }
-            return .custom(weight == .bold ? "SUIT-SemiBold" : "SUIT-Medium", size: size)
+            return .custom(weight == .bold ? "GmarketSansMedium" : "GmarketSansLight", size: size)
         case .system:
             return .system(size: size, weight: weight)
         }
@@ -134,9 +138,10 @@ extension Font {
             guard AlmanacFont.available else { return .system(style, design: .serif).weight(weight) }
             return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular",
                            size: size, relativeTo: style)
-        case .suit:
-            guard SuitFont.available else { return .system(style).weight(weight) }
-            return .custom(weight == .bold ? "SUIT-SemiBold" : "SUIT-Regular",
+        case .playlistSans:
+            // 플리 본문·세부 = IBM Plex Sans KR(2026-08-31 "세세한 글씨는 IBM")
+            guard PlaylistFont.available else { return .system(style).weight(weight) }
+            return .custom(weight == .bold ? "IBMPlexSansKR-Medium" : "IBMPlexSansKR-Regular",
                            size: size, relativeTo: style)
         case .system:
             return .system(style).weight(weight)

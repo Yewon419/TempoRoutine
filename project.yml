@@ -69,9 +69,10 @@ targets:
           - "Geist-Regular.otf"
           - "Geist-Medium.otf"
           - "Geist-SemiBold.otf"
-          - "SUIT-Regular.otf"
-          - "SUIT-Medium.otf"
-          - "SUIT-SemiBold.otf"
+          - "GmarketSansLight.otf"
+          - "GmarketSansMedium.otf"
+          - "IBMPlexSansKR-Regular.ttf"
+          - "IBMPlexSansKR-Medium.ttf"
     info:
       path: Widgets/Info.plist
       properties:
