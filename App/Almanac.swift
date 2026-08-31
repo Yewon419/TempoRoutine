@@ -48,9 +48,20 @@ enum ThemeFont {
     }()
 }
 
+/// 플리 본문 서체 — SUIT(SIL OFL, App/Fonts 번들) 3웨이트(2026-08-31 대표님 — Noto Serif KR
+/// 은퇴, SUIT/WantedSans 시안 비교 후 SUIT 확정). 위젯 타깃 제외(Gowun 유지).
+enum SuitFont {
+    static let available: Bool = {
+        ["SUIT-Regular", "SUIT-Medium", "SUIT-SemiBold"].allSatisfy { name in
+            guard let url = Bundle.main.url(forResource: name, withExtension: "otf") else { return false }
+            return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
+    }()
+}
+
 /// 플리 라틴 각인 서체 — Geist(SIL OFL, App/Fonts 번들) 3웨이트(2026-08-30 대표님 "플리
 /// 영어폰트 다 geist로"). 소비처 = 트랙명·NOW PLAYING·연도·캘린더 숫자(라틴 전용 —
-/// 한글은 Noto Serif가 담당). 위젯 타깃 제외(project.yml — 활판 Noto 전례).
+/// 한글 본문은 SUIT가 담당, 2026-08-31). 위젯 타깃 제외(project.yml — 활판 Noto 전례).
 enum GeistFont {
     static let available: Bool = {
         ["Geist-Regular", "Geist-Medium", "Geist-SemiBold"].allSatisfy { name in
@@ -92,6 +103,12 @@ extension Font {
                 return .system(size: size, weight: weight, design: .serif)
             }
             return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
+        case .suit:
+            // 플리(2026-08-31) — Pretendard 문법 미러(표제 = Medium, 강조 = SemiBold)
+            guard SuitFont.available else {
+                return .system(size: size, weight: weight == .bold ? .semibold : .medium)
+            }
+            return .custom(weight == .bold ? "SUIT-SemiBold" : "SUIT-Medium", size: size)
         case .system:
             return .system(size: size, weight: weight)
         }
@@ -116,6 +133,10 @@ extension Font {
         case .gowun:
             guard AlmanacFont.available else { return .system(style, design: .serif).weight(weight) }
             return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular",
+                           size: size, relativeTo: style)
+        case .suit:
+            guard SuitFont.available else { return .system(style).weight(weight) }
+            return .custom(weight == .bold ? "SUIT-SemiBold" : "SUIT-Regular",
                            size: size, relativeTo: style)
         case .system:
             return .system(style).weight(weight)

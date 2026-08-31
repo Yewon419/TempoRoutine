@@ -63,12 +63,15 @@ targets:
       - Widgets
       - Shared
       - path: App/Fonts   # Gowun Batang 번들(위젯 프로세스도 런타임 등록 필요, 2026-07-27)
-        excludes:         # 활판·플리 라틴 서체는 앱 전용(2026-08-18·08-30) — 위젯 미대응, 이중 탑재 금지
+        excludes:         # 활판·플리 서체는 앱 전용(2026-08-18·08-30·08-31) — 위젯 미대응, 이중 탑재 금지
           - "NotoSerifKR-Variable.ttf"
           - "BodoniModa-Variable.ttf"
           - "Geist-Regular.otf"
           - "Geist-Medium.otf"
           - "Geist-SemiBold.otf"
+          - "SUIT-Regular.otf"
+          - "SUIT-Medium.otf"
+          - "SUIT-SemiBold.otf"
     info:
       path: Widgets/Info.plist
       properties:
