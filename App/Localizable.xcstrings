@@ -10739,6 +10739,28 @@
         }
       }
     },
+    "소중한 의견 고마워요. 개발에 잘 반영할게요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thanks for your feedback. We'll put it to good use."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "貴重なご意見ありがとうございます。開発にしっかり反映します。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "感谢你的宝贵意见，我们会认真采纳。"
+          }
+        }
+      }
+    },
     "소화 편한 죽 한 그릇": {
       "extractionState": "manual",
       "localizations": {
@@ -15404,6 +15426,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "前一天早上"
+          }
+        }
+      }
+    },
+    "전달했어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信しました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已发送"
           }
         }
       }

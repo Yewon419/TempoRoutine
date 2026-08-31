@@ -91,6 +91,10 @@ struct NoticesView: View {
     @State private var feedbackText = ""
     @State private var showMailComposer = false
     @State private var showMailFallback = false
+    // 직송(2026-08-31 대표님 지시) — CloudKit 공개 DB. 저장이 수 초 걸릴 수 있어 스피너
+    // (결제 대기 전례 — 반응 없으면 씹힌 걸로 읽힌다). 실패는 메일 경로 폴백.
+    @State private var feedbackSending = false
+    @State private var feedbackSent = false
     /// 개발자 모드 토글 알럿(2026-08-27) — nil = 닫힘, 값 = 토글 후 상태
     @State private var devToggled: Bool?
     @FocusState private var feedbackFocused: Bool
@@ -147,6 +151,11 @@ struct NoticesView: View {
                  ? Loc.str("기록과 분리된 빈 스토어로 열려요. 모든 테마가 열려 있고, 동기화·건강 연동·위젯·알림은 쉬어요. 끄려면 같은 커맨드를 다시 보내거나 설정 맨 아래를 쓰세요.")
                  : Loc.str("원래 기록으로 돌아왔어요."))
         }
+        .alert("전달했어요", isPresented: $feedbackSent) {
+            Button("확인") {}
+        } message: {
+            Text(Loc.str("소중한 의견 고마워요. 개발에 잘 반영할게요."))
+        }
         .alert("메일 앱을 열 수 없어요", isPresented: $showMailFallback) {
             Button("확인") {}
         } message: {
@@ -174,13 +183,19 @@ struct NoticesView: View {
             Button {
                 sendFeedback()
             } label: {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Ink.paper)
-                    .frame(width: 34, height: 34)
-                    .background(Ink.text, in: Circle())
+                Group {
+                    if feedbackSending {
+                        ProgressView().controlSize(.small).tint(Ink.paper)
+                    } else {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Ink.paper)
+                    }
+                }
+                .frame(width: 34, height: 34)
+                .background(Ink.text, in: Circle())
             }
-            .disabled(trimmedFeedback.isEmpty)
+            .disabled(trimmedFeedback.isEmpty || feedbackSending)
             .opacity(trimmedFeedback.isEmpty ? 0.35 : 1)
             .accessibilityLabel(Loc.str("보내기"))
         }
@@ -203,6 +218,24 @@ struct NoticesView: View {
             return
         }
         feedbackFocused = false
+        // 직송이 1차(2026-08-31 대표님 "메일 말고 바로 메세지처럼") — CloudKit 공개 DB.
+        // iCloud 비로그인·실패만 종전 메일 경로로 떨어진다.
+        feedbackSending = true
+        let text = trimmedFeedback
+        Task { @MainActor in
+            defer { feedbackSending = false }
+            do {
+                try await FeedbackInbox.send(text)
+                feedbackText = ""
+                feedbackSent = true
+            } catch {
+                fallbackToMail()
+            }
+        }
+    }
+
+    /// 직송 실패 시 종전 메일 경로(2026-08-26 문법 그대로)
+    private func fallbackToMail() {
         if MFMailComposeViewController.canSendMail() {
             showMailComposer = true
         } else if let url = FeedbackMail.mailtoURL(trimmedFeedback) {
