@@ -162,9 +162,10 @@ struct SeasonCalendarView: View {
             if ThemeStore.chrome.skyGround {
                 WeatherSky(veil: 0.14)
             } else if ThemeStore.chrome.videoGround {
-                // 캘린더만 흐린 지면(2026-08-26 베타) — 격자가 영상 디테일과 안 겹치게.
-                // 16 → 8 → 4(2026-08-27 "블러 0.5배" 판정)
-                PlaylistVideoGround(blurRadius: 4)
+                // 캘린더 = 흰 지면(2026-08-31 베타 "여기는 그냥 하얀 배경에 계절광 깔자") —
+                // 흐린 영상(블러 16→8→4 반복)도 격자와 계속 부딪혀 은퇴. 영상 지면은 오늘 탭 몫,
+                // 계절광은 아래 calendarTopGlow(진한 파스텔 세트)가 흰 바탕 위에 얹는다.
+                Color.white.ignoresSafeArea()
             } else {
                 (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
                     .ignoresSafeArea()
