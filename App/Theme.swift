@@ -217,26 +217,31 @@ extension ThemePalette {
     /// ⚠ 계절 4색은 **흰 티켓 위에서 읽히는 값**이다. 유화 지면 위(설정·하루 상세)에서는
     /// 성립하지 않으므로 그 자리 활자는 뷰에서 흰 계열로 덮는다(시안 §3.2 주석).
     static let ticket = ThemePalette(
-        winter: .flat(0xA9, 0x32, 0x26),      // 검표 스탬프 레드 = 생리 시그널
-        spring: .flat(0x3F, 0x7A, 0x44),      // 잎 그린
-        summer: .flat(0x1C, 0x7A, 0x94),      // 시안
-        autumn: .flat(0xB8, 0x86, 0x1F),      // 골드
+        // 계절색 재지정(2026-08-31 대표님 지시 "봄 연보라·여름 청녹·가을 붉은색·겨울 하늘빛
+        // 회색") — winter가 종전엔 생리 시그널 레드와 같은 값을 겸했으나(검표 스탬프 레드),
+        // 이번 개정으로 겨울 = 하늘빛 회색으로 갈리며 **생리 시그널은 winter에서 분리**해
+        // record/coral/danger/holiday에 그 레드를 직접 박는다(의료 신호는 계절 재지정과
+        // 무관하게 항상 빨강이어야 한다).
+        winter: .flat(0x7B, 0x92, 0xA8),      // 하늘빛 회색
+        spring: .flat(0x8E, 0x7A, 0xB5),      // 연보라
+        summer: .flat(0x1F, 0x7A, 0x72),      // 청녹
+        autumn: .flat(0xB8, 0x40, 0x2C),      // 붉은색(생리 시그널 레드와는 다른 톤 — 가을 전용)
         text: .flat(0x22, 0x38, 0x4F),        // 딥 네이비 잉크
         // 지면 = 웜 화이트(2026-08-18 사용자 지시 "배경컬러 걍 흰색" — 블루그레이 색면·유화 폐기.
         // 발권지(surface)와 동값이라 카드 구분은 그림자·클립 윤곽이 담당한다, 시안 탭바 전례)
         paper: .flat(0xFA, 0xFA, 0xF8),
-        coral: .flat(0xA9, 0x32, 0x26),       // 은퇴 토큰
-        record: .flat(0xA9, 0x32, 0x26),
+        coral: .flat(0xA9, 0x32, 0x26),       // 은퇴 토큰 — 생리 시그널 레드(winter와 분리)
+        record: .flat(0xA9, 0x32, 0x26),      // 생리 시그널 레드 — 계절 재지정과 무관하게 고정
         danger: .flat(0xA9, 0x32, 0x26),
         dim: Color(red: 0x22 / 255, green: 0x38 / 255, blue: 0x4F / 255).opacity(0.55),
         oxide: .flat(0x7E, 0x8F, 0xA0),       // 과거 = 바랜 블루그레이
         holiday: .flat(0xA9, 0x32, 0x26),
         saturday: .flat(0x2E, 0x5C, 0x8A),
         frost: .flat(0xFA, 0xFA, 0xF8),
-        glowWinter: .flat(0xA9, 0x32, 0x26),
-        glowSpring: .flat(0x3F, 0x7A, 0x44),
-        glowSummer: .flat(0x1C, 0x7A, 0x94),
-        glowAutumn: .flat(0xB8, 0x86, 0x1F),
+        glowWinter: .flat(0x7B, 0x92, 0xA8),
+        glowSpring: .flat(0x8E, 0x7A, 0xB5),
+        glowSummer: .flat(0x1F, 0x7A, 0x72),
+        glowAutumn: .flat(0xB8, 0x40, 0x2C),
         surface: .flat(0xFA, 0xFA, 0xF8),     // 발권물 = 웜 화이트
         accent: .flat(0x22, 0x38, 0x4F)
     )
