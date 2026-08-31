@@ -73,6 +73,7 @@ targets:
           - "GmarketSansMedium.otf"
           - "IBMPlexSansKR-Regular.ttf"
           - "IBMPlexSansKR-Medium.ttf"
+          - "GowunDodum-Regular.ttf"
     info:
       path: Widgets/Info.plist
       properties:

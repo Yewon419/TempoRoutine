@@ -52,6 +52,17 @@ enum ThemeFont {
 /// IBM"): 표제 = Gmarket Sans(Light, 강조 Medium) / 본문·세부 = IBM Plex Sans KR(Regular,
 /// 강조 Medium). 라틴 각인 = Geist 유지. 전부 OFL. 같은 날 중간 확정이던 SUIT는 이 판정으로
 /// 대체(번들 제거). 위젯 타깃 제외(Gowun 유지). PostScript 이름은 fontTools name(6) 실측값.
+/// 티켓 서체 — 고운돋움(OFL, 단일 웨이트. 2026-08-31 대표님 — 5종 비교 페이지 판정 "고운돋음").
+/// 발권물 문법에 둥근 단정 산세리프. 강조도 같은 얼굴(단일 웨이트 — 위계는 크기·색이 담당).
+/// 위젯 타깃 제외(Gowun Batang 유지).
+enum DodumFont {
+    static let available: Bool = {
+        guard let url = Bundle.main.url(forResource: "GowunDodum-Regular", withExtension: "ttf")
+        else { return false }
+        return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+    }()
+}
+
 enum PlaylistFont {
     static let available: Bool = {
         let files = [("GmarketSansLight", "otf"), ("GmarketSansMedium", "otf"),
@@ -113,6 +124,10 @@ extension Font {
                 return .system(size: size, weight: weight == .bold ? .medium : .light)
             }
             return .custom(weight == .bold ? "GmarketSansMedium" : "GmarketSansLight", size: size)
+        case .dodum:
+            // 티켓(2026-08-31) — 단일 웨이트, 위계는 크기·색이 담당
+            guard DodumFont.available else { return .system(size: size, weight: weight) }
+            return .custom("GowunDodum-Regular", size: size)
         case .system:
             return .system(size: size, weight: weight)
         }
@@ -143,6 +158,9 @@ extension Font {
             guard PlaylistFont.available else { return .system(style).weight(weight) }
             return .custom(weight == .bold ? "IBMPlexSansKR-Medium" : "IBMPlexSansKR-Regular",
                            size: size, relativeTo: style)
+        case .dodum:
+            guard DodumFont.available else { return .system(style).weight(weight) }
+            return .custom("GowunDodum-Regular", size: size, relativeTo: style)
         case .system:
             return .system(style).weight(weight)
         }

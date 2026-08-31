@@ -420,7 +420,7 @@ extension View {
 // 뒤집어 각 테마가 스스로 답하게 한다.
 struct ThemeChrome {
     /// 표제·책력 표기 서체 계열. `.system`은 번들 서체를 쓰지 않는다.
-    enum TypeFace { case gowun, pretendard, system, notoSerif /* 활판·은필 = Noto Serif KR(한글) + Bodoni Moda(라틴 숫자) */, playlistSans /* 플리(2026-08-31) — 표제 Gmarket·본문 IBM Plex, 라틴 각인 Geist 유지 */ }
+    enum TypeFace { case gowun, pretendard, system, notoSerif /* 활판·은필 = Noto Serif KR(한글) + Bodoni Moda(라틴 숫자) */, playlistSans /* 플리(2026-08-31) — 표제 Gmarket·본문 IBM Plex, 라틴 각인 Geist 유지 */, dodum /* 티켓(2026-08-31) — 고운돋움 단일 웨이트 */ }
     /// 지면 질감. `.none`은 아무것도 얹지 않는다.
     enum Texture { case motif, dotGrid, none, grain /* 활판 = 종이 그레인 타일 */ }
 
@@ -566,7 +566,8 @@ extension ThemeChrome {
     /// 티켓 — 지면이 계절 유화라 대비 보정을 켜고, 계절광은 얹지 않는다(레퍼런스 지면은 평면).
     /// 티켓 조판에서는 표제가 위, 계절 라인이 아래다(발권 정보 블록 안에서).
     static let ticket = ThemeChrome(
-        typeFace: .pretendard, texture: .none, outlineDisplay: false,
+        // .pretendard → .dodum(2026-08-31 대표님 — 5종 비교 판정 "고운돋음")
+        typeFace: .dodum, texture: .none, outlineDisplay: false,
         showsSeasonLight: false, neutralSeasonLight: false,
         dimsInDarkMode: false, forcesDarkAppearance: false,
         todayCircleUsesAccent: true,

@@ -1267,6 +1267,10 @@ struct SeasonCalendarView: View {
         case .playlistSans:
             // 플리 숫자 = Geist 유지(2026-08-30 "플리 영어폰트 다 geist로" — 본문 서체 전환과 무관)
             return .geist(size: 14, weight: isToday ? .medium : .regular)
+        case .dodum:
+            // 티켓 숫자 = 고운돋움(단일 웨이트 — 오늘 강조는 원 채움이 담당)
+            guard DodumFont.available else { return .system(size: 14, weight: isToday ? .bold : .semibold) }
+            return .custom("GowunDodum-Regular", size: 14)
         case .system:
             return .system(size: 14, weight: isToday ? .bold : .semibold)
         }
