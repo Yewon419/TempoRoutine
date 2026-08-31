@@ -377,7 +377,7 @@ struct TodayView: View {
                 // 문장 단위 줄바꿈(2026-08-30 베타 "겨울이에요 어쩌구 그냥 다 문장 단위로 줄바꿈")
                 // — 프로토 .stc 문법의 앱 이식. 마침표+공백 = 문장 경계(전 언어 카피가 이 규약).
                 Text((moodlineText ?? info.meta.moodline).replacingOccurrences(of: ". ", with: ".\n"))
-                    .font(.system(.body, design: .serif))
+                    .font(.almanacBody(.body, size: 17))
                     .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.88))
                     .padding(.top, 2)
                     .skyInkShadow()
@@ -580,7 +580,7 @@ struct TodayView: View {
             }
         )) {
             Text("생리 기록")
-                .font(.system(.subheadline, design: .serif))
+                .font(.almanacBody(.subheadline, size: 15))
                 .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
         }
         .tint(Ink.text)
@@ -596,7 +596,7 @@ struct TodayView: View {
         if snapshot.isColdStart {
             VStack(alignment: .leading, spacing: 14) {
                 Text("첫 생리 시작일을 기록하면, 당신의 계절이 시작돼요.")
-                    .font(.system(.body, design: .serif))
+                    .font(.almanacBody(.body, size: 17))
                     .foregroundStyle(Ink.text.opacity(0.8))
                 Button {
                     showLogSheet = true
@@ -708,7 +708,7 @@ struct TodayView: View {
     @ViewBuilder
     private var scheduleSection: some View {
         if todaySchedules.isEmpty && EventOverlay.shared.events(on: today).isEmpty {
-            Text("아직 없어요").font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
+            Text("아직 없어요").font(.almanacBody(.footnote, size: 13)).foregroundStyle(Ink.text.opacity(0.45))
         }
         ForEach(todaySchedules) { item in
             Button {
@@ -718,7 +718,7 @@ struct TodayView: View {
                 // 제목 먼저·시각 trailing(2026-08-09 베타 피드백 "일정명과 종일 위치 바꿔" —
                 // 하루 상세 행과 같은 문법으로 통일)
                 HStack(spacing: 10) {
-                    Text(item.title).font(.subheadline).foregroundStyle(Ink.text)
+                    Text(item.title).font(.almanacBody(.subheadline, size: 15)).foregroundStyle(Ink.text)
                     // 여러 날 일정 — 오늘이 몇 일차인지(§8.2.3)
                     if let index = item.dayIndex(on: today) {
                         Text(Loc.fmt("%1$lld/%2$lld일차", index, item.spanDays))
@@ -809,7 +809,7 @@ struct TodayView: View {
                 Image(systemName: checked ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(checked ? Ink.text : Ink.text.opacity(0.35))
                 Text(item.title)
-                    .font(.subheadline)
+                    .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text)
                     .strikethrough(checked, color: Ink.dim)
                 Spacer()
@@ -830,7 +830,7 @@ struct TodayView: View {
     @ViewBuilder
     private var inputSection: some View {
         if todayInputs.isEmpty {
-            Text("아직 없어요").font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
+            Text("아직 없어요").font(.almanacBody(.footnote, size: 13)).foregroundStyle(Ink.text.opacity(0.45))
         } else {
             ForEach(todayInputs) { item in
                 VStack(alignment: .leading, spacing: 4) {
@@ -885,12 +885,12 @@ struct TodayView: View {
     @ViewBuilder
     private var outputSection: some View {
         if todayOutputs.isEmpty {
-            Text(outputEmptyMessage).font(.footnote).foregroundStyle(Ink.text.opacity(0.45))
+            Text(outputEmptyMessage).font(.almanacBody(.footnote, size: 13)).foregroundStyle(Ink.text.opacity(0.45))
         } else {
             ForEach(todayOutputs) { item in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
-                        Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(Ink.text)
+                        Text(item.title).font(.almanacBody(.subheadline, size: 15, weight: .bold)).foregroundStyle(Ink.text)
                         if let target = item.targetDate {
                             DDayBadge(target: target, from: today)
                         }
@@ -915,7 +915,7 @@ struct TodayView: View {
         }
         if let meta = todayInfo?.meta, !todayOutputs.isEmpty {
             Text(meta.lever)
-                .font(.system(.footnote, design: .serif))
+                .font(.almanacBody(.footnote, size: 13))
                 .foregroundStyle(Ink.text.opacity(0.55))
                 .padding(.top, 2)
         }
@@ -950,7 +950,7 @@ struct TodayView: View {
                     HStack(spacing: 8) {
                         Image(systemName: sub.isDone ? "checkmark.square.fill" : "square")
                             .foregroundStyle(sub.isDone ? Ink.text : Ink.text.opacity(0.35))
-                        Text(sub.title).font(.footnote).foregroundStyle(Ink.text)
+                        Text(sub.title).font(.almanacBody(.footnote, size: 13)).foregroundStyle(Ink.text)
                             .strikethrough(sub.isDone, color: Ink.dim)
                         Spacer()
                     }

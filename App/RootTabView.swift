@@ -332,8 +332,18 @@ struct RootTabView: View {
             // 없다") — 시스템 유리는 탭마다 다른 지면을 샘플링해 바 색이 널뛴다. 블러 위에
             // Ink.paper 60%를 얹어 테마 지면으로 고정하고, 라벨·미선택 아이콘을 잉크로 맞춘다.
             // 선택 아이콘 색은 SwiftUI `.tint`가 담당(티켓 branch 전례).
-            appearance.configureWithDefaultBackground()
-            appearance.backgroundColor = UIColor(Ink.paper.opacity(0.6))
+            // ⚠ 날씨 = **진한 회색 불투명 고정**(2026-08-31 베타 "밝았다 어두웠다 하는것좀
+            // 어두운걸로 고정" + "그냥 진한 회색으로") — 라이트 외관 전환(38차-b) 뒤 기본
+            // 유리가 화면·스크롤 상태 따라 밝게 뒤집혔다. 반투명 틴트로는 못 잡는다(유리가
+            // 아래에서 밝아지면 60% 틴트가 씻긴다) — 불투명이 답이다.
+            if ThemeStore.chrome.skyGround {
+                appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = UIColor(red: 0x2A / 255, green: 0x2F / 255,
+                                                     blue: 0x38 / 255, alpha: 1)
+            } else {
+                appearance.configureWithDefaultBackground()
+                appearance.backgroundColor = UIColor(Ink.paper.opacity(0.6))
+            }
             let normal = UIColor(Ink.text.opacity(0.45))
             for layout in [appearance.stackedLayoutAppearance,
                            appearance.inlineLayoutAppearance,

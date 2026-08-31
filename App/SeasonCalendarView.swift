@@ -1467,7 +1467,9 @@ struct SeasonCalendarView: View {
         return HStack(spacing: 4) {
             SeasonGlyph(phase: phase, size: 12)
             Text(meta.name)
-                .font(.system(size: 12, weight: .semibold, design: .serif))
+                // 테마 본문 서체 추종(2026-08-31 베타 "플리테마는 폰트반영이 아예 안돼있어" —
+                // 하드코딩 세리프가 테마 서체 개정을 안 탔다. 전 테마 시안 base 서체와 정합)
+                .font(.almanacBody(.caption, size: 12, weight: .bold))
                 .foregroundStyle(meta.color)
                 .skyInkShadow()
         }

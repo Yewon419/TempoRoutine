@@ -195,12 +195,17 @@ struct PlaylistRecordHeader: View {
                 .font(.geist(size: 10, weight: .medium))
                 .kerning(1.8)
                 .foregroundStyle(Ink.dim)
+            // 베타 "이 탭 빼고 플리테마는 폰트반영이 아예 안돼있어" — 캘린더 레코드판 월명이
+            // .system() 하드코딩으로 남아 표제 서체 개정(Gmarket)을 안 타고 있었다.
             Text(Loc.monthName(month))
-                .font(.system(size: 26, weight: .semibold))
+                .font(.almanac(size: 26))
                 .foregroundStyle(Ink.text)
             if let phase {
+                // 트랙명 = 라틴 각인(Geist). 오늘 탭 NOW PLAYING과 같은 처리로 통일
+                // (2026-08-31 — SemiBold가 굵어 보였다는 베타 지적과 같은 뿌리, Regular+자간)
                 Text(verbatim: playlistTrackName(for: phase))
-                    .font(.geist(size: 15, weight: .semibold))
+                    .font(.geist(size: 15, weight: .regular))
+                    .tracking(0.3)
                     .foregroundStyle(Ink.text)
                     .padding(.top, 1)
             }
