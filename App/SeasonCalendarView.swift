@@ -280,15 +280,13 @@ struct SeasonCalendarView: View {
     private func calendarColumn() -> some View {
         VStack(alignment: .leading, spacing: 12) {
             if ThemeStore.chrome.ticketChrome {
-                // 티켓 = 화면 한 장이 발권물(시안 §3.4). 브랜드 표식은 스텁의 일련 조판이 대신한다.
-                // 티켓은 발권 정보 블록이 상단을 다 쓰고 `.cal-top`(브랜드 표식·소식란)을
-                // 숨긴다(시안 §3.5) — 그 바람에 **소식란 진입점이 통째로 사라져 있었다**
-                // (2026-08-27 베타 "티켓 테마엔 공지가 없네"). 발권 블록 위 우측에 확성기만 얹는다.
-                HStack {
-                    Spacer()
-                    noticeButton
-                }
-                .padding(.bottom, -12)   // 발권 블록과 붙여 상단 150pt 계약을 안 흔든다
+                // 티켓 히어로 밴드(2026-08-31 시안 §3.4 증강) — 확성기 줄까지는 어두운 계절
+                // 유화, 그 아래부터 흰 발권지(베타 "공지 버튼 바로 아래에서 흰색 부분 끊어줘.
+                // 그 위는 다른 탭들처럼 어둡게"). 브랜드 표식·소식란이 이 위에 흰 잉크로 얹힌다
+                // — 종전엔 `.cal-top`을 통째로 숨겨 소식란 진입점이 사라졌던 자리(2026-08-27
+                // 베타 "공지가 없네")를 살린 것과 같은 문법, 배경만 바뀌었다.
+                ticketHeroBand
+                    .padding(.bottom, 14)   // 스캘럽과 조판 사이 여백(대표님 "여백 더 만들어")
                 ticketHeaderBlock
             } else if ThemeStore.chrome.playlistChrome {
                 // 플레이리스트 = 레코드판(시안 §4.4 ③, 2026-08-25 확정). 브랜드 표식·소식란은
@@ -297,7 +295,7 @@ struct SeasonCalendarView: View {
                     BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
                         .padding(.leading, 6)
                     Spacer()
-                    noticeButton
+                    noticeButton()
                 }
                 PlaylistRecordHeader(
                     year: cal.component(.year, from: monthStart),
@@ -320,7 +318,7 @@ struct SeasonCalendarView: View {
                     BrandMark(diameter: 22, color: Ink.text.opacity(0.75))   // 오늘 탭과 동일 보정(2026-08-09 피드백)
                         .padding(.leading, 6)
                     Spacer()
-                    noticeButton
+                    noticeButton()
                 }
                 monthHeader
                 // 활판 = 표제 아래 계절 고전 인용문(시안 §2.3-5, 2026-08-24 "인앱에도")
@@ -344,8 +342,37 @@ struct SeasonCalendarView: View {
     }
 
     // ── 티켓 전용 상단(시안 §3.4) ──
-    // 발권 정보 블록 150pt + 절취선. 절취선은 화면 폭을 가로질러야 해서 좌우 패딩을 되돌리고,
-    // 양 끝에 V홈 노치를 얹는다. 노치 안쪽은 다른 탭 지면색 고정값이다.
+    /// 히어로 밴드 — 브랜드 표식·소식란(흰 잉크, 정상 위치) + 유화 배경(세이프에어리어까지 번짐).
+    /// 배경만 번지는 패턴은 종전 사진 지면 상단바(TodayView.compactBar)와 같은 idiom —
+    /// 전경은 제자리, `.background` 안에서만 `.ignoresSafeArea`를 태운다.
+    private var ticketHeroBand: some View {
+        HStack {
+            BrandMark(diameter: 22, color: .white)
+                .padding(.leading, 6)
+            Spacer()
+            noticeButton(tint: .white)
+        }
+        .padding(.top, 10)
+        .padding(.bottom, 10)
+        .background(alignment: .top) {
+            TicketHeroArtwork(phase: currentPhase, label: Self.ticketHeroLabel(monthStart))
+                .ignoresSafeArea(edges: .top)
+        }
+    }
+
+    /// 히어로 라벨 "2026 · JULY" — 활판 라틴 날짜 스탬프와 같은 규약(en_US 고정, 로컬라이제이션
+    /// 대상 아님 — 시안 원본 문법이 라틴이다).
+    private static let ticketHeroFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "yyyy · MMMM"
+        return formatter
+    }()
+
+    private static func ticketHeroLabel(_ date: Date) -> String {
+        ticketHeroFormatter.string(from: date).uppercased()
+    }
+
     private var ticketHeaderBlock: some View {
         VStack(alignment: .leading, spacing: 0) {
             TicketMonthHeader(
@@ -631,7 +658,8 @@ struct SeasonCalendarView: View {
 
     /// 소식란(2026-08-09 사용자 지시 — 우상단 확성기, 미읽음 점).
     /// 표제 줄(기본)과 상단 행(플레이리스트) 두 자리에서 쓰여 추출(2026-08-19).
-    private var noticeButton: some View {
+    /// `tint` = 지면 위 잉크색. 티켓 히어로 밴드(2026-08-31)는 유화 위라 흰색이 필요해 매개변수화.
+    private func noticeButton(tint: Color = Ink.text) -> some View {
         Button {
             lightFeedback += 1
             showNotices = true
@@ -647,7 +675,7 @@ struct SeasonCalendarView: View {
                     }
                 }
         }
-        .foregroundStyle(Ink.text)
+        .foregroundStyle(tint)
         .accessibilityLabel(noticeFeed.hasUnread ? Loc.str("소식, 새 글 있음") : Loc.str("소식"))
     }
 
