@@ -98,9 +98,24 @@ struct NoticesView: View {
     /// 개발자 모드 토글 알럿(2026-08-27) — nil = 닫힘, 값 = 토글 후 상태
     @State private var devToggled: Bool?
     @FocusState private var feedbackFocused: Bool
+    // placeholder 이스터에그(2026-08-31 대표님 지시) — 열 때마다 1/4 확률로 장난 문구가
+    // 대신 자리한다. 표시만 바뀐다 — 보내기·개발자 모드 커맨드 판정과 무관.
+    @State private var feedbackPrompt = NoticesView.rollFeedbackPrompt()
 
     private var trimmedFeedback: String {
         feedbackText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func rollFeedbackPrompt() -> String {
+        guard Int.random(in: 0..<4) == 0 else { return Loc.str("개발자에게 피드백 보내기") }
+        let variants = [
+            Loc.str("템포루틴 사랑해요"),
+            Loc.str("테마 더 만들어 주세요"),
+            Loc.str("앱이 너무 구려요"),
+            Loc.str("씨앗 뿌려주세요"),
+            Loc.str("오타 제보도 환영이에요"),
+        ]
+        return variants.randomElement() ?? Loc.str("개발자에게 피드백 보내기")
     }
 
     var body: some View {
@@ -171,7 +186,7 @@ struct NoticesView: View {
     /// 메일 앱을 열어 사용자가 직접 보낸다(§5.2 무서버 경계 유지).
     private var feedbackBar: some View {
         HStack(alignment: .bottom, spacing: 10) {
-            TextField("개발자에게 피드백 보내기", text: $feedbackText, axis: .vertical)
+            TextField(feedbackPrompt, text: $feedbackText, axis: .vertical)
                 .lineLimit(1...4)
                 .font(.subheadline)
                 .foregroundStyle(Ink.text)

@@ -12740,6 +12740,29 @@
         }
       }
     },
+    "씨앗 뿌려주세요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sprinkle some seeds, please"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねをまいてください"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请撒点种子吧"
+          }
+        }
+      }
+    },
     "씨앗은 하루 체크인을 완성하면 하나씩 모여요.": {
       "extractionState": "manual",
       "localizations": {
@@ -13287,6 +13310,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "打开一次 App 就会填上"
+          }
+        }
+      }
+    },
+    "앱이 너무 구려요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This app is so lame"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリがダサすぎます"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个应用太逊了"
           }
         }
       }
@@ -14796,6 +14842,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "错误 %1$@(%2$@) %3$@"
+          }
+        }
+      }
+    },
+    "오타 제보도 환영이에요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typo reports are welcome too"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "誤字の報告も歓迎です"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "也欢迎报告错别字"
           }
         }
       }
@@ -19290,6 +19359,29 @@
         }
       }
     },
+    "테마 더 만들어 주세요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please make more themes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマをもっと作ってください"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请多做一些主题"
+          }
+        }
+      }
+    },
     "테마 배경 영상처럼 내려받은 파일만 지워요. 기록은 그대로예요. 지금 쓰는 테마의 파일은 필요해지면 다시 받아요.": {
       "extractionState": "manual",
       "localizations": {
@@ -19447,6 +19539,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "TempoRoutine · 契合你身体的节奏"
+          }
+        }
+      }
+    },
+    "템포루틴 사랑해요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I love TempoRoutine"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テンポルーティン大好きです"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我爱 TempoRoutine"
           }
         }
       }
