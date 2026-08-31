@@ -168,10 +168,11 @@ struct TodayView: View {
     }
     private var moodlineText: String? {
         guard let info = todayInfo else { return nil }
+        // 무드라인 풀(2026-08-31 A4) — 하루 시드 고정 선택. 층은 종전(개인화 → 기본)
         if let phase = snapshot.phase(on: today), let level = todayEnergyLevel {
-            return EnergyProfile.moodline(for: phase, level: level)
+            return MoodlinePool.personalized(for: phase, level: level, on: today)
         }
-        return info.meta.moodline
+        return MoodlinePool.base(for: info.meta.phase, on: today)
     }
 
     var body: some View {

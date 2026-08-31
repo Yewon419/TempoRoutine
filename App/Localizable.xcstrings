@@ -3193,6 +3193,50 @@
         }
       }
     },
+    "가을이에요. 기록상 기운이 내려가던 때예요. 일정을 가볍게 둬도 좋아요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's autumn. Energy dipped around now. Keep the schedule light."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋です。記録では気力が下がる頃。予定は軽めでいいんです。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是秋天。记录里精力在回落。日程可以轻一点。"
+          }
+        }
+      }
+    },
+    "가을이에요. 기록상 끝심이 좋던 때예요. 미뤄둔 마무리를 해봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's autumn. Your finishing strength was good. Close out what you've put off."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋です。記録では締めの粘りが良い頃。後回しの仕上げをどうぞ。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是秋天。记录里后劲不错。把搁置的收尾做完吧。"
+          }
+        }
+      }
+    },
     "가을이에요. 기록상 이맘때 에너지가 충분했어요. 오늘은 어떤 것에 몰입해볼까요?": {
       "extractionState": "manual",
       "localizations": {
@@ -3239,6 +3283,28 @@
         }
       }
     },
+    "가을이에요. 기록상 차분히 마무리하던 때예요. 매듭 하나면 충분해요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's autumn. You wrapped things calmly around now. One knot is enough."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋です。記録では落ち着いて締めくくる頃。結び目ひとつで十分。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是秋天。记录里是从容收尾的时候。一个结就够了。"
+          }
+        }
+      }
+    },
     "가을이에요. 기록상 하나씩 정리하던 때예요. 스스로를 돌아보는 시간을 가져봐요.": {
       "extractionState": "manual",
       "localizations": {
@@ -3262,6 +3328,28 @@
         }
       }
     },
+    "가을이에요. 속도를 줄이는 것도 실력이에요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's autumn. Slowing down is a skill, too."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋です。ペースを落とすのも実力のうち。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是秋天。放慢速度也是一种本事。"
+          }
+        }
+      }
+    },
     "가을이에요. 스스로를 돌아보는 시간을 가져봐요.": {
       "extractionState": "manual",
       "localizations": {
@@ -3281,6 +3369,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "是秋天了。可以留些时间回望自己。"
+          }
+        }
+      }
+    },
+    "가을이에요. 오늘은 정리 하나면 충분해요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's autumn. One bit of tidying is enough today."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋です。今日は整理ひとつで十分。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是秋天。今天整理一件事就够了。"
+          }
+        }
+      }
+    },
+    "가을이에요. 하나씩 매듭지어도 좋은 때예요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's autumn. A good time to tie things up one by one."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋です。ひとつずつ締めくくるのにいい頃。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是秋天。适合一件件收尾。"
           }
         }
       }
@@ -4524,6 +4656,50 @@
         }
       }
     },
+    "겨울이에요. 기록상 무리하지 않는 날이 많았어요. 그 감각을 믿어봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's winter. You often took it easy around now. Trust that instinct."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬です。記録では無理しない日が多めでした。その感覚を信じて。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是冬天。记录里这时常不勉强自己。相信那种感觉。"
+          }
+        }
+      }
+    },
+    "겨울이에요. 기록상 이맘때는 쉼이 먼저였어요. 오늘도 그래도 돼요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's winter. Your records say rest came first around now. Today can be the same."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬です。記録ではこの頃、休むのが先でした。今日もそれでいいんです。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是冬天。记录里这时候休息优先。今天也可以这样。"
+          }
+        }
+      }
+    },
     "겨울이에요. 기록상 이맘때는 에너지가 낮았어요. 조금은 쉬어가도 좋아요.": {
       "extractionState": "manual",
       "localizations": {
@@ -4570,6 +4746,28 @@
         }
       }
     },
+    "겨울이에요. 기록상 이맘때도 힘이 남아 있었어요. 다만 무리는 말아요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's winter. You've had energy to spare around now — just don't overdo it."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬です。記録ではこの頃も力が残っていました。ただ無理はしないで。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是冬天。记录里这时也还有余力，只是别勉强。"
+          }
+        }
+      }
+    },
     "겨울이에요. 기록상 이맘때의 당신은 잔잔했어요. 천천히 가도 좋아요.": {
       "extractionState": "manual",
       "localizations": {
@@ -4589,6 +4787,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "现在是冬。从记录看，这个时候的你很平静。慢慢来也可以。"
+          }
+        }
+      }
+    },
+    "겨울이에요. 따뜻한 것 하나면 충분한 날도 있어요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's winter. Some days one warm thing is enough."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬です。温かいものひとつで十分な日もあります。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是冬天。有些日子一件温暖的事就够了。"
+          }
+        }
+      }
+    },
+    "겨울이에요. 몸이 하는 말을 먼저 들어봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's winter. Listen to your body first."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬です。まずは体の声を聞いてみて。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是冬天。先听听身体的声音。"
+          }
+        }
+      }
+    },
+    "겨울이에요. 오늘은 나에게 너그러워도 좋아요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's winter. Be gentle with yourself today."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬です。今日は自分にやさしくていいんです。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是冬天。今天可以对自己宽容一点。"
           }
         }
       }
@@ -9891,6 +10155,28 @@
         }
       }
     },
+    "봄이에요. 기록상 리듬이 올라오던 때예요. 작은 일부터 얹어봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's spring. Your rhythm was rising around now. Stack small things first."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春です。記録ではリズムが上がってくる頃。小さなことから積んでみて。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是春天。记录里节奏在上升。先从小事叠起。"
+          }
+        }
+      }
+    },
     "봄이에요. 기록상 이맘때 에너지가 생긴대요. 슬슬 시동을 걸어볼까요!": {
       "extractionState": "manual",
       "localizations": {
@@ -9956,6 +10242,116 @@
           "stringUnit": {
             "state": "translated",
             "value": "现在是春。记录显示这是你慢慢舒展开来的时候。轻轻开始也很好。"
+          }
+        }
+      }
+    },
+    "봄이에요. 기록상 천천히 깨어나던 때예요. 몸을 먼저 풀어봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's spring. You woke up slowly around now. Loosen up first."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春です。記録ではゆっくり目覚めていく頃。まず体をほぐして。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是春天。记录里是慢慢苏醒的时候。先活动下身体。"
+          }
+        }
+      }
+    },
+    "봄이에요. 기록상 출발이 좋던 때예요. 오늘 하나 시작해봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's spring. Starts went well around now. Begin one thing today."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春です。記録ではスタートが良い頃でした。今日ひとつ始めてみて。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是春天。记录里这时开局不错。今天开始一件事吧。"
+          }
+        }
+      }
+    },
+    "봄이에요. 새로 하고 싶은 게 생겼다면 그게 신호예요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's spring. Wanting something new is the signal."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春です。新しくやりたいことができたら、それが合図。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是春天。想做点新东西，就是信号。"
+          }
+        }
+      }
+    },
+    "봄이에요. 서두르지 않아도 어느새 자라 있을 거예요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's spring. No rush — growth happens anyway."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春です。急がなくても、いつのまにか育っています。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是春天。不用急，不知不觉就会成长。"
+          }
+        }
+      }
+    },
+    "봄이에요. 작은 것부터 하나씩 깨워봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's spring. Wake things up one small step at a time."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春です。小さなことからひとつずつ目覚めさせて。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是春天。从小事开始一件件唤醒。"
           }
         }
       }
@@ -13285,6 +13681,28 @@
         }
       }
     },
+    "여름이에요. 기록상 이맘때는 의외로 지치곤 했어요. 오늘은 가볍게 가요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's summer. Oddly, you'd tire around now. Keep it light today."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏です。記録では意外とこの頃、疲れがち。今日は軽めに。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是夏天。记录里这时反而容易累。今天轻松点。"
+          }
+        }
+      }
+    },
     "여름이에요. 기록상 이맘때의 당신은 밝았어요. 하고 싶은 만큼 해봐요!": {
       "extractionState": "manual",
       "localizations": {
@@ -13304,6 +13722,116 @@
           "stringUnit": {
             "state": "translated",
             "value": "现在是夏。记录显示这个时候的你很明亮。想做多少就做多少吧！"
+          }
+        }
+      }
+    },
+    "여름이에요. 기록상 절정이던 때예요. 큰 일을 두기 좋은 날이에요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's summer. This was your peak. A good day for the big thing."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏です。記録では絶頂期。大きなことを置くのに良い日。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是夏天。记录里是巅峰期。适合安排大事。"
+          }
+        }
+      }
+    },
+    "여름이에요. 기록상 컨디션이 안정적이던 때예요. 꾸준히 가기 좋아요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's summer. Your condition held steady around now. Good for keeping pace."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏です。記録では調子が安定していた頃。こつこつ進むのに良い時。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是夏天。记录里状态稳定。适合稳步前进。"
+          }
+        }
+      }
+    },
+    "여름이에요. 미뤄둔 일을 꺼내기 좋은 날이에요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's summer. A good day to pick up what you've put off."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏です。後回しにしていたことを出すのにいい日。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是夏天。适合把搁置的事拿出来。"
+          }
+        }
+      }
+    },
+    "여름이에요. 사람을 만나기에도 좋은 때예요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's summer. A good time to see people, too."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏です。人に会うにもいい頃です。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是夏天。也是见朋友的好时候。"
+          }
+        }
+      }
+    },
+    "여름이에요. 오늘의 에너지를 마음껏 써봐요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's summer. Spend today's energy freely."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏です。今日のエネルギーを思いきり使ってみて。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是夏天。尽情使用今天的精力吧。"
           }
         }
       }

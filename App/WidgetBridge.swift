@@ -222,7 +222,9 @@ enum WidgetBridge {
             var entry = WidgetDay(day: day, season: key, title: info.meta.name,
                                   sub: Loc.fmt("%1$@ %2$@일차%3$@", "\(info.meta.name)", "\(info.dayInPhase)", "\(hedge)"),
                                   inline: Loc.fmt("%1$@ %2$@일차", "\(info.meta.name)", "\(info.dayInPhase)"),
-                                  mood: info.meta.moodline, projected: info.projected)
+                                  // 무드라인 풀(2026-08-31 A4) — 그날 시드 고정이라 위젯도 앱과 같은 문구
+                                  mood: MoodlinePool.base(for: info.meta.phase, on: day),
+                                  projected: info.projected)
             // 주기 진행(플레이리스트 미니 시크바, 시안 §4.4 ⑧) — 재생 위치 = 주기 일차
             entry.cycleProgress = min(1, Double(info.dayInCycle) / Double(max(snapshot.averageLength, 1)))
             return entry
