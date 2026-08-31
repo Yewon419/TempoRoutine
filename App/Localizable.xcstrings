@@ -2163,6 +2163,28 @@
         }
       }
     },
+    "1월 1일에 기록을 남겼어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left a note on January 1st"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1月1日に記録を残しました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在1月1日留下了记录"
+          }
+        }
+      }
+    },
     "1일 전": {
       "extractionState": "manual",
       "localizations": {
@@ -3773,6 +3795,28 @@
         }
       }
     },
+    "개발자에게 커피를 다섯 잔 사줬어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bought the developer five coffees"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開発者にコーヒーを5杯"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请开发者喝了五杯咖啡"
+          }
+        }
+      }
+    },
     "개발자에게 피드백 보내기": {
       "extractionState": "manual",
       "localizations": {
@@ -4623,6 +4667,28 @@
         }
       }
     },
+    "계절 이름의 숨은 반응을 찾았어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Found the season title's hidden response"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節の名前の隠れた反応を見つけました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发现了季节名的隐藏反应"
+          }
+        }
+      }
+    },
     "계절과 루틴": {
       "extractionState": "manual",
       "localizations": {
@@ -4688,6 +4754,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "这是一款配合季节来安排计划的计划表。"
+          }
+        }
+      }
+    },
+    "계절을 만진 손": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touched a Season"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節にふれた手"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触到季节的手"
           }
         }
       }
@@ -5359,6 +5447,72 @@
         }
       }
     },
+    "기념 티켓": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keepsake Tickets"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記念チケット"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "纪念票"
+          }
+        }
+      }
+    },
+    "기념 티켓 발권: %1$@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keepsake ticket issued: %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記念チケット発券: %1$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "纪念票已发放：%1$@"
+          }
+        }
+      }
+    },
+    "기념 티켓이 발권됐어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A keepsake ticket was issued"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記念チケットが発券されました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已发放纪念票"
+          }
+        }
+      }
+    },
     "기록": {
       "extractionState": "manual",
       "localizations": {
@@ -6003,6 +6157,28 @@
         }
       }
     },
+    "깊은 새벽에 체크인을 완성했어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed a check-in in the small hours"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "深夜のチェックインを完成しました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在深夜完成了签到"
+          }
+        }
+      }
+    },
     "꺼짐": {
       "extractionState": "manual",
       "localizations": {
@@ -6160,6 +6336,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "我的节奏"
+          }
+        }
+      }
+    },
+    "나의 템포에서 네 계절 패턴을 완성해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete all four season patterns in My Tempo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マイテンポで四季のパターンを完成"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在我的节奏中集齐四季模式"
           }
         }
       }
@@ -6942,6 +7140,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "朱红"
+          }
+        }
+      }
+    },
+    "단골손님": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regular"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常連さん"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常客"
           }
         }
       }
@@ -8510,6 +8730,28 @@
         }
       }
     },
+    "모든 테마를 모아요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collect every theme"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのテーマを集める"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "集齐所有主题"
+          }
+        }
+      }
+    },
     "모은 씨앗으로\n새 테마를 구매할 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -8529,6 +8771,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "用收集到的种子\n可以购买新主题。"
+          }
+        }
+      }
+    },
+    "모은 티켓 %1$@ / %2$@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tickets collected %1$@ / %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "集めたチケット %1$@ / %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收集票券 %1$@ / %2$@"
           }
         }
       }
@@ -9130,6 +9394,28 @@
         }
       }
     },
+    "발견하면 알게 돼요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You'll know when you find it"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "見つけたときにわかります"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找到时就会知道"
+          }
+        }
+      }
+    },
     "발표 자료 만들기": {
       "extractionState": "manual",
       "localizations": {
@@ -9172,6 +9458,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "夜"
+          }
+        }
+      }
+    },
+    "백 밤의 기록": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hundred Nights"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "百夜の記録"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "百夜记录"
           }
         }
       }
@@ -9681,6 +9989,28 @@
         }
       }
     },
+    "사계 수집가": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Four Seasons Collector"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四季コレクター"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四季收藏家"
+          }
+        }
+      }
+    },
     "사람마다 리듬은 모두 달라요.": {
       "extractionState": "manual",
       "localizations": {
@@ -9980,6 +10310,28 @@
         }
       }
     },
+    "새 옷": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Clothes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しい服"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新衣"
+          }
+        }
+      }
+    },
     "새 장르 노래 들어보기": {
       "extractionState": "manual",
       "localizations": {
@@ -10114,6 +10466,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "用新主题、新心情享受 TempoRoutine 吧！"
+          }
+        }
+      }
+    },
+    "새해 첫 기록": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Year's First Note"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新年最初の記録"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新年首记"
           }
         }
       }
@@ -10853,6 +11227,28 @@
         }
       }
     },
+    "쉰 밤의 기록": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fifty Nights"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "五十夜の記録"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "五十夜记录"
+          }
+        }
+      }
+    },
     "쉽게 피곤해져요": {
       "extractionState": "manual",
       "localizations": {
@@ -10872,6 +11268,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "容易累"
+          }
+        }
+      }
+    },
+    "쉿, 자는 중": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shh, Sleeping"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "しーっ、おやすみ中"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "嘘，睡着了"
           }
         }
       }
@@ -11750,6 +12168,28 @@
         }
       }
     },
+    "씨앗 부자": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seed Rich"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たね長者"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "种子富翁"
+          }
+        }
+      }
+    },
     "씨앗은 하루 체크인을 완성하면 하나씩 모여요.": {
       "extractionState": "manual",
       "localizations": {
@@ -11769,6 +12209,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "每完成一天的打卡，就会攒下一颗种子。"
+          }
+        }
+      }
+    },
+    "씨앗을 누적 100개 모아요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Earn 100 seeds in total"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねを累計100個集める"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "累计获得100颗种子"
           }
         }
       }
@@ -12712,6 +13174,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "同步已关闭"
+          }
+        }
+      }
+    },
+    "열 밤의 기록": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ten Nights"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "十夜の記録"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "十夜记录"
           }
         }
       }
@@ -13682,6 +14166,50 @@
         }
       }
     },
+    "올빼미": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night Owl"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夜ふかし"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夜猫子"
+          }
+        }
+      }
+    },
+    "옷장 완성": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full Wardrobe"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クローゼット完成"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "衣橱集齐"
+          }
+        }
+      }
+    },
     "완료": {
       "extractionState": "manual",
       "localizations": {
@@ -13747,6 +14275,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "往返完成 — 没有新的更改"
+          }
+        }
+      }
+    },
+    "우상단 친구를 꾹 눌러 재웠어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long-pressed the little friend to sleep"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右上の友だちを長押しで寝かせました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "长按右上角的小家伙让它入睡了"
           }
         }
       }
@@ -14759,6 +15309,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "日"
+          }
+        }
+      }
+    },
+    "일 년치 밤들": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Year of Nights"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一年分の夜"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一年份的夜晚"
+          }
+        }
+      }
+    },
+    "일 주년": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One Year Together"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一周年"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一周年"
           }
         }
       }
@@ -16762,6 +17356,28 @@
         }
       }
     },
+    "첫 걸음": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First Step"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "はじめの一歩"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一步"
+          }
+        }
+      }
+    },
     "첫 생리 시작일을 기록하면, 당신의 계절이 시작돼요.": {
       "extractionState": "manual",
       "localizations": {
@@ -16850,6 +17466,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "记录下第一天月经就会开始"
+          }
+        }
+      }
+    },
+    "첫 체크인을 완성해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete your first check-in"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "はじめてのチェックインを完成"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成第一次签到"
+          }
+        }
+      }
+    },
+    "첫 테마를 구매해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy your first theme"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "はじめてのテーマを購入"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "购买第一个主题"
           }
         }
       }
@@ -16988,6 +17648,94 @@
           "stringUnit": {
             "state": "translated",
             "value": "仅打勾"
+          }
+        }
+      }
+    },
+    "체크인 100일을 완성해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete 100 check-ins"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックインを100日完成"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成100天签到"
+          }
+        }
+      }
+    },
+    "체크인 10일을 완성해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete 10 check-ins"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックインを10日完成"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成10天签到"
+          }
+        }
+      }
+    },
+    "체크인 365일을 완성해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete 365 check-ins"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックインを365日完成"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成365天签到"
+          }
+        }
+      }
+    },
+    "체크인 50일을 완성해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete 50 check-ins"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックインを50日完成"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成50天签到"
           }
         }
       }
@@ -17659,6 +18407,28 @@
         }
       }
     },
+    "탭하면 닫습니다": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to dismiss"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タップで閉じます"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按关闭"
+          }
+        }
+      }
+    },
     "탭하면 수정, 길게 누르면 삭제할 수 있어요": {
       "extractionState": "manual",
       "localizations": {
@@ -17930,6 +18700,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "TempoRoutine 反馈"
+          }
+        }
+      }
+    },
+    "템포루틴과 1년을 함께해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spend a year with TempoRoutine"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テンポルーティンと1年間"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "与TempoRoutine共度一年"
           }
         }
       }
@@ -18601,6 +19393,28 @@
         }
       }
     },
+    "한 바퀴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full Circle"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ひとまわり"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完整一轮"
+          }
+        }
+      }
+    },
     "한 주기 안에서 가장 좋은 때와 가장 안 좋은 때, 얼마나 다른가요": {
       "extractionState": "manual",
       "localizations": {
@@ -18666,6 +19480,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "一个周期里状态最好的时候是什么时候"
+          }
+        }
+      }
+    },
+    "한 주기를 처음부터 끝까지 함께해요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See one full cycle through"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ひとつの周期を最初から最後まで"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "陪伴完整一个周期"
           }
         }
       }

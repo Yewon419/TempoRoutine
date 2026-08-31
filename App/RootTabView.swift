@@ -152,6 +152,9 @@ struct RootTabView: View {
         // 1.1s·탭 스킵. 온보딩(첫 실행)은 자체 스플래시(사운드 포함)가 있어 여기선 건너뛴다.
         // 루트 .id 리빌드(테마·언어 변경)엔 게이트가 재등장을 막는다.
         .overlay {
+            // 업적 발권 배너(2026-08-31) — 새 모디파이어 금지(body 타입체크 한계, repo CLAUDE.md)
+            // 라 기존 overlay 블록에 동거. 스플래시보다 아래 조건이라 겹칠 일 없다(스플래시 1.1s).
+            AchievementBannerHost()
             if showLaunchSplash, onboardingDone {
                 // 대표님 제작 정적 이미지(2026-08-30, App/Assets.xcassets/LaunchSplash). 그림 배경
                 // 테마(은필·티켓·플리)는 제 지면 + 스크림 위에 로고·심볼만(SplashLogo, 밝은 판) —
@@ -220,6 +223,8 @@ struct RootTabView: View {
             // 위젯을 재발행하고, 언어도 아래 onChange(of: appLanguage)가 맡는다.
             guard !Self.bootstrapped else { return }
             Self.bootstrapped = true
+            // 업적(2026-08-31) — 첫 실행일 기록 + 1주년 판정. dev 게이트는 Achievements 내부
+            Achievements.shared.appLaunched()
             // 개발자 모드(2026-08-27, DevMode.swift) — 아래 시작 작업은 전부 정지: 건강·동기화는
             // 실데이터를 만지고, 위젯 발행·알림 재예약은 dev의 빈 스토어 기준으로 실표면을
             // 덮는다(빈 재예약 = 실알림 취소). 백필도 dev 체크인이 실원장을 벌면 안 되니 막는다.

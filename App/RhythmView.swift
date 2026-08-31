@@ -59,6 +59,40 @@ struct RhythmView: View {
                                averageLength: snapshot.averageLength,
                                menstrualLength: snapshot.menstrualLength)
     }
+    // 기념 티켓 보관함(2026-08-31 업적) — 방송 카운터로 달성 수 갱신(씨앗 revisionKey 전례)
+    @State private var showAchievements = false
+    @AppStorage(Achievements.revisionKey) private var achievementRevision = 0
+
+    /// 보관함 진입 카드 — 달성 수만 말하고 재촉하지 않는다(§7)
+    private var achievementEntry: some View {
+        Button {
+            showAchievements = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "ticket")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Ink.text.opacity(0.7))
+                Text("기념 티켓")
+                    .font(.almanacBody(.subheadline, size: 15, weight: .bold))
+                    .foregroundStyle(Ink.text)
+                Spacer(minLength: 0)
+                Text(Loc.fmt("%1$@ / %2$@", "\(Achievements.shared.unlockedCount)",
+                             "\(Achievements.shared.totalCount)"))
+                    .font(.almanacBody(.footnote, size: 13))
+                    .monospacedDigit()
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Ink.text.opacity(0.35))
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .milkGlass()
+        }
+        .buttonStyle(.plain)
+        .id(achievementRevision)   // 원장 방송 — 달성 직후 카운트 갱신
+    }
+
     /// 패널 노출 = 비교 서술 가능한 신호가 하나라도 있을 때(§5.6.3 임계).
     /// 그 전엔 콜드 문법 유지 — 진행 카드만.
     private var showSwitcher: Bool {
@@ -117,11 +151,17 @@ struct RhythmView: View {
                     case .diary:
                         diarySheet
                     }
+                    achievementEntry   // 기념 티켓 보관함(2026-08-31 업적 — 하단 상시)
                 }
                 .padding(20)
                 .centeredColumn(720)   // 아이패드 중앙 조판(2026-07-23)
             }
         }
+        // 4계절 패턴 완성 업적(2026-08-31) — 열린 계절 수가 바뀔 때만 판정
+        .task(id: unlockedPhases.count) {
+            Achievements.shared.seasonsUnlocked(unlockedPhases.count)
+        }
+        .sheet(isPresented: $showAchievements) { AchievementShelfView() }
         .confirmationDialog("무엇을 추가할까요?",
                             isPresented: Binding(get: { addingSeason != nil && addKind == nil },
                                                  set: { if !$0 && addKind == nil { addingSeason = nil } }),

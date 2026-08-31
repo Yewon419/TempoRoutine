@@ -22,6 +22,9 @@ enum Seeds {
 
     /// 완료 도장 — 처음 완성된 순간에만 찍는다(이후 수정해도 최초 시각 유지 = 중복 지급 없음).
     /// 반환 = 이번 호출로 도장이 새로 찍혔고 지급 대상인지 — 획득 연출 트리거(2026-08-09).
+    /// @MainActor(2026-08-31) — 업적 판정(Achievements, MainActor)을 이 단일 깔때기에서 부른다.
+    /// 호출부 4곳 전부 뷰 액션(메인)이라 실동작 무변화. 진입점 게이트 원칙(repo CLAUDE.md).
+    @MainActor
     @discardableResult
     static func stampCompletion(_ record: DailyCheckIn, signals: TrackedSignals) -> Bool {
         guard record.completedAt == nil,
@@ -33,6 +36,11 @@ enum Seeds {
         // 개발자 모드(2026-08-27) — dev 스토어의 체크인이 실씨앗 원장(UserDefaults 공유)을 벌면
         // 안 된다. 도장(completedAt)은 dev 스토어 안이라 무해, 원장 기입만 막는다.
         if awarded, !DevMode.active { recordEarned(day: record.day) }
+        // 업적(2026-08-31) — dev 가드는 Achievements 내부. 누적 씨앗 판정은 원장 기입 뒤 값으로.
+        Achievements.shared.checkInStamped(day: record.day, stampedAt: .now)
+        if awarded, !DevMode.active {
+            Achievements.shared.seedsEarned(total: (ledger.earnedDays ?? []).count)
+        }
         return awarded
     }
 

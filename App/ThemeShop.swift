@@ -598,6 +598,7 @@ struct ThemeShopView: View {
 
     /// 구매 성공 연출(새싹 + 성공 햅틱 + 한 박자 뒤 알럿) — 씨앗·₩5,000 패스 공용
     private func celebrate(_ theme: AppTheme) {
+        Achievements.shared.themePurchased()   // 업적(2026-08-31) — 씨앗·패스 공용 깔때기가 여기다
         celebrateTick += 1
         withAnimation(reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.55)) {
             sprout = theme

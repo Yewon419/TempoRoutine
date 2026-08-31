@@ -146,6 +146,7 @@ final class TipStore {
         cups += 1
         UserDefaults.standard.set(cups, forKey: Self.cupsKey)
         status = .thanks
+        Achievements.shared.coffeeReceived(totalCups: cups)   // 업적(2026-08-31)
     }
 
     /// 앱 초기화(2026-08-25) — UserDefaults는 밖에서 비우므로 여기선 인메모리만 맞춘다.
@@ -164,6 +165,7 @@ final class TipStore {
         let defaults = UserDefaults.standard
         defaults.set(cups, forKey: Self.cupsKey)
         defaults.set(counted.sorted(), forKey: Self.countedKey)
+        Achievements.shared.coffeeReceived(totalCups: cups)   // 업적(2026-08-31)
     }
 }
 
