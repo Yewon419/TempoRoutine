@@ -24,6 +24,8 @@ enum FeedbackInbox {
     }
 
     /// 공개 DB에 피드백 레코드 하나 저장. 성공 = 그대로 끝(개발자가 대시보드에서 읽는다).
+    /// @MainActor — UIDevice.current(메인 격리) 서명 때문. 대기는 전부 await라 블로킹 없음.
+    @MainActor
     static func send(_ text: String) async throws(SendError) {
         let container = CKContainer(identifier: containerID)
         let status = (try? await container.accountStatus()) ?? .couldNotDetermine
