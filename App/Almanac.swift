@@ -119,11 +119,11 @@ extension Font {
             }
             return .custom(weight == .bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
         case .playlistSans:
-            // 플리 표제 = Gmarket Sans(2026-08-31) — 얇은 기하 골격이 표제 몫, 강조만 Medium
-            guard PlaylistFont.available else {
-                return .system(size: size, weight: weight == .bold ? .medium : .light)
-            }
-            return .custom(weight == .bold ? "GmarketSansMedium" : "GmarketSansLight", size: size)
+            // 플리 표제 = Gmarket Sans **Light 고정**(2026-08-31 베타 「캘린더 탭 폰트도
+            // 개선해줘」·「여기 폰트도」, 빌드 570 — bold 호출이 Medium으로 나가 표제가
+            // 굵었다). 위계는 굵기가 아니라 크기가 잡는다. Medium은 카드 제목급 전용.
+            guard PlaylistFont.available else { return .system(size: size, weight: .light) }
+            return .custom("GmarketSansLight", size: size)
         case .dodum:
             // 티켓(2026-08-31) — 단일 웨이트, 위계는 크기·색이 담당
             guard DodumFont.available else { return .system(size: size, weight: weight) }

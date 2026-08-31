@@ -62,7 +62,10 @@ struct PlaylistPlayerCard: View {
             kicker
             // 트랙명 = 영어 각인 + Geist(2026-08-30 — LP 문법에서 여기만 영어 유지)
             Text(verbatim: playlistTrackName(for: meta.phase))
-                .font(.geist(size: 30, weight: .semibold))
+                // SemiBold → Regular + 살짝 넓힌 자간(2026-08-31 베타 「여기 폰트도 개선해줘」)
+                // — 굵은 각인이 얇은 조판과 어긋났다. 무게는 크기(30)가 이미 준다.
+                .font(.geist(size: 30, weight: .regular))
+                .tracking(0.6)
                 .foregroundStyle(Ink.text)   // 트랙명 = 잉크 — 색은 커버가 담당(§4.3)
                 .padding(.top, 6)
             // 부제 = 날짜만. 종전엔 의학 단계명(「배란기 · …」)이 앞에 붙어 있었는데
