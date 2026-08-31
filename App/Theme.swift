@@ -224,7 +224,7 @@ extension ThemePalette {
         // 무관하게 항상 빨강이어야 한다).
         winter: .flat(0x7B, 0x92, 0xA8),      // 하늘빛 회색
         spring: .flat(0x8E, 0x7A, 0xB5),      // 연보라
-        summer: .flat(0x1F, 0x7A, 0x72),      // 청녹
+        summer: .flat(0x1E, 0x8C, 0x5A),      // 청녹 → 초록 쪽으로(2026-08-31 2차 교정)
         autumn: .flat(0xB8, 0x40, 0x2C),      // 붉은색(생리 시그널 레드와는 다른 톤 — 가을 전용)
         text: .flat(0x22, 0x38, 0x4F),        // 딥 네이비 잉크
         // 지면 = 웜 화이트(2026-08-18 사용자 지시 "배경컬러 걍 흰색" — 블루그레이 색면·유화 폐기.
@@ -240,7 +240,7 @@ extension ThemePalette {
         frost: .flat(0xFA, 0xFA, 0xF8),
         glowWinter: .flat(0x7B, 0x92, 0xA8),
         glowSpring: .flat(0x8E, 0x7A, 0xB5),
-        glowSummer: .flat(0x1F, 0x7A, 0x72),
+        glowSummer: .flat(0x1E, 0x8C, 0x5A),
         glowAutumn: .flat(0xB8, 0x40, 0x2C),
         surface: .flat(0xFA, 0xFA, 0xF8),     // 발권물 = 웜 화이트
         accent: .flat(0x22, 0x38, 0x4F)
