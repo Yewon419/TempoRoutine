@@ -1358,6 +1358,28 @@
         }
       }
     },
+    "%1$@이 시작됐어요": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ has begun"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@が始まりました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@开始了"
+          }
+        }
+      }
+    },
     "%1$@인 날엔 매일 보여요.": {
       "extractionState": "manual",
       "localizations": {
@@ -3149,6 +3171,28 @@
         }
       }
     },
+    "가을이 시작됐어요. 차분히 고르는 때예요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autumn has begun. A time to sort things calmly."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋が始まりました。落ち着いて整える頃です。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秋天开始了。是从容整理的时候。"
+          }
+        }
+      }
+    },
     "가을이에요. 기록상 이맘때 에너지가 충분했어요. 오늘은 어떤 것에 몰입해볼까요?": {
       "extractionState": "manual",
       "localizations": {
@@ -4454,6 +4498,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "进入冬天之前"
+          }
+        }
+      }
+    },
+    "겨울이 시작됐어요. 조금은 쉬어가도 좋아요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Winter has begun. It's okay to slow down."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬が始まりました。少し休んでも大丈夫です。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬天开始了。可以稍微歇一歇。"
           }
         }
       }
@@ -9780,6 +9846,28 @@
         }
       }
     },
+    "봄이 시작됐어요. 조금씩 가벼워지는 때예요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spring has begun. Things get a little lighter now."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春が始まりました。少しずつ軽くなっていく頃です。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "春天开始了。是渐渐轻盈起来的时候。"
+          }
+        }
+      }
+    },
     "봄이에요. 가볍게 시작해보기 좋은 때예요.": {
       "extractionState": "manual",
       "localizations": {
@@ -13125,6 +13213,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "夏"
+          }
+        }
+      }
+    },
+    "여름이 시작됐어요. 에너지가 차오르는 때예요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Summer has begun. Energy is on the rise."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏が始まりました。エネルギーが満ちてくる頃です。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏天开始了。是精力上涨的时候。"
           }
         }
       }

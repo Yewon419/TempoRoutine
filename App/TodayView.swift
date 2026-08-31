@@ -130,6 +130,8 @@ struct TodayView: View {
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
     @State private var recapDismissTick = 0  // 리캡 닫기 리렌더(2026-08-31 A3 — 판정이 UserDefaults라)
+    // 계절 넘김(2026-08-31 A1) — 마지막으로 본 계절. 빈 값 = 첫 실행(task가 조용히 채움)
+    @AppStorage(SeasonTurnStore.lastSeenKey) private var lastSeenPhaseRaw = ""
     // 알림 권한 안내 카드(2026-08-08) — 기본 켬 알림의 능동 권한 획득 경로, 1회
     @State private var showNoticeCard = false
     // 씨앗 배지 탭 = 테마 탭(2026-08-09). 플래그를 뷰 밖에 두는 이유는 RootTab 주석 참조 —
@@ -146,6 +148,17 @@ struct TodayView: View {
     private var cal: Calendar { Calendar.current }
     private var today: Date { cal.startOfDay(for: .now) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
+
+    /// 계절 넘김 판정(A1) — 순수 계산, 저장은 카드 닫기·첫 실행 task가 한다.
+    /// 겨울은 리캡(A3)이 그 순간을 담당하므로 건너뛴다(SeasonTurn.swift 머리말).
+    private var seasonTurn: SeasonMeta? {
+        guard !lastSeenPhaseRaw.isEmpty,
+              let phase = snapshot.phase(on: today),
+              phase.rawValue != lastSeenPhaseRaw,
+              phase != .menstrual
+        else { return nil }
+        return seasonMeta(for: phase)
+    }
     private var todayInfo: (meta: SeasonMeta, dayInCycle: Int, dayInPhase: Int, projected: Bool)? { snapshot.phaseInfo(on: today) }
 
     // 단계별 에너지 프로필(2026-07-23) — 표본 3개+면 무드라인·Input 예시 개인화, 미달이면 기본 유지
@@ -189,6 +202,13 @@ struct TodayView: View {
                             lightFeedback += 1
                             CycleRecapStore.markIssued(newStart: recap.end)
                             recapDismissTick += 1   // 저장만으론 뷰가 안 갱신된다 — 리렌더 트리거
+                        }
+                    }
+                    // 계절 넘김(2026-08-31 A1) — 전환 뒤 첫 진입에 인사 한 장(겨울 = 리캡이 담당)
+                    if let turn = seasonTurn {
+                        SeasonTurnCard(meta: turn) {
+                            lightFeedback += 1
+                            lastSeenPhaseRaw = turn.phase.rawValue
                         }
                     }
                     if showNoticeCard { noticePermissionCard }
@@ -277,6 +297,10 @@ struct TodayView: View {
             // 예약할 내용이 처음 생기는 시점을 잡는다 — 일정·생리 기록이 바뀔 때마다 재판정
             showNoticeCard = await DailyNotices.shouldOfferPermission(periodDays: periodDays,
                                                                       schedules: schedules)
+            // 계절 넘김(A1) 첫 실행 — 조용히 현재 계절을 채워 설치 직후 가짜 전환을 막는다
+            if lastSeenPhaseRaw.isEmpty, let phase = snapshot.phase(on: today) {
+                lastSeenPhaseRaw = phase.rawValue
+            }
         }
     }
 
