@@ -129,6 +129,7 @@ struct TodayView: View {
     @State private var isCollapsed = false
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
+    @State private var recapDismissTick = 0  // 리캡 닫기 리렌더(2026-08-31 A3 — 판정이 UserDefaults라)
     // 알림 권한 안내 카드(2026-08-08) — 기본 켬 알림의 능동 권한 획득 경로, 1회
     @State private var showNoticeCard = false
     // 씨앗 배지 탭 = 테마 탭(2026-08-09). 플래그를 뷰 밖에 두는 이유는 RootTab 주석 참조 —
@@ -182,6 +183,14 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     largeHeader
                     stateSurfaces
+                    // 주기 리캡(2026-08-31 A3) — 새 주기 첫 진입에 한 장, 닫으면 발행 확정
+                    if let recap = CycleRecapData.pending(snapshot: snapshot, checkIns: checkIns) {
+                        CycleRecapCard(data: recap) {
+                            lightFeedback += 1
+                            CycleRecapStore.markIssued(newStart: recap.end)
+                            recapDismissTick += 1   // 저장만으론 뷰가 안 갱신된다 — 리렌더 트리거
+                        }
+                    }
                     if showNoticeCard { noticePermissionCard }
                     if hSize == .regular {
                         // 아이패드: 3구획 좌열 + 체크인 우측 레일(2026-07-23).

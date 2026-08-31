@@ -1450,6 +1450,28 @@
         }
       }
     },
+    "%1$@일의 주기를 한 바퀴 함께했어요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You went full circle through a %1$@-day cycle."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@日の周期をひとまわり一緒に過ごしました。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "陪你走完了%1$@天的一个周期。"
+          }
+        }
+      }
+    },
     "%1$@일차": {
       "extractionState": "manual",
       "localizations": {
@@ -2779,6 +2801,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "· 预计"
+          }
+        }
+      }
+    },
+    "“%1$@”": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@”"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%1$@」"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@”"
           }
         }
       }
@@ -13040,6 +13084,28 @@
         }
       }
     },
+    "에너지는 %1$@에 가장 높았어요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energy peaked in %1$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エネルギーは%1$@がいちばん高めでした。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "精力在%1$@最高。"
+          }
+        }
+      }
+    },
     "여름": {
       "extractionState": "manual",
       "localizations": {
@@ -17034,6 +17100,28 @@
         }
       }
     },
+    "지난 주기 돌아보기": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last Cycle in Review"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前の周期をふりかえる"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回顾上个周期"
+          }
+        }
+      }
+    },
     "지난달로 넘기면 이전 생리도 기록할 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -17648,6 +17736,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "仅打勾"
+          }
+        }
+      }
+    },
+    "체크인 %1$@일을 완성했어요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You completed %1$@ days of check-ins."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックインを%1$@日完成しました。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成了%1$@天签到。"
           }
         }
       }
