@@ -398,17 +398,19 @@ extension View {
                              : ThemeStore.chrome.forcesLightAppearance ? .light : nil)
     }
 
-    /// 날씨(skyGround) 다크 글래스 재질 유지(2026-08-31 대표님 "카드 색은 진하게 유지하되
-    /// 라이트모드로") — 외관은 라이트 고정으로 바뀌었지만 카드·설정 행 같은 유리 재질은
-    /// 다크 글래스 문법(§5.3-2)이다. 시스템 재질(.ultraThinMaterial)은 colorScheme만 보므로
-    /// **재질을 그리는 서브트리에만** 다크 환경을 흘린다. 다른 테마는 무영향.
-    @ViewBuilder
-    func skyGlassScheme() -> some View {
-        if ThemeStore.chrome.skyGround {
-            environment(\.colorScheme, .dark)
-        } else {
-            self
-        }
+}
+
+extension Color {
+    /// 날씨(skyGround) 다크 글래스 잉크판(2026-08-31 "카드 색은 진하게 유지하되 라이트모드로") —
+    /// 라이트 외관에서 유리 재질 위에 이 색을 직접 얹어 다크 글래스를 만든다.
+    /// ⚠ 1안 기각(같은 날 실기기): `.environment(\.colorScheme, .dark)`로 재질만 어둡히는
+    /// 방식은 iOS 26 실기기에서 재질에 안 먹혔다 — 카드가 밝은 재질로 떨어져 흰 잉크가
+    /// 통째로 실종(베타 "날씨테마 적용했더니 글자 다 날라가는 버그", 빌드 563). 환경값이
+    /// 아니라 **그리는 색으로** 어둡혀야 결정론적이다. 다른 테마는 무영향(clear).
+    static var skyGlassDim: Color {
+        ThemeStore.chrome.skyGround
+            ? Color(red: 14 / 255, green: 26 / 255, blue: 40 / 255).opacity(0.42)
+            : .clear
     }
 }
 

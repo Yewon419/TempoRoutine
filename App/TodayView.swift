@@ -537,8 +537,9 @@ struct TodayView: View {
                         Rectangle().fill(Ink.text.opacity(0.12)).frame(height: 1)   // 경계 극세 괘선(§3.3-⑦ 동조)
                     }
             } else {
-                Rectangle().fill(.ultraThinMaterial).ignoresSafeArea(edges: .top)
-                    .skyGlassScheme()   // 날씨 = 라이트 외관에서도 다크 글래스(2026-08-31)
+                Rectangle().fill(.ultraThinMaterial)
+                    .overlay { Color.skyGlassDim }   // 날씨 = 라이트 재질 위 다크 글래스 잉크판(2026-08-31)
+                    .ignoresSafeArea(edges: .top)
             }
         }
         .opacity(isCollapsed ? 1 : 0)

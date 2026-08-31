@@ -379,10 +379,14 @@ struct MilkGlass: ViewModifier {
                 RoundedRectangle(cornerRadius: radius).fill(Ink.surface)
             }
             .overlay {
+                // 날씨 = 라이트 재질 위에서도 다크 글래스가 서도록 잉크판 보강(§5.3-2 —
+                // colorScheme 강제 1안 기각 이력은 Color.skyGlassDim 주석)
+                RoundedRectangle(cornerRadius: radius).fill(Color.skyGlassDim)
+            }
+            .overlay {
                 RoundedRectangle(cornerRadius: radius)
                     .stroke(Ink.accent.opacity(0.18), lineWidth: 1)   // 구조색 테두리(기본=은필 동값)
             }
-            .skyGlassScheme()   // 날씨 = 라이트 외관에서도 카드 재질은 다크 글래스(§5.3-2)
     }
 }
 

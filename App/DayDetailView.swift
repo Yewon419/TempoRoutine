@@ -192,7 +192,7 @@ struct DayDetailView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 10)
         .background(Rectangle().fill(.ultraThinMaterial)
-            .skyGlassScheme())   // 날씨 = 라이트 외관에서도 다크 글래스(2026-08-31)
+            .overlay { Color.skyGlassDim })   // 날씨 = 라이트 재질 위 다크 글래스 잉크판(2026-08-31)
     }
 
     private func navArrow(systemName: String, label: String, action: @escaping () -> Void) -> some View {
