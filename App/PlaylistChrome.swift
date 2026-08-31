@@ -224,11 +224,12 @@ struct PlaylistRecordHeader: View {
                 Text(verbatim: playlistTrackName(for: phase))
                     .font(.geist(size: 15, weight: .regular))
                     .tracking(0.3)
-                    .foregroundStyle(Ink.text)
+                    // 계절색(2026-08-31 베타 "spring에 계절색 입혀")
+                    .foregroundStyle(meta.color)
                     .padding(.top, 1)
             }
             seek
-                .padding(.top, 8)
+                .padding(.top, 14)   // 8 → 14(2026-08-31 베타 "재생바랑 n일차 좀만 더 아래로")
             controls
                 .padding(.top, 2)
         }
@@ -256,10 +257,13 @@ struct PlaylistRecordHeader: View {
                     .frame(width: 11, height: 14)
             }
             navButton(action: onStop, label: Loc.str("오늘 달로")) {
+                // ⏸ 두 막대(2026-08-31 베타 "정지표지 저거 말고 ㅣㅣ 이렇게 생긴걸로")
                 ZStack {
                     Circle().stroke(Ink.text, lineWidth: 1.4)
-                    RoundedRectangle(cornerRadius: 1.5).fill(Ink.text)
-                        .frame(width: 9, height: 9)
+                    HStack(spacing: 3) {
+                        RoundedRectangle(cornerRadius: 1).fill(Ink.text).frame(width: 2.6, height: 11)
+                        RoundedRectangle(cornerRadius: 1).fill(Ink.text).frame(width: 2.6, height: 11)
+                    }
                 }
                 .frame(width: 28, height: 28)
             }

@@ -18,8 +18,9 @@ enum LetterpressLogotype {
     /// 활판 잉크 — 시안 `--lp-ink`(#8A5A3E). 월 표제 07도 같은 값을 쓴다.
     static let ink = Color(red: 138 / 255, green: 90 / 255, blue: 62 / 255)
 
-    /// 표제 크기(pt) — 시안 100px 동값. 전 계절 공통(규칙 ①).
-    static let size: CGFloat = 100
+    /// 표제 크기(pt) — 시안 86px 동값(100 → 86, 2026-09-01 베타 "Spring 위아랫줄이
+    /// 겹쳐보이니 글씨크기 좀 줄이자"). 전 계절 공통(규칙 ①)은 유지.
+    static let size: CGFloat = 86
 
     /// 행 = (글자, 좌 들여쓰기 = 폭 비율). 시안 SEASON_SIM과 동값.
     static func rows(for phase: CyclePhase) -> [(String, CGFloat)] {
@@ -34,7 +35,7 @@ enum LetterpressLogotype {
     /// 날짜 스탬프가 앉을 세로 자리 — 계절마다 로고타입이 비우는 자리가 다르다(시안 stampTop).
     /// 가을만 첫 행(AUTU)이 폭을 다 써서 스탬프를 M 행 옆으로 내린다.
     static func stampTop(for phase: CyclePhase) -> CGFloat {
-        phase == .luteal ? 100 : 16
+        phase == .luteal ? 86 : 16   // 크기 100 → 86 동반 조정
     }
 
     /// 행 높이 = 시안 line-height .8

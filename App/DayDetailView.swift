@@ -175,7 +175,8 @@ struct DayDetailView: View {
         .sheet(item: $editingSchedule) { item in
             ScheduleAddSheet(defaultDate: day, editing: item).themeColorScheme()
         }
-        .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
+        // 삭제 확인은 행 부착(quickDeletable)으로 이동(2026-09-01) — 루트 부착은 iOS 26
+        // 팝오버 화살표가 행과 무관한 곳을 가리켰다
     }
 
     /// 전날·다음날 이동 바(2026-08-01 베타 피드백) — 화살표 + 가운데에 지금 보는 날짜
@@ -415,7 +416,8 @@ struct DayDetailView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .simultaneousGesture(quickDeleteGesture(.schedule(item), into: $pendingDelete, feedback: $confirmFeedback))
+                    .quickDeletable(.schedule(item), target: $pendingDelete, feedback: $confirmFeedback,
+                                    completions: completions, context: modelContext)
                     .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
                     .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .schedule(item) }
                 }
@@ -549,7 +551,8 @@ struct DayDetailView: View {
                     .font(.subheadline)
                 }
                 .disabled(isFuture)   // 미래 완료 금지(원칙 4)
-                .simultaneousGesture(quickDeleteGesture(.input(row.item), into: $pendingDelete, feedback: $confirmFeedback))
+                .quickDeletable(.input(row.item), target: $pendingDelete, feedback: $confirmFeedback,
+                                completions: completions, context: modelContext)
                 .accessibilityValue(checked ? Loc.str("완료") : Loc.str("미완료"))
                 .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .input(row.item) }
         }
@@ -625,7 +628,8 @@ struct DayDetailView: View {
                 }
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
-                .simultaneousGesture(quickDeleteGesture(.output(row.item), into: $pendingDelete, feedback: $confirmFeedback))
+                .quickDeletable(.output(row.item), target: $pendingDelete, feedback: $confirmFeedback,
+                                completions: completions, context: modelContext)
                 .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .output(row.item) }
             }
         }

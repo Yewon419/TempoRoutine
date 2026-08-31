@@ -75,19 +75,23 @@ struct RootTabView: View {
     var body: some View {
         TabView(selection: $rootTab) {
             TodayView()
+                .skyTabBarPlate()
                 .tabItem { tabLabel("오늘", symbol: "circle.inset.filled", ticketAsset: "TicketIconSun") }
                 .tag(RootTab.today.rawValue)
             NavigationStack {
                 SeasonCalendarView()
             }
+            .skyTabBarPlate()
             .tabItem { tabLabel("캘린더", symbol: "calendar", ticketAsset: "TicketIconMoon") }
             .tag(RootTab.calendar.rawValue)
             RhythmView()
+                .skyTabBarPlate()
                 .tabItem { tabLabel("나의 템포", symbol: "chart.xyaxis.line", ticketAsset: "TicketIconWave") }
                 .tag(RootTab.rhythm.rawValue)
             NavigationStack {
                 SettingsView()
             }
+            .skyTabBarPlate()
             .tabItem { tabLabel("설정", symbol: "gearshape", ticketAsset: "TicketIconStar") }
             .tag(RootTab.settings.rawValue)
         }
@@ -382,5 +386,23 @@ struct RootTabView: View {
         }
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+}
+
+// ── 날씨 하단바 진회색 고정 2차(2026-09-01 베타 "하단바 계속 이런데") ──
+// 43차 UIKit appearance 불투명(#2A2F38)이 빌드 578 실기기에서 안 먹었다 — 바가 흰 유리로
+// 렌더되고 미선택 아이콘 색까지 시스템 기본이었다(프록시 전체 미적용 정황, iOS 26 부유 유리
+// 바). SwiftUI `toolbarBackground` 경로를 탭 콘텐츠마다 얹는다 — UIKit 분기는 남겨 둔다
+// (먹는 환경에선 항목색까지 잡아 주므로 무해).
+private extension View {
+    @ViewBuilder
+    func skyTabBarPlate() -> some View {
+        if ThemeStore.chrome.skyGround {
+            self
+                .toolbarBackground(Color.flatRGB(0x2A, 0x2F, 0x38), for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+        } else {
+            self
+        }
     }
 }

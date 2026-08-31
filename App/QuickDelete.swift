@@ -60,34 +60,45 @@ enum QuickDeleteTarget: Identifiable {
     }
 }
 
-private struct QuickDeleteDialog: ViewModifier {
+/// 행 자신에 제스처 + 확인 다이얼로그를 함께 얹는다(2026-09-01 베타 "말풍선 위치도 이상하다").
+/// 종전엔 화면 루트에 한 번만 붙였는데, iOS 26 confirmationDialog가 부착 뷰를 가리키는 앵커
+/// 팝오버로 떠서 말풍선이 행과 무관한 화면 상단을 가리켰다 — 행 부착이 정위치다.
+private struct QuickDeletableRow: ViewModifier {
+    let item: QuickDeleteTarget
     @Binding var target: QuickDeleteTarget?
+    @Binding var feedback: Int
     let completions: [ItemCompletion]
     let context: ModelContext
 
     func body(content: Content) -> some View {
-        content.confirmationDialog(
-            target.map { "\($0.kindLabel) 「\($0.title)」" } ?? "",
-            isPresented: Binding(get: { target != nil }, set: { if !$0 { target = nil } }),
-            titleVisibility: .visible
-        ) {
-            Button("삭제", role: .destructive) {
-                target?.delete(from: context, completions: completions)
-                target = nil
+        content
+            .simultaneousGesture(quickDeleteGesture(item, into: $target, feedback: $feedback))
+            .confirmationDialog(
+                "\(item.kindLabel) 「\(item.title)」" as String,
+                isPresented: Binding(get: { target?.id == item.id },
+                                     set: { if !$0 { target = nil } }),
+                titleVisibility: .visible
+            ) {
+                Button("삭제", role: .destructive) {
+                    target?.delete(from: context, completions: completions)
+                    target = nil
+                }
+                Button("취소", role: .cancel) { target = nil }
+            } message: {
+                Text("이 항목과 기록이 함께 지워져요. 되돌릴 수 없어요.")
             }
-            Button("취소", role: .cancel) { target = nil }
-        } message: {
-            Text("이 항목과 기록이 함께 지워져요. 되돌릴 수 없어요.")
-        }
     }
 }
 
 extension View {
-    /// 화면당 한 번만 붙인다 — 어떤 행을 눌렀는지는 바인딩이 물고 있다.
-    func quickDeleteDialog(_ target: Binding<QuickDeleteTarget?>,
-                           completions: [ItemCompletion],
-                           context: ModelContext) -> some View {
-        modifier(QuickDeleteDialog(target: target, completions: completions, context: context))
+    /// 행마다 붙인다 — 팝오버 화살표가 그 행을 가리킨다. 표시 판정은 id 일치라 겹침 없음.
+    func quickDeletable(_ item: QuickDeleteTarget,
+                        target: Binding<QuickDeleteTarget?>,
+                        feedback: Binding<Int>,
+                        completions: [ItemCompletion],
+                        context: ModelContext) -> some View {
+        modifier(QuickDeletableRow(item: item, target: target, feedback: feedback,
+                                   completions: completions, context: context))
     }
 }
 

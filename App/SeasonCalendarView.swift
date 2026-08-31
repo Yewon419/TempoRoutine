@@ -10,6 +10,16 @@ import SwiftData
 import TempoCore
 import UIKit
 
+/// 티켓 히어로 표식 줄의 화면 기준 하단 y — 지면 유화 높이가 이 값을 따른다(2026-09-01).
+/// ⚠ 파일 스코프인 이유: View 프로토콜이 @MainActor라 뷰 안 중첩 타입의 static이 격리를
+/// 물려받아 PreferenceKey의 nonisolated 요구를 못 채운다.
+private struct TicketHeroBottomKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 struct SeasonCalendarView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var hSize   // 아이패드 분할 뷰(2026-07-23)
@@ -22,6 +32,9 @@ struct SeasonCalendarView: View {
     @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
     @State private var showLogSheet = false
     @State private var showNotices = false          // 소식란(2026-08-09)
+    /// 티켓 히어로 = 화면 배경(2026-09-01 베타 "저거를 배경으로 깔아놓고 흰색 박스의 칸을
+    /// 조정하는 식으로") — 표식 줄의 화면 기준 하단 y. 유화가 상태바·좌우 여백까지 이 높이로 깔린다.
+    @State private var ticketHeroBottom: CGFloat = 0
     private let noticeFeed = NoticeFeed.shared      // @Observable — 미읽음 점 추종
     @State private var pushedDay: Date?
     @State private var selectedDay: Date?       // regular 분할 뷰의 우측 하루 상세 선택(2026-07-23)
@@ -170,6 +183,18 @@ struct SeasonCalendarView: View {
                 (ThemeStore.chrome.ticketChrome ? TicketSpec.ticketPaper : Ink.frost)
                     .ignoresSafeArea()
             }
+            // 티켓 히어로 = 지면 레이어(2026-09-01 베타 "저거를 배경으로 깔아놓고 흰색 박스의
+            // 칸을 조정하는 식으로") — 유화가 상태바·좌우 여백 포함 화면 상단 전폭을 채우고,
+            // 그 아래부터 흰 발권지가 시작된다. 높이 = 표식 줄 하단(전경이 preference로 보고).
+            if ThemeStore.chrome.ticketChrome, ticketHeroBottom > 0 {
+                VStack(spacing: 0) {
+                    TicketHeroArtwork(phase: currentPhase, label: Self.ticketHeroLabel(monthStart))
+                        .frame(height: ticketHeroBottom)
+                    Spacer(minLength: 0)
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+            }
             if ThemeStore.chrome.texture == .dotGrid {
                 DotGrid().ignoresSafeArea()   // 모던 전용 질감(시안 §1.3-1)
             }
@@ -202,6 +227,9 @@ struct SeasonCalendarView: View {
                     Spacer(minLength: 0)
                 }
             }
+        }
+        .onPreferenceChange(TicketHeroBottomKey.self) { value in
+            Task { @MainActor in ticketHeroBottom = value }
         }
     }
 
@@ -343,10 +371,13 @@ struct SeasonCalendarView: View {
     }
 
     // ── 티켓 전용 상단(시안 §3.4) ──
+
     /// 히어로 밴드 — 브랜드 표식·소식란(흰 잉크, 정상 위치) + 유화 배경(세이프에어리어까지 번짐).
     /// 배경만 번지는 패턴은 종전 사진 지면 상단바(TodayView.compactBar)와 같은 idiom —
     /// 전경은 제자리, `.background` 안에서만 `.ignoresSafeArea`를 태운다.
     private var ticketHeroBand: some View {
+        // 유화는 여기서 그리지 않는다(2026-09-01) — calendarBody 지면 레이어가 화면 전폭으로
+        // 깐다. 이 줄은 흰 잉크 전경 + 자기 하단 y(화면 기준)만 preference로 보고한다.
         HStack {
             BrandMark(diameter: 22, color: .white)
                 .padding(.leading, 6)
@@ -355,9 +386,11 @@ struct SeasonCalendarView: View {
         }
         .padding(.top, 10)
         .padding(.bottom, 10)
-        .background(alignment: .top) {
-            TicketHeroArtwork(phase: currentPhase, label: Self.ticketHeroLabel(monthStart))
-                .ignoresSafeArea(edges: .top)
+        .background {
+            GeometryReader { g in
+                Color.clear.preference(key: TicketHeroBottomKey.self,
+                                       value: g.frame(in: .global).maxY)
+            }
         }
     }
 
@@ -1163,6 +1196,31 @@ struct SeasonCalendarView: View {
             } else {
                 cellBody(date: date, index: index, render: render)
             }
+        } else {
+            // 빈 뒤쪽 칸 = 계절 이어짐 페이드(2026-09-01 베타 「맨밑줄의 계절 표시 줄이 잘리네」)
+            trailingSeasonTail(layout: layout, index: index, render: render)
+        }
+    }
+
+    /// 마지막 주의 달 밖 빈 칸 — 마지막 날의 계절 줄을 예상 불투명에서 0으로 사그라뜨린다.
+    /// 달이 끝나도 계절은 이어지는데 줄이 원 옆에서 뭉툭하게 끊겨 「잘림」으로 읽혔다.
+    @ViewBuilder
+    private func trailingSeasonTail(layout: MonthLayout, index: Int, render: MonthRender) -> some View {
+        let firstTrailing = layout.leadingBlanks + layout.daysInMonth
+        if index >= firstTrailing, index / 7 == (firstTrailing - 1) / 7,
+           let lastDay = layout.date(at: firstTrailing - 1),
+           let meta = render.style[lastDay]?.meta {
+            let hairline = ThemeStore.chrome.hairlineSeasonBand
+            let base = hairline ? 0.35 : 0.25   // seasonBand 예상 구간과 동값
+            let total = Double(layout.rowCount * 7 - firstTrailing)
+            let position = Double(index - firstTrailing)
+            LinearGradient(colors: [meta.glow.opacity(base * (1 - position / total)),
+                                    meta.glow.opacity(base * (1 - (position + 1) / total))],
+                           startPoint: .leading, endPoint: .trailing)
+                .frame(height: hairline ? 1.5 : 4)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .padding(.top, 25.5)
+                .allowsHitTesting(false)
         } else {
             Color.clear
         }

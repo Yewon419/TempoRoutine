@@ -285,7 +285,7 @@ struct TodayView: View {
         .sheet(item: $editingSchedule) { item in
             ScheduleAddSheet(defaultDate: today, editing: item).themeColorScheme()
         }
-        .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
+        // 삭제 확인은 행 부착(quickDeletable, 2026-09-01) — 팝오버 앵커 정위치
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .coachOverlay(id: .today, steps: CoachSteps.today)   // 기능 튜토리얼(2026-07-23)
@@ -755,7 +755,8 @@ struct TodayView: View {
                 // 제목 먼저·시각 trailing(2026-08-09 베타 피드백 "일정명과 종일 위치 바꿔" —
                 // 하루 상세 행과 같은 문법으로 통일)
                 HStack(spacing: 10) {
-                    Text(item.title).font(.almanacBody(.subheadline, size: 15)).foregroundStyle(Ink.text)
+                    // 행 제목 15 → 14(2026-08-31 베타 "장보기, 아침산책 얘네 폰트 크기 좀만 줄여줘")
+                    Text(item.title).font(.almanacBody(.subheadline, size: 14)).foregroundStyle(Ink.text)
                     // 여러 날 일정 — 오늘이 몇 일차인지(§8.2.3)
                     if let index = item.dayIndex(on: today) {
                         Text(Loc.fmt("%1$lld/%2$lld일차", index, item.spanDays))
@@ -771,8 +772,8 @@ struct TodayView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .simultaneousGesture(quickDeleteGesture(.schedule(item), into: $pendingDelete,
-                                                    feedback: $confirmFeedback))
+            .quickDeletable(.schedule(item), target: $pendingDelete, feedback: $confirmFeedback,
+                            completions: completions, context: modelContext)
             .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
             .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .schedule(item) }
         }
@@ -846,7 +847,7 @@ struct TodayView: View {
                 Image(systemName: checked ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(checked ? Ink.text : Ink.text.opacity(0.35))
                 Text(item.title)
-                    .font(.almanacBody(.subheadline, size: 15))
+                    .font(.almanacBody(.subheadline, size: 14))   // 15 → 14(위 일정 행과 같은 교정)
                     .foregroundStyle(Ink.text)
                     .strikethrough(checked, color: Ink.dim)
                 Spacer()
@@ -858,8 +859,8 @@ struct TodayView: View {
                 }
             }
         }
-        .simultaneousGesture(quickDeleteGesture(.input(item), into: $pendingDelete,
-                                                feedback: $confirmFeedback))
+        .quickDeletable(.input(item), target: $pendingDelete, feedback: $confirmFeedback,
+                        completions: completions, context: modelContext)
         .accessibilityValue(checked ? Loc.str("완료") : Loc.str("미완료"))
         .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .input(item) }
     }
@@ -927,7 +928,7 @@ struct TodayView: View {
             ForEach(todayOutputs) { item in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
-                        Text(item.title).font(.almanacBody(.subheadline, size: 15, weight: .bold)).foregroundStyle(Ink.text)
+                        Text(item.title).font(.almanacBody(.subheadline, size: 14, weight: .bold)).foregroundStyle(Ink.text)   // 15 → 14(행 제목 일괄)
                         if let target = item.targetDate {
                             DDayBadge(target: target, from: today)
                         }
@@ -945,8 +946,8 @@ struct TodayView: View {
                 }
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
-                .simultaneousGesture(quickDeleteGesture(.output(item), into: $pendingDelete,
-                                                        feedback: $confirmFeedback))
+                .quickDeletable(.output(item), target: $pendingDelete, feedback: $confirmFeedback,
+                                completions: completions, context: modelContext)
                 .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .output(item) }
             }
         }

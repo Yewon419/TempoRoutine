@@ -31,6 +31,9 @@ struct RhythmView: View {
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 칩 전환, 확정 아님. 2026-08-09 사용자 지시)
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
+    // 「나중에」 즉시 반영(2026-08-31 베타 "나중에 선택해도 안꺼지는데" → "바로 꺼지게 해줘") —
+    // hasPrompted는 생 UserDefaults라 뷰 무효화가 안 걸린다. 로컬 상태가 그 자리에서 접는다.
+    @State private var selfReportLater = false
     // 단일 칩 행(2026-08-09 베타 피드백 "탭 별도 구분하지말고 한 줄로 쭉") — 2단 스위처 병합.
     // 마지막 본 탭은 재진입·재실행 때 복원("들어갈때마다 마지막 탭" — AppStorage).
     @AppStorage("rhythmLastTab") private var lastTabRaw = RhythmTab.seasons.rawValue
@@ -193,7 +196,7 @@ struct RhythmView: View {
         .sheet(item: $editingOutput) { item in
             OutputAddSheet(editing: item).themeColorScheme()
         }
-        .quickDeleteDialog($pendingDelete, completions: completions, context: modelContext)
+        // 삭제 확인은 행 부착(quickDeletable, 2026-09-01) — 팝오버 앵커 정위치
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
     }
@@ -205,7 +208,7 @@ struct RhythmView: View {
     // 침묵하는 문구의 이유("아직 당신의 이맘때를 모르겠어요")를 이미 체감했다.
     @ViewBuilder
     private var selfReportPrompt: some View {
-        if SelfReportStore.shouldPrompt(snapshot: snapshot, records: selfReports) {
+        if !selfReportLater, SelfReportStore.shouldPrompt(snapshot: snapshot, records: selfReports) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("이맘때 이야기를 하려면 몇 가지를 알아야 해요.")
                     .font(.system(.subheadline, design: .serif))
@@ -216,7 +219,10 @@ struct RhythmView: View {
                         .foregroundStyle(Ink.paper)
                         .padding(.horizontal, 14).padding(.vertical, 8)
                         .background(Ink.text, in: Capsule())
-                    Button("나중에") { SelfReportStore.hasPrompted = true }
+                    Button("나중에") {
+                        SelfReportStore.hasPrompted = true
+                        withAnimation(.easeOut(duration: 0.2)) { selfReportLater = true }
+                    }
                         .font(.footnote)
                         .foregroundStyle(Ink.text.opacity(0.55))
                 }
@@ -1092,8 +1098,8 @@ struct RhythmView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .simultaneousGesture(quickDeleteGesture(routine.deleteTarget, into: $pendingDelete,
-                                                feedback: $confirmFeedback))
+        .quickDeletable(routine.deleteTarget, target: $pendingDelete, feedback: $confirmFeedback,
+                        completions: completions, context: modelContext)
         .accessibilityHint("탭하면 수정, 길게 누르면 삭제할 수 있어요")
         .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = routine.deleteTarget }
     }
