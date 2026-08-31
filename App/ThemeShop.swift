@@ -72,9 +72,24 @@ struct ThemeShopView: View {
     /// 날씨 위치 게이트(2026-08-19) — 거부 시 적용 차단 + 설정 안내
     @State private var showWeatherLocationAlert = false
     @Environment(\.openURL) private var openURL
+    // 검색·필터(2026-08-31 대표님 지시 "검색기능 + 보유중만/미보유만 토글")
+    @State private var searchText = ""
+    /// nil = 전체. 두 토글은 상호배타 — 같은 걸 다시 누르면 전체로 돌아온다
+    @State private var ownedFilter: Bool?
 
     private var current: AppTheme { AppTheme(rawValue: appTheme) ?? .plain }
     private var available: Int { Seeds.available(checkIns) }
+
+    /// 카드 목록에 적용되는 검색·필터 — 이름과 캡션 양쪽을 훑는다(대소문자·부분 일치)
+    private var visibleThemes: [AppTheme] {
+        AppTheme.allCases.filter { theme in
+            if let ownedFilter, isPlanted(theme) != ownedFilter { return false }
+            let query = searchText.trimmingCharacters(in: .whitespaces)
+            guard !query.isEmpty else { return true }
+            return theme.displayName.localizedStandardContains(query)
+                || theme.shopCaption.localizedStandardContains(query)
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -90,8 +105,18 @@ struct ThemeShopView: View {
                                 .foregroundStyle(Ink.text.opacity(0.6))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        ForEach(AppTheme.allCases) { theme in
+                        // 검색·필터(2026-08-31) — 필드는 카드 재질(밀크 글래스), 토글은 칩 한 쌍
+                        searchField
+                        filterRow
+                        ForEach(visibleThemes) { theme in
                             themeCard(theme)
+                        }
+                        if visibleThemes.isEmpty {
+                            Text("조건에 맞는 테마가 없어요.")
+                                .font(.footnote)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 28)
                         }
                         Text("씨앗은 하루 체크인을 완성하면 하나씩 모여요.")
                             .font(.caption)
@@ -246,6 +271,62 @@ struct ThemeShopView: View {
             SeedBadge(count: available)
                 .coachAnchor(.themeSeedBalance)   // 첫 진입 안내 1단계(2026-08-12)
         }
+    }
+
+    // ── 검색·필터(2026-08-31 대표님 지시) ──
+    /// 검색 필드 — 시스템 .searchable 대신 인라인 필드: 시트 지면·잉크가 테마를 타야 하고
+    /// (날씨 다크 글래스 등), 항목이 8개뿐이라 내비바 검색은 과하다.
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14))
+                .foregroundStyle(Ink.text.opacity(0.45))
+            TextField(Loc.str("테마 검색"), text: $searchText)
+                .font(.almanacBody(.subheadline, size: 15))
+                .foregroundStyle(Ink.text)
+                .autocorrectionDisabled()
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Ink.text.opacity(0.35))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("검색어 지우기")
+            }
+        }
+        .padding(.horizontal, 13)
+        .padding(.vertical, 10)
+        .milkGlass(radius: 12)
+    }
+
+    /// 보유중만 / 미보유만 — 상호배타 토글 칩. 같은 칩을 다시 누르면 전체로 돌아온다.
+    private var filterRow: some View {
+        HStack(spacing: 8) {
+            filterChip(Loc.str("보유중인 테마만"), matches: true)
+            filterChip(Loc.str("미보유 테마만"), matches: false)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func filterChip(_ label: String, matches: Bool) -> some View {
+        let on = ownedFilter == matches
+        return Button {
+            lightFeedback += 1
+            ownedFilter = on ? nil : matches
+        } label: {
+            Text(label)
+                .font(.almanacBody(.caption, size: 12, weight: on ? .bold : .regular))
+                .foregroundStyle(on ? Ink.paper : Ink.text.opacity(0.7))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(on ? AnyShapeStyle(Ink.text) : AnyShapeStyle(.clear), in: Capsule())
+                .overlay(Capsule().stroke(Ink.text.opacity(on ? 0 : 0.3), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     /// 첫 진입 안내 2단계가 가리킬 카드 — 값을 치르는 첫 테마 하나만 잡는다.

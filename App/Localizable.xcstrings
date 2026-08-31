@@ -829,6 +829,29 @@
         }
       }
     },
+    "%1$@ 주기 일차별 평균 곡선 · 일차 %2$@곳 기록": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ average curve by cycle day · logged on %2$@ days"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の周期日ごとの平均曲線 · %2$@日分の記録"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@按周期天数的平均曲线 · 已记录%2$@天"
+          }
+        }
+      }
+    },
     "%1$@ 추가": {
       "extractionState": "manual",
       "localizations": {
@@ -4210,6 +4233,28 @@
         }
       }
     },
+    "검색어 지우기": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "検索語をクリア"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除搜索词"
+          }
+        }
+      }
+    },
     "겨울": {
       "extractionState": "manual",
       "localizations": {
@@ -5797,48 +5842,25 @@
         }
       }
     },
-    "심플": {
+    "기본 지면에 단색 한 점. 계절은 밝기로 갈려요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Simple"
+            "value": "One accent dot on the basic ground. Seasons are told apart by brightness."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "シンプル"
+            "value": "ベーシックな地にひと色をひと点。季節は明るさで分かれます。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "简约"
-          }
-        }
-      }
-    },
-    "심플 테마.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The Simple theme."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "シンプルのテーマです。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "简约主题。"
+            "value": "基础底色上一点单色。季节以明暗区分。"
           }
         }
       }
@@ -8971,6 +8993,28 @@
         }
       }
     },
+    "미보유 테마만": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not owned only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未所持テーマのみ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅未拥有"
+          }
+        }
+      }
+    },
     "미완료": {
       "extractionState": "manual",
       "localizations": {
@@ -9289,6 +9333,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "可以更轻松地开始。"
+          }
+        }
+      }
+    },
+    "보유중인 테마만": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Owned only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所持テーマのみ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅已拥有"
           }
         }
       }
@@ -11382,6 +11448,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "室内攀岩"
+          }
+        }
+      }
+    },
+    "심플": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シンプル"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简约"
+          }
+        }
+      }
+    },
+    "심플 테마.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Simple theme."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シンプルのテーマです。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简约主题。"
           }
         }
       }
@@ -15572,6 +15684,28 @@
         }
       }
     },
+    "조건에 맞는 테마가 없어요.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No themes match."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "条件に合うテーマがありません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有符合条件的主题。"
+          }
+        }
+      }
+    },
     "조금 달라요": {
       "extractionState": "manual",
       "localizations": {
@@ -15798,29 +15932,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "按周期天数的平均 · 是记录中的规律"
-          }
-        }
-      }
-    },
-    "%1$@ 주기 일차별 평균 곡선 · 일차 %2$@곳 기록": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ average curve by cycle day · logged on %2$@ days"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@の周期日ごとの平均曲線 · %2$@日分の記録"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@按周期天数的平均曲线 · 已记录%2$@天"
           }
         }
       }
@@ -17573,6 +17684,28 @@
         }
       }
     },
+    "테마 검색": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search themes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマを検索"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索主题"
+          }
+        }
+      }
+    },
     "테마 배경 영상처럼 내려받은 파일만 지워요. 기록은 그대로예요. 지금 쓰는 테마의 파일은 필요해지면 다시 받아요.": {
       "extractionState": "manual",
       "localizations": {
@@ -18811,29 +18944,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "一集治愈系剧"
-          }
-        }
-      }
-    },
-    "기본 지면에 단색 한 점. 계절은 밝기로 갈려요.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One accent dot on the basic ground. Seasons are told apart by brightness."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ベーシックな地にひと色をひと点。季節は明るさで分かれます。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "基础底色上一点单色。季节以明暗区分。"
           }
         }
       }
