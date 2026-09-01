@@ -30,8 +30,8 @@ struct AxisProfile {
 
             let samples: [WindowDaySample] = checkIns.compactMap { entry in
                 guard !entry.isBackfilled else { return nil }
-                // 질병일 제외(2026-09-01 아픈 날) — WindowStats는 백필 전례처럼 이분법만
-                // 가른다(가중 없음): 질병(가중 0)은 빼고, 통증(0.5)은 전량 포함.
+                // 질병일 제외(2026-09-01 아픈 날) — 질병(가중 0)은 빼고 통증은 전량 포함.
+                // 2차 결정으로 가중 자체가 이분(0/1)이라 전 소비처가 같은 판을 본다.
                 guard entry.aggregationWeight > 0 else { return nil }
                 let day = cal.startOfDay(for: entry.day)
                 guard day >= start, day < end,

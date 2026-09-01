@@ -24,7 +24,8 @@ public struct SignalSample: Equatable, Sendable {
     public let mood: Int
     public let sleep: Int?
     public let appetite: Int?
-    /// 집계 가중(2026-09-01 아픈 날) — 통증 0.5, 무증상 1. 질병(0)은 앱이 아예 안 넘긴다.
+    /// 집계 가중(2026-09-01 아픈 날) — 질병(0)은 앱이 아예 안 넘긴다. 현재 실사용 값은
+    /// 이분(0/1)이지만 배관은 임의 가중을 받는다(Σw 가중 평균 계약).
     public let weight: Double
 
     /// appetite·weight 기본값 — 기존 콜사이트·테스트 하위 호환.

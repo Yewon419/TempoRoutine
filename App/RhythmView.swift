@@ -54,7 +54,7 @@ struct RhythmView: View {
 
     // ── 신호 패널 입력 (§5.6.3 — DailyCheckIn → SignalSample, 계산은 RhythmEngine) ──
     private var signalSamples: [SignalSample] {
-        // 증상 가중(2026-09-01) — 질병(0)은 아예 안 넘기고, 통증은 0.5로 넘긴다
+        // 증상 가중(2026-09-01) — 질병(가중 0)은 아예 안 넘긴다
         checkIns.compactMap {
             let w = $0.aggregationWeight
             guard w > 0 else { return nil }

@@ -30,7 +30,7 @@ struct CycleRecapData {
         guard (15...60).contains(length) else { return nil }
         let inCycle = checkIns.filter { $0.day >= prevStart && $0.day < newStart }
         let completed = inCycle.filter { $0.completedAt != nil }
-        // 에너지 최고 계절 — 계절별 가중 평균(2026-09-01 증상 가중: 질병 0·통증 0.5).
+        // 에너지 최고 계절 — 계절별 가중 평균(2026-09-01 증상 가중: 질병 0 = 제외).
         // 유효 표본(가중 합) 2 미만인 계절은 제외: 한 번의 우연을 패턴처럼 말하지 않는다.
         var byPhase: [CyclePhase: (sum: Double, weight: Double)] = [:]
         for record in completed where record.energy > 0 {

@@ -12,7 +12,7 @@ enum EnergyLevel {
 
 struct EnergyProfile {
     /// 단계별 energy 표본 — 비투영 일자의 체크인(energy 1...5)만, 증상 가중(2026-09-01:
-    /// 질병 0 = 제외 · 통증 0.5). sum = Σ(w·energy), weight = Σw.
+    /// 질병 0 = 제외). sum = Σ(w·energy), weight = Σw.
     private let stats: [CyclePhase: (sum: Double, weight: Double)]
 
     static let minSamples = 3

@@ -7,8 +7,8 @@ import SwiftData
 
 /// 아픈 날 증상(2026-09-01 대표님 지시 "질병 등으로 아픈 특수케이스를 따로") — 체크인 칩.
 /// 질병(감기·몸살·배탈)의 낮은 신호는 주기와 무관한 오염이라 집계에서 **완전 제외**,
-/// 통증(근육통·두통)은 주기 신호가 섞여 있을 수 있어 **절반 가중**(대표님 결정 — "감기나
-/// 이런 질병은 제외하고, 근육통이라던가 그런건 가중치 반영").
+/// 통증(근육통·두통)은 주기성 증상일 수 있어 **전량 반영**(2026-09-01 2차 결정 "1로
+/// 올리자" — 초판 0.5에서 상향. 1 초과는 통증일이 평균을 지배해 기각).
 enum CheckInSymptom: String, CaseIterable {
     case cold, fever, stomach, muscle, headache
 
@@ -22,7 +22,7 @@ enum CheckInSymptom: String, CaseIterable {
         }
     }
 
-    /// 질병(가중 0) 여부 — 나머지는 통증(가중 0.5)
+    /// 질병(가중 0) 여부 — 나머지는 통증(가중 1, 전량 반영)
     var isIllness: Bool {
         switch self {
         case .cold, .fever, .stomach: true
@@ -76,12 +76,11 @@ final class DailyCheckIn {
         set { symptoms = newValue.map(\.rawValue).sorted().joined(separator: ",") }
     }
 
-    /// 집계 가중(2026-09-01) — 질병 0(완전 제외) / 통증 0.5 / 무증상 1.
-    /// 소비처 = EnergyProfile·RhythmEngine 매핑·CycleRecap. AxisProfile은 이분법 유지
-    /// (질병만 제외 — §5.12 백필 전례처럼 WindowStats는 가중 없이 포함/제외만 가른다).
+    /// 집계 가중(2026-09-01, 2차 결정으로 이분화) — 질병 0(완전 제외) / 그 외 1.
+    /// 통증(근육통·두통)은 주기성 증상일 수 있어 전량 반영("1로 올리자" — 초판 0.5 상향).
+    /// 소비처 = EnergyProfile·RhythmEngine 매핑·CycleRecap·AxisProfile. 엔진의 Double 가중
+    /// 배관은 유지 — 값이 이분일 뿐 계약(Σw 가중 평균)은 그대로다.
     var aggregationWeight: Double {
-        let set = symptomSet
-        if set.contains(where: \.isIllness) { return 0 }
-        return set.isEmpty ? 1 : 0.5
+        symptomSet.contains(where: \.isIllness) ? 0 : 1
     }
 }

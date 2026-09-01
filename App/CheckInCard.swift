@@ -58,8 +58,8 @@ struct CheckInCard: View {
             if signals.appetite {
                 checkInRow(label: Loc.str("식욕은"), options: [Loc.str("없음"), Loc.str("보통"), Loc.str("좋음")], value: $draftAppetite)
             }
-            // 아픈 날 증상(2026-09-01 대표님 지시) — 다중 선택. 질병은 집계 제외·통증은 반가중
-            // (판정은 aggregationWeight). 안내 문구 없이 칩만("안내 말고 증상 토글" — 지시 원문).
+            // 아픈 날 증상(2026-09-01 대표님 지시) — 다중 선택. 질병은 집계 제외·통증은 전량
+            // 반영(판정은 aggregationWeight). 안내 문구 없이 칩만("안내 말고 증상 토글" — 지시 원문).
             symptomRow
             // 「오늘 한 줄」도 추적 항목 토글을 따른다(2026-08-20 감사 — 온보딩 ③ 토글이
             // 있는데 두 표면 다 무조건 렌더해 죽은 스위치였다). 꺼도 기존 노트는 보존된다
