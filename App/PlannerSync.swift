@@ -292,7 +292,8 @@ final class PlannerSync: NSObject {
                                 note: item.note, createdAt: item.createdAt,
                                 irritability: item.irritability,
                                 isBackfilled: item.isBackfilled ? true : nil,
-                                completedAt: item.completedAt))
+                                completedAt: item.completedAt,
+                                symptoms: item.symptoms.isEmpty ? nil : item.symptoms))
         }
         // 리듬 설문(2026-08-24 대표님 보고 "기기간 연동이 안 돼") — 종전 동기 범위 밖이라 두 번째
         // 기기가 설문을 다시 권하고 답도 안 따라왔다. **새 레코드 타입을 만들지 않는다** —
@@ -501,6 +502,7 @@ final class PlannerSync: NSObject {
             item.note = dto.note
             item.createdAt = dto.createdAt
             item.isBackfilled = dto.isBackfilled ?? false
+            item.symptoms = dto.symptoms ?? ""
             // 도장은 불변(Seeds 계약 — 한 번 완성은 회수 안 함)이라 원격 nil이 로컬 도장을
             // 지우지 않는다(2026-08-20 감사 — LWW가 다른 기기 도장·씨앗 근거를 덮던 결함)
             item.completedAt = dto.completedAt ?? item.completedAt

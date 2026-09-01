@@ -233,10 +233,13 @@ public struct DailyCheckInDTO: Codable, Equatable, Sendable {
     /// 2026-08-09 추가(같은 optional 패턴) — 씨앗 재화 근거(체크인 최초 완성 시각).
     /// 백업·전체 삭제 undo가 이 봉투를 쓰므로 동봉하지 않으면 복원 때 씨앗이 사라진다.
     public var completedAt: Date?
+    /// 2026-09-01 추가(같은 optional 패턴) — 아픈 날 증상 raw 콤마 구분("cold,muscle").
+    public var symptoms: String?
 
     public init(id: UUID, day: String, energy: Int, mood: Int, sleep: Int?, pain: Int?,
                 appetite: Int?, note: String?, createdAt: Date,
-                irritability: Int? = nil, isBackfilled: Bool? = nil, completedAt: Date? = nil) {
+                irritability: Int? = nil, isBackfilled: Bool? = nil, completedAt: Date? = nil,
+                symptoms: String? = nil) {
         self.id = id
         self.day = day
         self.energy = energy
@@ -249,6 +252,7 @@ public struct DailyCheckInDTO: Codable, Equatable, Sendable {
         self.irritability = irritability
         self.isBackfilled = isBackfilled
         self.completedAt = completedAt
+        self.symptoms = symptoms
     }
 }
 

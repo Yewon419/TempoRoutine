@@ -30,15 +30,18 @@ struct CycleRecapData {
         guard (15...60).contains(length) else { return nil }
         let inCycle = checkIns.filter { $0.day >= prevStart && $0.day < newStart }
         let completed = inCycle.filter { $0.completedAt != nil }
-        // 에너지 최고 계절 — 계절별 평균(기록 2개 미만인 계절은 제외: 한 번의 우연을 패턴처럼 말하지 않는다)
-        var byPhase: [CyclePhase: [Int]] = [:]
+        // 에너지 최고 계절 — 계절별 가중 평균(2026-09-01 증상 가중: 질병 0·통증 0.5).
+        // 유효 표본(가중 합) 2 미만인 계절은 제외: 한 번의 우연을 패턴처럼 말하지 않는다.
+        var byPhase: [CyclePhase: (sum: Double, weight: Double)] = [:]
         for record in completed where record.energy > 0 {
-            guard let phase = snapshot.phase(on: record.day) else { continue }
-            byPhase[phase, default: []].append(record.energy)
+            let w = record.aggregationWeight
+            guard w > 0, let phase = snapshot.phase(on: record.day) else { continue }
+            let cur = byPhase[phase] ?? (0, 0)
+            byPhase[phase] = (cur.sum + Double(record.energy) * w, cur.weight + w)
         }
         let top = byPhase
-            .filter { $0.value.count >= 2 }
-            .max { avg($0.value) < avg($1.value) }
+            .filter { $0.value.weight >= 2 }
+            .max { ($0.value.sum / $0.value.weight) < ($1.value.sum / $1.value.weight) }
             .map { seasonMeta(for: $0.key) }
         let note = completed
             .sorted { $0.day > $1.day }
@@ -48,9 +51,6 @@ struct CycleRecapData {
                               checkInCount: completed.count, topSeason: top, note: note)
     }
 
-    private static func avg(_ values: [Int]) -> Double {
-        Double(values.reduce(0, +)) / Double(max(values.count, 1))
-    }
 }
 
 enum CycleRecapStore {

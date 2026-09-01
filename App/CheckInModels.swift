@@ -5,6 +5,32 @@
 import Foundation
 import SwiftData
 
+/// 아픈 날 증상(2026-09-01 대표님 지시 "질병 등으로 아픈 특수케이스를 따로") — 체크인 칩.
+/// 질병(감기·몸살·배탈)의 낮은 신호는 주기와 무관한 오염이라 집계에서 **완전 제외**,
+/// 통증(근육통·두통)은 주기 신호가 섞여 있을 수 있어 **절반 가중**(대표님 결정 — "감기나
+/// 이런 질병은 제외하고, 근육통이라던가 그런건 가중치 반영").
+enum CheckInSymptom: String, CaseIterable {
+    case cold, fever, stomach, muscle, headache
+
+    var title: String {
+        switch self {
+        case .cold: Loc.str("감기")
+        case .fever: Loc.str("몸살·열")
+        case .stomach: Loc.str("배탈")
+        case .muscle: Loc.str("근육통")
+        case .headache: Loc.str("두통")
+        }
+    }
+
+    /// 질병(가중 0) 여부 — 나머지는 통증(가중 0.5)
+    var isIllness: Bool {
+        switch self {
+        case .cold, .fever, .stomach: true
+        case .muscle, .headache: false
+        }
+    }
+}
+
 @Model
 final class DailyCheckIn {
     var id: UUID = UUID()
@@ -25,6 +51,9 @@ final class DailyCheckIn {
     /// 체크인이 처음 완성된 시각(씨앗 재화 근거, 2026-08-09 — 판정·지급 규칙은 Seeds).
     /// optional 추가라 구 저장분 디코딩·CloudKit 규칙 모두 무영향. nil = 미완성.
     var completedAt: Date?
+    /// 증상 raw 콤마 구분("cold,muscle" — CheckInSymptom, 2026-09-01). 복합 Codable을 저장
+    /// 프로퍼티로 두지 않는 규칙(repo CLAUDE.md)이라 String 평탄화 + computed 노출. 기본값 필수.
+    var symptoms: String = ""
 
     init(day: Date, energy: Int, mood: Int, isBackfilled: Bool = false) {
         self.id = UUID()
@@ -39,5 +68,20 @@ final class DailyCheckIn {
         self.createdAt = .now
         self.isBackfilled = isBackfilled
         self.completedAt = nil
+        self.symptoms = ""
+    }
+
+    var symptomSet: Set<CheckInSymptom> {
+        get { Set(symptoms.split(separator: ",").compactMap { CheckInSymptom(rawValue: String($0)) }) }
+        set { symptoms = newValue.map(\.rawValue).sorted().joined(separator: ",") }
+    }
+
+    /// 집계 가중(2026-09-01) — 질병 0(완전 제외) / 통증 0.5 / 무증상 1.
+    /// 소비처 = EnergyProfile·RhythmEngine 매핑·CycleRecap. AxisProfile은 이분법 유지
+    /// (질병만 제외 — §5.12 백필 전례처럼 WindowStats는 가중 없이 포함/제외만 가른다).
+    var aggregationWeight: Double {
+        let set = symptomSet
+        if set.contains(where: \.isIllness) { return 0 }
+        return set.isEmpty ? 1 : 0.5
     }
 }

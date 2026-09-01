@@ -20,6 +20,7 @@ struct CheckInCard: View {
     @State private var draftSleep = 0
     @State private var draftAppetite = 0
     @State private var draftNote = ""
+    @State private var draftSymptoms: Set<CheckInSymptom> = []   // 아픈 날 증상(2026-09-01)
     @State private var draftLoaded = false
     @State private var seedEarned = 0   // 씨앗 획득 연출 트리거(2026-08-09)
 
@@ -57,6 +58,9 @@ struct CheckInCard: View {
             if signals.appetite {
                 checkInRow(label: Loc.str("식욕은"), options: [Loc.str("없음"), Loc.str("보통"), Loc.str("좋음")], value: $draftAppetite)
             }
+            // 아픈 날 증상(2026-09-01 대표님 지시) — 다중 선택. 질병은 집계 제외·통증은 반가중
+            // (판정은 aggregationWeight). 안내 문구 없이 칩만("안내 말고 증상 토글" — 지시 원문).
+            symptomRow
             // 「오늘 한 줄」도 추적 항목 토글을 따른다(2026-08-20 감사 — 온보딩 ③ 토글이
             // 있는데 두 표면 다 무조건 렌더해 죽은 스위치였다). 꺼도 기존 노트는 보존된다
             if signals.note {
@@ -158,6 +162,47 @@ struct CheckInCard: View {
         }
     }
 
+    /// 증상 칩 행 — 3탭 척도 행과 같은 조판(라벨 좌·칩 우, 안 들어가면 세로 폴백)이되 다중 선택.
+    /// 중간값 롱프레스 없음 — 증상은 있다/없다이지 정도가 아니다.
+    private var symptomRow: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                checkInLabel(Loc.str("아픈 곳은")).frame(width: 108, alignment: .leading)
+                symptomChips
+                Spacer(minLength: 0)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                checkInLabel(Loc.str("아픈 곳은"))
+                HStack(spacing: 8) {
+                    symptomChips
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    private var symptomChips: some View {
+        ForEach(CheckInSymptom.allCases, id: \.rawValue) { symptom in
+            let selected = draftSymptoms.contains(symptom)
+            Button {
+                if selected { draftSymptoms.remove(symptom) } else { draftSymptoms.insert(symptom) }
+                persistDraft()
+            } label: {
+                Text(symptom.title)
+                    .font(.caption)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.08)),
+                                in: Capsule())
+            }
+            .accessibilityLabel(Loc.fmt("증상 %1$@", symptom.title))
+            .accessibilityAddTraits(selected ? [.isSelected] : [])
+        }
+    }
+
     /// SwiftUI 뷰 한 식에 조건 분기를 몰면 타입체크가 터진다 — 배경만 떼어 낸다(CLAUDE.md 실측)
     private func chipFill(selected: Bool, half: Bool) -> AnyShapeStyle {
         if selected { return AnyShapeStyle(Ink.text) }
@@ -172,6 +217,7 @@ struct CheckInCard: View {
         draftMood = 0
         draftSleep = 0
         draftAppetite = 0
+        draftSymptoms = []
         draftNote = ""
         draftLoaded = false
         loadDraft()
@@ -185,6 +231,7 @@ struct CheckInCard: View {
             draftMood = existing.mood
             draftSleep = existing.sleep ?? 0
             draftAppetite = existing.appetite ?? 0
+            draftSymptoms = existing.symptomSet
             draftNote = existing.note ?? ""
         }
     }
@@ -194,26 +241,30 @@ struct CheckInCard: View {
     private func persistDraft() {
         let hasSignals = draftEnergy > 0 && draftMood > 0
         let hasNote = !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        // 증상 단독도 저장(2026-09-01) — 아픈 날은 신호를 안 매길 수 있다. 그 자체가 기록이다.
+        let hasSymptoms = !draftSymptoms.isEmpty
         if let existing = record {
-            if hasSignals || hasNote {
+            if hasSignals || hasNote || hasSymptoms {
                 existing.energy = draftEnergy
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
                 // irritability·pain은 건드리지 않는다 — 입력 행이 사라졌을 뿐(2026-08-05 병합),
                 // 과거에 기록된 값을 0 초안으로 덮어쓰면 리듬 집계 표본이 파괴된다.
                 existing.appetite = draftAppetite > 0 ? draftAppetite : nil
+                existing.symptomSet = draftSymptoms
                 existing.note = hasNote ? draftNote : nil
                 if Seeds.stampCompletion(existing, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
             } else {
                 modelContext.delete(existing)   // 전부 해제 = 기록 철회(스킵 무벌점)
             }
-        } else if hasSignals || hasNote {
+        } else if hasSignals || hasNote || hasSymptoms {
             // 지난 날짜에 쓰는 기록 = 회상 기반이라 적합 가중치가 다르다(v1.5 §3-4).
             // 판정 기준은 "카드가 보고 있는 날 ≠ 오늘" — 자정 넘겨 마무리하는 하루도 여기 걸린다.
             let created = DailyCheckIn(day: normalizedDay, energy: draftEnergy, mood: draftMood,
                                        isBackfilled: !isToday)
             created.sleep = draftSleep > 0 ? draftSleep : nil
             created.appetite = draftAppetite > 0 ? draftAppetite : nil
+            created.symptomSet = draftSymptoms
             created.note = hasNote ? draftNote : nil
             if Seeds.stampCompletion(created, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
             modelContext.insert(created)

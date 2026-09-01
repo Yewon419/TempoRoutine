@@ -11,31 +11,35 @@ enum EnergyLevel {
 }
 
 struct EnergyProfile {
-    /// 단계별 energy 표본 — 비투영 일자의 체크인(energy 1...5)만 집계
-    private let stats: [CyclePhase: (sum: Int, count: Int)]
+    /// 단계별 energy 표본 — 비투영 일자의 체크인(energy 1...5)만, 증상 가중(2026-09-01:
+    /// 질병 0 = 제외 · 통증 0.5). sum = Σ(w·energy), weight = Σw.
+    private let stats: [CyclePhase: (sum: Double, weight: Double)]
 
     static let minSamples = 3
 
     init(checkIns: [DailyCheckIn], snapshot: CycleSnapshot) {
-        var acc: [CyclePhase: (sum: Int, count: Int)] = [:]
+        var acc: [CyclePhase: (sum: Double, weight: Double)] = [:]
         for record in checkIns where (1...5).contains(record.energy) {
+            let w = record.aggregationWeight
+            guard w > 0 else { continue }
             guard let info = snapshot.phaseInfo(on: record.day), !info.projected,
                   let phase = snapshot.phase(on: record.day) else { continue }
             let cur = acc[phase] ?? (0, 0)
-            acc[phase] = (cur.sum + record.energy, cur.count + 1)
+            acc[phase] = (cur.sum + Double(record.energy) * w, cur.weight + w)
         }
         stats = acc
     }
 
-    /// 해당 단계의 비투영 energy 표본 수 — 콜드 카드 진행 표시용(2026-07-23)
+    /// 해당 단계의 유효 표본 수(가중 합 내림) — 콜드 카드 진행 표시용(2026-07-23).
+    /// 표시와 판정이 같은 값을 봐야 "3/3인데 안 열림"이 없다.
     func sampleCount(for phase: CyclePhase) -> Int {
-        stats[phase]?.count ?? 0
+        Int((stats[phase]?.weight ?? 0).rounded(.down))
     }
 
-    /// 표본 3개 미만이면 nil(기본 문구 유지). 경계: 평균 ≤2.5 low / ≥3.5 high / 그 외 mid.
+    /// 유효 표본 3 미만이면 nil(기본 문구 유지). 경계: 평균 ≤2.5 low / ≥3.5 high / 그 외 mid.
     func level(for phase: CyclePhase) -> EnergyLevel? {
-        guard let s = stats[phase], s.count >= Self.minSamples else { return nil }
-        let mean = Double(s.sum) / Double(s.count)
+        guard let s = stats[phase], s.weight >= Double(Self.minSamples) else { return nil }
+        let mean = s.sum / s.weight
         if mean <= 2.5 { return .low }
         if mean >= 3.5 { return .high }
         return .mid

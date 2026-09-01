@@ -3010,6 +3010,29 @@
         }
       }
     },
+    "감기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cold"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "風邪"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "感冒"
+          }
+        }
+      }
+    },
     "가끔": {
       "extractionState": "manual",
       "localizations": {
@@ -5683,6 +5706,29 @@
         }
       }
     },
+    "근육통": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muscle ache"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "筋肉痛"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "肌肉酸痛"
+          }
+        }
+      }
+    },
     "근로자의 날": {
       "extractionState": "manual",
       "localizations": {
@@ -8137,6 +8183,29 @@
         }
       }
     },
+    "두통": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Headache"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頭痛"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "头痛"
+          }
+        }
+      }
+    },
     "뒤척임": {
       "extractionState": "manual",
       "localizations": {
@@ -9377,6 +9446,29 @@
         }
       }
     },
+    "몸살·열": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fever·aches"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "発熱・悪寒"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发烧·浑身酸痛"
+          }
+        }
+      }
+    },
     "몸의 에너지와 컨디션을 기록합니다.": {
       "extractionState": "manual",
       "localizations": {
@@ -9876,6 +9968,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "百夜记录"
+          }
+        }
+      }
+    },
+    "배탈": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upset stomach"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "お腹の不調"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "肠胃不适"
           }
         }
       }
@@ -12896,6 +13011,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "物品"
+          }
+        }
+      }
+    },
+    "아픈 곳은": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feeling unwell?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "つらいところは"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不舒服的地方"
           }
         }
       }
@@ -17411,6 +17549,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "中间水平"
+          }
+        }
+      }
+    },
+    "증상 %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symptom %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "症状 %1$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "症状 %1$@"
           }
         }
       }

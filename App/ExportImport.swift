@@ -121,7 +121,8 @@ enum ExportImport {
                                 note: $0.note, createdAt: $0.createdAt,
                                 irritability: $0.irritability,
                                 isBackfilled: $0.isBackfilled ? true : nil,
-                                completedAt: $0.completedAt)
+                                completedAt: $0.completedAt,
+                                symptoms: $0.symptoms.isEmpty ? nil : $0.symptoms)
             },
             trackedSignals: AppSettings.trackedSignals,
             rhythmSummary: RhythmSummaryDTO.build(cycles: axis.cycles,
@@ -269,7 +270,8 @@ enum ExportImport {
             // 종전 guard(energy·mood 필수)는 노트 단독 체크인을 복원에서 버렸다(2026-07-27 리뷰 결함).
             let hasSignals = dto.energy >= 1 && dto.mood >= 1
             let hasNote = !(dto.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            guard hasSignals || hasNote else { continue }
+            let hasSymptoms = !(dto.symptoms ?? "").isEmpty   // 증상 단독 행도 유효(2026-09-01)
+            guard hasSignals || hasNote || hasSymptoms else { continue }
             let record = DailyCheckIn(day: day, energy: dto.energy, mood: dto.mood,
                                       isBackfilled: dto.isBackfilled ?? false)
             record.id = dto.id
@@ -280,6 +282,7 @@ enum ExportImport {
             record.note = dto.note
             record.createdAt = dto.createdAt
             record.completedAt = dto.completedAt   // 씨앗 근거 복원(2026-08-09)
+            record.symptoms = dto.symptoms ?? ""
             context.insert(record)
             added += 1
         }

@@ -24,14 +24,18 @@ public struct SignalSample: Equatable, Sendable {
     public let mood: Int
     public let sleep: Int?
     public let appetite: Int?
+    /// 집계 가중(2026-09-01 아픈 날) — 통증 0.5, 무증상 1. 질병(0)은 앱이 아예 안 넘긴다.
+    public let weight: Double
 
-    /// appetite 기본 nil — 기존 콜사이트·테스트(3인자) 하위 호환.
-    public init(day: Date, energy: Int, mood: Int, sleep: Int?, appetite: Int? = nil) {
+    /// appetite·weight 기본값 — 기존 콜사이트·테스트 하위 호환.
+    public init(day: Date, energy: Int, mood: Int, sleep: Int?, appetite: Int? = nil,
+                weight: Double = 1) {
         self.day = day
         self.energy = energy
         self.mood = mood
         self.sleep = sleep
         self.appetite = appetite
+        self.weight = weight
     }
 
     func value(of signal: SignalKind) -> Int? {
@@ -82,10 +86,12 @@ public enum RhythmEngine {
     public static func summaries(samples: [SignalSample], periodStarts: [Date],
                                  averageLength: Int, menstrualLength: Int = 5) -> [PhaseSignalSummary] {
         guard averageLength > 0 else { return [] }
-        var buckets: [CyclePhase: [SignalKind: (sum: Int, count: Int)]] = [:]
+        // 가중 누적(2026-09-01 아픈 날) — sum = Σ(w·x), weight = Σw. 유효 표본 수 = ⌊Σw⌋.
+        var buckets: [CyclePhase: [SignalKind: (sum: Double, weight: Double)]] = [:]
 
         for sample in samples {
-            guard (1...5).contains(sample.energy), (1...5).contains(sample.mood) else { continue }
+            guard (1...5).contains(sample.energy), (1...5).contains(sample.mood),
+                  sample.weight > 0 else { continue }
             guard let r = CyclePredictor.cycleDay(of: sample.day, periodStarts: periodStarts,
                                                   averageLength: averageLength),
                   !r.projected else { continue }
@@ -94,15 +100,16 @@ public enum RhythmEngine {
             for signal in SignalKind.allCases {
                 guard let value = sample.value(of: signal), (1...5).contains(value) else { continue }
                 let cur = buckets[phase]?[signal] ?? (0, 0)
-                buckets[phase, default: [:]][signal] = (cur.sum + value, cur.count + 1)
+                buckets[phase, default: [:]][signal] =
+                    (cur.sum + Double(value) * sample.weight, cur.weight + sample.weight)
             }
         }
 
         return buckets.flatMap { phase, signals in
             signals.map { signal, acc in
                 PhaseSignalSummary(phase: phase, signal: signal,
-                                   mean: Double(acc.sum) / Double(acc.count),
-                                   sampleCount: acc.count)
+                                   mean: acc.sum / acc.weight,
+                                   sampleCount: Int(acc.weight.rounded(.down)))
             }
         }
     }
@@ -113,20 +120,21 @@ public enum RhythmEngine {
     public static func dayCurve(signal: SignalKind, samples: [SignalSample],
                                 periodStarts: [Date], averageLength: Int) -> [DayCurvePoint] {
         guard averageLength > 0 else { return [] }
-        var buckets: [Int: (sum: Int, count: Int)] = [:]
+        var buckets: [Int: (sum: Double, weight: Double)] = [:]
         for sample in samples {
             guard (1...5).contains(sample.energy), (1...5).contains(sample.mood),
+                  sample.weight > 0,
                   let value = sample.value(of: signal), (1...5).contains(value),
                   let r = CyclePredictor.cycleDay(of: sample.day, periodStarts: periodStarts,
                                                   averageLength: averageLength),
                   !r.projected, (1...averageLength).contains(r.day) else { continue }
             let cur = buckets[r.day] ?? (0, 0)
-            buckets[r.day] = (cur.sum + value, cur.count + 1)
+            buckets[r.day] = (cur.sum + Double(value) * sample.weight, cur.weight + sample.weight)
         }
         return buckets.sorted { $0.key < $1.key }.map {
             DayCurvePoint(day: $0.key,
-                          mean: Double($0.value.sum) / Double($0.value.count),
-                          sampleCount: $0.value.count)
+                          mean: $0.value.sum / $0.value.weight,
+                          sampleCount: Int($0.value.weight.rounded(.down)))
         }
     }
 
@@ -148,6 +156,7 @@ public enum RhythmEngine {
             let end = starts[index + 1]
             let hasData = samples.contains { sample in
                 (1...5).contains(sample.energy) && (1...5).contains(sample.mood)
+                    && sample.weight > 0
                     && sample.value(of: signal).map { (1...5).contains($0) } == true
                     && sample.day >= start && sample.day < end
             }
@@ -172,9 +181,10 @@ public enum RhythmEngine {
             guard let length = calendar.dateComponents([.day], from: start, to: end).day,
                   length > 0 else { continue }
 
-            var acc: [CyclePhase: (sum: Int, count: Int)] = [:]
+            var acc: [CyclePhase: (sum: Double, weight: Double)] = [:]
             for sample in samples {
                 guard (1...5).contains(sample.energy), (1...5).contains(sample.mood),
+                      sample.weight > 0,
                       let value = sample.value(of: signal), (1...5).contains(value),
                       sample.day >= start, sample.day < end,
                       let offset = calendar.dateComponents([.day], from: start, to: sample.day).day
@@ -183,13 +193,11 @@ public enum RhythmEngine {
                 let phase = CyclePredictor.phaseForDay(offset + 1, cycleLength: length,
                                                        menstrualLength: menstrualLength)
                 let cur = acc[phase] ?? (0, 0)
-                acc[phase] = (cur.sum + value, cur.count + 1)
+                acc[phase] = (cur.sum + Double(value) * sample.weight, cur.weight + sample.weight)
             }
             guard acc.count >= 2 else { continue }
             let top = acc.max {
-                let l = Double($0.value.sum) / Double($0.value.count)
-                let r = Double($1.value.sum) / Double($1.value.count)
-                return l < r
+                ($0.value.sum / $0.value.weight) < ($1.value.sum / $1.value.weight)
             }
             if let top { result.append(top.key) }
         }
