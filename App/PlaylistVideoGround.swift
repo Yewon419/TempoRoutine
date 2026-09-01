@@ -171,8 +171,9 @@ private struct PlaylistLoopVideo: UIViewRepresentable {
         if let player = PlaylistPlayerPool.shared.acquire(name) {
             view.playerLayer.player = player
             view.attachedName = name
-            // 재생 배속 0.5(2026-08-25 베타 "좀 더 천천히") — 재인코딩 불요
-            if !paused, player.rate == 0 { player.rate = 0.5 }
+            // 배속 1.0 복귀(2026-09-01 베타 "0.5배속 하니까 너무 끊겨서 걍 원래 속도로" —
+            // 08-25 "좀 더 천천히"를 뒤집는 판정. 30fps 소스가 0.5배속에선 15fps로 읽혔다)
+            if !paused, player.rate == 0 { player.rate = 1 }
         }
         return view
     }
@@ -188,7 +189,7 @@ private struct PlaylistLoopVideo: UIViewRepresentable {
         if paused {
             player.pause()
         } else if player.rate == 0 {
-            player.rate = 0.5
+            player.rate = 1
         }
     }
 

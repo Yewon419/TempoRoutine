@@ -137,9 +137,14 @@ enum WxState {
 /// `veil`(캘린더 14%)은 낮 하늘 위 격자 흰 숫자 대비를 되찾는 자리.
 struct WeatherSky: View {
     var veil: Double = 0
+    /// 조건 방송(2026-09-01 베타 "같은날인데 두 탭에서 날씨 다름") — 정적 캐시만 읽으면
+    /// 실측 갱신 전에 그려진 탭이 옛 하늘로 박제된다(탭 뷰는 유지되어 재평가 계기가 없다).
+    /// applyCondition·설정 스위처 둘 다 이 키에 쓰므로, 값이 바뀌면 모든 하늘이 다시 그려진다
+    /// (Seeds.revisionKey 방송 전례).
+    @AppStorage(WxState.conditionKey) private var conditionRaw = ""
 
     var body: some View {
-        let condition = WxState.condition
+        let condition = WxCondition(rawValue: conditionRaw) ?? WxState.condition
         let daypart = WxState.daypart
         let s = SkySpec.stops(condition, daypart)
         LinearGradient(colors: [s.a, s.b, s.c], startPoint: .top, endPoint: .bottom)
