@@ -96,6 +96,27 @@ extension Font {
     }
 }
 
+/// 플리 트랙명 서체 — Raleway(SIL OFL, variable 번들). 3차 비교 판정(2026-09-02 대표님
+/// "3안 ㄱㄱ" — "얇고 세련" 방향, Geist 트랙명 「살짝 구리다」 교체). named instance
+/// 접근은 BodoniModa 전례(fvar ps 이름 fontTools 실측: RalewayRoman-Thin/-Light).
+enum RalewayFont {
+    static let available: Bool = {
+        guard let url = Bundle.main.url(forResource: "Raleway-Variable", withExtension: "ttf")
+        else { return false }
+        return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+    }()
+}
+
+extension Font {
+    /// 트랙명 헤어라인 — 대형(카드 30pt+)은 Thin(100), 소형(레코드판 15pt)은 Light(300)로
+    /// 가독 보정. 등록 실패 시 시스템 thin/light 폴백.
+    static func ralewayDisplay(size: CGFloat) -> Font {
+        let thin = size >= 24
+        guard RalewayFont.available else { return .system(size: size, weight: thin ? .thin : .light) }
+        return .custom(thin ? "RalewayRoman-Thin" : "RalewayRoman-Light", size: size)
+    }
+}
+
 extension Font {
     /// 거대 표제·책력 조판 전용. 본문은 시스템 서체 유지(프로토: 표제=Gowun Batang, 본문=산세리프).
     /// 모던 = Pretendard(표제 600, 시안 §1.3-3 — Gowun 세리프 대체), 등록 실패 시 시스템 폴백

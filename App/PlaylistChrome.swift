@@ -65,12 +65,11 @@ struct PlaylistPlayerCard: View {
     private var main: some View {
         VStack(alignment: .leading, spacing: 0) {
             kicker
-            // 트랙명 = 영어 각인 + Geist(2026-08-30 — LP 문법에서 여기만 영어 유지)
+            // 트랙명 = 영어 각인. Geist → Raleway Thin(2026-09-02 3차 비교 판정 "3안" —
+            // "얇고 세련" 방향, 베타 「Spring 영어 폰트가 살짝 구리다」)
             Text(verbatim: playlistTrackName(for: meta.phase))
-                // SemiBold → Regular + 살짝 넓힌 자간(2026-08-31 베타 「여기 폰트도 개선해줘」)
-                // — 굵은 각인이 얇은 조판과 어긋났다. 무게는 크기(30)가 이미 준다.
-                .font(.geist(size: 30, weight: .regular))
-                .tracking(0.6)
+                .font(.ralewayDisplay(size: 32))
+                .tracking(0.8)
                 .foregroundStyle(Ink.text)   // 트랙명 = 잉크 — 색은 커버가 담당(§4.3)
                 .padding(.top, 6)
                 // B1(2026-08-31) — 트랙명 탭 = 음표(링 탭 음표의 오늘 탭 판본).
@@ -86,15 +85,10 @@ struct PlaylistPlayerCard: View {
                     noteHaptic += 1
                 }
                 .sensoryFeedback(.impact(weight: .light), trigger: noteHaptic)
-            // 부제 = 날짜만. 종전엔 의학 단계명(「배란기 · …」)이 앞에 붙어 있었는데
-            // MASTER 개정 M-1c의 「의학 단계명은 사용자 표면 금지」 위반이었다(2026-08-20).
-            // 계절명은 바로 위 30px 표제가 이미 말한다 — 부제에 다시 넣지 않는다.
-            Text(date.formatted(Loc.dateTime.month().day().weekday(.wide)))
-                .font(.caption)
-                .foregroundStyle(Ink.dim)
-                .padding(.top, 1)
+            // 날짜 부제는 kicker 줄 우측으로 이동(2026-09-02 대표님 지시 — 트랙명 아래를
+            // 비워 Thin 표제가 혼자 선다). 의학 단계명 금지 이력(M-1c)은 그대로 유효.
             PlaylistSeekBar(progress: progress)
-                .padding(.top, 12)
+                .padding(.top, 14)
             HStack {
                 Text(Loc.fmt("%1$@일차", "\(dayInCycle)"))
                 Spacer(minLength: 0)
@@ -119,6 +113,11 @@ struct PlaylistPlayerCard: View {
                 .foregroundStyle(Ink.dim)
             Rectangle().fill(Ink.text.opacity(0.22))
                 .frame(height: 1)
+            // 날짜 = 줄 우측(2026-09-02 대표님 판정 — 종전 트랙명 아래 부제에서 이동)
+            Text(date.formatted(Loc.dateTime.month().day().weekday(.wide)))
+                .font(.caption2)
+                .foregroundStyle(Ink.dim)
+                .fixedSize()
         }
     }
 
@@ -221,9 +220,10 @@ struct PlaylistRecordHeader: View {
             if let phase {
                 // 트랙명 = 라틴 각인(Geist). 오늘 탭 NOW PLAYING과 같은 처리로 통일
                 // (2026-08-31 — SemiBold가 굵어 보였다는 베타 지적과 같은 뿌리, Regular+자간)
+                // Raleway Light(2026-09-02 트랙명 서체 통일 — 15pt에서 Thin은 안 읽혀 무게 보정)
                 Text(verbatim: playlistTrackName(for: phase))
-                    .font(.geist(size: 15, weight: .regular))
-                    .tracking(0.3)
+                    .font(.ralewayDisplay(size: 16))
+                    .tracking(0.5)
                     // 계절색(2026-08-31 베타 "spring에 계절색 입혀")
                     .foregroundStyle(meta.color)
                     .padding(.top, 1)

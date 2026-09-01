@@ -66,6 +66,7 @@ targets:
         excludes:         # 활판·플리 서체는 앱 전용(2026-08-18·08-30·08-31) — 위젯 미대응, 이중 탑재 금지
           - "NotoSerifKR-Variable.ttf"
           - "BodoniModa-Variable.ttf"
+          - "Raleway-Variable.ttf"
           - "Geist-Regular.otf"
           - "Geist-Medium.otf"
           - "Geist-SemiBold.otf"
