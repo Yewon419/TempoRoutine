@@ -336,8 +336,10 @@ struct SeasonCalendarView: View {
                     compact: currentLayout.rowCount >= 6,
                     onPrev: { lightFeedback += 1; shiftMonth(-1) },
                     onStop: { lightFeedback += 1; returnToTodayMonth() },
-                    onNext: { lightFeedback += 1; shiftMonth(1) }
+                    onNext: { lightFeedback += 1; shiftMonth(1) },
+                    onLog: { showLogSheet = true }   // 컨트롤 줄 우측(2026-09-02 재배치)
                 )
+                .coachAnchor(.calendarLog)
             } else {
                 // 상단 순서 = 시안 `.cal-wrap .season-row { order:-1 }` 전 테마 공통(2026-08-23 대표님
                 // "프로토타입 디자인대로"): 계절 줄·생리 기록 → 브랜드 표식·소식란 → 거대 표제·월 이동.
@@ -524,8 +526,11 @@ struct SeasonCalendarView: View {
         if abs(clamped - titleShrink) > 0.5 { titleShrink = clamped }
     }
 
-    /// 격자 셀 최소 높이 — 활판 양보 ②단계에서만 48로 준다(다른 테마는 항상 54)
-    private var effMinCellHeight: CGFloat { lpCellTight ? 48 : minCellHeight }
+    /// 격자 셀 최소 높이 — 활판 양보 ②단계에서 48, 플리는 상시 48(2026-09-02 대표님 —
+    /// 레코드판 헤더가 세로를 먹어 막줄이 잘리던 것. 5주 달 30pt 확보), 그 외 54.
+    private var effMinCellHeight: CGFloat {
+        lpCellTight || ThemeStore.chrome.playlistChrome ? 48 : minCellHeight
+    }
 
     @ViewBuilder
     private func sidePanel(_ offsetMonths: Int, width: CGFloat) -> some View {
@@ -1478,26 +1483,12 @@ struct SeasonCalendarView: View {
     // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
     private var legend: some View {
         HStack(spacing: 14) {
+            // 플리 = 4계절만 중앙 정렬(2026-09-02 재배치 — 생리 기록은 레코드판 컨트롤 줄 우측으로.
+            // 캡슐과 한 줄에 꽉 차 지저분하던 것)
+            if ThemeStore.chrome.playlistChrome { Spacer(minLength: 0) }
             ForEach(CyclePhase.displayOrder, id: \.self) { legendItem($0) }   // 봄→여름→가을→겨울(2026-07-29 피드백)
             Spacer()
             // 「기록」 스와치 폐기(2026-08-01 베타 피드백) — 상단 「생리 기록」 버튼과 중복 안내였다
-            if ThemeStore.chrome.playlistChrome {
-                // 플리 = 생리 기록이 범례 줄 우측(시안 §4.4 ③ .pl-log — 헤더에서 하단으로)
-                Button {
-                    showLogSheet = true
-                } label: {
-                    HStack(spacing: 5) {
-                        Circle().fill(Ink.record).frame(width: 7, height: 7)
-                        Text("생리 기록")
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Ink.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
-                }
-                .coachAnchor(.calendarLog)
-            }
         }
         // 티켓 = 달 이동 화살표가 같은 줄 양 끝에 얹힌다 — 항목이 화살표 자리까지 흐르면
         // 「봄」이 ‹ 뒤에 가려진다(2026-08-17 베타 피드백). 좌우를 화살표 폭만큼 비운다.

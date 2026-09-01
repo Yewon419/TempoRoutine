@@ -182,6 +182,8 @@ struct PlaylistRecordHeader: View {
     let onPrev: () -> Void
     let onStop: () -> Void
     let onNext: () -> Void
+    /// 생리 기록(2026-09-02 재배치 — 범례 줄에서 컨트롤 줄 우측으로. nil = 버튼 없음)
+    var onLog: (() -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var spinning = false
@@ -199,9 +201,12 @@ struct PlaylistRecordHeader: View {
     var body: some View {
         typeStack
             .frame(maxWidth: .infinity)
-            .padding(.top, compact ? 84 : 104)   // 디스크 보이는 몫
+            // 디스크 보이는 몫 −8(2026-09-02 막줄 잘림 — 세로 절약)
+            .padding(.top, compact ? 76 : 96)
             .background(alignment: .top) {
-                discAssembly.offset(y: compact ? -206 : -186)
+                // 디스크 −14 상향(2026-09-02 대표님 "LP판과 표제 사이 거리가 너무 가까워
+                // 조잡" — 노출을 줄여 표제와의 숨을 확보. 패딩 −8과 합쳐 간격 순증 +6)
+                discAssembly.offset(y: compact ? -220 : -200)
             }
     }
 
@@ -217,14 +222,11 @@ struct PlaylistRecordHeader: View {
             Text(Loc.monthName(month))
                 .font(.almanac(size: 26))
                 .foregroundStyle(Ink.text)
-            if let phase {
-                // 트랙명 = 라틴 각인(Geist). 오늘 탭 NOW PLAYING과 같은 처리로 통일
-                // (2026-08-31 — SemiBold가 굵어 보였다는 베타 지적과 같은 뿌리, Regular+자간)
-                // Raleway Light(2026-09-02 트랙명 서체 통일 — 15pt에서 Thin은 안 읽혀 무게 보정)
-                Text(verbatim: playlistTrackName(for: phase))
-                    .font(.ralewayDisplay(size: 16))
-                    .tracking(0.5)
-                    // 계절색(2026-08-31 베타 "spring에 계절색 입혀")
+            if phase != nil {
+                // 한국어 복귀(2026-09-02 대표님 "9월 아래 계절명 다시 한국어로" — 라틴 각인은
+                // 오늘 탭 카드만 유지). 서체 = 플리 표제 Gmarket Light(almanac), 계절색 유지.
+                Text(meta.name)
+                    .font(.almanac(size: 16))
                     .foregroundStyle(meta.color)
                     .padding(.top, 1)
             }
@@ -232,6 +234,23 @@ struct PlaylistRecordHeader: View {
                 .padding(.top, 14)   // 8 → 14(2026-08-31 베타 "재생바랑 n일차 좀만 더 아래로")
             controls
                 .padding(.top, 2)
+                // 생리 기록 = 컨트롤 줄 우측(2026-09-02 재배치 — 범례 줄이 4계절+캡슐로
+                // 꽉 차 지저분하던 것. 컨트롤은 중앙 유지, 빈 우측을 쓴다)
+                .overlay(alignment: .trailing) {
+                    if let onLog {
+                        Button(action: onLog) {
+                            HStack(spacing: 5) {
+                                Circle().fill(Ink.record).frame(width: 7, height: 7)
+                                Text("생리 기록")
+                            }
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Ink.text)
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 7)
+                            .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
+                        }
+                    }
+                }
         }
     }
 
