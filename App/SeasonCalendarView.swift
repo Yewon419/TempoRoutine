@@ -327,7 +327,6 @@ struct SeasonCalendarView: View {
                     noticeButton()
                 }
                 PlaylistRecordHeader(
-                    year: cal.component(.year, from: monthStart),
                     month: cal.component(.month, from: monthStart),
                     phase: currentPhase,
                     date: today,
@@ -362,7 +361,11 @@ struct SeasonCalendarView: View {
             // 이전/현재/다음 달을 나란히 렌더하고 오프셋으로 민다 — 놓으면 임계 판정 후 정착.
             monthCarousel
                 .coachAnchor(.calendarGrid)
-            legend
+            // 플리 = 범례 줄 자체를 걷는다(2026-09-02 대표님 "겨울 봄 여름 가을 하단에
+            // 이것도 없애고" — 정보 과밀 정리. 계절은 밑줄 색+레코드판 계절명이 이미 말한다)
+            if !ThemeStore.chrome.playlistChrome {
+                legend
+            }
             // ⚠ 뒤에 Spacer를 두지 않는다(2026-08-23) — 캐러셀(GeometryReader)과 남는 세로를
             // 반씩 나눠 격자가 21pt 손해 봤다. 시안은 격자 하단 = 범례 상단(.cal-wrap flex).
         }
@@ -1483,9 +1486,7 @@ struct SeasonCalendarView: View {
     // ── 범례 (색맹 담보: 글리프+계절명 병행 — §8.1 SeasonGlyph) ──
     private var legend: some View {
         HStack(spacing: 14) {
-            // 플리 = 4계절만 중앙 정렬(2026-09-02 재배치 — 생리 기록은 레코드판 컨트롤 줄 우측으로.
-            // 캡슐과 한 줄에 꽉 차 지저분하던 것)
-            if ThemeStore.chrome.playlistChrome { Spacer(minLength: 0) }
+            // (플리는 범례 줄 자체가 안 뜬다 — 2026-09-02 걷음, 호출부 분기)
             ForEach(CyclePhase.displayOrder, id: \.self) { legendItem($0) }   // 봄→여름→가을→겨울(2026-07-29 피드백)
             Spacer()
             // 「기록」 스와치 폐기(2026-08-01 베타 피드백) — 상단 「생리 기록」 버튼과 중복 안내였다

@@ -170,7 +170,7 @@ struct PlaylistPlayerCard: View {
 /// 정지 = **오늘 달로 되돌아오기**(계약 유지). 히트 영역 44pt.
 /// ⚠ 디스크는 화면 위로 넘쳐 상태바 뒤까지 올라간다 — 시계 가독은 실기기 확인 큐.
 struct PlaylistRecordHeader: View {
-    let year: Int
+    // year 파라미터 제거(2026-09-02 "2026도 빼" — 안 쓰는 건 삭제, 08-15 원칙)
     let month: Int
     let phase: CyclePhase?
     let date: Date
@@ -210,13 +210,10 @@ struct PlaylistRecordHeader: View {
             }
     }
 
-    // ── 조판(지면 직결) — 2026 / 7월 / 가을 센터 스택 → 시크바 → 컨트롤 정가운데 ──
+    // ── 조판(지면 직결) — 7월 / 가을 센터 스택 → 시크바 → 컨트롤 정가운데.
+    // 연도 각인 제거(2026-09-02 대표님 "2026도 빼" — 정보 과밀 정리) ──
     private var typeStack: some View {
         VStack(spacing: 0) {
-            Text(String(year))
-                .font(.geist(size: 10, weight: .medium))
-                .kerning(1.8)
-                .foregroundStyle(Ink.dim)
             // 베타 "이 탭 빼고 플리테마는 폰트반영이 아예 안돼있어" — 캘린더 레코드판 월명이
             // .system() 하드코딩으로 남아 표제 서체 개정(Gmarket)을 안 타고 있었다.
             Text(Loc.monthName(month))
@@ -255,18 +252,10 @@ struct PlaylistRecordHeader: View {
     }
 
     private var seek: some View {
-        VStack(spacing: 4) {
-            PlaylistSeekBar(progress: progress, barHeight: 3, knobSize: 7)
-            HStack {
-                Text(Loc.fmt("%lld일차", trackDay))
-                Spacer()
-                Text(Loc.fmt("%lld일", trackLength))
-            }
-            .font(.caption)
-            .foregroundStyle(Ink.dim)
-        }
-        .frame(width: 242)
-        .opacity(phase == nil ? 0 : 1)   // 콜드 = 자리 유지, 값 없음
+        // 일차/일 숫자 줄 제거(2026-09-02 대표님 "정보가 너무 과해") — 바(진행)만 남긴다
+        PlaylistSeekBar(progress: progress, barHeight: 3, knobSize: 7)
+            .frame(width: 242)
+            .opacity(phase == nil ? 0 : 1)   // 콜드 = 자리 유지, 값 없음
     }
 
     private var controls: some View {
