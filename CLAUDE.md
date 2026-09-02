@@ -137,3 +137,7 @@
 - **CI 판정은 커밋 SHA로 런을 특정해서 본다** — push 직후 `gh run list` 최신 런은 새 런이
   아직 목록에 안 떠 직전 런일 수 있다(2026-08-31 실측: 실패 2건을 연속으로 그린 오판).
   `gh run list --json databaseId,headSha`로 SHA 일치를 확인하고 그 ID를 watch 할 것.
+- **`Path.addArc`의 `clockwise`는 iOS 뒤집힌 좌표계(y-down)에서 수학·웹 감각과 반대다**
+  (2026-09-02 실측: 티켓 스캘럽 호가 false로 아래(뷰 밖)로 볼록해져 경계에서 잘려 직선만
+  남았다 — 컴파일은 통과하고 실기기에서만 드러나는 유형). 시안(CSS) 좌표를 Shape로 옮길 때
+  호 방향은 "위로 파려면 clockwise: true"로 뒤집어 생각할 것.
