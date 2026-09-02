@@ -389,18 +389,18 @@ struct RootTabView: View {
     }
 }
 
-// ── 날씨 하단바 진회색 고정 2차(2026-09-01 베타 "하단바 계속 이런데") ──
-// 43차 UIKit appearance 불투명(#2A2F38)이 빌드 578 실기기에서 안 먹었다 — 바가 흰 유리로
-// 렌더되고 미선택 아이콘 색까지 시스템 기본이었다(프록시 전체 미적용 정황, iOS 26 부유 유리
-// 바). SwiftUI `toolbarBackground` 경로를 탭 콘텐츠마다 얹는다 — UIKit 분기는 남겨 둔다
-// (먹는 환경에선 항목색까지 잡아 주므로 무해).
+// ── 날씨 하단바 진회색 고정 3차(2026-09-03 베타 "제발 저 새하얀 하단바좀") ──
+// 43차 UIKit appearance도, 48차 구형 `.toolbarBackground(.visible, for:)`도 iOS 26 부유
+// 유리 바에서 무효 실측(빌드 596+ 스크린샷 — 바가 흰 유리 그대로). 3차 = iOS 18 신설
+// `toolbarBackgroundVisibility(_:for:)` — 구형 visible 지정과 별개 API로, 유리 바에 배경을
+// 강제하는 현행 정식 경로다. UIKit 분기는 존치(먹는 환경에선 항목색까지 잡아 준다).
 private extension View {
     @ViewBuilder
     func skyTabBarPlate() -> some View {
         if ThemeStore.chrome.skyGround {
             self
                 .toolbarBackground(Color.flatRGB(0x2A, 0x2F, 0x38), for: .tabBar)
-                .toolbarBackground(.visible, for: .tabBar)
+                .toolbarBackgroundVisibility(.visible, for: .tabBar)
         } else {
             self
         }
