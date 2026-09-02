@@ -16,14 +16,18 @@ import TempoCore
 // 경계는 하드 엣지(흐린 페이드 기각) + 실물 티켓 가장자리 문법 — 발권지가 안쪽으로
 // 파여 그 구멍으로 유화가 보인다(볼록 아님, 3차 교정 확정).
 
-/// 반원 스캘럽 마스크 — 뷰 너비에 맞춰 파인 반원 개수를 동적으로 계산한다(디바이스 폭 무관하게
-/// 잘리지 않는다). 파인 자리(투명)가 유화를 보여주고, 채워진 자리(불투명)가 종이로 남는다.
+/// 반원 스캘럽 마스크 — 뷰 너비에 맞춰 반원 개수를 동적으로 계산한다(디바이스 폭 무관).
+/// 문법(시안 3차 확정 + 2026-09-02 베타 「동글동글이가 위쪽이야」 재교정): **발권지가 파여
+/// 유화 반원이 경계 아래로 매달린다** — 유화 본체는 maxY−r에서 끝나고, 반원(중심이 그
+/// 경계선 위)만 maxY까지 볼록하게 내려간다. 호출부는 뷰 높이에 r(지름/2)을 더해 볼록분이
+/// 잘리지 않게 해야 한다. 57차의 「위로 파기」는 시안과 반대 기하였다.
 struct TicketScallopMask: Shape {
     var diameter: CGFloat
     var period: CGFloat
 
     func path(in rect: CGRect) -> Path {
         let r = diameter / 2
+        let base = rect.maxY - r   // 발권지 경계선 — 유화 본체의 하단
         var centers: [CGFloat] = []
         var cx = rect.minX + period / 2
         while cx - r < rect.maxX + period {
@@ -33,18 +37,15 @@ struct TicketScallopMask: Shape {
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        // 우→좌로 걸으며 각 스캘럽에서 원호를 타고 위(파인 쪽)로 돈다 — 이 경로 자체가
-        // "마스크에 포함되는 영역"의 윤곽이라, 원호가 지나간 자리는 마스크 밖(= 투명)이 된다.
-        // ⚠ clockwise: true(2026-09-02 베타 「노치가 여전히 없는데」 — iOS 뒤집힌 좌표계에서
-        // addArc의 clockwise는 수학 감각과 반대다. false면 호가 아래(뷰 밖)로 볼록해져
-        // 경계에서 잘리고 직선만 남았다. 41차 이식 때 실기기 미검증으로 넘어간 결함).
+        path.addLine(to: CGPoint(x: rect.maxX, y: base))
+        // 우→좌로 걸으며 각 스캘럽에서 아래(발권지 쪽)로 볼록한 반원을 돈다.
+        // ⚠ y-down 좌표계에서 clockwise:false = 3시→6시(아래)→9시(repo CLAUDE.md 함정 항목)
         for cx in centers.reversed() {
-            path.addLine(to: CGPoint(x: cx + r, y: rect.maxY))
-            path.addArc(center: CGPoint(x: cx, y: rect.maxY), radius: r,
-                       startAngle: .degrees(0), endAngle: .degrees(180), clockwise: true)
+            path.addLine(to: CGPoint(x: cx + r, y: base))
+            path.addArc(center: CGPoint(x: cx, y: base), radius: r,
+                       startAngle: .degrees(0), endAngle: .degrees(180), clockwise: false)
         }
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: base))
         path.closeSubpath()
         return path
     }

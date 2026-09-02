@@ -192,7 +192,9 @@ struct SeasonCalendarView: View {
             if ThemeStore.chrome.ticketChrome, ticketHeroBottom > 0 {
                 VStack(spacing: 0) {
                     TicketHeroArtwork(phase: currentPhase, label: Self.ticketHeroLabel(monthStart))
-                        .frame(height: ticketHeroBottom)
+                        // +4 = 스캘럽 볼록분(지름 7.3의 반) — 유화 반원이 경계 아래로 매달린다
+                        // (2026-09-02 베타 「동글동글이가 위쪽」 재교정, TicketScallopMask 주석)
+                        .frame(height: ticketHeroBottom + 4)
                     Spacer(minLength: 0)
                 }
                 .ignoresSafeArea()
