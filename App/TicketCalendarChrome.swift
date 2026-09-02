@@ -36,10 +36,13 @@ struct TicketScallopMask: Shape {
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         // 우→좌로 걸으며 각 스캘럽에서 원호를 타고 위(파인 쪽)로 돈다 — 이 경로 자체가
         // "마스크에 포함되는 영역"의 윤곽이라, 원호가 지나간 자리는 마스크 밖(= 투명)이 된다.
+        // ⚠ clockwise: true(2026-09-02 베타 「노치가 여전히 없는데」 — iOS 뒤집힌 좌표계에서
+        // addArc의 clockwise는 수학 감각과 반대다. false면 호가 아래(뷰 밖)로 볼록해져
+        // 경계에서 잘리고 직선만 남았다. 41차 이식 때 실기기 미검증으로 넘어간 결함).
         for cx in centers.reversed() {
             path.addLine(to: CGPoint(x: cx + r, y: rect.maxY))
             path.addArc(center: CGPoint(x: cx, y: rect.maxY), radius: r,
-                       startAngle: .degrees(0), endAngle: .degrees(180), clockwise: false)
+                       startAngle: .degrees(0), endAngle: .degrees(180), clockwise: true)
         }
         path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
         path.closeSubpath()
