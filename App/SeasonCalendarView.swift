@@ -318,14 +318,10 @@ struct SeasonCalendarView: View {
                     .padding(.bottom, 14)   // 스캘럽과 조판 사이 여백(대표님 "여백 더 만들어")
                 ticketHeaderBlock
             } else if ThemeStore.chrome.playlistChrome {
-                // 플레이리스트 = 레코드판(시안 §4.4 ③, 2026-08-25 확정). 브랜드 표식·소식란은
-                // 상단 행 유지 — 디스크는 헤더 background로 위로 넘쳐 상단 반노출이 된다.
-                HStack {
-                    BrandMark(diameter: 22, color: Ink.text.opacity(0.75))
-                        .padding(.leading, 6)
-                    Spacer()
-                    noticeButton()
-                }
+                // 플레이리스트 = 레코드판(시안 §4.4 ③). 브랜드 표식은 라벨 각인 사이 중앙으로
+                // 이사(2026-09-02 "좌상단 심볼 빼고 LP판 안쪽 글씨 사이에 박아"), 소식란은
+                // 별도 줄을 걷고 **LP 위 오버레이**(흰 잉크) — 줄 하나(44pt)를 격자에 돌려주고
+                // 그만큼 LP 시각 비중이 준다("반이 넘게 노출" 해소의 본체).
                 PlaylistRecordHeader(
                     month: cal.component(.month, from: monthStart),
                     phase: currentPhase,
@@ -338,6 +334,7 @@ struct SeasonCalendarView: View {
                     onNext: { lightFeedback += 1; shiftMonth(1) },
                     onLog: { showLogSheet = true }   // 컨트롤 줄 우측(2026-09-02 재배치)
                 )
+                .overlay(alignment: .topTrailing) { noticeButton(tint: .white) }
                 .coachAnchor(.calendarLog)
             } else {
                 // 상단 순서 = 시안 `.cal-wrap .season-row { order:-1 }` 전 테마 공통(2026-08-23 대표님

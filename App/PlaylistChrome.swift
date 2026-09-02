@@ -188,10 +188,9 @@ struct PlaylistRecordHeader: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var spinning = false
 
-    // 시안 §4.4 ③ 치수
+    // 시안 §4.4 ③ 치수(라벨 118은 파스텔 바이닐 disc 안에 직접 — 2026-09-02)
     private let discSize: CGFloat = 256
     private let ringSize: CGFloat = 284
-    private let labelSize: CGFloat = 110
 
     private var progress: Double {
         trackLength > 0 ? min(1, Double(trackDay) / Double(trackLength)) : 0
@@ -201,12 +200,13 @@ struct PlaylistRecordHeader: View {
     var body: some View {
         typeStack
             .frame(maxWidth: .infinity)
-            // 디스크 보이는 몫 −8(2026-09-02 막줄 잘림 — 세로 절약)
-            .padding(.top, compact ? 76 : 96)
+            // LP 시각 비중 축소(2026-09-02 "반이 넘게 노출") — 본체는 소식란 줄 44pt를 걷어
+            // 헤더가 위로 올라간 것. 패딩은 +12(96→108/76→88): 라벨 각인·중앙 심볼이 화면에
+            // 남는 최소 노출(중심부가 세이프에어리어 위로 나가면 각인이 통째로 안 보인다).
+            .padding(.top, compact ? 88 : 108)
             .background(alignment: .top) {
-                // 디스크 −14 상향(2026-09-02 대표님 "LP판과 표제 사이 거리가 너무 가까워
-                // 조잡" — 노출을 줄여 표제와의 숨을 확보. 패딩 −8과 합쳐 간격 순증 +6)
-                discAssembly.offset(y: compact ? -220 : -200)
+                // |offset| = 296 − 패딩 관계 유지 — 디스크 하단 라인이 패딩을 따라간다
+                discAssembly.offset(y: compact ? -208 : -188)
             }
     }
 
@@ -290,6 +290,37 @@ struct PlaylistRecordHeader: View {
         .accessibilityLabel(label)
     }
 
+    /// 라벨 아치 각인(2026-09-02 파스텔 바이닐) — 문자를 원호에 한 자씩 세운다.
+    /// flipped = 아래 아치(6시 중심, 글자 머리가 중심을 향해 뒤집힘 — 레퍼런스 BTS 문법).
+    /// stepDegrees = 문자당 각도(폭 실측 대신 고정 근사 — 장식 각인이라 충분).
+    private struct ArcText: View {
+        let text: String
+        let radius: CGFloat
+        let size: CGFloat
+        let stepDegrees: Double
+        let flipped: Bool
+        let color: Color
+
+        var body: some View {
+            let chars = Array(text)
+            let total = Double(chars.count - 1) * stepDegrees
+            ZStack {
+                ForEach(chars.indices, id: \.self) { index in
+                    let angle = -total / 2 + Double(index) * stepDegrees
+                    Text(String(chars[index]))
+                        .font(RalewayFont.available
+                              ? .custom("RalewayRoman-Medium", size: size)
+                              : .system(size: size, weight: .medium))
+                        .foregroundStyle(color)
+                        .rotationEffect(.degrees(flipped ? 180 : 0))
+                        .offset(y: flipped ? radius : -radius)
+                        .rotationEffect(.degrees(flipped ? -angle : angle))
+                }
+            }
+            .accessibilityHidden(true)   // 장식 각인 — 정보는 조판이 담당
+        }
+    }
+
     // ── 디스크 어셈블리 — 회전 디스크 + 고정 진행 링·도트 + 톤암 ──
     private var discAssembly: some View {
         ZStack {
@@ -304,26 +335,36 @@ struct PlaylistRecordHeader: View {
         .accessibilityHidden(true)   // 장식 — 정보는 조판·시크바가 담당
     }
 
+    /// 파스텔 바이닐(2026-09-02 대표님 2차 레퍼런스 — 흰 판·계절색 라벨 은퇴).
+    /// 연한 계절 파스텔 판 + 밝은 라벨 + 라벨 아치 각인(계절 라틴명 / TEMPOROUTINE) +
+    /// 그 사이 중앙 = 브랜드 심볼(좌상단 표식을 여기로 이사 — "글씨 사이에 박아").
+    /// 각인·심볼이 디스크와 함께 돌아 회전이 저절로 보인다(민무늬 회전 불가시성의 답).
+    private static let vinylBase = Color.flatRGB(0xEB, 0xF1, 0xF4)
+    private static let labelBase = Color.flatRGB(0xF4, 0xF8, 0xFA)
+
     private var disc: some View {
         ZStack {
-            // 흰 판(2026-08-26 대표님 "LP판이랑 바깥라인 진행도 바 하얗게"). 종전 #202B34 폐기.
-            // ⚠ 흰 지면·흰 영상 위에서 판이 사라지지 않게 극세 잉크 테두리를 남긴다 —
-            // 없으면 실루엣이 통째로 증발한다(색만 바꾸면 판이 안 읽힌다).
-            Circle().fill(Color.white)
-                .overlay(Circle().stroke(Ink.text.opacity(0.12), lineWidth: 1))
-            // 그루브 — 흰 판이 됐으니 잉크 6%로 뒤집는다(흰 4.5%는 흰 판에서 안 보인다)
+            Circle().fill(Self.vinylBase)
+            Circle().fill(meta.color.opacity(0.30))
+            // 그루브 — 파스텔 위 흰 선(시안 rgba(255,255,255,.10) 대응)
             ForEach(0..<14, id: \.self) { ring in
-                Circle().stroke(Ink.text.opacity(0.06), lineWidth: 1.5)
-                    .frame(width: 122 + CGFloat(ring) * 9.5, height: 122 + CGFloat(ring) * 9.5)
+                Circle().stroke(Color.white.opacity(0.30), lineWidth: 1.5)
+                    .frame(width: 128 + CGFloat(ring) * 9, height: 128 + CGFloat(ring) * 9)
             }
-            // 라벨 = 계절색 원만(2026-08-26 베타 "레코드판 가운데의 사진은 빼" — 커버 사진 은퇴).
-            // 흰 판 위에서 계절을 말하는 유일한 색면이라 glow가 아니라 본색을 쓴다.
-            Circle().fill(meta.color)
-                .frame(width: labelSize, height: labelSize)
-                .overlay(Circle().stroke(Color.white.opacity(0.8), lineWidth: 3))
-            // 스핀들 — 흰 판에서 지면색(#E6EAEE)은 안 보인다. 잉크로 뒤집는다
-            Circle().fill(Ink.text.opacity(0.35))
-                .frame(width: 6, height: 6)
+            // 라벨 = 판보다 한 단 밝은 같은 톤(사진·본색 라벨 은퇴)
+            ZStack {
+                Circle().fill(Self.labelBase)
+                Circle().fill(meta.color.opacity(0.14))
+            }
+            .frame(width: 118, height: 118)
+            .overlay(Circle().stroke(Color.white.opacity(0.6), lineWidth: 1))
+            // 아치 각인 — 위 = 계절 라틴명, 아래 = 앱 각인(흰 잉크, 시안 동값)
+            ArcText(text: playlistTrackName(for: meta.phase), radius: 44, size: 15,
+                    stepDegrees: 12, flipped: false, color: .white.opacity(0.95))
+            ArcText(text: "TEMPOROUTINE", radius: 40, size: 8,
+                    stepDegrees: 10.5, flipped: true, color: .white.opacity(0.75))
+            // 중앙 = 브랜드 심볼(스핀들 겸 — 2026-09-02 "좌상단 심볼 빼고 글씨 사이에")
+            BrandMark(diameter: 24, color: .white.opacity(0.95))
         }
         .frame(width: discSize, height: discSize)
         .rotationEffect(.degrees(spinning ? 360 : 0))
