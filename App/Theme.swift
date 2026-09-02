@@ -46,6 +46,11 @@ enum AppTheme: String, CaseIterable, Identifiable {
         case .weather: Loc.str("날씨")
         }
     }
+
+    /// 일반 출고 여부(2026-09-02 대표님 "플레이리스트 테마를 다음 업데이트로 넘길게 개발자
+    /// 모드에만 남겨두자") — false면 테마 탭 목록·업적 분모에서 빠지고 개발자 모드에서만
+    /// 보인다. 코드·에셋은 전부 존치(다음 업데이트에서 이 한 줄만 되돌린다).
+    var shipped: Bool { self != .playlist }
 }
 
 private extension Color {

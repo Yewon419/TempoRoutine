@@ -84,6 +84,8 @@ struct ThemeShopView: View {
     /// 카드 목록에 적용되는 검색·필터 — 이름과 캡션 양쪽을 훑는다(대소문자·부분 일치)
     private var visibleThemes: [AppTheme] {
         AppTheme.allCases.filter { theme in
+            // 미출고 테마(플리) = 개발자 모드에서만(2026-09-02 대표님 — 다음 업데이트로 이월)
+            if !theme.shipped, !DevMode.active { return false }
             if let ownedFilter, isPlanted(theme) != ownedFilter { return false }
             let query = searchText.trimmingCharacters(in: .whitespaces)
             guard !query.isEmpty else { return true }
@@ -350,7 +352,8 @@ struct ThemeShopView: View {
     /// 첫 진입 안내 2단계가 가리킬 카드 — 값을 치르는 첫 테마 하나만 잡는다.
     /// 여러 카드에 같은 앵커를 붙이면 마지막 하나만 남아 엉뚱한 카드를 가리킨다(PreferenceKey reduce).
     private var coachTargetTheme: AppTheme? {
-        AppTheme.allCases.first { $0.seedPrice != nil }
+        // 보이는 목록 기준(2026-09-02) — 숨은 테마(미출고)를 가리키면 앵커가 허공에 뜬다
+        visibleThemes.first { $0.seedPrice != nil }
     }
 
     private func isPlanted(_ theme: AppTheme) -> Bool {

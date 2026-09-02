@@ -171,7 +171,9 @@ final class Achievements {
     /// 유료 테마 구매 직후(씨앗 심기·₩5,000 패스 공용). 0원 승계는 부르지 않는다.
     func themePurchased() {
         unlock(.firstTheme)
-        let paidThemes = AppTheme.allCases.filter { $0.seedPrice != nil }
+        // 미출고 테마(플리, 2026-09-02 이월)는 분모에서 뺀다 — 일반 사용자가 살 수 없는
+        // 테마가 끼면 「모든 테마」 업적이 영영 안 열린다
+        let paidThemes = AppTheme.allCases.filter { $0.seedPrice != nil && $0.shipped }
         if paidThemes.allSatisfy({ Seeds.owned.contains($0.rawValue) }) { unlock(.allThemes) }
     }
 
