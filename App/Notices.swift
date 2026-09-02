@@ -226,12 +226,18 @@ struct NoticesView: View {
         guard !trimmedFeedback.isEmpty else { return }
         // 개발자 모드 커맨드(2026-08-27, DevMode.swift) — 피드백이 아니라 토글이다.
         // 컨테이너 교체(루트 리빌드)는 앱 씬의 @AppStorage 관찰이 받아서 처리한다.
-        if trimmedFeedback == DevMode.command {
+        // 관대 판정(2026-09-03 대표님 "피드백보내기 바꾼 다음부터 개발자모드 활성화가 안돼")
+        // — 직송 전환 후 커맨드가 안 먹는 제보. 정확 일치만 받던 판정을 정규화(소문자·공백
+        // 제거)로 늘려 키보드 자동수정·공백 삽입 변형을 흡수하고, "//"로 시작하는 입력은
+        // 커맨드 오타로 보고 직송하지 않는다(커맨드가 피드백 DB로 새는 것 방지).
+        let normalized = trimmedFeedback.lowercased().replacingOccurrences(of: " ", with: "")
+        if normalized == DevMode.command {
             feedbackText = ""
             feedbackFocused = false
             devToggled = DevMode.toggle()
             return
         }
+        if normalized.hasPrefix("//") { return }   // 커맨드 오타 — 조용히 무시(전송 금지)
         feedbackFocused = false
         // 직송이 1차(2026-08-31 대표님 "메일 말고 바로 메세지처럼") — CloudKit 공개 DB.
         // iCloud 비로그인·실패만 종전 메일 경로로 떨어진다.
