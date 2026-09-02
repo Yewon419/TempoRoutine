@@ -19108,6 +19108,52 @@
         }
       }
     },
+    "캘린더 탭에서 생리 기록 숨기기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide period log on Calendar tab"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダータブで生理記録を隠す"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在日历标签页隐藏经期记录"
+          }
+        }
+      }
+    },
+    "캘린더 탭의 「생리 기록」 버튼이 숨겨져요. 기록은 여기서 할 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Period log button is hidden on the Calendar tab. You can log it here instead."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダータブの「生理記録」ボタンが隠れます。記録はここからできます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日历标签页的「经期记录」按钮将被隐藏，可以在这里记录。"
+          }
+        }
+      }
+    },
     "캘린더 가져오기": {
       "extractionState": "manual",
       "localizations": {

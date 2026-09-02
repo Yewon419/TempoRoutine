@@ -33,6 +33,9 @@ struct SettingsView: View {
     @State private var showCachePurgeConfirm = false
     /// 체험 종료 시트 직접 표시(임시 확인용) — 재실행 판정 경유 안 함
     @State private var showTrialEndSim = false
+    /// 생리 기록 프라이버시(2026-09-02 대표님) — 켜면 캘린더 탭 버튼이 숨고 설정이 진입점
+    @AppStorage("hideCalendarPeriodEntry") private var hidePeriodEntry = false
+    @State private var showPeriodSheet = false
     @State private var cacheBytes = 0
     /// 언어 변경 대기값(2026-08-22 대표님 "언어 바꾸면 앱 재시작") — 피커는 이 값에 묶고, 확인을
     /// 눌러야 저장·종료한다. @AppStorage에 직접 묶으면 종료 전에 루트 리빌드가 먼저 돌아 옛 언어
@@ -254,6 +257,30 @@ struct SettingsView: View {
                          ? Loc.str("알림이 꺼져 있어요. 설정에서 알림을 켜면 다시 고를 수 있어요.")
                          : Loc.str("브리핑은 일정 당일 아침 8시에, 생리 예측 알림은 예상일 전날과 당일에 한 번씩 알림이 가요."))
                         .foregroundStyle(Ink.groundSub)
+                }
+
+                // 생리 기록 프라이버시(2026-09-02 대표님 "캘린더 탭에서 생리 기록 숨기기") —
+                // 캘린더를 남에게 보일 때를 위한 스위치. 켜면 캘린더 탭의 「생리 기록」 버튼이
+                // 전 테마에서 숨고, 기록 진입은 아래 행이 대신한다(기능은 그대로).
+                Section {
+                    Toggle("캘린더 탭에서 생리 기록 숨기기", isOn: $hidePeriodEntry)
+                        .tint(Ink.text)
+                    if hidePeriodEntry {
+                        Button {
+                            showPeriodSheet = true
+                        } label: {
+                            HStack(spacing: 7) {
+                                Circle().fill(Ink.record).frame(width: 7, height: 7)
+                                Text("생리 기록")
+                            }
+                        }
+                        .foregroundStyle(Ink.text)
+                    }
+                } footer: {
+                    if hidePeriodEntry {
+                        Text("캘린더 탭의 「생리 기록」 버튼이 숨겨져요. 기록은 여기서 할 수 있어요.")
+                            .foregroundStyle(Ink.groundSub)
+                    }
                 }
 
                 // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)
@@ -519,6 +546,10 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showTrialEndSim) {
             TrialEndSheet { showTrialEndSim = false }.themeColorScheme()
+        }
+        // 생리 기록(2026-09-02) — 캘린더 버튼을 숨겼을 때의 진입점
+        .sheet(isPresented: $showPeriodSheet) {
+            PeriodTrackerSheet().themeColorScheme()
         }
         .confirmationDialog("캐시를 비울까요?", isPresented: $showCachePurgeConfirm, titleVisibility: .visible) {
             Button("비우기", role: .destructive) {

@@ -158,7 +158,10 @@ struct TicketStub: View {
                 .frame(width: 14)
             TicketBarcode()
         }
-        .frame(width: TicketSpec.stubWidth)
+        // 높이를 블록(150)에 못 박는다(2026-09-02 베타 「사진 옆에 점선 아랫칸으로 안넘어오게」
+        // — 뷰 높이가 콘텐츠(바코드) 기준이라 아래 절취선 Path(0→150)가 세로 중앙 배치에서
+        // 블록 밖 격자까지 흘러내렸다. 프레임 = Path 좌표계 기준이어야 한다)
+        .frame(width: TicketSpec.stubWidth, height: TicketSpec.headerHeight)
         .foregroundStyle(Ink.text)
         .overlay(alignment: .leading) {
             // 세로 절취선
@@ -180,7 +183,8 @@ struct TicketMonthHeader: View {
     let month: Int
     let seasonLine: String
     let phase: CyclePhase?
-    let onLogTap: () -> Void
+    /// nil = 생리 기록 버튼 없음(2026-09-02 숨기기 스위치 — 설정 행이 진입점)
+    let onLogTap: (() -> Void)?
 
     var body: some View {
         // 세로 중앙(2026-08-31 대표님 "아래 디자인 요소들 정렬, 위로 쏠린 느낌") — 도판·스텁은
@@ -211,8 +215,10 @@ struct TicketMonthHeader: View {
                 .font(.system(size: 11.5))
                 .foregroundStyle(Ink.text.opacity(0.7))
                 .lineLimit(1)
-            logButton
-                .padding(.top, 8)
+            if onLogTap != nil {
+                logButton
+                    .padding(.top, 8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.trailing, 13)
@@ -237,7 +243,7 @@ struct TicketMonthHeader: View {
 
     /// 생리 기록 = 알약이 아니라 직각 모노 라벨. 둥근 캡슐은 이 테마의 직각·모노 문법에서 튄다.
     private var logButton: some View {
-        Button(action: onLogTap) {
+        Button(action: onLogTap ?? {}) {
             HStack(spacing: 5) {
                 Circle().fill(Ink.record).frame(width: 6, height: 6)
                 Text("생리 기록")
