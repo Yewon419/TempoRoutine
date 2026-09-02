@@ -389,11 +389,12 @@ struct RootTabView: View {
     }
 }
 
-// ── 날씨 하단바 진회색 고정 3차(2026-09-03 베타 "제발 저 새하얀 하단바좀") ──
-// 43차 UIKit appearance도, 48차 구형 `.toolbarBackground(.visible, for:)`도 iOS 26 부유
-// 유리 바에서 무효 실측(빌드 596+ 스크린샷 — 바가 흰 유리 그대로). 3차 = iOS 18 신설
-// `toolbarBackgroundVisibility(_:for:)` — 구형 visible 지정과 별개 API로, 유리 바에 배경을
-// 강제하는 현행 정식 경로다. UIKit 분기는 존치(먹는 환경에선 항목색까지 잡아 준다).
+// ── 날씨 하단바 4차(2026-09-03, 빌드 612 실측 — 3차 toolbarBackgroundVisibility도 무효) ──
+// 실측 사실: 다른 탭은 검정(43차 UIKit appearance 유효), **캘린더 탭만** 흰 유리(베타
+// 「왜 캘린더탭만 가면 하얘질까」 — NavigationStack + 비스크롤 화면 조합에서 외관 지정이
+// 통째로 무시되는 iOS 26 회귀 정황). 날씨는 라이트 외관 강제(38차-b)라 무시되는 순간
+// **라이트 유리(뿌연 흰색)**가 드러난다. 4차 = 유리 재질 자체를 다크로 강제
+// (`toolbarColorScheme` — 배경 지정과 별개 축이라 배경이 무시돼도 어두운 유리가 남는다).
 private extension View {
     @ViewBuilder
     func skyTabBarPlate() -> some View {
@@ -401,6 +402,7 @@ private extension View {
             self
                 .toolbarBackground(Color.flatRGB(0x2A, 0x2F, 0x38), for: .tabBar)
                 .toolbarBackgroundVisibility(.visible, for: .tabBar)
+                .toolbarColorScheme(.dark, for: .tabBar)
         } else {
             self
         }
