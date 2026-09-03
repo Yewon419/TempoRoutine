@@ -94,6 +94,9 @@ jobs:
       - uses: Yewon419/chalkak@main
         with:
           app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          # 무서명 .app은 entitlements가 비어 CKContainer 초기화에서 죽는다(2026-09-04 실측, PlannerSync.start).
+          # TestFlight 잡의 ad-hoc 심기와 같은 처방을 찰칵이 설치 전에 한다.
+          entitlements: TempoRoutine.entitlements
           defaults: |
             onboardingDone -bool true
           screens: |
