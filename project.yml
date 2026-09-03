@@ -41,6 +41,9 @@ targets:
         INFOPLIST_KEY_UIBackgroundModes: remote-notification   # CloudKit 변경 푸시 수신(동기화)
         INFOPLIST_KEY_NSSupportsLiveActivities: YES   # 타이머·스톱워치 잠금화면(2026-08-09)
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO  # 자체 암호화 없음 — 수출 규정 질문 생략(ASC 실측)
+        # 구입 내역(2026-09-04) — 소모품(커피 한 잔)은 finish 하면 StoreKit 이력에서 지워지는 게
+        # 기본값이라, 이 키 없이는 설정 > 구입 내역에 커피가 한 줄도 안 뜬다(iOS 18+ 옵트인).
+        INFOPLIST_KEY_SKIncludeConsumableInAppPurchaseHistory: YES
         # EventKit 읽기(§3.6.1) — iOS 17+ 풀 액세스 필요, 의도는 fetch만
         INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: 기존 캘린더의 약속과 생일을 화면에 비추기 위해서만 읽어요. 기록이 밖으로 나가지 않아요.
         # HealthKit read-write 미러(§5.7) — 로컬이 단일 출처, Health는 미러

@@ -55,6 +55,16 @@ jobs:
           APP=$(find build/dd/Build/Products -maxdepth 3 -name "TempoRoutine.app" | head -1)
           echo "APP=$APP"
           find "$APP" -maxdepth 2 -name "*.lproj" -exec basename {} \; | sort
+      # ── 구입 내역 실측 (2026-09-04) ─────────────────────────────────────────────
+      # 소모품(커피) 이력 옵트인 키가 생성 Info.plist에 **불리언으로** 들어갔는지 본다.
+      # INFOPLIST_KEY_ 경로는 Xcode가 타입을 아는 키만 불리언으로 쓰고 모르는 키는 문자열로
+      # 떨어질 수 있다 — 문자열이면 StoreKit이 플래그를 못 읽어 커피 결제가 이력에서 조용히
+      # 빠진다(빌드는 그린). `=> 1`이면 불리언, `=> "YES"`면 문자열이라 다른 경로가 필요하다.
+      # 계측이지 게이트가 아니다(위 로컬라이제이션 실측과 같은 태도).
+      - name: 실측 — 소모품 구입 이력 옵트인 키
+        run: |
+          APP=$(find build/dd/Build/Products -maxdepth 3 -name "TempoRoutine.app" | head -1)
+          plutil -p "$APP/Info.plist" | grep -i "SKIncludeConsumable" || echo "⚠ 키가 Info.plist에 없음"
       # ② Xcode 공식 추출로 **런타임 키**를 뽑는다. Windows에선 추출을 못 돌려 카탈로그를
       #    손으로 쓰는데, 보간 문자열의 키(예: "\(n)일차" → "%lld일차")를 소스만 보고 단정할
       #    수 없다. 이 xliff가 그 정답지다 — 내려받아 카탈로그 키와 대조한다.

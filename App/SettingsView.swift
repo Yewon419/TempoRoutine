@@ -142,7 +142,8 @@ struct SettingsView: View {
     /// 설정 행 재질(2026-08-20 베타 피드백 "설정탭만 이질적" — 시안 `.list-group`은 그 테마의
     /// 카드 재질과 동일하다). nil = 시스템 insetGrouped 그대로(기본·포인트컬러·티켓).
     /// 활판은 채움 없음(§2.6 — 눌린 것은 면이 아니라 선), 행 구분은 세퍼레이터가 담당.
-    private static var themedRowGround: AnyView? {
+    /// 하위 화면(구입 내역)도 같은 재질을 쓴다 — 그래서 private이 아니다(2026-09-04).
+    static var themedRowGround: AnyView? {
         switch ThemeStore.chrome.settingsList {
         case .system: nil
         case .glass: AnyView(Rectangle().fill(.ultraThinMaterial).overlay { Ink.surface }
@@ -176,6 +177,16 @@ struct SettingsView: View {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
                     Text("매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!")
                         .foregroundStyle(Ink.groundSub)
+                }
+                // 구입 내역(2026-09-04 대표님 지시) — 결제(테마 패스·커피)와 씨앗 구매를 한 화면에.
+                // 시트가 아니라 push다: 이 body는 이미 시트·다이얼로그를 여럿 달고 있어
+                // 모디파이어를 더 늘리지 않는다(repo CLAUDE.md 타입체크 한계선) + 하위 화면 성격.
+                Section {
+                    NavigationLink {
+                        PurchaseHistoryView()
+                    } label: {
+                        Text("구입 내역").foregroundStyle(Ink.onSky)
+                    }
                 }
                 // 언어(2026-08-22 베타 피드백) — 확인하면 **그 자리에서 바뀐다**(번들 덮어쓰기 +
                 // RootTabView `.id(…appLanguage)` 리빌드). 종전엔 `exit(0)`으로 앱을 닫았는데,
