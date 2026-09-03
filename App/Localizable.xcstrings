@@ -898,6 +898,29 @@
         }
       }
     },
+    "%1$@ 테마 %2$@ 화면": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ theme, %2$@ screen"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@テーマ・%2$@画面"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@主题 · %2$@ 界面"
+          }
+        }
+      }
+    },
     "%1$@ 테마 미리보기": {
       "extractionState": "manual",
       "localizations": {

@@ -642,11 +642,77 @@ struct ThemePreviewScreen: View {
     let theme: AppTheme
     @Environment(\.dismiss) private var dismiss
     @AppStorage(PointColor.storageKey) private var pointColor = PointColor.vermilion.rawValue
+    @State private var page = 0
 
     private var p: ThemePalette { theme.palette(point: PointColor(rawValue: pointColor) ?? .vermilion) }
     private var chrome: ThemeChrome { theme.chrome }
 
+    /// 실기기 스크린샷 3종(2026-09-03 대표님 촬영분 — 상태바 잘라 720폭 JPEG로 번들).
+    /// 에셋이 없는 테마(플리 = 다음 업데이트 이월)는 종전 하드코딩 목업으로 폴백한다.
+    private var shots: [(name: String, label: String)] {
+        let stem = "ThemeShot" + theme.rawValue.prefix(1).uppercased() + theme.rawValue.dropFirst()
+        return [("Today", Loc.str("오늘")), ("Calendar", Loc.str("캘린더")), ("Rhythm", Loc.str("나의 템포"))]
+            .map { (stem + $0.0, $0.1) }
+            .filter { UIImage(named: $0.0) != nil }
+    }
+
     var body: some View {
+        Group {
+            if shots.isEmpty { mockup } else { gallery }
+        }
+        .presentationDragIndicator(.visible)
+        // 미리보는 테마의 colorScheme — 활성 테마(RootTabView 루트 값)가 아니라 이 시트가
+        // 보여주는 테마 기준이어야 한다(2026-08-19 베타 피드백).
+        .preferredColorScheme(chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil)
+    }
+
+    /// 스크린샷 갤러리(2026-09-03 대표님 지시 "테마 탭 미리보기 상세페이지에 스크린샷") —
+    /// 목업이 아무리 정교해도 실물만 못하다. 지면색 위에 실제 화면 3장을 좌우로 넘긴다.
+    private var gallery: some View {
+        ZStack(alignment: .top) {
+            ground
+            if chrome.skyGround { weatherGlow }
+            TabView(selection: $page) {
+                ForEach(Array(shots.enumerated()), id: \.offset) { index, shot in
+                    Image(shot.name)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .stroke(groundInk.opacity(0.14), lineWidth: 1)
+                        }
+                        .shadow(color: .black.opacity(0.14), radius: 14, y: 6)
+                        .padding(.horizontal, 26)
+                        .padding(.top, 30)
+                        .padding(.bottom, 52)   // 페이지 점 자리
+                        .tag(index)
+                        .accessibilityLabel(Loc.fmt("%1$@ 테마 %2$@ 화면", "\(theme.displayName)", shot.label))
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .always))
+            .indexViewStyle(.page(backgroundDisplayMode: .interactive))
+            closeButton
+        }
+    }
+
+    /// 닫기 — 목업·갤러리 공용(시트 기본 내림 제스처도 살아 있다)
+    private var closeButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "xmark.circle.fill")
+                .font(.title2)
+                .foregroundStyle(groundInk.opacity(0.5))
+        }
+        .padding(.top, 14)
+        .padding(.trailing, 16)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .accessibilityLabel("미리보기 닫기")
+    }
+
+    /// 종전 하드코딩 목업 — 스크린샷 에셋이 없는 테마의 폴백
+    private var mockup: some View {
         ZStack(alignment: .top) {
             ground
             if chrome.skyGround { weatherGlow }
@@ -659,25 +725,8 @@ struct ThemePreviewScreen: View {
                 tabBarMock
             }
             .padding(20)
-            // 닫기 — 목업 위 우상단(시트 기본 내림 제스처도 살아 있다)
-            .overlay(alignment: .topTrailing) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(groundInk.opacity(0.5))
-                }
-                .padding(.top, 14)
-                .padding(.trailing, 16)
-                .accessibilityLabel("미리보기 닫기")
-            }
+            .overlay(alignment: .topTrailing) { closeButton }
         }
-        .presentationDragIndicator(.visible)
-        // 미리보는 테마의 colorScheme — 활성 테마(RootTabView 루트 값)가 아니라 이 시트가
-        // 보여주는 테마 기준이어야 한다(2026-08-19 베타 피드백 — 시스템 다크에서 라이트
-        // 고정 테마를 미리볼 때 List·glassEffect 같은 시스템 컴포넌트만 검게 떨어졌다).
-        .preferredColorScheme(chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil)
     }
 
     /// 지면 — 티켓은 유화+스크림(오늘 탭과 동일 문법), 그 외는 팔레트 지면색
