@@ -46,7 +46,14 @@ enum Ink {
     /// `text` 저불투명 혼합이 묻혀 안 읽힌다 — 흰 계열로 올린다. 카드 **안** 활자는 해당 없음
     /// (카드는 흰 지면이라 종전 규칙이 맞다).
     /// 2026-08-18 2차: 설정은 티켓에서도 흰 지면이라 원복 — 소비처가 설정 헤더·풋터뿐이다.
-    static var groundSub: Color { text.opacity(0.55) }
+    /// 2026-09-03 3차: 날씨만 예외로 흰 계열(베타 「설정 글씨 흰색 통일 그리고 가독성 개선」)
+    /// — 설정 지면이 하늘이라 라이트 외관의 검정 잉크가 파란 하늘 위에서 안 읽혔다.
+    static var groundSub: Color {
+        ThemeStore.chrome.skyGround ? Color.white.opacity(0.72) : text.opacity(0.55)
+    }
+    /// 지면 위 본문 활자 — 날씨(하늘 지면)만 흰 잉크. 그 외는 팔레트 먹색 그대로.
+    /// 설정처럼 지면 위에 바로 앉는 글자에 쓴다(카드 안 활자는 해당 없음).
+    static var onSky: Color { ThemeStore.chrome.skyGround ? .white : text }
     /// 지면 위 활자 일반형(시안 티켓 흰 덮기 목록 2026-08-15 — 표제·일차·무드라인·날짜 도장 등).
     /// base = 다른 테마의 원래 색 / white = 사진 지면에서의 흰 불투명도(시안 color-mix 비율).
     static func onGround(_ base: Color, white: Double) -> Color {

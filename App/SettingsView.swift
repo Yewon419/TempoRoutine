@@ -163,13 +163,13 @@ struct SettingsView: View {
                         showThemeShop = true
                     } label: {
                         HStack {
-                            Text("테마").foregroundStyle(Ink.text)
+                            Text("테마").foregroundStyle(Ink.onSky)
                             Spacer()
                             Text((AppTheme(rawValue: appTheme) ?? .plain).displayName)
-                                .foregroundStyle(Ink.text.opacity(0.5))
+                                .foregroundStyle(Ink.onSky.opacity(0.5))
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.semibold))
-                                .foregroundStyle(Ink.text.opacity(0.35))
+                                .foregroundStyle(Ink.onSky.opacity(0.35))
                         }
                     }
                 } footer: {
@@ -197,7 +197,7 @@ struct SettingsView: View {
                             }
                         }
                     } label: {
-                        Text("언어").foregroundStyle(Ink.text)
+                        Text("언어").foregroundStyle(Ink.onSky)
                     }
                     .alert("언어를 바꿀까요?",
                            isPresented: Binding(get: { pendingLanguage != nil },
@@ -239,7 +239,7 @@ struct SettingsView: View {
                             testNoticeHint = Loc.str("5초 뒤에 와요. 앱을 홈으로 내려두세요 — 앱이 떠 있으면 배너가 안 보여요.")
                         }
                     }
-                    .foregroundStyle(Ink.text)
+                    .foregroundStyle(Ink.onSky)
                     if let hint = testNoticeHint {
                         Text(hint)
                             .font(.footnote)
@@ -247,7 +247,7 @@ struct SettingsView: View {
                     }
                     if notificationDenied {
                         Button("알림 설정 열기") { openAppSettings() }
-                            .foregroundStyle(Ink.text)
+                            .foregroundStyle(Ink.onSky)
                     }
                 } header: {
                     Text("알림")
@@ -274,7 +274,7 @@ struct SettingsView: View {
                                 Text("생리 기록")
                             }
                         }
-                        .foregroundStyle(Ink.text)
+                        .foregroundStyle(Ink.onSky)
                     }
                 } footer: {
                     if hidePeriodEntry {
@@ -294,7 +294,7 @@ struct SettingsView: View {
                     if mirror.available {
                         // 읽기 권한 재요청은 애플이 막음(§5.7) — 설정 앱 원탭 이동이 최선(2026-07-24)
                         Button("건강 권한 설정 열기") { openAppSettings() }
-                            .foregroundStyle(Ink.text)
+                            .foregroundStyle(Ink.onSky)
                     }
                 } header: {
                     Text("건강 앱")
@@ -327,7 +327,7 @@ struct SettingsView: View {
                             lightFeedback += 1
                             Task { await PlannerSync.shared.syncNow() }
                         }
-                        .foregroundStyle(Ink.text)
+                        .foregroundStyle(Ink.onSky)
                     }
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
@@ -350,7 +350,7 @@ struct SettingsView: View {
                         lightFeedback += 1
                         CoachStore.resetAll()
                     }
-                    .foregroundStyle(Ink.text)
+                    .foregroundStyle(Ink.onSky)
                     // 온보딩 다시 보기(2026-08-01 베타 피드백) — 앱 삭제·재설치 없이 첫 안내를 다시 본다.
                     // 기록은 건드리지 않는다(플래그만 내림) — 온보딩에서 기준일을 다시 적으면 그때 반영.
                     Button("온보딩 다시 보기") {
@@ -360,7 +360,7 @@ struct SettingsView: View {
                         UserDefaults.standard.set(true, forKey: "onboardingRevisit")
                         onboardingDone = false
                     }
-                    .foregroundStyle(Ink.text)
+                    .foregroundStyle(Ink.onSky)
                 } header: {
                     Text("다시 보기")
                         .foregroundStyle(Ink.groundSub)
@@ -373,7 +373,7 @@ struct SettingsView: View {
                         lightFeedback += 1
                         showSelfReport = true
                     }
-                    .foregroundStyle(Ink.text)
+                    .foregroundStyle(Ink.onSky)
                 } footer: {
                     // 「이전 설문 확인」은 별도 화면 없이 다시 하기에 합쳐졌다(2026-08-24 대표님
                     // 지시) — 다시 하기를 누르면 이전 응답이 채워진 채 열린다.
@@ -387,9 +387,9 @@ struct SettingsView: View {
                 // (2026-08-12 정보 구조 재편 — 「내 기록이 어디 있나」 맥락끼리 인접).
                 Section {
                     Button("JSON으로 내보내기") { exportData() }
-                        .foregroundStyle(Ink.text)
+                        .foregroundStyle(Ink.onSky)
                     Button("백업 가져오기") { showImporter = true }
-                        .foregroundStyle(Ink.text)
+                        .foregroundStyle(Ink.onSky)
                     // 캐시 비우기(2026-08-25) — 온디맨드 테마 미디어. 기록이 아니라 재다운로드
                     // 가능한 파생물이라 파괴적 섹션이 아니라 데이터 섹션에 둔다(확인 1단).
                     Button {
@@ -402,13 +402,13 @@ struct SettingsView: View {
                                 .foregroundStyle(Ink.groundSub)
                         }
                     }
-                    .foregroundStyle(Ink.text)
+                    .foregroundStyle(Ink.onSky)
                     .disabled(cacheBytes == 0)
                     // 심사 지침 5.1.1(i)은 ASC 메타데이터뿐 아니라 **앱 안에서도** 처리방침에
                     // 닿을 수 있기를 요구한다(2026-08-12). 데이터 섹션에 두는 이유 = 내보내기·
                     // 삭제와 같은 "내 기록이 어디 있나" 맥락.
                     Link("개인정보 처리방침", destination: Self.privacyPolicyURL)
-                        .foregroundStyle(Ink.text)
+                        .foregroundStyle(Ink.onSky)
                 } header: {
                     Text("데이터")
                         .foregroundStyle(Ink.groundSub)
@@ -438,7 +438,7 @@ struct SettingsView: View {
                         defaults.removeObject(forKey: ThemeTrial.reviewAskedKey)
                         showTrialEndSim = true
                     }
-                    .foregroundStyle(Ink.text)
+                    .foregroundStyle(Ink.onSky)
                 } footer: {
                     Text(Loc.str("확인용 임시 버튼이에요. 확인이 끝나면 제거할게요."))
                         .foregroundStyle(Ink.groundSub)
@@ -469,7 +469,7 @@ struct SettingsView: View {
                         Button(Loc.str("개발자 모드 종료")) {
                             DevMode.toggle()
                         }
-                        .foregroundStyle(Ink.text)
+                        .foregroundStyle(Ink.onSky)
                     } footer: {
                         Text(Loc.str("지금은 개발자 모드예요. 기록과 분리된 스토어를 쓰고 있고, 동기화·건강 연동·위젯·알림은 쉬는 중이에요."))
                             .foregroundStyle(Ink.groundSub)
@@ -528,6 +528,9 @@ struct SettingsView: View {
             .ignoresSafeArea()
         }
         .navigationTitle("설정")
+        // 큰 제목 「설정」은 시스템 라벨색이라 하늘 지면에서 검정으로 떨어진다 — 날씨만 흰
+        // 잉크로 뒤집는다(2026-09-03 베타 「설정 글씨 흰색 통일」. 다른 테마는 종전 그대로)
+        .toolbarColorScheme(ThemeStore.chrome.skyGround ? .dark : nil, for: .navigationBar)
         .sheet(item: Binding(
             get: { shareURL.map(ShareFile.init) },
             set: { if $0 == nil { shareURL = nil } }

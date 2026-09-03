@@ -1056,8 +1056,9 @@ struct ThemePreview: View {
                     Circle().fill(p.winter).frame(width: 7, height: 7)
                 }
             }
-            innerCard(p)
-                .frame(height: 46)
+            // 안쪽 표본 행 폐기(2026-09-03 대표님 "미리보기 위의 미리보기가 크게 의미가 없는
+            // 것 같아 8월 2026 컬러네개 이것만 남겨놓고 그 아래는 없애도될듯") — 실물은 이제
+            // 미리보기 갤러리(스크린샷)가 보여준다. 카드는 서체·지면·계절색만 말한다.
         }
         .padding(12)
         .background { ground(p) }
@@ -1094,29 +1095,8 @@ struct ThemePreview: View {
         }
     }
 
-    /// 안쪽 표본 행 — 플레이리스트만 리퀴드 글래스, 그 외는 팔레트 표면
-    @ViewBuilder
-    private func innerCard(_ p: ThemePalette) -> some View {
-        let row = HStack(spacing: 8) {
-            Circle().fill(p.accent).frame(width: 9, height: 9)
-            VStack(alignment: .leading, spacing: 4) {
-                Capsule().fill(groundInk(p).opacity(0.55)).frame(width: 64, height: 5)
-                Capsule().fill(groundInk(p).opacity(0.25)).frame(width: 96, height: 5)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        if chrome.liquidGlassCards {
-            row.playlistGlass(radius: 9)
-        } else {
-            row.background {
-                RoundedRectangle(cornerRadius: 9)
-                    .fill(p.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 9).stroke(p.accent.opacity(0.18), lineWidth: 1))
-            }
-        }
-    }
+    // ⚠ `innerCard` 삭제(2026-09-03 대표님 "그 아래는 없애도될듯") — 카드 안의 표본 행은
+    // 스크린샷 갤러리가 생기면서 「미리보기 위의 미리보기」가 됐다. 되살릴 땐 그때 문법으로.
 }
 
 // ── 체험 종료 선택 시트(2026-08-19 사용자 결정) — 기본·은필 중 하나를 골라 영구 보유 ──
