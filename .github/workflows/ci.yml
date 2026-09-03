@@ -87,6 +87,21 @@ jobs:
           name: localizations
           path: build/loc
           if-no-files-found: warn
+      # ── 찰칵: 시뮬레이터 스크린샷 (2026-09-04) ─────────────────────────────
+      # 위에서 만든 무서명 .app을 시뮬레이터에 올려 탭별로 찍는다. TestFlight 없이 진짜 렌더링을
+      # 아티팩트(screenshots)로 본다. 화면 이동은 런치 인자(argument 도메인)·defaults 주입뿐,
+      # 앱 코드 무수정. 첫 실측이라 fail-on-crash 끔. 죽으면 summary.md에 「죽음」으로 남는다.
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          defaults: |
+            onboardingDone -bool true
+          screens: |
+            today    | -rootTab today
+            calendar | -rootTab calendar
+            rhythm   | -rootTab rhythm
+            settings | -rootTab settings
+          fail-on-crash: 'false'
 
   testflight:
     name: TestFlight upload (archive + cloud signing)
