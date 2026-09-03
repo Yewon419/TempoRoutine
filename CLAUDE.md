@@ -12,6 +12,9 @@
   default.store로 복귀. 재도전은 맥+시뮬레이터 확보 후에만.
 - CI는 컴파일·순수 로직만 검증한다. SwiftData 스키마·권한·제스처 같은 런타임 동작은
   TestFlight 실기기 확인 전까지 "완료"가 아니다.
+  단 **렌더링(레이아웃·색·폰트·다크)은 CI 찰칵 스텝의 `screenshots` 아티팩트로 push마다 확인 가능**
+  (2026-09-04, `Yewon419/chalkak`). 시뮬 빌드는 ad-hoc 서명(`CODE_SIGN_IDENTITY=-`) 필수 —
+  무서명이면 entitlements 섹션이 없어 CKContainer 초기화에서 죽는다. 화면 추가는 ci.yml `screens` 줄.
 - 연관값 enum을 저장·직렬화할 땐 discriminator 커스텀 Codable (§5.5.1, 실기기 실측 결함).
 - **연관값 enum·복합 Codable 값은 `@Model` 저장 프로퍼티로 직접 두지 않는다** — SwiftData
   composite 처리에서 실기기 크래시(2026-07-20 앱 충돌). `Data` 인코딩 저장 + computed 노출
