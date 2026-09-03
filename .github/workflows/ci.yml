@@ -37,15 +37,18 @@ jobs:
         run: brew install xcodegen
       - name: Generate project
         run: xcodegen generate
-      - name: Build (simulator, unsigned)
+      - name: Build (simulator, ad-hoc signed)
         run: |
           set -o pipefail
+          # ad-hoc 서명(2026-09-04). 시뮬용 entitlements는 링크 시점에 __TEXT,__entitlements 섹션으로
+          # 들어가는데 CODE_SIGNING_ALLOWED=NO면 그 섹션이 없어 CKContainer 초기화가 트랩한다(찰칵 실측).
+          # 빌드 뒤 codesign --entitlements 주입은 taskgated가 SIGKILL 하므로 불가. 인증서·프로파일 불요.
           xcodebuild build \
             -project TempoRoutine.xcodeproj \
             -scheme TempoRoutine \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/dd \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO
 
       # ── 로컬라이제이션 실측 (2026-08-20, en·ja 이관) ────────────────────────────
       # ① 번들에 언어가 실제로 들어갔는지: String Catalog는 컴파일돼 <lang>.lproj로 떨어진다.
@@ -94,9 +97,6 @@ jobs:
       - uses: Yewon419/chalkak@main
         with:
           app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
-          # 무서명 .app은 entitlements가 비어 CKContainer 초기화에서 죽는다(2026-09-04 실측, PlannerSync.start).
-          # TestFlight 잡의 ad-hoc 심기와 같은 처방을 찰칵이 설치 전에 한다.
-          entitlements: TempoRoutine.entitlements
           defaults: |
             onboardingDone -bool true
           screens: |
