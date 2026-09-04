@@ -13567,6 +13567,29 @@
         }
       }
     },
+    "아픈 곳이 있어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something hurts"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "痛いところがあります"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有不舒服的地方"
+          }
+        }
+      }
+    },
     "악기 연주": {
       "extractionState": "manual",
       "localizations": {
@@ -17710,6 +17733,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "没有符合条件的主题。"
+          }
+        }
+      }
+    },
+    "조금 그래요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little more"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "少しそうなります"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有一点"
           }
         }
       }

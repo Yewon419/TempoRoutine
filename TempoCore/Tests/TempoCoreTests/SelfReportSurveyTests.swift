@@ -39,11 +39,22 @@ final class SelfReportSurveyTests: XCTestCase {
     func testModalityRawRange() {
         let emotionalHeavy = ["Q1": "worse", "Q2": "worse", "Q3": "worse",
                               "Q4": "same", "Q5": "same", "Q6": "same", "Q9": "much"]
-        XCTAssertEqual(SelfReportScoring.score(emotionalHeavy).modalityRaw, 3)
+        XCTAssertEqual(SelfReportScoring.score(emotionalHeavy).modalityRaw, 6)
 
         let bodilyHeavy = ["Q1": "same", "Q2": "same", "Q3": "same",
                            "Q4": "worse", "Q5": "worse", "Q6": "worse", "Q9": "much"]
-        XCTAssertEqual(SelfReportScoring.score(bodilyHeavy).modalityRaw, -3)
+        XCTAssertEqual(SelfReportScoring.score(bodilyHeavy).modalityRaw, -6)
+    }
+
+    /// 중간 선택지(2026-09-04) — 「조금 그래요」는 문항당 1점. 0으로 접히면 답이 사라진다.
+    func testSomewhatCountsAsHalf() {
+        let mid = ["Q1": "somewhat", "Q2": "somewhat", "Q3": "somewhat",
+                   "Q4": "same", "Q5": "same", "Q6": "same", "Q9": "much"]
+        XCTAssertEqual(SelfReportScoring.score(mid).modalityRaw, 3)
+
+        let mixed = ["Q1": "worse", "Q2": "somewhat", "Q3": "same",
+                     "Q4": "somewhat", "Q5": "same", "Q6": "same", "Q9": "much"]
+        XCTAssertEqual(SelfReportScoring.score(mixed).modalityRaw, 2)   // (2+1+0) − (1+0+0)
     }
 
     /// 루바토가 진폭 판정보다 먼저다 — 모르겠다고 답한 사람을 비바체로 밀지 않는다.

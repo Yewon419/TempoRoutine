@@ -38,6 +38,10 @@ struct SelfReportFlow: View {
     /// 문항이 하나뿐인 장 — 선택이 곧 그 장의 답이라 「다음」을 한 번 더 누를 이유가 없다
     /// (2026-08-12 베타 피드백 "선택하면 다음 안눌러도 넘어가게"). 1장 = 캘리브레이션 단문항.
     private var isSingleQuestionStep: Bool { step == 1 }
+    /// 자동 진행을 이미 태운 장(2026-09-04 베타 "바로 넘어가는 건 최초 한번만 답 바꾸려고
+    /// 이전 눌러서 재접근하면 자동넘어가기는 꺼줘"). 답을 고치러 돌아온 사람을 다시 밀어내면
+    /// 고칠 방법이 없다.
+    @State private var autoAdvancedSteps: Set<Int> = []
 
     var body: some View {
         NavigationStack {
@@ -244,11 +248,13 @@ struct SelfReportFlow: View {
     /// 한 박자 늦추는 이유 = 고른 표시(라디오 채움)를 보고 넘어가야 무엇을 골랐는지 남는다.
     private func select(question: SurveyQuestion, choice: SurveyChoice, wasSelected: Bool) {
         answers[question.id] = wasSelected ? nil : choice.value
-        guard !wasSelected, isSingleQuestionStep else { return }
+        guard !wasSelected, isSingleQuestionStep, !autoAdvancedSteps.contains(step) else { return }
+        let armedStep = step
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 260_000_000)
             // 사이에 사용자가 직접 넘겼거나 답을 지웠으면 손대지 않는다
-            guard isSingleQuestionStep, canAdvance else { return }
+            guard step == armedStep, isSingleQuestionStep, canAdvance else { return }
+            autoAdvancedSteps.insert(armedStep)
             advance()
         }
     }

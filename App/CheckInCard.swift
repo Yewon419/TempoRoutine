@@ -21,6 +21,9 @@ struct CheckInCard: View {
     @State private var draftAppetite = 0
     @State private var draftNote = ""
     @State private var draftSymptoms: Set<CheckInSymptom> = []   // 아픈 날 증상(2026-09-01)
+    /// 증상 칩 펼침(2026-09-04 베타 "아픈곳 저렇게 바로 노출하지 말고") — 기본은 접힘.
+    /// 이미 적어 둔 증상이 있으면 로드 때 펼친다(기록이 있는데 안 보이면 안 된다).
+    @State private var symptomsExpanded = false
     @State private var draftLoaded = false
     @State private var seedEarned = 0   // 씨앗 획득 연출 트리거(2026-08-09)
 
@@ -162,20 +165,36 @@ struct CheckInCard: View {
         }
     }
 
-    /// 증상 칩 행 — 3탭 척도 행과 같은 조판(라벨 좌·칩 우, 안 들어가면 세로 폴백)이되 다중 선택.
-    /// 중간값 롱프레스 없음 — 증상은 있다/없다이지 정도가 아니다.
+    /// 증상 행 — **접혀 있다가 눌러야 펼쳐진다**(2026-09-04 베타 "아픈곳 저렇게 바로 노출하지
+    /// 말고 … 버튼 클릭 시 아래에 띄워줘"). 아픈 날은 드물어서 매일 다섯 개를 펼쳐 두면
+    /// 체크인 카드가 증상 목록처럼 읽힌다. 중간값 롱프레스 없음 — 증상은 있다/없다이지 정도가 아니다.
     private var symptomRow: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
-                checkInLabel(Loc.str("아픈 곳은")).frame(width: 108, alignment: .leading)
-                symptomChips
-                Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeOut(duration: 0.18)) { symptomsExpanded.toggle() }
+            } label: {
+                HStack(spacing: 6) {
+                    checkInLabel(Loc.str("아픈 곳이 있어요"))
+                    if !draftSymptoms.isEmpty {
+                        Text(verbatim: "\(draftSymptoms.count)")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Ink.paper)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Ink.text, in: Capsule())
+                    }
+                    Image(systemName: symptomsExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Ink.text.opacity(0.4))
+                    Spacer(minLength: 0)
+                }
             }
-            VStack(alignment: .leading, spacing: 6) {
-                checkInLabel(Loc.str("아픈 곳은"))
-                // 세로 폴백도 칩 5개를 한 줄 HStack에 두면 영어(Cold·Fever·aches·Upset stomach·
-                // Muscle ache·Headache ≈ 422pt > 카드 330pt)에서 카드 폭을 넘고, 그 폭이 오늘 탭
-                // VStack 전체로 전파돼 centeredColumn이 화면 밖으로 양쪽 균등히 밀어냈다
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(symptomsExpanded ? .isSelected : [])
+            if symptomsExpanded {
+                // 칩 5개를 한 줄 HStack에 두면 영어(Cold·Fever·aches·Upset stomach·Muscle ache·
+                // Headache ≈ 422pt > 카드 330pt)에서 카드 폭을 넘고, 그 폭이 오늘 탭 VStack
+                // 전체로 전파돼 centeredColumn이 화면 밖으로 양쪽 균등히 밀어냈다
                 // (2026-09-04 찰칵 실측 + 실기기 영어 재현). 줄바꿈 흐름으로 폭 안에 가둔다.
                 ChipFlow(spacing: 8, rowSpacing: 6) {
                     symptomChips
@@ -235,6 +254,7 @@ struct CheckInCard: View {
             draftSleep = existing.sleep ?? 0
             draftAppetite = existing.appetite ?? 0
             draftSymptoms = existing.symptomSet
+            symptomsExpanded = !draftSymptoms.isEmpty   // 적어 둔 게 있으면 펼친 채로 연다
             draftNote = existing.note ?? ""
         }
     }

@@ -46,8 +46,11 @@ public enum SelfReportSurvey {
         SurveyChoice("unknown", "잘 모르겠어요"),
     ]
 
+    /// 2026-09-04 베타("중간에 조금 그래요 추가") — 이진 척도에 중간값을 넣는다.
+    /// 순서는 강도 내림차순. 옛 응답(worse·same)은 값이 그대로라 그대로 읽힌다.
     private static let symptomChoices = [
         SurveyChoice("worse", "심해져요"),
+        SurveyChoice("somewhat", "조금 그래요"),
         SurveyChoice("same", "비슷해요"),
     ]
 
@@ -159,7 +162,9 @@ public enum SelfReportSurvey {
 /// 루바토라는 이름을 공유하지만 산출 경로가 다르므로 같은 필드에 담지 말 것(MASTER §3.11).
 public struct SelfReportResult: Equatable, Sendable {
     public let type: RhythmType
-    public let modalityRaw: Int      // (Q1+Q2+Q3) − (Q4+Q5+Q6), 범위 [-3, +3]
+    /// (Q1+Q2+Q3) − (Q4+Q5+Q6), 범위 [-6, +6].
+    /// 2026-09-04 중간 선택지 도입으로 문항당 0·1·2가 됐다(종전 0·1, 범위 [-3, +3]).
+    public let modalityRaw: Int
 
     public init(type: RhythmType, modalityRaw: Int) {
         self.type = type
@@ -168,15 +173,22 @@ public struct SelfReportResult: Equatable, Sendable {
 }
 
 public enum SelfReportScoring {
-    /// 이진 척도라 "심해져요"의 개수가 곧 계열 점수다.
-    private static func binary(_ value: String?) -> Int { value == "worse" ? 1 : 0 }
+    /// 문항당 강도 점수 — 심해져요 2 · 조금 그래요 1 · 비슷해요(무응답) 0.
+    /// 중간 선택지를 0으로 접으면 그 답이 계열 점수에서 통째로 사라진다(2026-09-04).
+    private static func weight(_ value: String?) -> Int {
+        switch value {
+        case "worse": 2
+        case "somewhat": 1
+        default: 0
+        }
+    }
 
     private static let vivaceAnswers: Set<String> = ["much", "total"]
     private static let andanteAnswers: Set<String> = ["same", "slight"]
 
     public static func score(_ answers: [String: String]) -> SelfReportResult {
-        let emotional = binary(answers["Q1"]) + binary(answers["Q2"]) + binary(answers["Q3"])
-        let bodily = binary(answers["Q4"]) + binary(answers["Q5"]) + binary(answers["Q6"])
+        let emotional = weight(answers["Q1"]) + weight(answers["Q2"]) + weight(answers["Q3"])
+        let bodily = weight(answers["Q4"]) + weight(answers["Q5"]) + weight(answers["Q6"])
         return SelfReportResult(type: resolveType(answers), modalityRaw: emotional - bodily)
     }
 
