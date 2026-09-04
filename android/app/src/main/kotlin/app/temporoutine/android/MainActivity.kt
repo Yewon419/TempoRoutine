@@ -1,23 +1,29 @@
 package app.temporoutine.android
 
+import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import app.temporoutine.core.CyclePredictor
+import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import app.temporoutine.android.theme.TempoTheme
+import app.temporoutine.android.today.TodayRoute
+import kotlinx.coroutines.launch
 
-// Phase 0 껍데기 — tempocore 링크가 앱 모듈까지 닿는지만 본다. 화면은 Phase 1부터.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        val app = application as TempoApp
+        val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        if (debuggable && intent.getBooleanExtra("seedSample", false)) {
+            lifecycleScope.launch { DevSampleData.seed(app) }
+        }
+        // 디버그 검증용 진입(캘린더 탭의 「생리 기록」 버튼은 Phase 2) — `--ez openLogSheet true`
+        val openSheet = debuggable && intent.getBooleanExtra("openLogSheet", false)
         setContent {
-            val spans = CyclePredictor.phaseSpans(cycleLength = 28)
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = spans.joinToString { "${it.phase}:${it.startDay}+${it.length}" })
+            TempoTheme {
+                TodayRoute(app, openLogSheetInitially = openSheet)
             }
         }
     }

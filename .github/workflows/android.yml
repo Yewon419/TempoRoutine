@@ -20,7 +20,7 @@ on:
 
 jobs:
   android:
-    name: tempocore test + app assembleDebug
+    name: tempocore test + app unit test + assembleDebug
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,6 +35,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: tempocore test
         run: ./gradlew :tempocore:test --console=plain
+      - name: app unit test (CycleSnapshot·EnergyProfile·MoodlinePool·Seeds·Occurrence)
+        run: ./gradlew :app:testDebugUnitTest --console=plain
       - name: app assembleDebug
         run: ./gradlew :app:assembleDebug --console=plain
       - name: Upload test reports

@@ -1,4 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- iOS 확정 카피 그대로(한글 = 키이자 값). 화면 문자열은 예외 없이 여기서 — 리터럴 금지(iOS Loc 규칙 승계). -->
 <resources>
     <string name="app_name">템포루틴</string>
+
+    <!-- 오늘 헤더·상태 -->
+    <string name="today_day_in_phase">%1$d일차</string>
+    <string name="today_badge_prediction">예측 기반</string>
+    <string name="today_badge_projected">예상</string>
+    <string name="today_period_toggle">생리 기록</string>
+    <string name="today_cold_title">계절 기록 전</string>
+    <string name="today_cold_body">첫 생리 시작일을 기록하면, 당신의 계절이 시작돼요.</string>
+    <string name="today_cold_cta">첫 생리일 기록</string>
+    <string name="today_overdue">예정일에서 %1$d일이 지났어요. 리듬은 늘 조금씩 다르니, 생리가 시작되면 캘린더에서 기록해 주세요.</string>
+    <string name="seeds_count_a11y">씨앗 %1$d개</string>
+
+    <!-- 구획 -->
+    <string name="section_schedule">일정</string>
+    <string name="section_input" translatable="false">Input</string>
+    <string name="section_output" translatable="false">Output</string>
+    <string name="section_schedule_info">약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요.</string>
+    <string name="section_input_info">식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요.</string>
+    <string name="section_output_info">프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?</string>
+    <string name="section_info_a11y">%1$s 설명</string>
+    <string name="ok">확인</string>
+    <string name="empty_none">아직 없어요</string>
+    <string name="empty_output_cold">생리를 기록하면 계획이 보이기 시작해요.</string>
+    <string name="all_day">종일</string>
+    <string name="span_day_index">%1$d/%2$d일차</string>
+    <string name="done">완료</string>
+    <string name="not_done">미완료</string>
+    <string name="check">체크</string>
+    <string name="delete">삭제</string>
+    <string name="cancel">취소</string>
+    <string name="delete_confirm_body">이 항목과 기록이 함께 지워져요. 되돌릴 수 없어요.</string>
+    <string name="row_hint">탭하면 수정, 길게 누르면 삭제할 수 있어요</string>
+    <string name="dday_until">목표일까지 %1$d일</string>
+    <string name="dday_past">목표일에서 %1$d일 지남</string>
+    <string name="session_progress">세션 진행</string>
+    <string name="sessions_of">%1$s / %2$s 세션</string>
+    <string name="sessions_only">%1$s 세션</string>
+    <string name="timer_pause">일시정지</string>
+    <string name="timer_start">시작</string>
+    <string name="timer_reset">초기화</string>
+
+    <!-- 체크인 -->
+    <string name="checkin_title_today">오늘의 체크인</string>
+    <string name="checkin_title_day">이날의 체크인</string>
+    <string name="checkin_energy">에너지는</string>
+    <string name="checkin_energy_low">낮음</string>
+    <string name="checkin_mid">보통</string>
+    <string name="checkin_energy_high">높음</string>
+    <string name="checkin_mood">기분은</string>
+    <string name="checkin_mood_low">흐림</string>
+    <string name="checkin_mood_high">맑음</string>
+    <string name="checkin_sleep">지난밤 잠은</string>
+    <string name="checkin_sleep_low">뒤척임</string>
+    <string name="checkin_sleep_high">푹 잤어요</string>
+    <string name="checkin_appetite">식욕은</string>
+    <string name="checkin_appetite_low">없음</string>
+    <string name="checkin_appetite_high">좋음</string>
+    <string name="checkin_symptoms">아픈 곳은</string>
+    <string name="symptom_cold">감기</string>
+    <string name="symptom_fever">몸살·열</string>
+    <string name="symptom_stomach">배탈</string>
+    <string name="symptom_muscle">근육통</string>
+    <string name="symptom_headache">두통</string>
+    <string name="symptom_a11y">증상 %1$s</string>
+    <string name="checkin_half_a11y">이전 항목과의 중간</string>
+    <string name="checkin_half_action">중간값으로</string>
+    <string name="checkin_note_today">오늘 한 줄</string>
+    <string name="checkin_note_day">그날 한 줄</string>
+    <string name="checkin_note_prompt">하루를 간단히 남겨봐요</string>
+    <string name="checkin_confirm_today">오늘 기록이 나의 템포에 담겼어요.</string>
+    <string name="checkin_confirm_day">이날 기록이 나의 템포에 담겼어요.</string>
+
+    <!-- 생리 기록 시트 -->
+    <string name="sheet_title">생리 기록</string>
+    <string name="sheet_confirm">완료</string>
+    <string name="sheet_pick_date">날짜 선택</string>
+    <string name="sheet_day_today">%1$s, 오늘</string>
+    <string name="sheet_a11y_recorded">, 생리 기록됨</string>
+    <string name="sheet_a11y_future">, 미래</string>
+    <string name="sheet_a11y_toggle_hint">이중 탭으로 생리 기록 전환</string>
+    <string name="sheet_record_section">기록</string>
+    <string name="sheet_period">생리</string>
+    <string name="sheet_recorded">기록됨</string>
+    <string name="sheet_not_recorded">기록 없음</string>
+    <string name="sheet_condition">컨디션</string>
 </resources>

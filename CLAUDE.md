@@ -165,3 +165,15 @@
   단 파이썬 생성 픽스처는 명시 null을 담고 있어 비교 시 부재와 동형으로 본다.
 - Android 변경은 `android.yml`(Linux)만 돈다 — `ci.yml`(macOS)은 `android/**`를 무시한다.
   커밋은 이 리포 규칙대로 명시 경로(`git add android/ .github/workflows/android.yml …`).
+- **검증 루프(Phase 1부터):** `gradlew :app:assembleDebug` → `adb install -r` → `adb shell am start … --ez seedSample true`
+  (디버그 빌드 전용 샘플 주입, `--ez openLogSheet true`로 시트 직행) → `adb exec-out screencap -p > x.png`.
+  ⚠ 스크린샷 리다이렉트는 **bash로만** — PowerShell `>`는 BOM을 붙여 PNG를 깨뜨린다(2026-09-04 실측).
+  Room 계측 테스트 = 에뮬레이터 켠 뒤 `:app:connectedDebugAndroidTest`(CI엔 없음).
+- **디버그 빌드 콜드 스타트 7~8초는 에뮬레이터+JIT 비용이다** — 릴리스(R8) 빌드는 ~2초(설정 앱 1.5~3초와 동급).
+  서체(23MB)·Room이 원인이 아니라는 걸 시스템 서체 교체 실험으로 확인(2026-09-04). 성능 판단은 `assembleRelease`
+  (debug 키 서명, 로컬 실측용)로.
+- **multiply 블렌드는 실제 배경 위에 직접 그린다** — `saveLayer` 안에서 multiply하면 투명 위 = 원본이라 흰 지면이
+  통째로 얹힌다(계절광 모티프 실측). 세로 마스크는 띠별 alpha로, 타일 페더는 비트맵 alpha에 구워 둔다(`SeasonLight.kt`).
+- 앱 모듈 안에서 `app.temporoutine.…` 전체 경로 참조는 지역 `app` 프로퍼티와 충돌해 `Unresolved reference 'temporoutine'`이
+  난다 — 항상 import로.
+- **첫 DB 방출 전엔 지면만 그린다**(`state.loaded`) — iOS @Query는 동기라 없는 콜드 플래시가 Android엔 있다.
