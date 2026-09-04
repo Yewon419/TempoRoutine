@@ -54,6 +54,10 @@ final class DailyCheckIn {
     /// 증상 raw 콤마 구분("cold,muscle" — CheckInSymptom, 2026-09-01). 복합 Codable을 저장
     /// 프로퍼티로 두지 않는 규칙(repo CLAUDE.md)이라 String 평탄화 + computed 노출. 기본값 필수.
     var symptoms: String = ""
+    /// 한 줄 기록에 붙인 사진 파일 이름(2026-09-04 베타, 최대 1장). 바이트가 아니라 **이름만**
+    /// 둔다 — 파일은 CheckInPhotoStore가 앱 컨테이너에 보관한다. 동기화 DTO·내보내기 봉투에는
+    /// 넣지 않는다(이 기기 안에만 남는다는 뜻이다. 근거는 CheckInPhotoStore 머리말).
+    var photoName: String?
 
     init(day: Date, energy: Int, mood: Int, isBackfilled: Bool = false) {
         self.id = UUID()
@@ -69,6 +73,7 @@ final class DailyCheckIn {
         self.isBackfilled = isBackfilled
         self.completedAt = nil
         self.symptoms = ""
+        self.photoName = nil
     }
 
     var symptomSet: Set<CheckInSymptom> {

@@ -396,6 +396,8 @@ struct SettingsView: View {
                         Text(Loc.fmt("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$@일 · 체크인 %2$@건", "\(periodDays.count)", "\(checkIns.count)"))
                         // 기기 이전 경로 노출(2026-08-19, 개정 P 후속) — 경로는 종전부터 동작, 카피만 신설
                         Text("기기를 바꾸시나요? 내보내기 파일을 새 기기로 보내고 「백업 가져오기」로 열면 기록이 이어져요.")
+                        // 사진의 한계를 먼저 말한다(2026-09-04) — 옮겨진 줄 알았다가 잃는 게 제일 나쁘다
+                        Text("한 줄 기록에 붙인 사진은 이 기기에만 있어요. 백업 파일과 다른 기기로는 옮겨지지 않아요.")
                     }
                     .foregroundStyle(Ink.groundSub)
                 }
@@ -657,6 +659,9 @@ struct SettingsView: View {
             HealthMirror.resetImportState()   // 앵커·툼스톤 리셋 — 재연동이 초기 가져오기가 되도록(2026-07-23)
         }
         ExportImport.wipeAll(store, context: modelContext)
+        // 한 줄 기록 사진(2026-09-04) — 기록이 지워지면 가리키는 곳 없는 파일만 남는다.
+        // ⚠ 되돌리기로 기록은 살아나지만 사진은 못 살린다(봉투가 사진을 싣지 않는다).
+        CheckInPhotoStore.purgeAll()
         refreshDerivedSurfaces()
         withAnimation { undoSnapshot = snapshot }
         undoDismissTask = Task {
@@ -710,6 +715,7 @@ struct SettingsView: View {
         ThemeStore.apply(AppTheme.standard.rawValue)
         TipStore.shared.resetForAppReset()
         ThemeMedia.shared.purge()   // 온디맨드 미디어 캐시(2026-08-25)
+        CheckInPhotoStore.purgeAll()   // 한 줄 기록 사진(2026-09-04) — 기록이 사라지면 함께
 
         // 위젯 — 빈 스냅샷 발행(홈 화면 위젯이 옛 데이터를 계속 그리지 않게)
         WidgetBridge.publish(periodDays: [])

@@ -855,8 +855,9 @@ struct RhythmView: View {
 
     // ── 한 줄 기록 (2026-07-22 사용자 요청 — 오늘 탭 "오늘 한 줄"의 열람 표면. 2026-08-09 섹션 분리) ──
     // 루틴 낱장과 별도 화면: 낱장은 공유 안전 화면(§3.5.1 메모 렌더 금지)이라 일기는 섞지 않는다.
+    /// 사진만 남긴 날도 한 줄 기록이다(2026-09-04) — 글이 없다고 빼면 그날이 통째로 사라진다
     private var diaryEntries: [DailyCheckIn] {
-        checkIns.filter { !($0.note ?? "").isEmpty }
+        checkIns.filter { !($0.note ?? "").isEmpty || $0.photoName != nil }
     }
 
     private var diarySheet: some View {
@@ -886,10 +887,12 @@ struct RhythmView: View {
         .milkGlass(radius: 18)
     }
 
+    /// 피드 한 칸(2026-09-04 베타 "한줄기록 약간 사진도 들어가야되니 피드처럼 만들면 좋겠다")
+    /// — 날짜·계절 머리 → 사진 → 글 순. 사진이 없는 날은 종전과 같은 두 줄로 남는다.
     private func diaryRow(_ entry: DailyCheckIn) -> some View {
         let phase = snapshot.phase(on: entry.day)
         let meta = phase.map(seasonMeta(for:))
-        return VStack(alignment: .leading, spacing: 4) {
+        return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Text(entry.day.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
                     .font(.almanacBody(.caption, size: 12))
@@ -901,12 +904,21 @@ struct RhythmView: View {
                 }
                 Spacer()
             }
+            if let image = CheckInPhotoStore.image(named: entry.photoName) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: 240)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
             // 한 줄 일기 본문 — 한글이 주라 시스템 세리프면 고딕 폴백(2026-08-01 베타 피드백)
-            Text(entry.note ?? "")
-                .font(.almanacBody(.subheadline, size: 15))
-                .foregroundStyle(Ink.text)
+            if let note = entry.note, !note.isEmpty {
+                Text(note)
+                    .font(.almanacBody(.subheadline, size: 15))
+                    .foregroundStyle(Ink.text)
+            }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .almanacRule()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(entry.day.formatted(Loc.dateTime.month().day())), \(meta?.name ?? ""), \(entry.note ?? "")")

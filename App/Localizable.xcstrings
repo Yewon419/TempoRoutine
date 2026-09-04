@@ -11159,6 +11159,52 @@
         }
       }
     },
+    "사진 넣기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a photo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真を追加"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加照片"
+          }
+        }
+      }
+    },
+    "사진 지우기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove photo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真を削除"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除照片"
+          }
+        }
+      }
+    },
     "삭제": {
       "extractionState": "manual",
       "localizations": {
@@ -21238,6 +21284,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "一行记录"
+          }
+        }
+      }
+    },
+    "한 줄 기록에 붙인 사진은 이 기기에만 있어요. 백업 파일과 다른 기기로는 옮겨지지 않아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos in your one-line records stay on this device. They aren't included in backup files and don't move to other devices."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一行記録に付けた写真はこの端末にだけあります。バックアップファイルや他の端末には移りません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一行记录里的照片只存在这台设备上。备份文件和其他设备都不会带走它们。"
           }
         }
       }

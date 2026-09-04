@@ -5,6 +5,7 @@
 // 저장 조건 = 필수 2신호(energy·mood) 또는 노트(§5.5 — 한 줄 일기 단독 저장 허용).
 // 스트릭·연속 표시 금지(§3.4), 전부 해제하면 기록 철회(스킵 무벌점).
 
+import PhotosUI
 import SwiftUI
 import SwiftData
 import TempoCore   // TrackedSignals
@@ -21,6 +22,9 @@ struct CheckInCard: View {
     @State private var draftAppetite = 0
     @State private var draftNote = ""
     @State private var draftSymptoms: Set<CheckInSymptom> = []   // 아픈 날 증상(2026-09-01)
+    /// 한 줄 기록 사진(2026-09-04 베타) — 파일 이름만 든다. 최대 1장이라 배열이 아니다.
+    @State private var draftPhotoName: String?
+    @State private var photoItem: PhotosPickerItem?
     /// 증상 칩 펼침(2026-09-04 베타 "아픈곳 저렇게 바로 노출하지 말고") — 기본은 접힘.
     /// 이미 적어 둔 증상이 있으면 로드 때 펼친다(기록이 있는데 안 보이면 안 된다).
     @State private var symptomsExpanded = false
@@ -76,6 +80,7 @@ struct CheckInCard: View {
                         .foregroundStyle(Ink.text)
                         .focused($noteFocused)
                         .onChange(of: draftNote) { persistDraft() }
+                    photoRow
                 }
             }
             if draftEnergy > 0 && draftMood > 0 {
@@ -256,7 +261,64 @@ struct CheckInCard: View {
             draftSymptoms = existing.symptomSet
             symptomsExpanded = !draftSymptoms.isEmpty   // 적어 둔 게 있으면 펼친 채로 연다
             draftNote = existing.note ?? ""
+            draftPhotoName = existing.photoName
         }
+    }
+
+    /// 한 줄 아래 사진(2026-09-04 베타 "오늘 한줄 밑에 사진 넣기 추가" · "사진 넣는건 최대 한장").
+    /// 한 장뿐이라 갤러리가 아니라 자리 하나다 — 있으면 그 자리에 사진, 없으면 넣기 버튼.
+    /// PhotosPicker는 앱 밖 프로세스에서 고르게 하므로 사진 접근 권한 문구가 필요 없다.
+    @ViewBuilder
+    private var photoRow: some View {
+        if let image = CheckInPhotoStore.image(named: draftPhotoName) {
+            ZStack(alignment: .topTrailing) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                Button {
+                    removePhoto()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(Ink.paper)
+                        .padding(6)
+                        .background(Ink.text.opacity(0.55), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .padding(8)
+                .accessibilityLabel(Loc.str("사진 지우기"))
+            }
+        } else {
+            PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
+                HStack(spacing: 6) {
+                    Image(systemName: "photo")
+                        .font(.caption)
+                    Text("사진 넣기")
+                        .font(.caption)
+                }
+                .foregroundStyle(Ink.text.opacity(0.55))
+            }
+            .onChange(of: photoItem) { _, item in
+                guard let item else { return }
+                Task { @MainActor in
+                    // 고른 사진을 줄여 파일로 저장하고 이름만 기록에 붙인다(원본은 안 들고 온다)
+                    guard let data = try? await item.loadTransferable(type: Data.self),
+                          let name = CheckInPhotoStore.save(data) else { photoItem = nil; return }
+                    CheckInPhotoStore.delete(draftPhotoName)   // 갈아 끼울 땐 옛 파일을 남기지 않는다
+                    draftPhotoName = name
+                    photoItem = nil
+                    persistDraft()
+                }
+            }
+        }
+    }
+
+    private func removePhoto() {
+        CheckInPhotoStore.delete(draftPhotoName)
+        draftPhotoName = nil
+        persistDraft()
     }
 
     /// 저장 조건 = 필수 2신호(energy·mood) 또는 노트(§5.5 개정 2026-07-22 — 노트 단독 저장 허용,
@@ -266,8 +328,10 @@ struct CheckInCard: View {
         let hasNote = !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         // 증상 단독도 저장(2026-09-01) — 아픈 날은 신호를 안 매길 수 있다. 그 자체가 기록이다.
         let hasSymptoms = !draftSymptoms.isEmpty
+        // 사진 단독도 기록이다(2026-09-04) — 글은 없고 사진만 남기는 날이 있다
+        let hasPhoto = draftPhotoName != nil
         if let existing = record {
-            if hasSignals || hasNote || hasSymptoms {
+            if hasSignals || hasNote || hasSymptoms || hasPhoto {
                 existing.energy = draftEnergy
                 existing.mood = draftMood
                 existing.sleep = draftSleep > 0 ? draftSleep : nil
@@ -276,11 +340,13 @@ struct CheckInCard: View {
                 existing.appetite = draftAppetite > 0 ? draftAppetite : nil
                 existing.symptomSet = draftSymptoms
                 existing.note = hasNote ? draftNote : nil
+                existing.photoName = draftPhotoName
                 if Seeds.stampCompletion(existing, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
             } else {
+                CheckInPhotoStore.delete(existing.photoName)   // 기록이 사라지면 사진도 남기지 않는다
                 modelContext.delete(existing)   // 전부 해제 = 기록 철회(스킵 무벌점)
             }
-        } else if hasSignals || hasNote || hasSymptoms {
+        } else if hasSignals || hasNote || hasSymptoms || hasPhoto {
             // 지난 날짜에 쓰는 기록 = 회상 기반이라 적합 가중치가 다르다(v1.5 §3-4).
             // 판정 기준은 "카드가 보고 있는 날 ≠ 오늘" — 자정 넘겨 마무리하는 하루도 여기 걸린다.
             let created = DailyCheckIn(day: normalizedDay, energy: draftEnergy, mood: draftMood,
@@ -289,6 +355,7 @@ struct CheckInCard: View {
             created.appetite = draftAppetite > 0 ? draftAppetite : nil
             created.symptomSet = draftSymptoms
             created.note = hasNote ? draftNote : nil
+            created.photoName = draftPhotoName
             if Seeds.stampCompletion(created, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
             modelContext.insert(created)
         }
