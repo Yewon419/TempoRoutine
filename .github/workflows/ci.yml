@@ -99,33 +99,16 @@ jobs:
           app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
           defaults: |
             onboardingDone -bool true
-          # 전수 훑기(2026-09-04 대표님 지시): 4탭 × 언어 4(en=러너 기본·ko·ja·zh-Hans) + 테마 6(ko 오늘 탭)
-          # × 라이트/다크 = 44컷. 언어·테마는 앱의 자체 키(appLanguage·appTheme)를 런치 인자로 덮는다.
+          # 기본은 최소 컷(2026-09-04 대표님 결정: 수정은 특정 컷만 보니 필요한 줄을 그때 추가한다).
+          # 전수 훑기 예시(언어 -appLanguage ko|ja|zh-Hans, 테마 -appTheme standard|modern|ticket|letterpress|
+          # playlist|weather, appearance: light,dark)는 런 33830098614의 ci.yml 참조.
           screens: |
-            today       | -rootTab today
-            calendar    | -rootTab calendar
-            rhythm      | -rootTab rhythm
-            settings    | -rootTab settings
             today-ko    | -rootTab today    -appLanguage ko
             calendar-ko | -rootTab calendar -appLanguage ko
             rhythm-ko   | -rootTab rhythm   -appLanguage ko
             settings-ko | -rootTab settings -appLanguage ko
-            today-ja    | -rootTab today    -appLanguage ja
-            calendar-ja | -rootTab calendar -appLanguage ja
-            rhythm-ja   | -rootTab rhythm   -appLanguage ja
-            settings-ja | -rootTab settings -appLanguage ja
-            today-zh    | -rootTab today    -appLanguage zh-Hans
-            calendar-zh | -rootTab calendar -appLanguage zh-Hans
-            rhythm-zh   | -rootTab rhythm   -appLanguage zh-Hans
-            settings-zh | -rootTab settings -appLanguage zh-Hans
-            theme-standard    | -rootTab today -appLanguage ko -appTheme standard
-            theme-modern      | -rootTab today -appLanguage ko -appTheme modern
-            theme-ticket      | -rootTab today -appLanguage ko -appTheme ticket
-            theme-letterpress | -rootTab today -appLanguage ko -appTheme letterpress
-            theme-playlist    | -rootTab today -appLanguage ko -appTheme playlist
-            theme-weather     | -rootTab today -appLanguage ko -appTheme weather
-          appearance: light,dark
-          # 위치 시트 사전 허용(날씨 테마가 진입 즉시 요청. 1차 훑기에서 시트 하나가 22컷을 가렸다)
+            today-en    | -rootTab today
+          # 위치 시트 사전 허용(날씨 테마가 진입 즉시 요청. 시트 하나가 이후 컷을 전부 가린다)
           privacy: location
           wait: '8'
           fail-on-crash: 'false'
