@@ -173,9 +173,12 @@ struct CheckInCard: View {
             }
             VStack(alignment: .leading, spacing: 6) {
                 checkInLabel(Loc.str("아픈 곳은"))
-                HStack(spacing: 8) {
+                // 세로 폴백도 칩 5개를 한 줄 HStack에 두면 영어(Cold·Fever·aches·Upset stomach·
+                // Muscle ache·Headache ≈ 422pt > 카드 330pt)에서 카드 폭을 넘고, 그 폭이 오늘 탭
+                // VStack 전체로 전파돼 centeredColumn이 화면 밖으로 양쪽 균등히 밀어냈다
+                // (2026-09-04 찰칵 실측 + 실기기 영어 재현). 줄바꿈 흐름으로 폭 안에 가둔다.
+                ChipFlow(spacing: 8, rowSpacing: 6) {
                     symptomChips
-                    Spacer(minLength: 0)
                 }
             }
         }
@@ -268,6 +271,51 @@ struct CheckInCard: View {
             created.note = hasNote ? draftNote : nil
             if Seeds.stampCompletion(created, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
             modelContext.insert(created)
+        }
+    }
+}
+
+/// 칩 줄바꿈 흐름 — HStack처럼 왼쪽부터 놓다가 제안 폭을 넘기면 다음 줄로 (2026-09-04).
+/// 칩은 fixedSize라 ideal 크기로 잰다. 제안 폭이 없으면(ViewThatFits 측정 등) 한 줄로 친다.
+private struct ChipFlow: Layout {
+    let spacing: CGFloat
+    let rowSpacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let limit: CGFloat = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var widest: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > 0, x + size.width > limit {
+                x = 0
+                y += rowHeight + rowSpacing
+                rowHeight = 0
+            }
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+            widest = max(widest, x - spacing)
+        }
+        let width: CGFloat = limit == .infinity ? widest : limit
+        return CGSize(width: width, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = bounds.minX
+        var y: CGFloat = bounds.minY
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + size.width > bounds.maxX {
+                x = bounds.minX
+                y += rowHeight + rowSpacing
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
         }
     }
 }
