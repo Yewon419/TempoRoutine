@@ -43,7 +43,11 @@ TempoCore/     순수 Foundation SPM 패키지: 예측 엔진·주기 값 타입
   Tests/TempoCoreTests/
 Playground/    Step1 검증용 단일 파일 (역사 보존, SSOT는 TempoCore)
 project.yml    XcodeGen 프로젝트 정의
-.github/workflows/ci.yml    잡 3개: TempoCore 테스트(Linux) · 앱 빌드(macOS) · TestFlight 업로드
+android/       Android 앱 (Gradle 멀티모듈, 2026-09-04 착수 — MASTER §5.13)
+  tempocore/   TempoCore의 Kotlin 1:1 이식 (순수 JVM, Android 의존 0) + 동일 테스트 160케이스 + 골든 픽스처
+  app/         Jetpack Compose 앱 (minSdk 31)
+.github/workflows/ci.yml       잡 3개: TempoCore 테스트(Linux) · 앱 빌드(macOS) · TestFlight 업로드
+.github/workflows/android.yml  tempocore 테스트 + 앱 assembleDebug (Linux, android/** 변경에만)
 ```
 
 설계 SSOT는 로컬 `MASTER.md`(repo 외부), UI 시안 SSOT는 `ui-mockup/DESIGN.md`(repo 외부).
@@ -60,4 +64,10 @@ Windows에서 개발한다. 로컬에 Swift 컴파일 환경이 없어 검증 �
 
 ```bash
 swift test --package-path TempoCore
+```
+
+Android (JDK 17 + Android SDK 필요 — 로컬에서 바로 돈다):
+
+```bash
+cd android && ./gradlew :tempocore:test :app:assembleDebug
 ```

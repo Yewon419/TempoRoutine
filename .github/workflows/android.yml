@@ -1,0 +1,52 @@
+# 템포루틴 Android CI (MASTER §5.13)
+# tempocore 테스트(iOS TempoCore 이식 동치 — 골든 픽스처 포함) + 앱 debug 빌드. Linux 러너, 분 단위.
+# iOS 잡(ci.yml)은 android/** 변경에 돌지 않게 paths-ignore로 분리돼 있다.
+
+name: Android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - "tools/review-sample-backup.json"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "android/**"
+      - "tools/review-sample-backup.json"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+jobs:
+  android:
+    name: tempocore test + app assembleDebug
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: tempocore test
+        run: ./gradlew :tempocore:test --console=plain
+      - name: app assembleDebug
+        run: ./gradlew :app:assembleDebug --console=plain
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tempocore-test-report
+          path: android/tempocore/build/reports/tests/test
+          if-no-files-found: warn
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

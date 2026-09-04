@@ -7,7 +7,9 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ["android/**", ".github/workflows/android.yml"]   # Android는 android.yml(Linux)로 분리 — macOS 잡 낭비 방지
   pull_request:
+    paths-ignore: ["android/**", ".github/workflows/android.yml"]
   workflow_dispatch:   # TestFlight 업로드 = 수동 전용 (배포는 몰아서 — ASC 일일 한도 대응)
 
 jobs:

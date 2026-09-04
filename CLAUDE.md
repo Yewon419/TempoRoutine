@@ -144,3 +144,24 @@
   (2026-09-02 실측: 티켓 스캘럽 호가 false로 아래(뷰 밖)로 볼록해져 경계에서 잘려 직선만
   남았다 — 컴파일은 통과하고 실기기에서만 드러나는 유형). 시안(CSS) 좌표를 Shape로 옮길 때
   호 방향은 "위로 파려면 clockwise: true"로 뒤집어 생각할 것.
+
+## Android (`android/`, MASTER §5.13)
+
+- **tempocore는 iOS TempoCore의 1:1 이식이다.** 알고리즘·상수·테스트 이름을 같이 바꾼다 —
+  한쪽만 고치면 골든 픽스처(`GoldenFixtureTests`)와 케이스 이식 대조가 깨진다. 날짜는
+  `LocalDate`(date-only)·`Instant`(타임스탬프)만. `Date`류 혼용 금지.
+- **로컬 빌드 = `android/gradlew` (JDK 17, `ANDROID_HOME` 사용자 env 등록됨).** 툴체인은
+  Temurin 17 + cmdline-tools + platform 36/build-tools 36.0.0/emulator/시스템이미지
+  android-36 google_apis x86_64 + Android Studio(2026-09-04 설치).
+- **한글 경로 함정 3건(2026-09-04 실측, 리포가 `Desktop\PROJECT\템포루틴\` 아래라 생김):**
+  ① AGP가 non-ASCII 프로젝트 경로를 거부 → `android.overridePathCheck=true`.
+  ② Gradle 테스트 워커 `@argfile`은 UTF-8로 쓰이는데 `java.exe`는 시스템 코드페이지(CP949)로
+  읽어 한글 클래스패스 항목이 깨진다 → 전 테스트 클래스 `ClassNotFoundException`. 우회 =
+  루트 `build.gradle.kts`가 non-ASCII 경로일 때 빌드 디렉터리를 `~/.temporoutine-android-build/<module>`로
+  옮긴다(ASCII 경로·CI에선 미적용). 산출물(APK·리포트)은 그쪽에서 찾을 것. ③ 디렉터리 정션으로
+  ASCII 경로를 만들어도 Gradle이 실경로로 정규화해 소용없다.
+- **크로스플랫폼 JSON 동치는 바이트가 아니라 의미다.** iOS는 sortedKeys·정수 `0`, Kotlin은 선언
+  순서·`0.0`. 검증은 파싱 트리 비교(`GoldenFixtureTests`). 옵셔널 null은 양쪽 다 키 생략 —
+  단 파이썬 생성 픽스처는 명시 null을 담고 있어 비교 시 부재와 동형으로 본다.
+- Android 변경은 `android.yml`(Linux)만 돈다 — `ci.yml`(macOS)은 `android/**`를 무시한다.
+  커밋은 이 리포 규칙대로 명시 경로(`git add android/ .github/workflows/android.yml …`).
