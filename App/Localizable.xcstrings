@@ -5959,6 +5959,75 @@
         }
       }
     },
+    "기념 배지": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badges"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記念バッジ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "纪念徽章"
+          }
+        }
+      }
+    },
+    "기념 배지 획득: %1$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badge earned: %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記念バッジ獲得：%1$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "获得纪念徽章：%1$@"
+          }
+        }
+      }
+    },
+    "기념 배지를 받았어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You earned a badge"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記念バッジを獲得しました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "获得了纪念徽章"
+          }
+        }
+      }
+    },
     "기념 티켓": {
       "localizations": {
         "en": {
@@ -6801,6 +6870,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "开始照顾自己的时间"
+          }
+        }
+      }
+    },
+    "나를 말하기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Your Words"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自分を語る"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说说自己"
           }
         }
       }
@@ -8574,6 +8666,29 @@
         }
       }
     },
+    "리듬 설문에 답해요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer the rhythm survey"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リズム調査に答えます"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成节奏问卷"
+          }
+        }
+      }
+    },
     "리듬에 맞춰\n계획하는 법": {
       "extractionState": "manual",
       "localizations": {
@@ -9305,6 +9420,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "集齐所有主题"
+          }
+        }
+      }
+    },
+    "모은 배지 %1$@ / %2$@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badges: %1$@ / %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "集めたバッジ %1$@ / %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收集徽章 %1$@ / %2$@"
           }
         }
       }
@@ -11774,6 +11912,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "圣诞节"
+          }
+        }
+      }
+    },
+    "세 벌의 옷": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three Outfits"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三着の服"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三件衣裳"
           }
         }
       }
@@ -19861,6 +20022,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "打开主题页面"
+          }
+        }
+      }
+    },
+    "테마를 3개 모아요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collect three themes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマを3つ集めます"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收集三个主题"
           }
         }
       }

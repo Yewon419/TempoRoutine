@@ -67,7 +67,7 @@ struct RhythmView: View {
                                averageLength: snapshot.averageLength,
                                menstrualLength: snapshot.menstrualLength)
     }
-    // 기념 티켓 보관함(2026-08-31 업적) — 방송 카운터로 달성 수 갱신(씨앗 revisionKey 전례)
+    // 기념 배지 보관함(2026-08-31 업적, 2026-09-04 배지로 교체) — 방송 카운터로 달성 수 갱신
     @State private var showAchievements = false
     @AppStorage(Achievements.revisionKey) private var achievementRevision = 0
 
@@ -77,10 +77,10 @@ struct RhythmView: View {
             showAchievements = true
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: "ticket")
+                Image(systemName: "rosette")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Ink.text.opacity(0.7))
-                Text("기념 티켓")
+                Text("기념 배지")
                     .font(.almanacBody(.subheadline, size: 15, weight: .bold))
                     .foregroundStyle(Ink.text)
                 Spacer(minLength: 0)
@@ -159,7 +159,7 @@ struct RhythmView: View {
                     case .diary:
                         diarySheet
                     }
-                    achievementEntry   // 기념 티켓 보관함(2026-08-31 업적 — 하단 상시)
+                    achievementEntry   // 기념 배지 보관함(2026-08-31 업적 — 하단 상시)
                 }
                 .padding(20)
                 .centeredColumn(720)   // 아이패드 중앙 조판(2026-07-23)

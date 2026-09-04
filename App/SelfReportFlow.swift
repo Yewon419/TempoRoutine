@@ -267,6 +267,7 @@ struct SelfReportFlow: View {
         let cleaned = answers.filter { allowed.contains($0.key) }
         modelContext.insert(SelfReportRecord(answers: cleaned))
         SelfReportStore.hasPrompted = true
+        Achievements.shared.selfReportCompleted()   // 업적(2026-09-04 베타) — dev 가드는 내부
         dismiss()
     }
 }

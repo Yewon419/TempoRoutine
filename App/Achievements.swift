@@ -1,5 +1,6 @@
-// 템포루틴 — 업적(기념 티켓) 시스템 (2026-08-31 대표님 승인 C2 확장안)
-// 마일스톤을 「기념 티켓」으로 발권하고, 달성 뒤에도 보관함(나의 템포 탭)에서 다시 꺼내 본다.
+// 템포루틴 — 업적(기념 배지) 시스템 (2026-08-31 대표님 승인 C2 확장안)
+// 마일스톤을 「기념 배지」로 주고, 달성 뒤에도 보관함(나의 템포 탭)에서 다시 꺼내 본다.
+// 발권물(티켓) 문법은 2026-09-04 베타 「티켓 말고 배지로 바꾸자」로 배지로 교체됐다.
 // 달성 힘든 업적 + 히든 업적(달성 전 = "???") 포함.
 //
 // 원칙:
@@ -22,11 +23,14 @@ enum AchievementID: String, CaseIterable, Codable {
     case checkIns100
     case checkIns365       // 달성 힘듦
     case firstTheme        // 유료 테마 첫 구매(0원 승계 제외)
-    case allThemes         // 전 유료 테마 보유(달성 힘듦)
+    // 「모든 테마 보유」는 폐기(2026-09-04 베타 "테마는 계속 추가될테니") — 고정 개수로 대체.
+    // 옛 원장에 남은 `allThemes` 키는 이제 없는 케이스라 조회에서 무시된다(unlockedCount).
+    case themes3           // 테마 3개 보유
     case firstCycle        // 첫 주기 완주(리캡 첫 발행과 연동)
     case fourSeasons       // 나의 템포 4계절 패턴 완성
     case anniversary       // 함께한 지 1년
     case seeds100          // 누적 획득 씨앗 100(달성 힘듦)
+    case selfReport        // 리듬 설문 답변 완료(2026-09-04 베타)
     // 히든 — 달성 전엔 "???"
     case nightOwl          // 새벽(0~4시) 체크인 완성
     case newYear           // 1월 1일 체크인
@@ -49,11 +53,12 @@ enum AchievementID: String, CaseIterable, Codable {
         case .checkIns100:  Loc.str("백 밤의 기록")
         case .checkIns365:  Loc.str("일 년치 밤들")
         case .firstTheme:   Loc.str("새 옷")
-        case .allThemes:    Loc.str("옷장 완성")
+        case .themes3:      Loc.str("세 벌의 옷")
         case .firstCycle:   Loc.str("한 바퀴")
         case .fourSeasons:  Loc.str("사계 수집가")
         case .anniversary:  Loc.str("일 주년")
         case .seeds100:     Loc.str("씨앗 부자")
+        case .selfReport:   Loc.str("나를 말하기")
         case .nightOwl:     Loc.str("올빼미")
         case .newYear:      Loc.str("새해 첫 기록")
         case .coffeeFriend: Loc.str("단골손님")
@@ -71,16 +76,40 @@ enum AchievementID: String, CaseIterable, Codable {
         case .checkIns100:  Loc.str("체크인 100일을 완성해요")
         case .checkIns365:  Loc.str("체크인 365일을 완성해요")
         case .firstTheme:   Loc.str("첫 테마를 구매해요")
-        case .allThemes:    Loc.str("모든 테마를 모아요")
+        case .themes3:      Loc.str("테마를 3개 모아요")
         case .firstCycle:   Loc.str("한 주기를 처음부터 끝까지 함께해요")
         case .fourSeasons:  Loc.str("나의 템포에서 네 계절 패턴을 완성해요")
         case .anniversary:  Loc.str("템포루틴과 1년을 함께해요")
         case .seeds100:     Loc.str("씨앗을 누적 100개 모아요")
+        case .selfReport:   Loc.str("리듬 설문에 답해요")
         case .nightOwl:     Loc.str("깊은 새벽에 체크인을 완성했어요")
         case .newYear:      Loc.str("1월 1일에 기록을 남겼어요")
         case .coffeeFriend: Loc.str("개발자에게 커피를 다섯 잔 사줬어요")
         case .mascotNap:    Loc.str("우상단 친구를 꾹 눌러 재웠어요")
         case .seasonTap:    Loc.str("계절 이름의 숨은 반응을 찾았어요")
+        }
+    }
+
+    /// 배지 안에 새기는 기호(2026-09-04 배지 전환). 미달성·히든은 표면이 알아서 가린다.
+    var symbol: String {
+        switch self {
+        case .firstCheckIn: "figure.walk"
+        case .checkIns10:   "moon.fill"
+        case .checkIns50:   "moon.stars.fill"
+        case .checkIns100:  "sparkles"
+        case .checkIns365:  "calendar"
+        case .firstTheme:   "paintbrush.fill"
+        case .themes3:      "paintpalette.fill"
+        case .firstCycle:   "arrow.triangle.2.circlepath"
+        case .fourSeasons:  "leaf.fill"
+        case .anniversary:  "gift.fill"
+        case .seeds100:     "circle.grid.2x2.fill"
+        case .selfReport:   "text.bubble.fill"
+        case .nightOwl:     "moon.zzz.fill"
+        case .newYear:      "sun.horizon.fill"
+        case .coffeeFriend: "cup.and.saucer.fill"
+        case .mascotNap:    "zzz"
+        case .seasonTap:    "hand.tap.fill"
         }
     }
 }
@@ -124,12 +153,19 @@ final class Achievements {
     // ── 조회 ──
     func unlockedDate(_ id: AchievementID) -> Date? { ledger.unlocked[id.rawValue] }
     func isUnlocked(_ id: AchievementID) -> Bool { unlockedDate(id) != nil }
-    var unlockedCount: Int { ledger.unlocked.count }
+    /// 폐기된 업적(2026-09-04 `allThemes`)의 옛 기록은 세지 않는다 — 안 그러면 「17 / 17」을
+    /// 넘어가는 숫자가 나온다. 원장에서 지우지는 않는다(기록은 회수하지 않는다는 태도).
+    var unlockedCount: Int {
+        ledger.unlocked.keys.compactMap(AchievementID.init(rawValue:)).count
+    }
     var totalCount: Int { AchievementID.allCases.count }
-    /// 발권 일련번호 — 달성 순서(1부터). 티켓 조판의 NO. 자리
+    /// 획득 순번 — 달성 순서(1부터). 옛 기록은 순번 계산에서도 뺀다.
     func serial(_ id: AchievementID) -> Int? {
         guard let date = unlockedDate(id) else { return nil }
-        return ledger.unlocked.values.sorted().firstIndex(of: date).map { $0 + 1 }
+        let dates = ledger.unlocked
+            .filter { AchievementID(rawValue: $0.key) != nil }
+            .values.sorted()
+        return dates.firstIndex(of: date).map { $0 + 1 }
     }
 
     // ── 달성 ──
@@ -171,10 +207,13 @@ final class Achievements {
     /// 유료 테마 구매 직후(씨앗 심기·₩5,000 패스 공용). 0원 승계는 부르지 않는다.
     func themePurchased() {
         unlock(.firstTheme)
-        // 미출고 테마(플리, 2026-09-02 이월)는 분모에서 뺀다 — 일반 사용자가 살 수 없는
-        // 테마가 끼면 「모든 테마」 업적이 영영 안 열린다
-        let paidThemes = AppTheme.allCases.filter { $0.seedPrice != nil && $0.shipped }
-        if paidThemes.allSatisfy({ Seeds.owned.contains($0.rawValue) }) { unlock(.allThemes) }
+        // 개수 기준(2026-09-04) — 테마가 계속 늘어나므로 「전부」를 조건으로 두지 않는다.
+        // 미출고 테마(플리, 2026-09-02 이월)는 세지 않는다: 일반 사용자가 살 수 없다.
+        // 보유 판정은 씨앗 원장 기준이라 ₩5,000 패스(0원 기재)도 함께 센다.
+        let owned = AppTheme.allCases.filter {
+            $0.seedPrice != nil && $0.shipped && Seeds.owned.contains($0.rawValue)
+        }
+        if owned.count >= 3 { unlock(.themes3) }
     }
 
     /// 누적 획득 씨앗 판정 — 씨앗 지급 직후 잔액이 아니라 **누적 획득**으로 센다
@@ -185,6 +224,11 @@ final class Achievements {
     /// 나의 템포 4계절 패턴 완성(RhythmView 진행 계산부)
     func seasonsUnlocked(_ count: Int) {
         if count >= 4 { unlock(.fourSeasons) }
+    }
+
+    /// 리듬 설문 답변 완료(SelfReportFlow.finish) — 다시 해도 한 번만(unlock 멱등)
+    func selfReportCompleted() {
+        unlock(.selfReport)
     }
 
     /// 커피 팁 수령(TipStore) — 잔 수 누적 기준
