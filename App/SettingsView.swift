@@ -11,7 +11,7 @@ import SwiftData
 import TempoCore
 import UIKit
 import UniformTypeIdentifiers
-import UserNotifications   // 임시 테스트 알림(2026-08-08) — 기능 제거 시 함께 걷을 것
+import UserNotifications   // 초기화 시 예약 알림 정리(resetApp)
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -31,8 +31,6 @@ struct SettingsView: View {
     /// 테마 미디어 캐시(2026-08-25 대표님 지시 "설정에 캐시삭제 기능도") — 파일 시스템을 훑는
     /// 값이라 렌더마다 읽지 않는다. 설정 진입·삭제 직후에만 재계산한다.
     @State private var showCachePurgeConfirm = false
-    /// 체험 종료 시트 직접 표시(임시 확인용) — 재실행 판정 경유 안 함
-    @State private var showTrialEndSim = false
     /// 생리 기록 프라이버시(2026-09-02 대표님) — 켜면 캘린더 탭 버튼이 숨고 설정이 진입점
     @AppStorage("hideCalendarPeriodEntry") private var hidePeriodEntry = false
     @State private var showPeriodSheet = false
@@ -58,21 +56,12 @@ struct SettingsView: View {
     /// 아침 일정 브리핑·생리 예측 알림(2026-08-05 사용자 결정) — 기본 켬.
     @AppStorage(DailyNotices.briefingKey) private var morningBriefingOn = true
     @AppStorage(DailyNotices.periodKey) private var periodForecastOn = true
-    /// 임시 테스트 알림 안내 문구(2026-08-08 — 기능 제거 시 함께 걷을 것)
-    @State private var testNoticeHint: String?
 
     /// 테마 진입 = 테마 탭 시트(2026-08-09 — 구 인라인 Picker 폐기, 심기·적용은 ThemeShopView 담당).
     /// 오늘 탭 진입과 같은 키를 공유한다 — 테마 리빌드에서 살아남아야 해서 뷰 밖에 둔다(RootTab 주석).
     @AppStorage(RootTab.themeShopKey) private var showThemeShop = false
-    // 하늘 상태 스위처(날씨 테마 확인용, 2026-08-19 — Phase ②에서 WeatherKit로 대체)
     /// 앱 언어(2026-08-22 베타 "설정에도 언어선택") — 온보딩 첫 단계와 같은 저장 키
     @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
-    @AppStorage(WxState.conditionKey) private var wxCondition = WxCondition.clear.rawValue
-    @AppStorage(WxState.daypartKey) private var wxDaypart = ""
-
-    private func applyWxState() {
-        WxState.apply(conditionRaw: wxCondition, daypartRaw: wxDaypart.isEmpty ? nil : wxDaypart)
-    }
     /// 기기 간 동기화 토글 상태(2026-08-10) — 원장은 PlannerSync, 여기는 렌더 트리거용 미러
     @State private var syncOn = PlannerSync.isEnabled
 
@@ -232,30 +221,8 @@ struct SettingsView: View {
                         .tint(Ink.text)
                     Toggle("기록이 부족한 시기 알려주기", isOn: coverageBinding)
                         .tint(Ink.text)
-                    // ⚠ 임시 테스트 기능(2026-08-08 사용자 지시 — 검증 끝나면 이 버튼·상태·import 제거)
-                    Button("테스트 알림 보내기") {
-                        lightFeedback += 1
-                        Task {
-                            let granted = await CoverageReminder.requestPermission()
-                            notificationDenied = !granted
-                            guard granted else { testNoticeHint = nil; return }
-                            let content = UNMutableNotificationContent()
-                            content.title = Loc.str("테스트 알림이에요")
-                            content.body = Loc.str("이 문구가 보이면 알림이 정상 동작하는 거예요.")
-                            content.sound = .signature   // 시그니처 칼림바(2026-08-09)
-                            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-                            try? await UNUserNotificationCenter.current().add(
-                                UNNotificationRequest(identifier: "test-notice",
-                                                      content: content, trigger: trigger))
-                            testNoticeHint = Loc.str("5초 뒤에 와요. 앱을 홈으로 내려두세요 — 앱이 떠 있으면 배너가 안 보여요.")
-                        }
-                    }
-                    .foregroundStyle(Ink.onSky)
-                    if let hint = testNoticeHint {
-                        Text(hint)
-                            .font(.footnote)
-                            .foregroundStyle(Ink.text.opacity(0.55))
-                    }
+                    // 「테스트 알림 보내기」는 2026-09-04 제거(베타 "여기서 테스트용으로 넣은거 다 제거").
+                    // 2026-08-08에 알림 동작 확인용으로 넣은 임시 버튼이었다.
                     if notificationDenied {
                         Button("알림 설정 열기") { openAppSettings() }
                             .foregroundStyle(Ink.onSky)
@@ -433,28 +400,6 @@ struct SettingsView: View {
                     .foregroundStyle(Ink.groundSub)
                 }
 
-                // ⚠ 임시 확인용(2026-08-26 대표님 "7일 무료체험 끝나는 거 확인하려고" — 확인 끝나면
-                // 이 섹션째 걷을 것): 종료 시트를 **그 자리에서 직접** 띄운다. 1차판(백데이트 후
-                // 재실행 판정 경유)은 "아예 안돼"였다 — 판정에 「은필 보유 + 보유 테마 사용 중 =
-                // 조용 종결」 게이트가 있어, 테마를 다 사둔 개발 기기에선 시트가 뜰 수 없었다.
-                // 백데이트·플래그 리셋은 유지(시트 안 카피·재실행 경로도 종료 상태로 맞춰 둔다).
-                Section {
-                    Button(Loc.str("테마 체험 종료 시뮬레이션")) {
-                        let defaults = UserDefaults.standard
-                        defaults.set(
-                            Calendar.current.date(byAdding: .day, value: -(ThemeTrial.lengthDays + 1),
-                                                  to: .now),
-                            forKey: ThemeTrial.startKey)
-                        defaults.removeObject(forKey: ThemeTrial.resolvedKey)
-                        defaults.removeObject(forKey: ThemeTrial.reviewAskedKey)
-                        showTrialEndSim = true
-                    }
-                    .foregroundStyle(Ink.onSky)
-                } footer: {
-                    Text(Loc.str("확인용 임시 버튼이에요. 확인이 끝나면 제거할게요."))
-                        .foregroundStyle(Ink.groundSub)
-                }
-
                 // 파괴적 액션 — 분리 배치(§8.2.6)
                 Section {
                     Button("모든 기록 삭제", role: .destructive) { showWipeConfirm = true }
@@ -487,33 +432,6 @@ struct SettingsView: View {
                     }
                 }
 
-                // ── 하늘 상태 스위처(날씨 테마 전용, 2026-08-19) — WeatherKit 연결(Phase ②)
-                // 전까지의 확인용. 시간대 고정까지 합쳐 12상태를 시각과 무관하게 확인한다.
-                if ThemeStore.chrome.skyGround {
-                    Section {
-                        Picker("하늘", selection: $wxCondition) {
-                            ForEach(WxCondition.allCases) { c in
-                                Text(c.displayName).tag(c.rawValue)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        Picker("시간대", selection: $wxDaypart) {
-                            Text("시계 따름").tag("")
-                            Text("낮").tag(Daypart.day.rawValue)
-                            Text("노을").tag(Daypart.dusk.rawValue)
-                            Text("밤").tag(Daypart.night.rawValue)
-                        }
-                        .pickerStyle(.segmented)
-                    } header: {
-                        Text("하늘 (확인용)")
-                            .foregroundStyle(Ink.groundSub)
-                    } footer: {
-                        Text("날씨 연동 전 임시 스위치예요. 「시계 따름」이면 시간대가 기기 시계를 따라요.")
-                            .foregroundStyle(Ink.groundSub)
-                    }
-                    .onChange(of: wxCondition) { _, _ in applyWxState() }
-                    .onChange(of: wxDaypart) { _, _ in applyWxState() }
-                }
                 }   // Group — 행 재질 전파 끝
                 .listRowBackground(Self.themedRowGround)
             }
@@ -557,9 +475,6 @@ struct SettingsView: View {
         // 테마 탭 시트 표시는 RootTabView 한 곳(2026-08-11) — 여기선 플래그만 세운다
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
             importData(result)
-        }
-        .sheet(isPresented: $showTrialEndSim) {
-            TrialEndSheet { showTrialEndSim = false }.themeColorScheme()
         }
         // 생리 기록(2026-09-02) — 캘린더 버튼을 숨겼을 때의 진입점
         .sheet(isPresented: $showPeriodSheet) {

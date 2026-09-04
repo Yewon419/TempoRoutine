@@ -517,15 +517,29 @@ struct ThemeShopView: View {
                         .background(Ink.text, in: Capsule())
                     }
                 } else {
-                    // 재촉 금지(§7) — 사실만: 몇 개가 더 필요한지
-                    HStack(spacing: 6) {
-                        SeedGlyph()
-                            .fill(Ink.text.opacity(0.4))
-                            .frame(width: 8, height: 11)
-                            .rotationEffect(.degrees(16))
-                        Text(Loc.fmt("씨앗 %1$lld개로 구매할 수 있어요 · 지금 %2$lld개", price, available))
+                    // 씨앗이 모자라도 **버튼 자리는 남긴다**(2026-09-04 베타 "구매할 수 없어도
+                    // 구매 버튼은 띄우고 회색 처리해") — 종전엔 문구만 남아 이 테마엔 구매라는
+                    // 길이 없는 것처럼 보였다. 누를 수 없다는 건 회색으로 말한다.
+                    // 재촉 금지(§7)는 그대로 — 아래 줄은 지금 가진 개수라는 사실만.
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            SeedGlyph()
+                                .fill(Ink.text.opacity(0.35))
+                                .frame(width: 8, height: 11)
+                                .rotationEffect(.degrees(16))
+                            Text(Loc.fmt("씨앗 %lld개로 구매", price))
+                                .font(.footnote.weight(.semibold))
+                        }
+                        .foregroundStyle(Ink.text.opacity(0.35))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 9)
+                        .background(Ink.text.opacity(0.10), in: Capsule())
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(Loc.fmt("씨앗 %lld개로 구매", price))
+                        .accessibilityHint(Loc.fmt("지금 씨앗 %lld개", available))
+                        Text(Loc.fmt("지금 씨앗 %lld개", available))
                             .font(.footnote)
-                            .foregroundStyle(Ink.text.opacity(0.55))
+                            .foregroundStyle(Ink.text.opacity(0.5))
                     }
                 }
                 passBuyButton(theme)
@@ -1106,6 +1120,8 @@ struct TrialEndSheet: View {
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
     @State private var choice: AppTheme
     @State private var lightFeedback = 0
+    /// 미리보기 시트(2026-09-04 베타 "여기에도 미리보기") — 테마 탭과 같은 화면을 쓴다
+    @State private var previewing: AppTheme?
     let onResolved: () -> Void
 
     init(onResolved: @escaping () -> Void) {
@@ -1146,34 +1162,52 @@ struct TrialEndSheet: View {
         .background(Ink.paper.ignoresSafeArea())
         .interactiveDismissDisabled(true)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
+        .sheet(item: $previewing) { ThemePreviewScreen(theme: $0) }
     }
 
+    /// 카드 = 선택 버튼 + 미리보기 버튼. 버튼 안에 버튼을 넣으면 바깥이 탭을 먼저 먹어
+    /// 미리보기가 안 열린다 — 둘을 나란히 두고 카드 지면만 공유한다(테마 탭과 같은 구조).
     private func choiceCard(_ theme: AppTheme) -> some View {
         let selected = choice == theme
-        return Button {
-            lightFeedback += 1
-            choice = theme
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                ThemePreview(theme: theme)
-                HStack(spacing: 8) {
-                    Text(theme.displayName)
-                        .font(.almanac(size: 17, weight: .bold))
-                        .foregroundStyle(Ink.text)
-                    Spacer(minLength: 0)
-                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(Ink.text.opacity(selected ? 0.9 : 0.3))
+        return VStack(alignment: .leading, spacing: 10) {
+            Button {
+                lightFeedback += 1
+                choice = theme
+            } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    ThemePreview(theme: theme)
+                    HStack(spacing: 8) {
+                        Text(theme.displayName)
+                            .font(.almanac(size: 17, weight: .bold))
+                            .foregroundStyle(Ink.text)
+                        Spacer(minLength: 0)
+                        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(Ink.text.opacity(selected ? 0.9 : 0.3))
+                    }
                 }
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .milkGlass()
-            .overlay(RoundedRectangle(cornerRadius: 16)
-                .stroke(Ink.text.opacity(selected ? 0.8 : 0), lineWidth: 1.5))
+            .buttonStyle(.plain)
+            .accessibilityLabel(Loc.fmt("%1$@ 테마", "\(theme.displayName)"))
+            .accessibilityAddTraits(selected ? .isSelected : [])
+            Button {
+                lightFeedback += 1
+                previewing = theme
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: "eye")
+                        .font(.caption2)
+                    Text("미리보기")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Ink.text.opacity(0.65))
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Loc.fmt("%1$@ 테마", "\(theme.displayName)"))
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .milkGlass()
+        .overlay(RoundedRectangle(cornerRadius: 16)
+            .stroke(Ink.text.opacity(selected ? 0.8 : 0), lineWidth: 1.5))
     }
 
     private func confirm() {

@@ -118,6 +118,9 @@ func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
 struct TodayView: View {
     /// §5.6.2 S4 배너 유예 — 예측일 경과 즉시가 아니라 +2일부터.
     static let overdueGraceDays = 2
+    /// 예정일 초과 안내를 접은 날("yyyy-MM-dd", 2026-09-04 베타). 하루짜리 표식이라
+    /// 날짜를 저장한다 — 불리언이면 다음 날에도 접힌 채로 남는다.
+    @AppStorage("overdueNoteHiddenDay") private var overdueNoteHiddenDay = ""
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var hSize   // 아이패드 2열(2026-07-23)
@@ -659,15 +662,40 @@ struct TodayView: View {
                 }
             }
             .padding(.vertical, 12)
-        } else if overdueDiff >= avgLength + Self.overdueGraceDays {
+        } else if overdueDiff >= avgLength + Self.overdueGraceDays,
+                  overdueNoteHiddenDay != ExportCodec.dayString(today) {
+            overdueNote
+        }
+    }
+
+    /// 예정일 초과 안내(2026-09-04 베타 "알림 빨간 점같은거 달아주고, 엑스 버튼 추가해서
+    /// 누르면 그날은 안띄우게") — 점은 알림의 문법이고, 닫기는 **그날 하루만** 접는다.
+    /// 영구 해제가 아니다: 다음 날 다시 뜬다(기록을 재촉하지 않되 사실은 계속 말한다, §7).
+    private var overdueNote: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Circle()
+                .fill(Ink.record)
+                .frame(width: 7, height: 7)
+                .padding(.top, 5)
             Text(Loc.fmt("예정일에서 %lld일이 지났어요. 리듬은 늘 조금씩 다르니, 생리가 시작되면 캘린더에서 기록해 주세요.",
                          overdueDiff - avgLength))
                 .font(.footnote)
                 .foregroundStyle(Ink.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(Ink.record.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+            Button {
+                lightFeedback += 1
+                overdueNoteHiddenDay = ExportCodec.dayString(today)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Ink.text.opacity(0.45))
+                    .padding(4)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Loc.str("오늘은 이 안내 닫기"))
         }
+        .padding(14)
+        .background(Ink.record.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var avgLength: Int { snapshot.averageLength }
