@@ -104,6 +104,8 @@ jobs:
             calendar | -rootTab calendar
             rhythm   | -rootTab rhythm
             settings | -rootTab settings
+          # today 컷 좌측 잘림 판별용(2026-09-04): 5초 촬영이 첫 실행 팁 애니메이션 중간이었는지 본다
+          wait: '15'
           fail-on-crash: 'false'
 
   testflight:
