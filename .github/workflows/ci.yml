@@ -125,7 +125,9 @@ jobs:
             theme-playlist    | -rootTab today -appLanguage ko -appTheme playlist
             theme-weather     | -rootTab today -appLanguage ko -appTheme weather
           appearance: light,dark
-          wait: '6'
+          # 위치 시트 사전 허용(날씨 테마가 진입 즉시 요청. 1차 훑기에서 시트 하나가 22컷을 가렸다)
+          privacy: location
+          wait: '8'
           fail-on-crash: 'false'
 
   testflight:
