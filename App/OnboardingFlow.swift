@@ -310,6 +310,9 @@ struct OnboardingFlow: View {
             ThemeStore.apply(raw)
             UserDefaults.standard.set(raw, forKey: ThemeStore.storageKey)
         }
+        // 첫 실행만 튜토리얼 체인을 태운다(2026-09-04 베타) — 재진입(「온보딩 다시 보기」)은
+        // 이미 쓰던 사람이라 탭을 옮기지 않는다.
+        if !isRevisit { TutorialGate.arm() }
         isRevisit = false
         onboardingDone = true
     }

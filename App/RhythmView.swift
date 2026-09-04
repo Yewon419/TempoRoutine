@@ -135,6 +135,7 @@ struct RhythmView: View {
                                    color: Ink.onGround(Ink.text, white: 1.0))
                     selfReportPrompt
                     sectionSwitcher
+                        .coachAnchor(.rhythmSwitcher)   // 나의 템포 코치 1단계(2026-09-04)
                     switch tab {
                     case .seasons:
                         // 관측 패턴 — 콜드 문법 승계: 서술 가능한 신호가 없으면 진행 카드만.
@@ -160,6 +161,7 @@ struct RhythmView: View {
                         diarySheet
                     }
                     achievementEntry   // 기념 배지 보관함(2026-08-31 업적 — 하단 상시)
+                        .coachAnchor(.rhythmBadges)   // 나의 템포 코치 2단계(2026-09-04)
                 }
                 .padding(20)
                 .centeredColumn(720)   // 아이패드 중앙 조판(2026-07-23)
@@ -168,6 +170,11 @@ struct RhythmView: View {
         // 4계절 패턴 완성 업적(2026-08-31) — 열린 계절 수가 바뀔 때만 판정
         .task(id: unlockedPhases.count) {
             Achievements.shared.seasonsUnlocked(unlockedPhases.count)
+        }
+        // 나의 템포 탭 안내(2026-09-04 베타 "여기도 튜토리얼 추가"). 첫 실행 체인의 마지막이라
+        // 여기서 끝나면 루트가 로고 스플래시를 띄우고 라이트 잠금을 푼다.
+        .coachOverlay(id: .rhythm, steps: CoachSteps.rhythm) {
+            if TutorialGate.active { TutorialGate.markDone() }
         }
         .sheet(isPresented: $showAchievements) { AchievementShelfView() }
         .confirmationDialog("무엇을 추가할까요?",

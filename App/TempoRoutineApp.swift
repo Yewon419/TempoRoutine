@@ -53,7 +53,12 @@ struct TempoRoutineApp: App {
         // 앱 언어 선택 복원(2026-08-21) — 팔레트와 같은 이유로 첫 렌더 전에 확정한다
         Loc.restore()
         let savedTheme = UserDefaults.standard.string(forKey: ThemeStore.storageKey)
-        ThemeStore.apply(savedTheme,
+        // 온보딩 전(신규 설치·앱 초기화 직후)은 은필 고정(2026-09-04 베타 "은필라이트로 고정").
+        // 저장은 하지 않는다 — 실제 선택·저장은 온보딩 테마 단계가 맡는다.
+        // 튜토리얼 라이트 잠금은 실행을 넘기지 않는다(중간에 그만둔 사람 구제) — Coach.swift
+        TutorialGate.releaseStaleLock()
+        let onboardingDone = UserDefaults.standard.bool(forKey: "onboardingDone")
+        ThemeStore.apply(onboardingDone ? savedTheme : (savedTheme ?? AppTheme.standard.rawValue),
                          pointRawValue: UserDefaults.standard.string(forKey: PointColor.storageKey))
         // 하늘 상태 복원(날씨 테마, 2026-08-19) — 설정 스위처가 저장한 확인용 값.
         // Phase ②에서 WeatherKit이 이 자리를 대체한다.

@@ -27,6 +27,10 @@ struct RootTabView: View {
     @Query private var inputProgresses: [InputProgress]   // 위젯 진행 라벨(2026-08-20)
     @Query private var checkIns: [DailyCheckIn]   // 씨앗 획득 원장 백필(2026-08-20)
     @AppStorage("onboardingDone") private var onboardingDone = false
+    /// 첫 실행 튜토리얼 구간 외관 잠금(2026-09-04 베타) — 온보딩·튜토리얼 동안 라이트 고정,
+    /// 마지막 코치가 끝나면 로고 스플래시를 한 번 띄우고 그 아래에서 푼다.
+    @AppStorage(TutorialGate.lockKey) private var tutorialLightLock = false
+    @AppStorage(TutorialGate.doneKey) private var tutorialChainDone = false
     @State private var showLaunchSplash = !LaunchSplashGate.shown
     @AppStorage(ThemeStore.storageKey) private var appTheme = AppTheme.plain.rawValue
     /// 포인트색(2026-08-17) — 아래 `.id`에 함께 태운다. 테마 키만 보면 포인트색 변경이
@@ -66,7 +70,15 @@ struct RootTabView: View {
         }
     }
 
+    /// 튜토리얼 마무리 스플래시 — 체인이 끝났는데 잠금이 남아 있는 동안만 뜬다(별도 @State를
+    /// 두지 않는다: 루트 `.id` 리빌드에 날아가면 잠금이 영영 안 풀린다).
+    private var showTutorialOutro: Bool { tutorialLightLock && tutorialChainDone }
+
     private func dismissLaunchSplash() {
+        if showTutorialOutro {
+            // 여기서 라이트 잠금이 풀린다 — 스플래시가 덮고 있는 동안이라 전환이 안 보인다
+            withAnimation(.easeOut(duration: 0.4)) { tutorialLightLock = false }
+        }
         guard showLaunchSplash else { return }
         LaunchSplashGate.shown = true
         withAnimation(.easeOut(duration: 0.4)) { showLaunchSplash = false }
@@ -107,6 +119,9 @@ struct RootTabView: View {
         // (티켓·활판·플레이리스트)는 팔레트가 라이트 고정인데, 시스템이 다크면 List 행 배경·
         // glassEffect 재질처럼 내 팔레트를 안 보는 시스템 컴포넌트만 검게 떨어진다.
         .preferredColorScheme({
+            // 첫 실행 구간(온보딩·튜토리얼)은 라이트 고정(2026-09-04 베타). 끝나면 테마 규칙,
+            // 즉 기기 설정 추종으로 돌아간다 — 다크 강제가 아니다(대표님 확인).
+            if !onboardingDone || tutorialLightLock { return .light }
             let chrome = (AppTheme(rawValue: appTheme) ?? .plain).chrome
             return chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil
         }())
@@ -159,7 +174,7 @@ struct RootTabView: View {
             // 업적 발권 배너(2026-08-31) — 새 모디파이어 금지(body 타입체크 한계, repo CLAUDE.md)
             // 라 기존 overlay 블록에 동거. 스플래시보다 아래 조건이라 겹칠 일 없다(스플래시 1.1s).
             AchievementBannerHost()
-            if showLaunchSplash, onboardingDone {
+            if showLaunchSplash || showTutorialOutro, onboardingDone {
                 // 대표님 제작 정적 이미지(2026-08-30, App/Assets.xcassets/LaunchSplash). 그림 배경
                 // 테마(은필·티켓·플리)는 제 지면 + 스크림 위에 로고·심볼만(SplashLogo, 밝은 판) —
                 // 전 테마 동일 이미지가 테마 정체성을 지우던 것의 교정(2026-08-30 대표님 지시).
@@ -192,7 +207,7 @@ struct RootTabView: View {
         }
         // 온보딩 = fullScreenCover, 첫 실행 1회(§8.2.1)
         .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { if !$0 { onboardingDone = true } })) {
-            OnboardingFlow().themeColorScheme()
+            OnboardingFlow().preferredColorScheme(.light)   // 온보딩은 라이트 고정(2026-09-04)
         }
         .task {
             // dev 자체 표본(2026-08-30) — 리빌드마다 돌지만 플래그·빈 스토어 게이트로 1회만.

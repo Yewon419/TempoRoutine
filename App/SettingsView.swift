@@ -790,7 +790,9 @@ struct SettingsView: View {
         }
 
         // 인메모리 캐시 — UserDefaults만 비우면 남는 것들
-        ThemeStore.apply(nil)          // 정적 팔레트 → 기본 테마
+        // 초기화 직후엔 곧바로 온보딩이 뜬다 — 그 구간 지면은 은필(2026-09-04 베타).
+        // 재실행 경로도 TempoRoutineApp.init이 같은 규칙을 다시 적용한다.
+        ThemeStore.apply(AppTheme.standard.rawValue)
         TipStore.shared.resetForAppReset()
         ThemeMedia.shared.purge()   // 온디맨드 미디어 캐시(2026-08-25)
 

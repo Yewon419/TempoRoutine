@@ -145,7 +145,11 @@ struct SeasonCalendarView: View {
         }
         .sheet(isPresented: $showNotices) { NoticesView().themeColorScheme() }
         .task { await noticeFeed.refresh() }   // 캘린더 진입 시 미읽음 점 갱신(1시간 캐시)
-        .coachOverlay(id: .calendar, steps: CoachSteps.calendar)   // 기능 튜토리얼(2026-07-23)
+        // 기능 튜토리얼(2026-07-23). 첫 실행 체인이면 나의 템포 탭으로 이어진다(2026-09-04 베타)
+        .coachOverlay(id: .calendar, steps: CoachSteps.calendar,
+                      finishLabel: TutorialGate.active ? Loc.str("나의 템포 보기") : nil) {
+            if TutorialGate.active { TutorialGate.move(to: .rhythm) }
+        }
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
         .sensoryFeedback(.impact(weight: .medium), trigger: pressFeedback)
         .navigationDestination(isPresented: Binding(

@@ -295,7 +295,12 @@ struct TodayView: View {
         // 삭제 확인은 행 부착(quickDeletable, 2026-09-01) — 팝오버 앵커 정위치
         .sensoryFeedback(.impact(weight: .medium), trigger: confirmFeedback)
         .sensoryFeedback(.impact(weight: .light), trigger: lightFeedback)
-        .coachOverlay(id: .today, steps: CoachSteps.today)   // 기능 튜토리얼(2026-07-23)
+        // 기능 튜토리얼(2026-07-23). 첫 실행 체인이면 마지막 버튼이 다음 탭으로 넘겨준다
+        // (2026-09-04 베타 "오늘 탭 튜토리얼 이후 캘린더탭 이동 유도").
+        .coachOverlay(id: .today, steps: CoachSteps.today,
+                      finishLabel: TutorialGate.active ? Loc.str("캘린더 보기") : nil) {
+            if TutorialGate.active { TutorialGate.move(to: .calendar) }
+        }
         // 씨앗 최초 획득 안내(2026-08-12) — 체크인을 완성해 씨앗이 처음 생기는 순간 발동한다.
         // 오늘 코치를 끝낸 뒤로 미루는 이유: 둘이 겹치면 어둠이 두 겹으로 깔린다.
         // 판정은 잔액(available)이 아니라 총 획득(balance) — 다 써서 0이 돼도 이미 겪은 일이다.

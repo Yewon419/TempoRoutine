@@ -11,6 +11,7 @@ enum CoachAnchor: String {
     case todaySchedule, todayInput, todayOutput
     case calendarLog, calendarGrid
     case todaySeed                              // 씨앗 최초 획득 안내(2026-08-12)
+    case rhythmSwitcher, rhythmBadges           // 나의 템포 탭 안내(2026-09-04 베타)
     case themeSeedBalance, themeCardAction      // 테마 탭 첫 진입 안내(2026-08-12)
 }
 
@@ -22,6 +23,8 @@ struct CoachStep {
 
 enum CoachID: String, CaseIterable {
     case today, calendar
+    /// 나의 템포 탭 첫 진입 1회(2026-09-04 베타 "여기도 튜토리얼 추가")
+    case rhythm
     /// 씨앗을 처음 얻은 뒤 오늘 탭 배지에서 1회(2026-08-12 사용자 지시)
     case seed
     /// 테마 탭 첫 진입 1회(2026-08-12 사용자 지시)
@@ -35,6 +38,49 @@ enum CoachStore {
     /// 설정 「사용법 다시 보기」 — 전 화면 완료 표시를 지운다(JejuNow resetAllCoach와 동형)
     static func resetAll() {
         CoachID.allCases.forEach { UserDefaults.standard.removeObject(forKey: key($0)) }
+    }
+}
+
+/// 첫 실행 튜토리얼 체인(2026-09-04 베타 "오늘 탭 튜토리얼 이후 캘린더탭 이동 유도…").
+/// 온보딩을 막 마친 사람만 태운다 — 오늘 → 캘린더 → 나의 템포 순으로 코치가 이어지고,
+/// 마지막이 끝나면 루트가 로고 스플래시를 한 번 띄운 뒤 외관 잠금을 푼다.
+/// ⚠ 설정 「사용법 다시 보기」는 이 체인을 태우지 않는다: 이미 쓰던 사람의 탭을 앱이 마음대로
+/// 옮기는 건 다른 종류의 일이다(코치는 화면마다 개별로 다시 뜬다).
+enum TutorialGate {
+    /// 이 구간 외관은 라이트 고정(2026-09-04 베타 "첫 시작 시 무조건 라이트모드 고정")
+    static let lockKey = "tutorialLightLock"
+    static let doneKey = "tutorialChainDone"
+
+    /// 온보딩 직후 잠긴 구간인가(스플래시가 풀어 준다)
+    static var lightLocked: Bool { UserDefaults.standard.bool(forKey: lockKey) }
+    static var isDone: Bool { UserDefaults.standard.bool(forKey: doneKey) }
+    /// 체인이 도는 중 = 탭 이동 유도를 걸어도 되는 구간
+    static var active: Bool { lightLocked && !isDone }
+
+    /// 온보딩 종료 시(신규만) — 여기서만 체인이 켜진다
+    static func arm() {
+        let defaults = UserDefaults.standard
+        defaults.set(true, forKey: lockKey)
+        defaults.set(false, forKey: doneKey)
+    }
+
+    /// 앱 시작 시 1회 — **이전 실행에서 남은 잠금은 여기서 푼다.** 튜토리얼은 온보딩을 마친
+    /// 그 실행에서 이어지는 흐름이다: 중간에 앱을 껐다 켜면 평소 외관으로 돌아가야 한다.
+    /// 안 그러면 나의 템포 탭에 영영 안 들어가는 사람이 라이트 모드에 갇힌다.
+    static func releaseStaleLock() {
+        let defaults = UserDefaults.standard
+        guard defaults.bool(forKey: lockKey) else { return }
+        defaults.set(false, forKey: lockKey)
+        defaults.set(true, forKey: doneKey)
+    }
+
+    /// 마지막 코치(나의 템포)가 끝났다. 잠금 해제는 루트의 스플래시가 사라질 때 — 전환이
+    /// 눈앞에서 번쩍이지 않게 스플래시로 덮는다.
+    static func markDone() { UserDefaults.standard.set(true, forKey: doneKey) }
+
+    /// 다음 탭으로 유도. 탭 선택은 뷰 밖(UserDefaults)에 있어 어느 화면에서든 옮길 수 있다.
+    static func move(to tab: RootTab) {
+        UserDefaults.standard.set(tab.rawValue, forKey: RootTab.storageKey)
     }
 }
 
@@ -58,6 +104,13 @@ enum CoachSteps {
         // (2026-08-01 「기록」 스와치 폐기) 첫 안내에서 뺀다.
         CoachStep(anchor: .calendarGrid, title: Loc.str("날짜 아래 선으로 계절을 알 수 있어요"),
                   body: Loc.str("날짜를 탭하면 빠르게 일정을 추가할 수 있어요. 길게 누르고 드래그해 며칠에 걸친 일정도 추가할 수 있어요. \n길게 누르면 하루 상세 탭으로 넘어갑니다.")),
+    ]
+    /// 나의 템포 탭 — 무엇을 보는 화면인지 + 배지 보관함(2026-09-04 베타)
+    static let rhythm: [CoachStep] = [
+        CoachStep(anchor: .rhythmSwitcher, title: Loc.str("기록이 쌓이면 여기서 보여요"),
+                  body: Loc.str("계절마다 컨디션이 어땠는지, 루틴은 얼마나 했는지, 그날의 한 줄은 무엇이었는지를 나눠서 볼 수 있어요.")),
+        CoachStep(anchor: .rhythmBadges, title: Loc.str("기념 배지"),
+                  body: Loc.str("체크인을 모으거나 숨은 것을 발견하면 배지가 하나씩 쌓여요. 눌러서 모은 배지를 볼 수 있어요.")),
     ]
     /// 씨앗 최초 획득 — 오늘 탭 우상단 배지에서 1회(2026-08-12 사용자 지시).
     /// 얻는 법·쓰는 곳을 한 번에 말한다. 재촉은 하지 않는다(§7) — 사실만.
@@ -93,9 +146,15 @@ extension View {
     /// `enabled` = 화면 진입 말고 다른 순간에 열려야 하는 코치용(2026-08-12 씨앗 최초 획득).
     /// false로 시작해 true가 되는 순간에도 발동한다 — onAppear만 보면 화면에 머무는 동안
     /// 생긴 조건(체크인을 완성해 씨앗이 처음 생김)을 영영 못 잡는다.
-    func coachOverlay(id: CoachID, steps: [CoachStep], enabled: Bool = true) -> some View {
+    /// `finishLabel`·`onFinish` = 튜토리얼 체인용(2026-09-04). 마지막 버튼 문구를 바꾸고,
+    /// **한 단계라도 실제로 보여준 경우에만** 끝에서 콜백을 부른다(앵커가 없어 통째로 건너뛴
+    /// 코치가 탭을 옮기면 안 된다).
+    func coachOverlay(id: CoachID, steps: [CoachStep], enabled: Bool = true,
+                      finishLabel: String? = nil,
+                      onFinish: (() -> Void)? = nil) -> some View {
         overlayPreferenceValue(CoachAnchorKey.self) { anchors in
-            CoachOverlay(id: id, steps: steps, anchors: anchors, enabled: enabled)
+            CoachOverlay(id: id, steps: steps, anchors: anchors, enabled: enabled,
+                         finishLabel: finishLabel, onFinish: onFinish)
         }
     }
 }
@@ -106,6 +165,8 @@ private struct CoachOverlay: View {
     let steps: [CoachStep]
     let anchors: [CoachAnchor: Anchor<CGRect>]
     let enabled: Bool
+    let finishLabel: String?
+    let onFinish: (() -> Void)?
 
     @State private var active = false
     @State private var index = 0
@@ -175,11 +236,11 @@ private struct CoachOverlay: View {
     }
 
     private func finish() {
-        if shownAny {
-            CoachStore.markDone(id)
-            successFeedback += 1
-        }
         active = false
+        guard shownAny else { return }
+        CoachStore.markDone(id)
+        successFeedback += 1
+        onFinish?()
     }
 
     private func card(step: CoachStep, shownIndex: Int, isLast: Bool,
@@ -213,7 +274,7 @@ private struct CoachOverlay: View {
                 Button {
                     advance(from: shownIndex)
                 } label: {
-                    Text(isLast ? Loc.str("알겠어요") : Loc.str("다음"))
+                    Text(isLast ? (finishLabel ?? Loc.str("알겠어요")) : Loc.str("다음"))
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(Ink.paper)
                         .padding(.horizontal, 20)

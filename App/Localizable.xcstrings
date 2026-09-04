@@ -5155,6 +5155,29 @@
         }
       }
     },
+    "계절마다 컨디션이 어땠는지, 루틴은 얼마나 했는지, 그날의 한 줄은 무엇이었는지를 나눠서 볼 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See how each season felt, how much of your routine you kept, and what you wrote that day, each in its own place."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節ごとの調子、ルーティンをどれくらい続けたか、その日の一行を、それぞれ分けて見られます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以分开查看每个季节的状态、routine 完成了多少、当天写下的一行是什么。"
+          }
+        }
+      }
+    },
     "계절별 루틴": {
       "extractionState": "manual",
       "localizations": {
@@ -6531,6 +6554,29 @@
         }
       }
     },
+    "기록이 쌓이면 여기서 보여요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is where your records add up"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録がたまるとここに見えます"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录攒起来后在这里看"
+          }
+        }
+      }
+    },
     "기록하면 계절이 채워져요": {
       "extractionState": "manual",
       "localizations": {
@@ -6962,6 +7008,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "我的节奏"
+          }
+        }
+      }
+    },
+    "나의 템포 보기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See My Tempo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マイテンポを見る"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看我的节奏"
           }
         }
       }
@@ -19108,6 +19177,29 @@
         }
       }
     },
+    "체크인을 모으거나 숨은 것을 발견하면 배지가 하나씩 쌓여요. 눌러서 모은 배지를 볼 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badges collect as you check in or find hidden things. Tap to see the ones you have."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックインを重ねたり、隠れたものを見つけるとバッジがたまります。タップすると集めたバッジを見られます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "签到累积或发现隐藏内容时会得到徽章。点一下就能看已收集的徽章。"
+          }
+        }
+      }
+    },
     "초기화": {
       "extractionState": "manual",
       "localizations": {
@@ -19472,6 +19564,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "日历"
+          }
+        }
+      }
+    },
+    "캘린더 보기": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See the calendar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダーを見る"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看日历"
           }
         }
       }
