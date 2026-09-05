@@ -296,7 +296,7 @@ struct CheckInCard: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: .infinity, height: 220)
+                    .frame(maxWidth: .infinity, minHeight: 220, maxHeight: 220)
                     .clipped()
                     .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: 12))

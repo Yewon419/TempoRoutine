@@ -910,7 +910,7 @@ struct RhythmView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: .infinity, height: 240)
+                    .frame(maxWidth: .infinity, minHeight: 240, maxHeight: 240)
                     .clipped()
                     .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: 12))
