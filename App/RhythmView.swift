@@ -905,11 +905,16 @@ struct RhythmView: View {
                 Spacer()
             }
             if let image = CheckInPhotoStore.image(named: entry.photoName) {
+                // 높이를 확정하고 잘라 낸다 — maxHeight만 주면 scaledToFill이 원본 비율대로
+                // 부풀어 칸 밖으로 넘친다(2026-09-05 체크인 카드에서 실제로 터진 자리)
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: 240)
+                    .frame(maxWidth: .infinity, height: 240)
+                    .clipped()
+                    .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .allowsHitTesting(false)
             }
             // 한 줄 일기 본문 — 한글이 주라 시스템 세리프면 고딕 폴백(2026-08-01 베타 피드백)
             if let note = entry.note, !note.isEmpty {

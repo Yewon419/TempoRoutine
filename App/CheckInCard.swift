@@ -49,6 +49,28 @@ struct CheckInCard: View {
     }
 
     var body: some View {
+        // 「오늘 한 줄」은 체크인과 다른 카드다(2026-09-05 베타 "오늘한줄이랑 사진넣는걸 아래칸에
+        // 따로 카드로 빼자") — 척도 고르기와 글·사진 남기기는 성격이 다른 일이다. 초안·저장은
+        // 한 뷰가 그대로 들고 있어 저장 경로는 갈라지지 않는다.
+        VStack(spacing: 16) {
+            checkInBody
+            if signals.note { noteBody }
+        }
+        .seedBurst(trigger: seedEarned)   // 획득 연출(2026-08-09)
+        .onAppear(perform: loadDraft)
+        // 날짜가 바뀌면 그날 것으로 다시 읽는다(2026-08-03 베타 피드백 "어제 저장한 게 오늘까지 표시").
+        // onAppear 한 번만 로드하면, 앱을 백그라운드에 둔 채 자정을 넘겼을 때 day는 오늘로 바뀌는데
+        // 초안은 어제 값이 남아 칩·확인 문구가 어제 상태로 보이고, 손대는 순간 오늘로 복사된다.
+        .onChange(of: normalizedDay) { _, _ in reloadDraft() }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
+            }
+        }
+    }
+
+    private var checkInBody: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(.almanac(size: 17, weight: .bold))
@@ -68,21 +90,6 @@ struct CheckInCard: View {
             // 아픈 날 증상(2026-09-01 대표님 지시) — 다중 선택. 질병은 집계 제외·통증은 전량
             // 반영(판정은 aggregationWeight). 안내 문구 없이 칩만("안내 말고 증상 토글" — 지시 원문).
             symptomRow
-            // 「오늘 한 줄」도 추적 항목 토글을 따른다(2026-08-20 감사 — 온보딩 ③ 토글이
-            // 있는데 두 표면 다 무조건 렌더해 죽은 스위치였다). 꺼도 기존 노트는 보존된다
-            if signals.note {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(noteLabel).font(.caption).foregroundStyle(Ink.text.opacity(0.5))
-                    // 안내문구 = prompt(2026-08-05 베타 피드백 "하루를 간단히 남겨봐요" — 07-31 placeholder 제거의 교체)
-                    TextField("", text: $draftNote, prompt: Text("하루를 간단히 남겨봐요")
-                        .foregroundStyle(Ink.text.opacity(0.35)), axis: .vertical)
-                        .font(.subheadline)
-                        .foregroundStyle(Ink.text)
-                        .focused($noteFocused)
-                        .onChange(of: draftNote) { persistDraft() }
-                    photoRow
-                }
-            }
             if draftEnergy > 0 && draftMood > 0 {
                 Text(confirmLine)
                     .font(.system(.footnote, design: .serif))
@@ -92,18 +99,27 @@ struct CheckInCard: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
-        .seedBurst(trigger: seedEarned)   // 획득 연출(2026-08-09)
-        .onAppear(perform: loadDraft)
-        // 날짜가 바뀌면 그날 것으로 다시 읽는다(2026-08-03 베타 피드백 "어제 저장한 게 오늘까지 표시").
-        // onAppear 한 번만 로드하면, 앱을 백그라운드에 둔 채 자정을 넘겼을 때 day는 오늘로 바뀌는데
-        // 초안은 어제 값이 남아 칩·확인 문구가 어제 상태로 보이고, 손대는 순간 오늘로 복사된다.
-        .onChange(of: normalizedDay) { _, _ in reloadDraft() }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
-            }
+    }
+
+    /// 두 번째 카드 — 한 줄과 사진(2026-09-05 베타). 추적 항목 토글을 따른다(2026-08-20 감사 —
+    /// 온보딩 ③ 토글이 있는데 두 표면 다 무조건 렌더해 죽은 스위치였다). 꺼도 기존 노트는 보존된다.
+    private var noteBody: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(noteLabel)
+                .font(.almanac(size: 17, weight: .bold))
+                .foregroundStyle(Ink.text)
+            // 안내문구 = prompt(2026-08-05 베타 피드백 "하루를 간단히 남겨봐요" — 07-31 placeholder 제거의 교체)
+            TextField("", text: $draftNote, prompt: Text("하루를 간단히 남겨봐요")
+                .foregroundStyle(Ink.text.opacity(0.35)), axis: .vertical)
+                .font(.subheadline)
+                .foregroundStyle(Ink.text)
+                .focused($noteFocused)
+                .onChange(of: draftNote) { persistDraft() }
+            photoRow
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .milkGlass()
     }
 
     /// 영어·일본어 칩이 길어 한 줄에 안 들어가면 칩이 낱말 중간에서 꺾였다(2026-08-22 베타
@@ -272,11 +288,19 @@ struct CheckInCard: View {
     private var photoRow: some View {
         if let image = CheckInPhotoStore.image(named: draftPhotoName) {
             ZStack(alignment: .topTrailing) {
+                // ⚠ `maxHeight:`로는 안 된다(2026-09-05 베타 "사진 넣으니까 터치가 안돼").
+                // maxHeight는 상한일 뿐 크기를 확정하지 않아서 scaledToFill이 원본 비율대로
+                // 부풀고, 그 커진 프레임이 카드 밖까지 깔려 **카드 전체의 탭을 가로챘다**.
+                // 높이를 확정(frame(height:))하고 clipped로 자른 뒤 히트 영역까지 프레임으로
+                // 고정한다. 사진 자체는 누를 대상이 아니라 히트테스트를 아예 끈다(지우기는 X 버튼).
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: 220)
+                    .frame(maxWidth: .infinity, height: 220)
+                    .clipped()
+                    .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .allowsHitTesting(false)
                 Button {
                     removePhoto()
                 } label: {

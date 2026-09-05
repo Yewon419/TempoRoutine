@@ -226,11 +226,15 @@ struct AchievementCell: View {
                 .font(.almanacBody(.subheadline, size: 14, weight: .bold))
                 .foregroundStyle(Ink.text.opacity(unlocked ? 1 : 0.45))
                 .multilineTextAlignment(.center)
+                .lineLimit(1)
+            // 설명 줄 수가 1~2로 갈려 칸 높이가 제각각이었다(2026-09-05 베타 "칸이 제각각이야").
+            // 두 줄 자리를 미리 잡아 두고, 남는 높이는 아래 maxHeight가 행에 맞춰 늘린다.
             Text(hiddenLocked ? Loc.str("발견하면 알게 돼요") : id.caption)
                 .font(.almanacBody(.caption, size: 11))
                 .foregroundStyle(Ink.text.opacity(unlocked ? 0.6 : 0.35))
                 .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(2, reservesSpace: true)
+            Spacer(minLength: 0)
             if let unlockedAt {
                 Text(unlockedAt.formatted(Loc.dateTime.year().month().day()))
                     .font(.system(size: 9, design: .monospaced))
@@ -239,7 +243,8 @@ struct AchievementCell: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity)
+        // 행 안에서 가장 높은 칸에 맞춰 늘어난다 — 격자가 들쭉날쭉하지 않게
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .milkGlass()
         .accessibilityElement(children: .combine)
     }
