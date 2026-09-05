@@ -4,7 +4,9 @@
 
 package app.temporoutine.android
 
+import app.temporoutine.android.data.DailyCheckInEntity
 import app.temporoutine.android.data.InputItemEntity
+import app.temporoutine.android.data.PeriodDayEntity
 import app.temporoutine.android.data.InputSubtaskEntity
 import app.temporoutine.android.data.OutputItemEntity
 import app.temporoutine.android.data.OutputSubtaskEntity
@@ -27,7 +29,21 @@ object DevSampleData {
         val today = LocalDate.now()
         val now = today.atStartOfDay(zone).toInstant()
 
+        // 생리 기록 3에피소드(5일) — 시작 −59·−31·−3일 → 실측 gap 28 → 계절 밑줄·예측·범례 검증용
+        val periodDays = listOf(59, 31, 3).flatMap { start -> (0 until 5).map { today.minusDays((start - it).toLong()) } }
+        db.periodDays().insert(periodDays.map { PeriodDayEntity(day = it) })
+        // 체크인 — 최근 20일 중 짝수일, 겨울은 낮게
+        for (back in 0 until 20 step 2) {
+            val day = today.minusDays(back.toLong())
+            val winter = periodDays.contains(day)
+            db.checkIns().insert(DailyCheckInEntity(day = day, energy = if (winter) 2 else 4, mood = 3, sleep = 3, appetite = 3,
+                createdAt = day.atStartOfDay(zone).toInstant().plusSeconds(3600), isBackfilled = false,
+                completedAt = day.atStartOfDay(zone).toInstant().plusSeconds(3600)))
+        }
+
         db.schedules().insert(ScheduleItemEntity(title = "여행", date = now, endDate = today.plusDays(2).atStartOfDay(zone).toInstant(), isAllDay = true))
+        db.schedules().insert(ScheduleItemEntity(title = "저녁약속", date = today.plusDays(1).atStartOfDay(zone).plusHours(19).toInstant(), isAllDay = false))
+        db.schedules().insert(ScheduleItemEntity(title = "친구 결혼식", date = today.plusDays(8).atStartOfDay(zone).toInstant(), endDate = today.plusDays(9).atStartOfDay(zone).toInstant(), isAllDay = true))
 
         db.inputs().insert(InputItemEntity(title = "혼자만의 패션쇼", scheduleJson = InputItemEntity.encodeSchedule(InputSchedule.Daily), createdAt = now))
         db.inputs().insert(InputItemEntity(title = "공원 피크닉", scheduleJson = InputItemEntity.encodeSchedule(InputSchedule.Daily), createdAt = now, timeMinutes = 15 * 60))

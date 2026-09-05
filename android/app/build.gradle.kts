@@ -56,6 +56,9 @@ val syncIosAssets by tasks.registering(Copy::class) {
     description = "iOS App/Fonts·Assets.xcassets에서 서체·모티프를 Android res로 복사"
     into(iosAssetsRes)
     from(File(iosRoot, "App/Fonts/NotoSerifKR-Variable.ttf")) { into("font"); rename { "notoserifkr_variable.ttf" } }
+    // 캘린더 셀 숫자 = Gowun Batang 14(오늘 Bold) — 은필도 숫자만 이 서체(SeasonCalendarView.numberFont)
+    from(File(iosRoot, "App/Fonts/GowunBatang-Regular.ttf")) { into("font"); rename { "gowunbatang_regular.ttf" } }
+    from(File(iosRoot, "App/Fonts/GowunBatang-Bold.ttf")) { into("font"); rename { "gowunbatang_bold.ttf" } }
     for (season in listOf("Winter", "Spring", "Summer", "Autumn")) {
         from(File(iosRoot, "App/Assets.xcassets/Motif$season.imageset/Motif$season.png")) {
             into("drawable-nodpi"); rename { "motif_${season.lowercase()}.png" }

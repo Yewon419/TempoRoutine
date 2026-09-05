@@ -177,3 +177,10 @@
 - 앱 모듈 안에서 `app.temporoutine.…` 전체 경로 참조는 지역 `app` 프로퍼티와 충돌해 `Unresolved reference 'temporoutine'`이
   난다 — 항상 import로.
 - **첫 DB 방출 전엔 지면만 그린다**(`state.loaded`) — iOS @Query는 동기라 없는 콜드 플래시가 Android엔 있다.
+- **캐러셀(3패널 Row) 함정 2건(2026-09-05 실측):** ① Row는 앞 자식이 폭을 다 쓰면 다음 자식에 남은 폭 0을 주고,
+  `requiredWidth`로 넘기면 초과분을 **가운데 정렬**해 반 폭이 밀린다 → Row에 `wrapContentWidth(Alignment.Start, unbounded = true)`.
+  ② 드래그 델타를 `Animatable.snapTo`로 델타마다 `launch`하면 MutatorMutex가 서로 취소해 700px 스와이프가 −61px로 정착
+  → 드래그는 `mutableFloatStateOf` 누적, 정착만 `animate()`. ③ 옆 달을 드래그 중에만 합성(iOS 최적화)하면 첫 드래그 때
+  합성 프레임이 델타를 먹는다 → Android는 옆 달 항상 합성(MonthRender 캐시라 싸다).
+- **에뮬레이터 로케일 = `adb root` 후 `setprop persist.sys.locale ko-KR` + reboot**(google_apis 이미지만 root 가능). 재부팅 직후
+  SystemUI/런처 ANR 다이얼로그가 반복되면 `emu kill` 후 재기동(로케일은 유지). 요일 한글·공휴일(KR 게이트)은 이 상태에서만 보인다.

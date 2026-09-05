@@ -56,26 +56,26 @@ import app.temporoutine.android.theme.GroundHaze
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.SeasonLight
 import app.temporoutine.android.theme.chromeGlass
+import androidx.compose.ui.unit.Dp
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun TodayRoute(app: TempoApp, openLogSheetInitially: Boolean = false) {
-    val vm: TodayViewModel = viewModel { TodayViewModel(app) }
+fun TodayRoute(app: TempoApp, vm: TodayViewModel, hazeState: HazeState, bottomPadding: Dp, openLogSheetInitially: Boolean = false) {
     val state by vm.state.collectAsState()
     var showLogSheet by remember { mutableStateOf(openLogSheetInitially) }
-    TodayScreen(state = state, vm = vm, onTogglePeriod = vm::togglePeriodToday, onOpenLogSheet = { showLogSheet = true })
+    TodayScreen(state = state, vm = vm, hazeState = hazeState, bottomPadding = bottomPadding,
+        onTogglePeriod = vm::togglePeriodToday, onOpenLogSheet = { showLogSheet = true })
     if (showLogSheet && state.loaded) {
         PeriodTrackerSheet(state = state, vm = vm, onDismiss = { showLogSheet = false })
     }
 }
 
 @Composable
-fun TodayScreen(state: TodayUiState, vm: TodayViewModel, onTogglePeriod: () -> Unit, onOpenLogSheet: () -> Unit) {
+fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, bottomPadding: Dp, onTogglePeriod: () -> Unit, onOpenLogSheet: () -> Unit) {
     val ink = Ink
-    val hazeState = rememberHazeState()
     val scroll = rememberScrollState()
     val density = LocalDensity.current
 
@@ -103,7 +103,7 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, onTogglePeriod: () -> U
                 .verticalScroll(scroll)
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(20.dp)
-                .windowInsetsPadding(WindowInsets.navigationBars),
+                .padding(bottom = bottomPadding),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             LargeHeader(state, onTogglePeriod)

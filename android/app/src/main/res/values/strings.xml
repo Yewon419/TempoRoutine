@@ -74,6 +74,22 @@
     <string name="checkin_confirm_today">오늘 기록이 나의 템포에 담겼어요.</string>
     <string name="checkin_confirm_day">이날 기록이 나의 템포에 담겼어요.</string>
 
+    <!-- 탭바 -->
+    <string name="tab_today">오늘</string>
+    <string name="tab_calendar">캘린더</string>
+
+    <!-- 캘린더 -->
+    <string name="calendar_season_cold">첫 생리일을 기록하면 계절이 채워지기 시작할거예요</string>
+    <string name="calendar_season_overdue">겨울 예상 · 예정일 %1$s일 지남</string>
+    <string name="calendar_season_line">%1$s %2$s일차%3$s</string>
+    <string name="calendar_projected_suffix">" · 예상"</string>
+    <string name="calendar_period_button">생리 기록</string>
+    <string name="calendar_prev_month">이전 달</string>
+    <string name="calendar_next_month">다음 달</string>
+    <string name="calendar_a11y_projected">%1$s 예상</string>
+    <string name="calendar_a11y_recorded">생리 기록</string>
+    <string name="calendar_a11y_predicted">생리 예상</string>
+
     <!-- 생리 기록 시트 -->
     <string name="sheet_title">생리 기록</string>
     <string name="sheet_confirm">완료</string>

@@ -20,6 +20,22 @@ object Fonts {
         Font(R.font.notoserifkr_variable, weight = FontWeight.Medium, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
     )
 
+    val gowunBatang: FontFamily = FontFamily(
+        Font(R.font.gowunbatang_regular, weight = FontWeight.Normal),
+        Font(R.font.gowunbatang_bold, weight = FontWeight.Bold),
+    )
+
+    /** 캘린더 셀 숫자 — Gowun Batang 14, 오늘만 Bold(iOS numberFont 은필 분기). */
+    fun calendarNumber(isToday: Boolean): TextStyle = TextStyle(
+        fontFamily = gowunBatang,
+        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 16.sp,
+        fontFeatureSettings = "tnum",
+        platformStyle = platform,
+        lineHeightStyle = trim,
+    )
+
     private val platform = PlatformTextStyle(includeFontPadding = false)
     private val trim = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None)
 

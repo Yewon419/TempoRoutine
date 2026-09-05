@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import app.temporoutine.android.theme.TempoTheme
-import app.temporoutine.android.today.TodayRoute
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -23,7 +22,7 @@ class MainActivity : ComponentActivity() {
         val openSheet = debuggable && intent.getBooleanExtra("openLogSheet", false)
         setContent {
             TempoTheme {
-                TodayRoute(app, openLogSheetInitially = openSheet)
+                RootScaffold(app, openLogSheetInitially = openSheet)
             }
         }
     }
