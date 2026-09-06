@@ -108,11 +108,12 @@ why a Claude Builder Club at Ewha wouldn't start from zero: it gives me both a r
 channel into Ewha and co-hosts for events a single-campus club can't run alone.
 
 **GYM-ZALABIM** — real-time home-training posture correction, 4-person team
-`MediaPipe · OpenCV · FastAPI · React` · [repo/demo link — fill in]
+`MediaPipe · OpenCV · FastAPI · React` · [github.com/vivamini7/Fitness](https://github.com/vivamini7/Fitness)
 
-Scores a user's form against reference data from their webcam in real time. Webcam →
-FastAPI backend (session state, per-mode flow control, scoring) → MediaPipe engine
-(33 pose landmarks → joint metrics → comparison against reference → score) → React frontend.
+A working web app, not a notebook: webcam → FastAPI backend (session state, per-mode flow
+control, scoring) → MediaPipe engine (33 pose landmarks → joint metrics → comparison against
+reference → score) → React frontend, with three scored attempts per session and a
+per-user leaderboard.
 
 - **Easy mode (squat)** runs a 5-state machine — Stand → Descend → Hold → Ascend → Rest —
   and scores four checkpoints: trunk, hip, and knee angles plus knee-valgus distance.
@@ -121,9 +122,9 @@ FastAPI backend (session state, per-mode flow control, scoring) → MediaPipe en
   and min-max normalizing — yielding reference means of trunk 32.59°, hip 110.11°,
   knee 108.35°, knee-valgus 49.13px.
 - **Hard mode (choreography)** can't use a static reference, because the same move performed
-  slower is still correct. So scoring runs **DTW frame matching** against a preprocessed
-  reference sequence before comparing left/right elbow and knee angles — aligning on time
-  first, then measuring form.
+  slower is still correct — the reference itself was extracted from video and time-scaled.
+  So scoring runs **DTW frame matching** against the preprocessed landmark sequence before
+  comparing left/right elbow and knee angles: align on time first, then measure form.
 Run as a study group rather than split by role: all four of us worked through every stage —
 pose extraction, reference derivation, DTW scoring, API, and frontend — so I came out of it
 having built each part rather than owning one slice.
@@ -237,8 +238,9 @@ to teach it from.
 ## What I would do on campus
 
 **A founding cohort on day one.** The club doesn't start cold. The technical base is three
-departments I can reach directly — **AI & Data Science** (my own division), **Computer
-Engineering**, and **Cyber Security** — and beyond Ewha, the Prometheus alumni network gives me AI-focused
+departments I can reach directly — **Data Science** (my own, now part of the merged AI &
+Data Science division), **Computer Engineering**, and **Cyber Security** — and beyond Ewha,
+the Prometheus alumni network gives me AI-focused
 students across several Seoul campuses to recruit from and co-host with. Most single-campus
 clubs can't offer that second channel.
 
