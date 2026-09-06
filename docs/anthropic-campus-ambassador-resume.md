@@ -236,19 +236,24 @@ to teach it from.
 
 ## What I would do on campus
 
-**A founding cohort on day one.** The club doesn't start cold: the Data Science department is
-my own, and Prometheus gives me an existing network of AI-focused students across several
-Seoul campuses to recruit from and co-host with. Most single-campus clubs can't offer that
-second channel.
+**A founding cohort on day one.** The club doesn't start cold. The technical base is three
+departments I can reach directly — **AI & Data Science** (my own division), **Computer
+Engineering**, and **Cyber Security** — and beyond Ewha, the Prometheus alumni network gives me AI-focused
+students across several Seoul campuses to recruit from and co-host with. Most single-campus
+clubs can't offer that second channel.
 
 - **Ship Night (weekly, 2h).** Not a lecture — everyone leaves with a deployed thing. Ladder:
   a claudebar-sized tool → a first MCP server (via MCP_supporter) → an agentic CI loop.
 - **"Verify It" workshop.** Building a test/CI harness for AI-generated code you can't read
   line-by-line. Concrete, straight from the TempoRoutine ledger.
-- **Research track for non-CS majors.** Ewha's strength is that most students here aren't
+- **A security-review session with Cyber Security.** They have the one use case that makes
+  the verification argument land instantly: reading code you didn't write, looking for what's
+  wrong with it. Co-hosting there also gets the club a technical audience that isn't already
+  in Prometheus.
+- **Research track for non-CS majors.** Ewha's real reach is that most students here aren't
   engineers. Claude Projects for thesis literature review, artifacts for data-heavy
-  coursework, MCP for wiring research tools together — starting with the departments
-  adjacent to Data Science [name 2–3].
+  coursework, MCP for wiring research tools together — run as a separate, lower-floor track
+  so the Builder Club's technical bar doesn't turn them away at the door.
 - **Competition cohort.** JejuNow was a competition entry I took from idea to
   submitted-and-deployed. Korea runs public-data and tourism-data competitions on a fixed
   annual calendar; I'd run a group that ships into one, using Claude for the pipeline work
