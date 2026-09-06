@@ -59,6 +59,7 @@ import app.temporoutine.android.theme.chromeGlass
 import androidx.compose.ui.unit.Dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -90,29 +91,33 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, b
         }
     }
 
+    // 컴팩트 바는 지면만이 아니라 스크롤 콘텐츠까지 흐려야 한다(iOS 동형) — 그 층의 소스를 따로 둔다.
+    val compactHaze = rememberHazeState()
     Box(Modifier.fillMaxSize().background(ink.paper)) {
         // 첫 DB 방출 전엔 지면만 — 기본 상태(콜드)를 잠깐 보여줬다가 바뀌는 깜빡임 방지(iOS는 @Query가 동기라 없는 문제)
         if (!state.loaded) return@Box
-        SeasonLight(
-            phase = state.info?.phase,
-            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
-        )
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(scroll)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(20.dp)
-                .padding(bottom = bottomPadding),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            LargeHeader(state, onTogglePeriod)
-            StateSurfaces(state, onOpenLogSheet)
-            TodaySections(state, vm, hazeState)
-            val record = state.checkIns.firstOrNull { it.day == state.today }
-            CheckInCard(day = state.today, record = record, signals = state.trackedSignals, vm = vm, hazeState = hazeState, isToday = true)
+        Box(Modifier.fillMaxSize().hazeSource(compactHaze)) {
+            SeasonLight(
+                phase = state.info?.phase,
+                modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+            )
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scroll)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(20.dp)
+                    .padding(bottom = bottomPadding),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                LargeHeader(state, onTogglePeriod)
+                StateSurfaces(state, onOpenLogSheet)
+                TodaySections(state, vm, hazeState)
+                val record = state.checkIns.firstOrNull { it.day == state.today }
+                CheckInCard(day = state.today, record = record, signals = state.trackedSignals, vm = vm, hazeState = hazeState, isToday = true)
+            }
         }
-        CompactBar(state, collapsed, Modifier.align(Alignment.TopCenter).zIndex(1f).chromeGlass(hazeState))
+        CompactBar(state, collapsed, Modifier.align(Alignment.TopCenter).zIndex(1f).chromeGlass(compactHaze))
     }
 }
 

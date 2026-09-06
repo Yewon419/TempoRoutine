@@ -52,6 +52,7 @@ import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.chromeGlass
 import app.temporoutine.android.today.TodayRoute
 import app.temporoutine.android.today.TodayViewModel
+import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
 private val TAB_BAR_HEIGHT = 49.dp
@@ -73,17 +74,22 @@ fun RootScaffold(app: TempoApp, openLogSheetInitially: Boolean = false) {
             OnboardingFlow(app, isRevisit = loaded.onboardingRevisit)
             return@Box
         }
+        // 유리 층은 소스가 서로 겹치면 피드백이 난다 — 층마다 상태를 따로 둔다(2026-09-07).
+        // ground = 카드(밀크 글래스)가 보는 지면 / tab = 탭바가 보는 화면 전체(지면 + 스크롤 콘텐츠).
         val hazeState = rememberHazeState()
+        val tabHaze = rememberHazeState()
         var tab by rememberSaveable { mutableStateOf(RootTab.TODAY) }
         val todayVm: TodayViewModel = viewModel { TodayViewModel(app) }
         val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         val bottomPadding = TAB_BAR_HEIGHT + navInset
-        when (tab) {
-            RootTab.TODAY -> TodayRoute(app, todayVm, hazeState, bottomPadding, openLogSheetInitially)
-            RootTab.CALENDAR -> CalendarRoute(app, todayVm, hazeState, bottomPadding, loaded.hideCalendarPeriodEntry)
-            RootTab.SETTINGS -> SettingsRoute(app, hazeState, bottomPadding)
+        Box(Modifier.fillMaxSize().hazeSource(tabHaze)) {
+            when (tab) {
+                RootTab.TODAY -> TodayRoute(app, todayVm, hazeState, bottomPadding, openLogSheetInitially)
+                RootTab.CALENDAR -> CalendarRoute(app, todayVm, hazeState, bottomPadding, loaded.hideCalendarPeriodEntry)
+                RootTab.SETTINGS -> SettingsRoute(app, hazeState, bottomPadding)
+            }
         }
-        TabBar(tab, onSelect = { tab = it }, Modifier.align(Alignment.BottomCenter).chromeGlass(hazeState))
+        TabBar(tab, onSelect = { tab = it }, Modifier.align(Alignment.BottomCenter).chromeGlass(tabHaze))
     }
 }
 

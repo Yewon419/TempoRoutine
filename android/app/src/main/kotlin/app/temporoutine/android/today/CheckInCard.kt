@@ -133,13 +133,13 @@ fun CheckInCard(day: LocalDate, record: DailyCheckInEntity?, signals: TrackedSig
         vm.persistCheckIn(day, next.copy(symptoms = next.symptoms ?: emptySet()))
     }
 
+    SeedBurstOverlay(trigger = burst, modifier = Modifier.fillMaxWidth()) {
     Column(
         Modifier.fillMaxWidth().milkGlass(hazeState).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(if (isToday) R.string.checkin_title_today else R.string.checkin_title_day), style = Fonts.almanac(17), color = ink.text)
-            if (burst > 0) SeedGlyph(color = ink.text.copy(alpha = 0.85f), width = 15.dp, height = 20.dp, modifier = Modifier.padding(start = 8.dp))
         }
         SignalRow(stringResource(R.string.checkin_energy), listOf(stringResource(R.string.checkin_energy_low), stringResource(R.string.checkin_mid), stringResource(R.string.checkin_energy_high)), draft.energy) { commit(draft.copy(energy = it)) }
         SignalRow(stringResource(R.string.checkin_mood), listOf(stringResource(R.string.checkin_mood_low), stringResource(R.string.checkin_mid), stringResource(R.string.checkin_mood_high)), draft.mood) { commit(draft.copy(mood = it)) }
@@ -166,5 +166,6 @@ fun CheckInCard(day: LocalDate, record: DailyCheckInEntity?, signals: TrackedSig
         if (draft.energy > 0 && draft.mood > 0) {
             Text(stringResource(if (isToday) R.string.checkin_confirm_today else R.string.checkin_confirm_day), style = Fonts.almanacBody(13), color = ink.text.copy(alpha = 0.6f))
         }
+    }
     }
 }

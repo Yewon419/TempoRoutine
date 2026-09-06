@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,7 @@ import app.temporoutine.android.data.DailyCheckInEntity
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.milkGlass
+import app.temporoutine.android.today.SeedBurstOverlay
 import app.temporoutine.android.today.SignalChips
 import app.temporoutine.android.today.TodayViewModel
 import app.temporoutine.android.today.persistCheckIn
@@ -53,7 +55,9 @@ fun CheckInEditor(day: LocalDate, record: DailyCheckInEntity?, signals: TrackedS
         draft = next
         if (!isFuture) vm.persistCheckIn(day, next)
     }
+    val burst by vm.seedBurst.collectAsState()
 
+    SeedBurstOverlay(trigger = burst, modifier = Modifier.fillMaxWidth()) {
     Column(
         Modifier.fillMaxWidth().alpha(if (isFuture) 0.45f else 1f).milkGlass(hazeState, radius = 14.dp).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -76,6 +80,7 @@ fun CheckInEditor(day: LocalDate, record: DailyCheckInEntity?, signals: TrackedS
             cursorBrush = SolidColor(ink.text),
             modifier = Modifier.fillMaxWidth(),
         )
+    }
     }
 }
 

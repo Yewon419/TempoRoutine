@@ -198,6 +198,13 @@
 - **Compose `PathMeasure`는 첫 컨투어만 잰다**(`nextContour` 없음). 여러 조각으로 된 선화를 SwiftUI `.trim`처럼 순차로 그리려면
   컨투어를 `List<Path>`로 나눠 누적 길이로 잘라야 한다(`drawTrimmedContours`).
 - **strings.xml에 줄바꿈은 반드시 `\n` 이스케이프.** 실제 개행을 넣으면 XML 파서가 공백으로 접어 표제가 한 줄로 붙는다(2026-09-05 실측).
+- **유리 층은 소스가 겹치면 피드백이 난다 — 층마다 `HazeState`를 따로 둔다**(2026-09-07). 지금 3층:
+  ground(카드가 보는 지면) · compact(오늘 탭 컴팩트 바가 보는 지면+스크롤) · tab(탭바가 보는 화면 전체).
+  소비자(`hazeEffect`)는 자기 소스 **바깥**에 있어야 한다 — 바를 소스 Box 안에 넣으면 자기를 흐리게 된다.
+- **SwiftUI `spring(response:)` → Compose `stiffness`는 ω=2π/response, k=ω²**(damping은 그대로 dampingRatio).
+  값을 눈대중으로 옮기면 iOS와 다른 탄성이 된다(씨앗 연출 이식 실측).
+- **씨앗 연출은 완성 판정을 통과해야 뜬다** — 켜 둔 옵션 신호(수면·식욕)까지 채워야 `Seeds.isComplete`가 참이다.
+  에너지·기분만 넣고 "연출이 안 뜬다"고 판단하지 말 것(2026-09-07 실측, iOS와 같은 규칙).
 - **SAF 왕복이 P0 백업 경로다.** 내보내기 = `CreateDocument("application/json")`, 가져오기 = `OpenDocument(arrayOf("application/json"))`.
   앱이 저장 위치를 고르지 않으니 권한 선언도 없다. 봉투 문자열은 VM이 만들고 파일 쓰기는 화면(런처)이 한다.
 - **토글 행은 스위치만이 아니라 행 전체가 눌려야 한다**(2026-09-06 실측 — 라벨을 눌러도 안 바뀌어 결함처럼 보였다).

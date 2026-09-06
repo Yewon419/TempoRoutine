@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -226,13 +228,25 @@ private fun PlusMinus(minus: () -> Unit, plus: () -> Unit) {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun PercentControl(percent: Double, labelWidth: androidx.compose.ui.unit.Dp, onChange: (Float) -> Unit) {
     val ink = Ink
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // M3 기본 슬라이더는 트랙이 두껍고 손잡이가 커서 은필의 가는 선과 부딪힌다 —
+        // iOS 시스템 슬라이더 비례(트랙 3dp · 손잡이 지름 16dp)로 얇게 그린다(2026-09-07 대표님 위임 결정).
         Slider(
             value = percent.toFloat(), onValueChange = onChange, valueRange = 0f..1f,
             colors = SliderDefaults.colors(thumbColor = ink.text, activeTrackColor = ink.text, inactiveTrackColor = ink.text.copy(alpha = 0.15f)),
+            track = { state ->
+                val fraction = ((state.value - state.valueRange.start) / (state.valueRange.endInclusive - state.valueRange.start)).coerceIn(0f, 1f)
+                Canvas(Modifier.fillMaxWidth().height(3.dp)) {
+                    val r = size.height / 2f
+                    drawRoundRect(ink.text.copy(alpha = 0.15f), cornerRadius = CornerRadius(r))
+                    if (fraction > 0f) drawRoundRect(ink.text, size = Size(size.width * fraction, size.height), cornerRadius = CornerRadius(r))
+                }
+            },
+            thumb = { Box(Modifier.size(16.dp).background(ink.text, CircleShape)) },
             modifier = Modifier.weight(1f),
         )
         Text("${(percent * 100).roundToInt()}%", style = Fonts.system(13).copy(fontFeatureSettings = "tnum"), color = ink.text.copy(alpha = 0.7f),
