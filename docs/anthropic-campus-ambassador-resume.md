@@ -27,7 +27,7 @@ you is actually correct.
 ## Education
 
 **Ewha Womans University** — B.S., Department of Data Science
-Seoul, Korea · Expected graduation Spring 2028
+Seoul, Korea · Third year · Expected graduation Spring 2028
 Relevant coursework: Data Engineering (the team project below), [ML / statistics / DB — add 2–3]
 [GPA — include only if strong]
 
@@ -100,19 +100,34 @@ against, and built the tooling they worked in.
   progress bar) painting detected intervals red and snapping playback to them.
   `mypy --strict` + `ruff`, zero errors.
 
-### Prometheus — inter-university AI & data engineering society
-[role: member / [cohort, exec position, project lead — fill in] · [dates]]
+### Prometheus — inter-university AI & data engineering society · Cohort 6, senior member
 
-An inter-university (not single-campus) society for AI and data engineering. It is the
-reason a Claude Builder Club at Ewha would not start from zero: I already sit in a network
-of AI-focused students across several Seoul universities, which gives me both a recruiting
-channel into Ewha and the ability to run joint events that a single-campus club can't.
-[Add what you actually did there — a project you led, a session you ran, a team you
-recruited. One concrete thing beats the membership line.]
+An inter-university (not single-campus) society for AI and data engineering. This is why a
+Claude Builder Club at Ewha wouldn't start from zero: as a senior member I already sit in a
+network of AI-focused students across several Seoul universities, which gives me both a
+recruiting channel into Ewha and the ability to co-host events a single-campus club can't.
 
-[Additional leadership — TA/tutoring, organizing, presentations, other competitions.
-Anthropic's stated bar is "well-connected on campus," so add anything where you convened
-people, even if it isn't technical.]
+**GYM-ZALABIM** — real-time home-training posture correction, 4-person team
+`MediaPipe · OpenCV · FastAPI · React` · [repo/demo link — fill in]
+
+Scores a user's form against reference data from their webcam in real time. Webcam →
+FastAPI backend (session state, per-mode flow control, scoring) → MediaPipe engine
+(33 pose landmarks → joint metrics → comparison against reference → score) → React frontend.
+
+- **Easy mode (squat)** runs a 5-state machine — Stand → Descend → Hold → Ascend → Rest —
+  and scores four checkpoints: trunk, hip, and knee angles plus knee-valgus distance.
+  The reference wasn't guessed: we derived it from AI Hub fitness posture imagery by
+  filtering to frames where all four conditions hold, selecting a representative peak frame,
+  and min-max normalizing — yielding reference means of trunk 32.59°, hip 110.11°,
+  knee 108.35°, knee-valgus 49.13px.
+- **Hard mode (choreography)** can't use a static reference, because the same move performed
+  slower is still correct. So scoring runs **DTW frame matching** against a preprocessed
+  reference sequence before comparing left/right elbow and knee angles — aligning on time
+  first, then measuring form.
+- [Your specific role — which of these you owned. The reference-derivation pipeline and the
+  DTW scoring are the two parts worth claiming if they were yours.]
+
+[Additional leadership — TA/tutoring, organizing, presentations, other competitions.]
 
 ---
 
@@ -258,5 +273,4 @@ XcodeGen, Gradle; `mypy --strict` + `ruff` clean as a standing gate
 
 ## Languages
 
-Korean (native) · English — professional working proficiency (TOEIC 810); I write and
-maintain technical documentation in English (see the `chalkak` repository).
+Korean (native) · English (TOEIC 810)
