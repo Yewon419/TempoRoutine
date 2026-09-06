@@ -105,10 +105,10 @@ jobs:
           # 전수 훑기 예시(언어 -appLanguage ko|ja|zh-Hans, 테마 -appTheme standard|modern|ticket|letterpress|
           # playlist|weather, appearance: light,dark)는 런 33830098614의 ci.yml 참조.
           screens: |
-            today-ko    | -rootTab today    -appLanguage ko
-            calendar-ko | -rootTab calendar -appLanguage ko
-            rhythm-ko   | -rootTab rhythm   -appLanguage ko
-            settings-ko | -rootTab settings -appLanguage ko
+            today-ko    | -rootTab today    -appLanguage ko -AppleLanguages (ko)
+            calendar-ko | -rootTab calendar -appLanguage ko -AppleLanguages (ko)
+            rhythm-ko   | -rootTab rhythm   -appLanguage ko -AppleLanguages (ko)
+            settings-ko | -rootTab settings -appLanguage ko -AppleLanguages (ko)
             today-en    | -rootTab today
           # 위치 시트 사전 허용(날씨 테마가 진입 즉시 요청. 시트 하나가 이후 컷을 전부 가린다)
           privacy: location
@@ -123,21 +123,21 @@ jobs:
           defaults: |
             onboardingDone -bool false
           screens: |
-            ob-00-lang      | -onboardingStep 0 -appLanguage ko
-            ob-01-brand     | -onboardingStep 1 -onboardingIntroScene 0 -appLanguage ko
-            ob-01-wave      | -onboardingStep 1 -onboardingIntroScene 1 -appLanguage ko
-            ob-01-seasons   | -onboardingStep 1 -onboardingIntroScene 2 -appLanguage ko
-            ob-02-theme     | -onboardingStep 2 -appLanguage ko
-            ob-03-link      | -onboardingStep 3 -onboardingBaselinePage 0 -appLanguage ko
-            ob-03-duration  | -onboardingStep 3 -onboardingBaselinePage 1 -appLanguage ko
-            ob-03-calendar  | -onboardingStep 3 -onboardingBaselinePage 2 -appLanguage ko
-            ob-03-cycle     | -onboardingStep 3 -onboardingBaselinePage 3 -appLanguage ko
-            ob-04-schedule  | -onboardingStep 4 -onboardingCardPage 0 -appLanguage ko
-            ob-04-input     | -onboardingStep 4 -onboardingCardPage 1 -appLanguage ko
-            ob-04-output    | -onboardingStep 4 -onboardingCardPage 2 -appLanguage ko
-            ob-05-signals   | -onboardingStep 5 -appLanguage ko
-            ob-06-storage   | -onboardingStep 6 -appLanguage ko
-            ob-07-survey    | -onboardingStep 7 -appLanguage ko
+            ob-00-lang      | -onboardingStep 0 -appLanguage ko -AppleLanguages (ko)
+            ob-01-brand     | -onboardingStep 1 -onboardingIntroScene 0 -appLanguage ko -AppleLanguages (ko)
+            ob-01-wave      | -onboardingStep 1 -onboardingIntroScene 1 -appLanguage ko -AppleLanguages (ko)
+            ob-01-seasons   | -onboardingStep 1 -onboardingIntroScene 2 -appLanguage ko -AppleLanguages (ko)
+            ob-02-theme     | -onboardingStep 2 -appLanguage ko -AppleLanguages (ko)
+            ob-03-link      | -onboardingStep 3 -onboardingBaselinePage 0 -appLanguage ko -AppleLanguages (ko)
+            ob-03-duration  | -onboardingStep 3 -onboardingBaselinePage 1 -appLanguage ko -AppleLanguages (ko)
+            ob-03-calendar  | -onboardingStep 3 -onboardingBaselinePage 2 -appLanguage ko -AppleLanguages (ko)
+            ob-03-cycle     | -onboardingStep 3 -onboardingBaselinePage 3 -appLanguage ko -AppleLanguages (ko)
+            ob-04-schedule  | -onboardingStep 4 -onboardingCardPage 0 -appLanguage ko -AppleLanguages (ko)
+            ob-04-input     | -onboardingStep 4 -onboardingCardPage 1 -appLanguage ko -AppleLanguages (ko)
+            ob-04-output    | -onboardingStep 4 -onboardingCardPage 2 -appLanguage ko -AppleLanguages (ko)
+            ob-05-signals   | -onboardingStep 5 -appLanguage ko -AppleLanguages (ko)
+            ob-06-storage   | -onboardingStep 6 -appLanguage ko -AppleLanguages (ko)
+            ob-07-survey    | -onboardingStep 7 -appLanguage ko -AppleLanguages (ko)
             ob-01-brand-en  | -onboardingStep 1 -onboardingIntroScene 0
             ob-03-link-en   | -onboardingStep 3 -onboardingBaselinePage 0
           output-dir: screenshots-onboarding
