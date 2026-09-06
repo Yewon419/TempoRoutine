@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.temporoutine.android.calendar.CalendarRoute
 import app.temporoutine.android.onboarding.OnboardingFlow
+import app.temporoutine.android.settings.SettingsRoute
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.chromeGlass
@@ -58,6 +59,7 @@ private val TAB_BAR_HEIGHT = 49.dp
 enum class RootTab(val labelRes: Int) {
     TODAY(R.string.tab_today),
     CALENDAR(R.string.tab_calendar),
+    SETTINGS(R.string.tab_settings),
 }
 
 @Composable
@@ -68,7 +70,7 @@ fun RootScaffold(app: TempoApp, openLogSheetInitially: Boolean = false) {
     Box(Modifier.fillMaxSize().background(ink.paper)) {
         val loaded = settings ?: return@Box
         if (!loaded.onboardingDone) {
-            OnboardingFlow(app)
+            OnboardingFlow(app, isRevisit = loaded.onboardingRevisit)
             return@Box
         }
         val hazeState = rememberHazeState()
@@ -78,7 +80,8 @@ fun RootScaffold(app: TempoApp, openLogSheetInitially: Boolean = false) {
         val bottomPadding = TAB_BAR_HEIGHT + navInset
         when (tab) {
             RootTab.TODAY -> TodayRoute(app, todayVm, hazeState, bottomPadding, openLogSheetInitially)
-            RootTab.CALENDAR -> CalendarRoute(app, todayVm, hazeState, bottomPadding)
+            RootTab.CALENDAR -> CalendarRoute(app, todayVm, hazeState, bottomPadding, loaded.hideCalendarPeriodEntry)
+            RootTab.SETTINGS -> SettingsRoute(app, hazeState, bottomPadding)
         }
         TabBar(tab, onSelect = { tab = it }, Modifier.align(Alignment.BottomCenter).chromeGlass(hazeState))
     }
@@ -132,6 +135,17 @@ private fun TabIcon(tab: RootTab, color: Color) {
                 val dot = 1.6.dp.toPx()
                 for (row in 0 until 2) for (col in 0 until 3) {
                     drawCircle(color, dot, Offset(size.width * (0.28f + 0.22f * col), size.height * (0.55f + 0.2f * row)))
+                }
+            }
+            RootTab.SETTINGS -> {
+                val r = size.minDimension / 2 - 2.dp.toPx()
+                drawCircle(color, radius = r * 0.42f, center = c, style = Stroke(width = 1.8.dp.toPx()))
+                for (i in 0 until 8) {
+                    val a = Math.PI * i / 4.0
+                    val dx = kotlin.math.cos(a).toFloat()
+                    val dy = kotlin.math.sin(a).toFloat()
+                    drawLine(color, Offset(c.x + dx * r * 0.62f, c.y + dy * r * 0.62f),
+                        Offset(c.x + dx * r, c.y + dy * r), 1.8.dp.toPx(), androidx.compose.ui.graphics.StrokeCap.Round)
                 }
             }
         }

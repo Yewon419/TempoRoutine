@@ -87,12 +87,12 @@ fun rememberReduceMotion(): Boolean {
 }
 
 @Composable
-fun OnboardingFlow(app: TempoApp) {
-    LightAppearance { OnboardingBody(app) }
+fun OnboardingFlow(app: TempoApp, isRevisit: Boolean = false) {
+    LightAppearance { OnboardingBody(app, isRevisit) }
 }
 
 @Composable
-private fun OnboardingBody(app: TempoApp) {
+private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
     val ink = Ink
     val vm: OnboardingViewModel = viewModel { OnboardingViewModel(app) }
     val baseline by vm.baseline.collectAsState()
@@ -123,6 +123,8 @@ private fun OnboardingBody(app: TempoApp) {
 
     fun tick() = haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
     fun finish() = vm.finish()
+    // 재진입(설정 「온보딩 다시 보기」)은 좌상단 X로 즉시 나갈 수 있다 — 첫 실행엔 X가 없다(최초 설정은 건너뛸 수 없다)
+    fun close() { tick(); finish() }
     fun leaveBaseline() { step = OnboardingStep.CARDS }
     fun pushBaseline(page: BaselinePage) { tick(); baselineStack.add(baselinePage); baselinePage = page }
     fun advanceIntro() { tick(); if (introScene < 2) introScene += 1 else step = OnboardingStep.BASELINE }
@@ -201,7 +203,7 @@ private fun OnboardingBody(app: TempoApp) {
                     .align(Alignment.CenterHorizontally)
                     .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
             ) {
-                TopBar(showBack, onBack = ::back)
+                TopBar(showBack, onBack = ::back, onClose = if (isRevisit) ::close else null)
                 Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     when (step) {
                         OnboardingStep.INTRO -> IntroStep(introScene, active = !showSplash, reduceMotion = reduceMotion, onTap = ::advanceIntro)
@@ -276,10 +278,20 @@ private fun OnboardingBody(app: TempoApp) {
 }
 
 @Composable
-private fun TopBar(showBack: Boolean, onBack: () -> Unit) {
+private fun TopBar(showBack: Boolean, onBack: () -> Unit, onClose: (() -> Unit)? = null) {
     val ink = Ink
     val label = stringResource(R.string.ob_back)
+    val closeLabel = stringResource(R.string.ob_close)
     Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (onClose != null) {
+            Box(Modifier.size(44.dp).semantics { contentDescription = closeLabel }.clickable(onClick = onClose), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.size(15.dp)) {
+                    val s = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                    drawLine(ink.text.copy(alpha = 0.6f), androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(size.width, size.height), s.width, StrokeCap.Round)
+                    drawLine(ink.text.copy(alpha = 0.6f), androidx.compose.ui.geometry.Offset(size.width, 0f), androidx.compose.ui.geometry.Offset(0f, size.height), s.width, StrokeCap.Round)
+                }
+            }
+        }
         if (showBack) {
             Box(Modifier.size(44.dp).semantics { contentDescription = label }.clickable(onClick = onBack), contentAlignment = Alignment.Center) {
                 Canvas(Modifier.size(10.dp, 17.dp)) {

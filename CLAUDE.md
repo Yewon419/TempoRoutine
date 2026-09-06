@@ -198,5 +198,13 @@
 - **Compose `PathMeasure`는 첫 컨투어만 잰다**(`nextContour` 없음). 여러 조각으로 된 선화를 SwiftUI `.trim`처럼 순차로 그리려면
   컨투어를 `List<Path>`로 나눠 누적 길이로 잘라야 한다(`drawTrimmedContours`).
 - **strings.xml에 줄바꿈은 반드시 `\n` 이스케이프.** 실제 개행을 넣으면 XML 파서가 공백으로 접어 표제가 한 줄로 붙는다(2026-09-05 실측).
+- **SAF 왕복이 P0 백업 경로다.** 내보내기 = `CreateDocument("application/json")`, 가져오기 = `OpenDocument(arrayOf("application/json"))`.
+  앱이 저장 위치를 고르지 않으니 권한 선언도 없다. 봉투 문자열은 VM이 만들고 파일 쓰기는 화면(런처)이 한다.
+- **토글 행은 스위치만이 아니라 행 전체가 눌려야 한다**(2026-09-06 실측 — 라벨을 눌러도 안 바뀌어 결함처럼 보였다).
+  iOS `Toggle` 행과 같은 타깃 크기를 맞추려면 Row에 `clickable { onChange(!value) }`.
+- **에뮬레이터 조작은 눈대중 좌표 말고 `uiautomator dump`의 `bounds` 중심으로.** 겹쳐 뜨는 요소(되돌리기 토스트 ↔
+  「모든 기록 삭제」 행)는 좌표가 같아, 토스트가 사라진 뒤 같은 자리를 누르면 삭제가 다시 열린다(2026-09-06 실측).
+- **`MSYS_NO_PATHCONV=1`은 adb 인자 경로 변환까지 끈다.** 기기 경로(`/sdcard/...`)를 쓸 땐 필요하지만, 같은 셸에서
+  `adb install ~/...apk`를 하면 파일을 못 찾는다 — 설치는 `C:/...` 형식으로 주거나 변수를 끄고 실행한다.
 - **계측 테스트에 실제 시각을 쓰지 말 것.** 씨앗 지급은 `completedAt < day + 2일`이라 고정 날짜 + `Instant.now()` 조합은
   이틀 뒤부터 깨진다(2026-09-06 실측 — Phase 1 테스트가 시한폭탄이었다). `persist(..., now = )`로 시계를 주입한다.

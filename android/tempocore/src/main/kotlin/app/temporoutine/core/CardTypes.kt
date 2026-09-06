@@ -26,6 +26,11 @@ enum class ScheduleRepeat {
     @SerialName("yearly") YEARLY;
 
     val rawValue: String get() = name.lowercase()
+
+    companion object {
+        /** Swift `init?(rawValue:)` 대응 — 봉투·엔티티의 문자열 컬럼에서 되읽을 때. */
+        fun fromRawValue(raw: String): ScheduleRepeat? = entries.firstOrNull { it.rawValue == raw }
+    }
 }
 
 // ② Input 카드
@@ -37,6 +42,10 @@ enum class InputCategory {
     @SerialName("other") OTHER;
 
     val rawValue: String get() = name.lowercase()
+
+    companion object {
+        fun fromRawValue(raw: String): InputCategory? = entries.firstOrNull { it.rawValue == raw }
+    }
 }
 
 /** Input 반복. ONCE = 반복 없음(단발 체크). */

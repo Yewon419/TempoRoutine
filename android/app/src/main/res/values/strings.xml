@@ -200,4 +200,33 @@
     <string name="survey_note_optional">이 페이지의 질문은 건너뛰셔도 괜찮아요.</string>
     <string name="survey_anchor_fallback">그나마 힘들었던 때를 떠올려서, 평소와 비교해서 답해주세요.</string>
     <string name="survey_anchor_format">「%1$s」, 평소와 비교해서 답해주세요.</string>
+
+    <!-- 설정 -->
+    <string name="tab_settings">설정</string>
+    <string name="settings_signals_foot">에너지·기분은 항상 기록해요. 나머지는 언제든 켜고 끌 수 있어요.</string>
+    <string name="settings_hide_period_entry">캘린더 탭에서 생리 기록 숨기기</string>
+    <string name="settings_hide_period_entry_foot">오늘 화면의 스위치로는 계속 기록할 수 있어요.</string>
+    <string name="settings_guide">안내</string>
+    <string name="settings_onboarding_revisit">온보딩 다시 보기</string>
+    <string name="settings_survey">리듬 설문 하기</string>
+    <string name="settings_survey_again">리듬 설문 다시 하기</string>
+    <string name="settings_survey_foot">다시 하기를 누르면 이전 응답이 채워진 채 열려요. 확인만 하고 닫아도 돼요.</string>
+    <string name="settings_data">데이터</string>
+    <string name="settings_export">JSON으로 내보내기</string>
+    <string name="settings_import">백업 가져오기</string>
+    <string name="settings_privacy">개인정보 처리방침</string>
+    <string name="settings_data_foot_counts">이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$d일 · 체크인 %2$d건</string>
+    <string name="settings_data_foot_transfer">기기를 바꾸시나요? 내보내기 파일을 새 기기로 보내고 「백업 가져오기」로 열면 기록이 이어져요.</string>
+    <string name="settings_export_done">내보냈어요.</string>
+    <string name="settings_export_failed">내보내기에 실패했어요. 다시 시도해 주세요.</string>
+    <string name="settings_import_done">%1$d건을 가져왔어요.</string>
+    <string name="settings_import_empty">새로 가져올 기록이 없어요.</string>
+    <string name="settings_import_newer">이 백업은 지금 앱보다 새로운 버전이에요. 앱을 업데이트한 뒤 가져와 주세요.</string>
+    <string name="settings_import_corrupt">가져올 수 없는 파일이에요.</string>
+    <string name="settings_wipe">모든 기록 삭제</string>
+    <string name="settings_wipe_confirm">비우기</string>
+    <string name="settings_wipe_confirm_body">생리·체크인·계획 기록이 모두 지워져요. 8초 안에 되돌릴 수 있어요.</string>
+    <string name="settings_wipe_done">모든 기록을 삭제했어요.</string>
+    <string name="settings_undo">되돌리기</string>
+    <string name="ob_close">온보딩 닫기</string>
 </resources>

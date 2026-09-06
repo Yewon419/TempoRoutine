@@ -95,6 +95,31 @@ class StoreTests {
         assertFalse("사흘 뒤 완성은 미지급", settings.current().seedLedger.earnedDays.orEmpty().contains("2026-09-01"))
     }
 
+    /** 백업 왕복 — 실제 DB에서 내보내고, 비우고, 같은 파일로 되살린다. 두 번째 가져오기는 0건. */
+    @Test fun backupExportWipeImportRoundTrip() = runBlocking {
+        val backup = BackupStore(db, settings)
+        periodStore.add(listOf(today, today.minusDays(1)), emptyList(), today)
+        checkInStore.persist(today, CheckInDraft(energy = 3, mood = 3, note = "한 줄"), today, now)
+        val input = InputItemEntity(title = "아침 루틴", createdAt = now)
+        db.inputs().insert(input)
+        db.inputs().insertSubtasks(listOf(InputSubtaskEntity(ownerId = input.id, title = "물 한 잔", order = 0)))
+        db.outputs().insert(OutputItemEntity(title = "시험공부", createdAt = now))
+
+        val json = backup.exportJson(now)
+        assertTrue(json.contains("아침 루틴"))
+
+        val envelope = app.temporoutine.core.ExportCodec.decode(json)
+        backup.wipeAll()
+        assertTrue(db.periodDays().all().isEmpty())
+        assertTrue("서브태스크도 함께 지워진다", db.inputs().allSubtasks().isEmpty())
+
+        assertEquals("생리 2 + 체크인 1 + Input 1 + Output 1", 5, backup.importEnvelope(envelope))
+        assertEquals(2, db.periodDays().all().size.toLong())
+        assertEquals("한 줄", db.checkIns().forDay(today)!!.note)
+        assertEquals("물 한 잔", db.inputs().allSubtasks().single().title)
+        assertEquals("같은 파일 재가져오기는 0건", 0, backup.importEnvelope(envelope))
+    }
+
     /** 온보딩 ⑥ 설문 제출 — 화이트리스트 밖 키가 저장되지 않고, JSON 왕복 후에도 답이 그대로 읽힌다. */
     @Test fun selfReportSubmitRoundTrip() = runBlocking {
         val raw = mapOf("C1" to "within1m", "P1" to "mid", "Q1" to "somewhat", "bogus" to "x")

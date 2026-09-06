@@ -27,6 +27,10 @@ data class SettingsSnapshot(
     val periodLengthPrior: Int?,
     val seedLedger: SeedLedgerDTO,
     val onboardingDone: Boolean,
+    /** 캘린더 탭에서 「생리 기록」 진입을 숨긴다(iOS 2026-09-02 스위치). */
+    val hideCalendarPeriodEntry: Boolean = false,
+    /** 설정 「온보딩 다시 보기」로 들어왔는가 — 좌상단 X(즉시 나가기) 노출 조건. */
+    val onboardingRevisit: Boolean = false,
 ) {
     companion object {
         /** iOS AppSettings.trackedSignals 기본값 */
@@ -44,6 +48,8 @@ class Settings(context: Context) {
         val periodLengthPrior = intPreferencesKey("periodLengthPrior")
         val seedLedger = stringPreferencesKey("seedLedger")
         val onboardingDone = booleanPreferencesKey("onboardingDone")
+        val hideCalendarPeriodEntry = booleanPreferencesKey("hideCalendarPeriodEntry")
+        val onboardingRevisit = booleanPreferencesKey("onboardingRevisit")
     }
 
     val snapshot: Flow<SettingsSnapshot> = store.data.map { p ->
@@ -53,6 +59,8 @@ class Settings(context: Context) {
             periodLengthPrior = p[Keys.periodLengthPrior]?.takeIf { it > 0 },
             seedLedger = p[Keys.seedLedger]?.let { decode(it, SeedLedgerDTO.serializer()) } ?: SeedLedgerDTO(),
             onboardingDone = p[Keys.onboardingDone] ?: false,
+            hideCalendarPeriodEntry = p[Keys.hideCalendarPeriodEntry] ?: false,
+            onboardingRevisit = p[Keys.onboardingRevisit] ?: false,
         )
     }
 
@@ -76,6 +84,20 @@ class Settings(context: Context) {
 
     suspend fun setOnboardingDone(value: Boolean) {
         store.edit { it[Keys.onboardingDone] = value }
+    }
+
+    suspend fun setHideCalendarPeriodEntry(value: Boolean) {
+        store.edit { it[Keys.hideCalendarPeriodEntry] = value }
+    }
+
+    /** 온보딩 다시 보기 — 재진입 표식과 게이트를 한 번에 연다(따로 쓰면 그 사이 프레임이 첫 실행처럼 보인다). */
+    suspend fun beginOnboardingRevisit() {
+        store.edit { it[Keys.onboardingRevisit] = true; it[Keys.onboardingDone] = false }
+    }
+
+    /** 온보딩 종료 — 재진입 표식도 여기서 내린다(다음 첫 실행과 혼동 방지). */
+    suspend fun finishOnboarding() {
+        store.edit { it[Keys.onboardingDone] = true; it[Keys.onboardingRevisit] = false }
     }
 
     private fun <T> decode(json: String, serializer: kotlinx.serialization.KSerializer<T>): T? = try {

@@ -234,6 +234,11 @@ data class SelfReportEntity(
 ) {
     val answers: Map<String, String>
         get() = decodeOrNull(answersJson, MapSerializer(String.serializer(), String.serializer())) ?: emptyMap()
+
+    companion object {
+        fun encodeAnswers(answers: Map<String, String>): String =
+            ExportCodec.json.encodeToString(MapSerializer(String.serializer(), String.serializer()), answers)
+    }
 }
 
 /** 타이머 저장처 통일 — 컨트롤은 이 계약만 알고 어느 카드인지 모른다. */

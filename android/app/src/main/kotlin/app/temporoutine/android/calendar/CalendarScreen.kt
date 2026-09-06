@@ -108,19 +108,20 @@ private val SEASON_BAND_TOP = 25.5.dp
 private val SEASON_BAND_HEIGHT = 4.dp
 
 @Composable
-fun CalendarRoute(app: TempoApp, todayVm: TodayViewModel, hazeState: HazeState, bottomPadding: Dp) {
+fun CalendarRoute(app: TempoApp, todayVm: TodayViewModel, hazeState: HazeState, bottomPadding: Dp, hidePeriodEntry: Boolean = false) {
     val vm: CalendarViewModel = viewModel { CalendarViewModel(app) }
     val state by vm.state.collectAsState()
     val todayState by todayVm.state.collectAsState()
     var showLogSheet by remember { mutableStateOf(false) }
-    CalendarScreen(state, vm, hazeState, bottomPadding, onOpenLogSheet = { showLogSheet = true })
+    // 숨기기 스위치(설정) — 진입점만 지운다. 오늘 화면 스위치로는 계속 기록할 수 있다.
+    CalendarScreen(state, vm, hazeState, bottomPadding, onOpenLogSheet = if (hidePeriodEntry) null else ({ showLogSheet = true }))
     if (showLogSheet && todayState.loaded) {
         PeriodTrackerSheet(state = todayState, vm = todayVm, onDismiss = { showLogSheet = false })
     }
 }
 
 @Composable
-fun CalendarScreen(state: CalendarUiState, vm: CalendarViewModel, hazeState: HazeState, bottomPadding: Dp, onOpenLogSheet: () -> Unit) {
+fun CalendarScreen(state: CalendarUiState, vm: CalendarViewModel, hazeState: HazeState, bottomPadding: Dp, onOpenLogSheet: (() -> Unit)?) {
     val ink = Ink
     val chrome = LocalChrome.current
     Box(Modifier.fillMaxSize().background(ink.frost)) {
@@ -168,7 +169,7 @@ fun CalendarScreen(state: CalendarUiState, vm: CalendarViewModel, hazeState: Haz
 // ── 상단 ──
 
 @Composable
-private fun SeasonHeaderRow(state: CalendarUiState, onOpenLogSheet: () -> Unit) {
+private fun SeasonHeaderRow(state: CalendarUiState, onOpenLogSheet: (() -> Unit)?) {
     val ink = Ink
     val line = when (val s = state.seasonLine) {
         SeasonLine.Cold -> stringResource(R.string.calendar_season_cold)
@@ -180,19 +181,21 @@ private fun SeasonHeaderRow(state: CalendarUiState, onOpenLogSheet: () -> Unit) 
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(line, style = Fonts.almanacBody(15), color = ink.text.copy(alpha = 0.65f), modifier = Modifier.weight(1f))
-        Row(
-            Modifier
-                .heightIn(min = 44.dp)
-                .clickable(onClick = onOpenLogSheet),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        if (onOpenLogSheet != null) {
             Row(
-                Modifier.border(1.dp, ink.text.copy(alpha = 0.3f), CircleShape).padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                Modifier
+                    .heightIn(min = 44.dp)
+                    .clickable(onClick = onOpenLogSheet),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(7.dp).background(ink.record, CircleShape))
-                Text(stringResource(R.string.calendar_period_button), style = Fonts.system(12, FontWeight.SemiBold), color = ink.text)
+                Row(
+                    Modifier.border(1.dp, ink.text.copy(alpha = 0.3f), CircleShape).padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(7.dp).background(ink.record, CircleShape))
+                    Text(stringResource(R.string.calendar_period_button), style = Fonts.system(12, FontWeight.SemiBold), color = ink.text)
+                }
             }
         }
     }

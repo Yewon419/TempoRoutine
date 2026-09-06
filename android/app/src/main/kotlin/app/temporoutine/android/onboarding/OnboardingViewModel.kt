@@ -156,9 +156,9 @@ class OnboardingViewModel(private val app: TempoApp) : ViewModel() {
         }
     }
 
-    /** 온보딩 종료 한 창구 */
+    /** 온보딩 종료 한 창구 — 재진입 표식도 여기서 내린다(다음 첫 실행과 혼동 방지). */
     fun finish() {
-        viewModelScope.launch { app.settings.setOnboardingDone(true) }
+        viewModelScope.launch { app.settings.finishOnboarding() }
     }
 }
 
