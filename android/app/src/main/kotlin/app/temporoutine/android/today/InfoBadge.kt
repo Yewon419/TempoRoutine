@@ -28,9 +28,14 @@ import app.temporoutine.android.theme.Ink
 
 @Composable
 fun InfoBadge(kind: CardKind) {
+    InfoBadge(title = stringResource(kind.titleRes), message = stringResource(kind.infoRes))
+}
+
+/** 제목·설명 직접 지정(온보딩 추적 항목 ⓘ — iOS InfoBadge(title:message:)). */
+@Composable
+fun InfoBadge(title: String, message: String) {
     val ink = Ink
     var open by remember { mutableStateOf(false) }
-    val title = stringResource(kind.titleRes)
     val label = stringResource(R.string.section_info_a11y, title)
     Box(
         Modifier
@@ -51,7 +56,7 @@ fun InfoBadge(kind: CardKind) {
             onDismissRequest = { open = false },
             confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.ok)) } },
             title = { Text(title) },
-            text = { Text(stringResource(kind.infoRes)) },
+            text = { Text(message) },
         )
     }
 }

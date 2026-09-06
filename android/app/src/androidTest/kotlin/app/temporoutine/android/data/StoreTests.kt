@@ -27,6 +27,9 @@ class StoreTests {
     private lateinit var periodStore: PeriodStore
     private lateinit var checkInStore: CheckInStore
     private val today = LocalDate.of(2026, 9, 4)
+    /** 지급 판정은 `completedAt < day + 2일`이라 실제 시각을 쓰면 테스트가 날짜에 따라 깨진다(2026-09-06 실측).
+     *  기준 날짜와 같은 날 오전으로 고정한다. */
+    private val now: java.time.Instant = today.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().plusSeconds(9 * 3600)
 
     @Before fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -60,13 +63,13 @@ class StoreTests {
     }
 
     @Test fun checkInUpsertDeleteAndStamp() = runBlocking {
-        val r1 = checkInStore.persist(today, CheckInDraft(energy = 3, mood = 3), today)
+        val r1 = checkInStore.persist(today, CheckInDraft(energy = 3, mood = 3), today, now)
         assertNotNull(r1.record)
         assertTrue("완성 즉시 지급", r1.awarded)
         assertNotNull(db.checkIns().forDay(today)!!.completedAt)
         assertEquals(listOf("2026-09-04"), settings.current().seedLedger.earnedDays)
 
-        val r2 = checkInStore.persist(today, CheckInDraft(energy = 5, mood = 3, note = "짧게"), today)
+        val r2 = checkInStore.persist(today, CheckInDraft(energy = 5, mood = 3, note = "짧게"), today, now)
         assertFalse("도장은 한 번", r2.awarded)
         val row = db.checkIns().forDay(today)!!
         assertEquals(5, row.energy)
@@ -75,20 +78,37 @@ class StoreTests {
 
         // 시트 편집기(symptoms=null)는 증상을 보존한다
         db.checkIns().update(row.copy(symptoms = "cold"))
-        checkInStore.persist(today, CheckInDraft(energy = 2, mood = 2), today)
+        checkInStore.persist(today, CheckInDraft(energy = 2, mood = 2), today, now)
         assertEquals("cold", db.checkIns().forDay(today)!!.symptoms)
 
-        checkInStore.persist(today, CheckInDraft(), today)
+        checkInStore.persist(today, CheckInDraft(), today, now)
         assertNull("전부 비면 삭제", db.checkIns().forDay(today))
 
-        val future = checkInStore.persist(today.plusDays(1), CheckInDraft(energy = 3, mood = 3), today)
+        val future = checkInStore.persist(today.plusDays(1), CheckInDraft(energy = 3, mood = 3), today, now)
         assertNull(future.record)
         assertTrue(db.checkIns().all().isEmpty())
     }
 
     @Test fun backfilledFlag() = runBlocking {
-        checkInStore.persist(today.minusDays(3), CheckInDraft(energy = 3, mood = 3), today)
+        checkInStore.persist(today.minusDays(3), CheckInDraft(energy = 3, mood = 3), today, now)
         assertTrue(db.checkIns().forDay(today.minusDays(3))!!.isBackfilled)
         assertFalse("사흘 뒤 완성은 미지급", settings.current().seedLedger.earnedDays.orEmpty().contains("2026-09-01"))
+    }
+
+    /** 온보딩 ⑥ 설문 제출 — 화이트리스트 밖 키가 저장되지 않고, JSON 왕복 후에도 답이 그대로 읽힌다. */
+    @Test fun selfReportSubmitRoundTrip() = runBlocking {
+        val raw = mapOf("C1" to "within1m", "P1" to "mid", "Q1" to "somewhat", "bogus" to "x")
+        val cleaned = app.temporoutine.android.onboarding.SurveyLogic.whitelist(raw)
+        val serializer = kotlinx.serialization.builtins.MapSerializer(
+            kotlinx.serialization.serializer<String>(),
+            kotlinx.serialization.serializer<String>(),
+        )
+        val json = app.temporoutine.core.ExportCodec.json.encodeToString(serializer, cleaned)
+        db.selfReports().insert(SelfReportEntity(answersJson = json))
+
+        val saved = db.selfReports().all().single()
+        assertEquals(mapOf("C1" to "within1m", "P1" to "mid", "Q1" to "somewhat"), saved.answers)
+        assertFalse("화이트리스트 밖 키는 저장되지 않는다", saved.answers.containsKey("bogus"))
+        assertEquals(1, app.temporoutine.core.SelfReportScoring.score(saved.answers).modalityRaw)
     }
 }

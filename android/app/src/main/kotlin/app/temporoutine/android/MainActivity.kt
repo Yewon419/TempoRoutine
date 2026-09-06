@@ -18,11 +18,16 @@ class MainActivity : ComponentActivity() {
         if (debuggable && intent.getBooleanExtra("seedSample", false)) {
             lifecycleScope.launch { DevSampleData.seed(app) }
         }
-        // 디버그 검증용 진입(캘린더 탭의 「생리 기록」 버튼은 Phase 2) — `--ez openLogSheet true`
+        // 디버그 검증용 진입 — `--ez openLogSheet true`(생리 기록 시트), `--ez resetOnboarding true`(온보딩 다시)
         val openSheet = debuggable && intent.getBooleanExtra("openLogSheet", false)
-        setContent {
-            TempoTheme {
-                RootScaffold(app, openLogSheetInitially = openSheet)
+        val resetOnboarding = debuggable && intent.getBooleanExtra("resetOnboarding", false)
+        lifecycleScope.launch {
+            // 리셋은 첫 프레임 전에 — 순서가 뒤집히면 오늘 탭이 한 번 그려진 뒤 온보딩이 덮는다
+            if (resetOnboarding) app.settings.setOnboardingDone(false)
+            setContent {
+                TempoTheme {
+                    RootScaffold(app, openLogSheetInitially = openSheet)
+                }
             }
         }
     }

@@ -39,11 +39,25 @@ class SelfReportSurveyTests {
     @Test fun testModalityRawRange() {
         val emotionalHeavy = mapOf("Q1" to "worse", "Q2" to "worse", "Q3" to "worse",
             "Q4" to "same", "Q5" to "same", "Q6" to "same", "Q9" to "much")
-        assertEquals(3, SelfReportScoring.score(emotionalHeavy).modalityRaw)
+        assertEquals(6, SelfReportScoring.score(emotionalHeavy).modalityRaw)
 
         val bodilyHeavy = mapOf("Q1" to "same", "Q2" to "same", "Q3" to "same",
             "Q4" to "worse", "Q5" to "worse", "Q6" to "worse", "Q9" to "much")
-        assertEquals(-3, SelfReportScoring.score(bodilyHeavy).modalityRaw)
+        assertEquals(-6, SelfReportScoring.score(bodilyHeavy).modalityRaw)
+    }
+
+    /** 중간 선택지(2026-09-04) — 「조금 그래요」는 문항당 1점. 0으로 접히면 답이 사라진다. */
+    @Test fun testSomewhatCountsAsHalf() {
+        val mid = mapOf("Q1" to "somewhat", "Q2" to "somewhat", "Q3" to "somewhat",
+            "Q4" to "same", "Q5" to "same", "Q6" to "same", "Q9" to "much")
+        assertEquals(3, SelfReportScoring.score(mid).modalityRaw)
+        val mixed = mapOf("Q1" to "worse", "Q2" to "somewhat", "Q3" to "same",
+            "Q4" to "somewhat", "Q5" to "same", "Q6" to "same", "Q9" to "much")
+        assertEquals(2, SelfReportScoring.score(mixed).modalityRaw)
+        // 증상 문항 선택지는 3개(강도 내림차순) — 옛 응답(worse·same)은 값이 그대로라 계속 읽힌다
+        for (q in SelfReportSurvey.symptomQuestions) {
+            assertEquals(listOf("worse", "somewhat", "same"), q.choices.map { it.value })
+        }
     }
 
     @Test fun testRubatoTakesPrecedence() {

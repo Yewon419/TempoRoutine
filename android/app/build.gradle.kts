@@ -64,6 +64,11 @@ val syncIosAssets by tasks.registering(Copy::class) {
             into("drawable-nodpi"); rename { "motif_${season.lowercase()}.png" }
         }
     }
+    // 온보딩 스플래시(대표님 제작 정적 이미지, 라이트 고정이라 -Dark는 안 쓴다) + 시그니처 사운드
+    from(File(iosRoot, "App/Assets.xcassets/OnboardingSplash.imageset/OnboardingSplash.png")) {
+        into("drawable-nodpi"); rename { "onboarding_splash.png" }
+    }
+    from(File(iosRoot, "App/Sounds/signature.mp3")) { into("raw") }
 }
 android.sourceSets["main"].res.srcDir(iosAssetsRes)
 tasks.named("preBuild") { dependsOn(syncIosAssets) }

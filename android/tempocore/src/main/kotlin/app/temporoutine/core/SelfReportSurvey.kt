@@ -23,8 +23,11 @@ object SelfReportSurvey {
         SurveyChoice("unknown", "잘 모르겠어요"),
     )
 
+    /** 2026-09-04 베타("중간에 조금 그래요 추가") — 이진 척도에 중간값을 넣는다.
+     *  순서는 강도 내림차순. 옛 응답(worse·same)은 값이 그대로라 그대로 읽힌다. */
     private val symptomChoices = listOf(
         SurveyChoice("worse", "심해져요"),
+        SurveyChoice("somewhat", "조금 그래요"),
         SurveyChoice("same", "비슷해요"),
     )
 
@@ -127,19 +130,24 @@ object SelfReportSurvey {
 /** 자기보고 결과 — ⚠ 앱 리듬 엔진(WindowStatsEngine)의 유형과 다른 양이다. 같은 필드에 담지 말 것. */
 data class SelfReportResult(
     val type: RhythmType,
-    val modalityRaw: Int,   // (Q1+Q2+Q3) − (Q4+Q5+Q6), 범위 [-3, +3]
+    val modalityRaw: Int,   // (Q1+Q2+Q3) − (Q4+Q5+Q6), 범위 [-6, +6]
 )
 
 object SelfReportScoring {
-    /** 이진 척도라 "심해져요"의 개수가 곧 계열 점수다. */
-    private fun binary(value: String?): Int = if (value == "worse") 1 else 0
+    /** 문항당 강도 점수 — 심해져요 2 · 조금 그래요 1 · 비슷해요(무응답) 0.
+     *  중간 선택지를 0으로 접으면 그 답이 계열 점수에서 통째로 사라진다(2026-09-04). */
+    private fun weight(value: String?): Int = when (value) {
+        "worse" -> 2
+        "somewhat" -> 1
+        else -> 0
+    }
 
     private val vivaceAnswers = setOf("much", "total")
     private val andanteAnswers = setOf("same", "slight")
 
     fun score(answers: Map<String, String>): SelfReportResult {
-        val emotional = binary(answers["Q1"]) + binary(answers["Q2"]) + binary(answers["Q3"])
-        val bodily = binary(answers["Q4"]) + binary(answers["Q5"]) + binary(answers["Q6"])
+        val emotional = weight(answers["Q1"]) + weight(answers["Q2"]) + weight(answers["Q3"])
+        val bodily = weight(answers["Q4"]) + weight(answers["Q5"]) + weight(answers["Q6"])
         return SelfReportResult(resolveType(answers), emotional - bodily)
     }
 

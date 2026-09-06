@@ -76,6 +76,8 @@ object StandardTheme {
 
 val LocalInk = staticCompositionLocalOf { StandardTheme.light }
 val LocalChrome = staticCompositionLocalOf { StandardTheme.chrome }
+/** 다크 외관 여부 — 계절광 감쇠 등 색 아닌 분기가 본다. 시스템값 대신 이걸 보는 이유 = 온보딩 라이트 고정(LightAppearance). */
+val LocalDarkAppearance = staticCompositionLocalOf { false }
 
 /** iOS `Ink.*` 대응 — 콜사이트는 이것만 본다. */
 val Ink: Palette
@@ -87,6 +89,17 @@ fun TempoTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalInk provides if (dark) StandardTheme.dark else StandardTheme.light,
         LocalChrome provides StandardTheme.chrome,
+        LocalDarkAppearance provides dark,
+        content = content,
+    )
+}
+
+/** 온보딩 라이트 고정(iOS `.preferredColorScheme(.light)`, 2026-09-04) — 팔레트·계절광 감쇠 둘 다 라이트로. */
+@Composable
+fun LightAppearance(content: @Composable () -> Unit) {
+    CompositionLocalProvider(
+        LocalInk provides StandardTheme.light,
+        LocalDarkAppearance provides false,
         content = content,
     )
 }

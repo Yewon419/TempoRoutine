@@ -7,7 +7,6 @@
 package app.temporoutine.android.theme
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -53,7 +52,7 @@ enum class MotifStyle { CARD, ONBOARDING }
 @Composable
 fun SeasonLight(phase: CyclePhase?, modifier: Modifier = Modifier, motif: MotifStyle = MotifStyle.CARD) {
     val chrome = LocalChrome.current
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkAppearance.current
     val colors = lightColors(phase)
     val raw: ImageBitmap = ImageBitmap.imageResource(motifRes(phase))
     // iOS motifTile의 가장자리 페더(5% 안쪽 rect + 5% blur 마스크) — 두 타일이 겹치는 경계(topLeading 타일 하단)가

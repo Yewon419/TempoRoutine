@@ -190,3 +190,13 @@
   합성 프레임이 델타를 먹는다 → Android는 옆 달 항상 합성(MonthRender 캐시라 싸다).
 - **에뮬레이터 로케일 = `adb root` 후 `setprop persist.sys.locale ko-KR` + reboot**(google_apis 이미지만 root 가능). 재부팅 직후
   SystemUI/런처 ANR 다이얼로그가 반복되면 `emu kill` 후 재기동(로케일은 유지). 요일 한글·공휴일(KR 게이트)은 이 상태에서만 보인다.
+- **탭 좌표는 스크린샷 눈대중 말고 `uiautomator dump`로**(2026-09-06 실측). 「지금은 넘어가기」를 두 번 눌렀는데 안 먹은 원인은
+  안내 문구 줄(비클릭)을 때린 것 — `adb shell uiautomator dump /sdcard/ui.xml` 후 `bounds=` 로 실제 노드 중심을 잡는다.
+- **앱 ANR이 떠도 먼저 호스트 부하부터 본다.** `/data/anr/` 최신 트레이스에서 `"main"` 스택이 `epoll_pwait`(유휴)이고
+  `dumpsys cpuinfo`에 앱이 안 보이면 코드 문제가 아니라 굶은 것이다(2026-09-06: 호스트 Docker가 CPU 포화 → 프레임 정지·입력 유실).
+  `kill -3 <pid>`로 즉석 덤프를 뜰 수 있다. 이 상태에선 화면이 멈춘 채 옛 프레임이 캡처되니 스크린샷을 증거로 믿지 말 것.
+- **Compose `PathMeasure`는 첫 컨투어만 잰다**(`nextContour` 없음). 여러 조각으로 된 선화를 SwiftUI `.trim`처럼 순차로 그리려면
+  컨투어를 `List<Path>`로 나눠 누적 길이로 잘라야 한다(`drawTrimmedContours`).
+- **strings.xml에 줄바꿈은 반드시 `\n` 이스케이프.** 실제 개행을 넣으면 XML 파서가 공백으로 접어 표제가 한 줄로 붙는다(2026-09-05 실측).
+- **계측 테스트에 실제 시각을 쓰지 말 것.** 씨앗 지급은 `completedAt < day + 2일`이라 고정 날짜 + `Instant.now()` 조합은
+  이틀 뒤부터 깨진다(2026-09-06 실측 — Phase 1 테스트가 시한폭탄이었다). `persist(..., now = )`로 시계를 주입한다.
