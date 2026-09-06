@@ -114,6 +114,37 @@ jobs:
           privacy: location
           wait: '8'
           fail-on-crash: 'false'
+      # ── 찰칵: 온보딩 전 단계(2026-09-06 온보딩 품질 패스) ──────────────────────
+      # DEBUG 전용 런치 인자(OnboardingFlow.init)로 각 단계를 직접 연다. 온보딩은 라이트 고정
+      # (RootTabView preferredColorScheme)이라 light만. 스플래시는 인자 경로에서 꺼져 wait 6이면 원·곡선 완성.
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          defaults: |
+            onboardingDone -bool false
+          screens: |
+            ob-00-lang      | -onboardingStep 0 -appLanguage ko
+            ob-01-brand     | -onboardingStep 1 -onboardingIntroScene 0 -appLanguage ko
+            ob-01-wave      | -onboardingStep 1 -onboardingIntroScene 1 -appLanguage ko
+            ob-01-seasons   | -onboardingStep 1 -onboardingIntroScene 2 -appLanguage ko
+            ob-02-theme     | -onboardingStep 2 -appLanguage ko
+            ob-03-link      | -onboardingStep 3 -onboardingBaselinePage 0 -appLanguage ko
+            ob-03-duration  | -onboardingStep 3 -onboardingBaselinePage 1 -appLanguage ko
+            ob-03-calendar  | -onboardingStep 3 -onboardingBaselinePage 2 -appLanguage ko
+            ob-03-cycle     | -onboardingStep 3 -onboardingBaselinePage 3 -appLanguage ko
+            ob-04-schedule  | -onboardingStep 4 -onboardingCardPage 0 -appLanguage ko
+            ob-04-input     | -onboardingStep 4 -onboardingCardPage 1 -appLanguage ko
+            ob-04-output    | -onboardingStep 4 -onboardingCardPage 2 -appLanguage ko
+            ob-05-signals   | -onboardingStep 5 -appLanguage ko
+            ob-06-storage   | -onboardingStep 6 -appLanguage ko
+            ob-07-survey    | -onboardingStep 7 -appLanguage ko
+            ob-01-brand-en  | -onboardingStep 1 -onboardingIntroScene 0
+            ob-03-link-en   | -onboardingStep 3 -onboardingBaselinePage 0
+          output-dir: screenshots-onboarding
+          artifact-name: screenshots-onboarding
+          title: '템포루틴 온보딩 찰칵'
+          wait: '6'
+          fail-on-crash: 'false'
 
   testflight:
     name: TestFlight upload (archive + cloud signing)

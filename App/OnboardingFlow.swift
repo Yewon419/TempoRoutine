@@ -89,6 +89,21 @@ struct OnboardingFlow: View {
     @State private var showSurvey = false
     @Query private var selfReports: [SelfReportRecord]
 
+    init() {
+        #if DEBUG
+        // 찰칵(CI 스크린샷) 전용 — 런치 인자(argument 도메인)로 단계를 바로 연다(2026-09-06).
+        // `-onboardingStep N [-onboardingIntroScene N] [-onboardingBaselinePage N] [-onboardingCardPage N]`
+        // 인자가 없으면 아무것도 건드리지 않는다. 릴리스 빌드엔 이 경로가 없다.
+        let args = UserDefaults.standard
+        guard args.object(forKey: "onboardingStep") != nil else { return }
+        _step = State(initialValue: args.integer(forKey: "onboardingStep"))
+        _introScene = State(initialValue: args.integer(forKey: "onboardingIntroScene"))
+        _baselinePage = State(initialValue: args.integer(forKey: "onboardingBaselinePage"))
+        _cardPage = State(initialValue: args.integer(forKey: "onboardingCardPage"))
+        _showSplash = State(initialValue: false)   // 컷마다 스플래시 2.7초를 안 기다린다
+        #endif
+    }
+
     var body: some View {
         ZStack {
             Ink.paper.ignoresSafeArea()
