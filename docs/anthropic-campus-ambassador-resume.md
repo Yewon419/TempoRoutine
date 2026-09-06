@@ -1,7 +1,9 @@
 # [FULL NAME] (한글 이름)
 
 B.S. Data Science · Ewha Womans University, Seoul, Korea
-[email] · [github.com/Yewon419](https://github.com/Yewon419) · [LinkedIn / portfolio URL]
+[email] · [phone] · [github.com/Yewon419](https://github.com/Yewon419) · [LinkedIn / portfolio URL]
+
+<!-- 연락처는 이 저장소가 public이라 플레이스홀더로 둡니다. 제출본은 로컬 사본에 채워 씁니다. -->
 
 **Applying to:** Claude Campus — Builder Club Lead (undergraduate track)
 
@@ -14,16 +16,19 @@ direction changes that each meant deleting finished work, and I write the standa
 tooling that let a team move together. Separately, across 27 repositories, I build in a
 paired agentic workflow with Claude Code — not just *using* Claude, but building the
 verification loop around it, open-sourcing the tooling that loop needed, and writing MCP
-servers that extend it. On campus I want to teach the second thing: not prompting, but how
-to know whether what the model gave you is actually correct.
+servers that extend it. Through Prometheus, an inter-university AI and data engineering
+society, I already sit in a network of AI-focused students across several Seoul campuses —
+so a Builder Club at Ewha would open with a cohort, not a signup sheet. What I want to teach
+there is the second thing above: not prompting, but how to know whether what the model gave
+you is actually correct.
 
 ---
 
 ## Education
 
-**Ewha Womans University** — B.S., Data Science
-Seoul, Korea · Expected graduation [YYYY.MM]
-Relevant coursework: Data Engineering (team project below), [ML / statistics / DB — fill in]
+**Ewha Womans University** — B.S., Department of Data Science
+Seoul, Korea · Expected graduation Spring 2028
+Relevant coursework: Data Engineering (the team project below), [ML / statistics / DB — add 2–3]
 [GPA — include only if strong]
 
 ---
@@ -95,7 +100,17 @@ against, and built the tooling they worked in.
   progress bar) painting detected intervals red and snapping playback to them.
   `mypy --strict` + `ruff`, zero errors.
 
-[Additional leadership — clubs, TA/tutoring, organizing, presentations, other competitions.
+### Prometheus — inter-university AI & data engineering society
+[role: member / [cohort, exec position, project lead — fill in] · [dates]]
+
+An inter-university (not single-campus) society for AI and data engineering. It is the
+reason a Claude Builder Club at Ewha would not start from zero: I already sit in a network
+of AI-focused students across several Seoul universities, which gives me both a recruiting
+channel into Ewha and the ability to run joint events that a single-campus club can't.
+[Add what you actually did there — a project you led, a session you ran, a team you
+recruited. One concrete thing beats the membership line.]
+
+[Additional leadership — TA/tutoring, organizing, presentations, other competitions.
 Anthropic's stated bar is "well-connected on campus," so add anything where you convened
 people, even if it isn't technical.]
 
@@ -205,15 +220,25 @@ to teach it from.
 
 ## What I would do on campus
 
+**A founding cohort on day one.** The club doesn't start cold: the Data Science department is
+my own, and Prometheus gives me an existing network of AI-focused students across several
+Seoul campuses to recruit from and co-host with. Most single-campus clubs can't offer that
+second channel.
+
 - **Ship Night (weekly, 2h).** Not a lecture — everyone leaves with a deployed thing. Ladder:
   a claudebar-sized tool → a first MCP server (via MCP_supporter) → an agentic CI loop.
 - **"Verify It" workshop.** Building a test/CI harness for AI-generated code you can't read
   line-by-line. Concrete, straight from the TempoRoutine ledger.
 - **Research track for non-CS majors.** Ewha's strength is that most students here aren't
   engineers. Claude Projects for thesis literature review, artifacts for data-heavy
-  coursework, MCP for wiring research tools together — [name specific departments/clubs].
-- **Competition/hackathon cohort.** I've taken a project from idea to submitted-and-deployed;
-  I'd run a group that does the same. [Existing Ewha club/hackathon to partner with.]
+  coursework, MCP for wiring research tools together — starting with the departments
+  adjacent to Data Science [name 2–3].
+- **Competition cohort.** JejuNow was a competition entry I took from idea to
+  submitted-and-deployed. Korea runs public-data and tourism-data competitions on a fixed
+  annual calendar; I'd run a group that ships into one, using Claude for the pipeline work
+  that usually kills student entries before submission.
+- **Cross-campus hackathon.** A joint build weekend with Prometheus — the kind of event that
+  makes an Ewha club visible beyond Ewha.
 
 ---
 
@@ -233,4 +258,5 @@ XcodeGen, Gradle; `mypy --strict` + `ruff` clean as a standing gate
 
 ## Languages
 
-Korean (native) · English ([level — e.g. professional working proficiency, TOEFL/OPIc score])
+Korean (native) · English — professional working proficiency (TOEIC 810); I write and
+maintain technical documentation in English (see the `chalkak` repository).
