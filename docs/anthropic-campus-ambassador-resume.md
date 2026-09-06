@@ -33,7 +33,7 @@ Relevant coursework: Data Engineering (the team project below), [ML / statistics
 
 ---
 
-## Leadership
+## Leadership & Activities
 
 ### Violence Temporal Localization — led a 6-person university data engineering project
 `Python · PyTorch · ResNet50 · Transformer · OpenCV · Flask · Streamlit`
@@ -124,10 +124,11 @@ FastAPI backend (session state, per-mode flow control, scoring) → MediaPipe en
   slower is still correct. So scoring runs **DTW frame matching** against a preprocessed
   reference sequence before comparing left/right elbow and knee angles — aligning on time
   first, then measuring form.
-- [Your specific role — which of these you owned. The reference-derivation pipeline and the
-  DTW scoring are the two parts worth claiming if they were yours.]
+Run as a study group rather than split by role: all four of us worked through every stage —
+pose extraction, reference derivation, DTW scoring, API, and frontend — so I came out of it
+having built each part rather than owning one slice.
 
-[Additional leadership — TA/tutoring, organizing, presentations, other competitions.]
+[Additional activities — TA/tutoring, organizing, presentations, other competitions.]
 
 ---
 
