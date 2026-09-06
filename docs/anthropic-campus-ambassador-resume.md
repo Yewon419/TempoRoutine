@@ -31,7 +31,7 @@ Relevant coursework: Data Engineering (team project below), [ML / statistics / D
 ## Leadership
 
 ### Violence Temporal Localization — led a 6-person university data engineering project
-`Python · PyTorch · ResNet50 · Transformer · OpenCV · Flask · Streamlit` · [role: [team lead / project lead — fill in exact title]]
+`Python · PyTorch · ResNet50 · Transformer · OpenCV · Flask · Streamlit`
 [github.com/Yewon419/violence-temporal-localization](https://github.com/Yewon419/violence-temporal-localization)
 
 Finding person-to-person physical violence *intervals* in films, as an aid to film ratings
