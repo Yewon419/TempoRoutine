@@ -16,9 +16,9 @@ direction changes that each meant deleting finished work, and I write the standa
 tooling that let a team move together. Separately, across 27 repositories, I build in a
 paired agentic workflow with Claude Code — not just *using* Claude, but building the
 verification loop around it, open-sourcing the tooling that loop needed, and writing MCP
-servers that extend it. Through Prometheus, an inter-university AI and data engineering
-society, I already sit in a network of AI-focused students across several Seoul campuses —
-so a Builder Club at Ewha would open with a cohort, not a signup sheet. What I want to teach
+servers that extend it. I completed Cohort 6 of Prometheus, an inter-university AI and data
+engineering society, and stay connected to its alumni across several Seoul campuses — so a
+Builder Club at Ewha would open with a cohort, not a signup sheet. What I want to teach
 there is the second thing above: not prompting, but how to know whether what the model gave
 you is actually correct.
 
@@ -100,12 +100,12 @@ against, and built the tooling they worked in.
   progress bar) painting detected intervals red and snapping playback to them.
   `mypy --strict` + `ruff`, zero errors.
 
-### Prometheus — inter-university AI & data engineering society · Cohort 6, senior member
+### Prometheus — inter-university AI & data engineering society · Cohort 6 (completed), alumni
 
-An inter-university (not single-campus) society for AI and data engineering. This is why a
-Claude Builder Club at Ewha wouldn't start from zero: as a senior member I already sit in a
-network of AI-focused students across several Seoul universities, which gives me both a
-recruiting channel into Ewha and the ability to co-host events a single-campus club can't.
+An inter-university (not single-campus) society for AI and data engineering. I completed
+Cohort 6 and remain in its alumni network, which spans several Seoul universities. This is
+why a Claude Builder Club at Ewha wouldn't start from zero: it gives me both a recruiting
+channel into Ewha and co-hosts for events a single-campus club can't run alone.
 
 **GYM-ZALABIM** — real-time home-training posture correction, 4-person team
 `MediaPipe · OpenCV · FastAPI · React` · [repo/demo link — fill in]
