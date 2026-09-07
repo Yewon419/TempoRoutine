@@ -310,7 +310,7 @@ struct OnboardingFlow: View {
     private var lensGround: some View {
         ZStack {
             Ink.frost
-            SeasonLight(phase: .menstrual, motif: .card)
+            SeasonLight(phase: .menstrual, motif: .lens)
         }
     }
 
@@ -365,7 +365,7 @@ struct OnboardingFlow: View {
     private var enterTitle: some View {
         VStack(spacing: 8) {
             Text("오늘")
-                .font(.almanac(size: 44, weight: .bold))
+                .font(LensSpec.serif(44))
                 .foregroundStyle(Ink.text)
             Text(enterSubtitle)
                 .font(.system(size: 14))
@@ -445,18 +445,18 @@ struct OnboardingFlow: View {
         return Group {
             VStack(alignment: .leading, spacing: 10) {
                 Text(current.eyebrow)
-                    .font(plain ? .system(size: 12, weight: .medium) : .almanacBody(.caption, size: 12))
+                    .font(plain ? .system(size: 12, weight: .medium) : LensSpec.serif(12, bold: false))
                     .kerning(plain ? 1.5 : 2)
                     .foregroundStyle(Ink.text.opacity(0.55))
                 Text(current.title)
                     .font(plain ? .system(size: current.hero ? 36 : 30, weight: .semibold)
-                                : .almanac(size: current.hero ? 36 : 30, weight: .bold))
+                                : LensSpec.serif(current.hero ? 36 : 30))
                     .foregroundStyle(Ink.text)
-                    .lineSpacing(6)
+                    .lineSpacing(5)
                     .fixedSize(horizontal: false, vertical: true)
                 if let mood = current.mood {
                     Text(mood)
-                        .font(.almanacBody(.callout, size: 16))
+                        .font(LensSpec.serif(16, bold: false))
                         .foregroundStyle(Ink.text.opacity(0.9))
                 }
                 if !current.body.isEmpty {
@@ -782,7 +782,7 @@ struct OnboardingFlow: View {
         return HStack(spacing: 10) {
             SeasonGlyph(phase: phase, size: 16)
             Text(meta.name)
-                .font(.almanacBody(.body, size: 16, weight: .bold))
+                .font(LensSpec.serif(16))
                 .foregroundStyle(meta.color)
                 .frame(width: 44, alignment: .leading)
             Text(desc)
@@ -817,7 +817,7 @@ struct OnboardingFlow: View {
             HStack(spacing: 12) {
                 HStack(spacing: 6) {
                     Text(month)
-                        .font(theme == .plain ? .system(size: 15, weight: .bold) : .almanac(size: 15, weight: .bold))
+                        .font(theme == .plain ? .system(size: 15, weight: .bold) : LensSpec.serif(15))
                         .foregroundStyle(p.text)
                     Spacer(minLength: 0)
                     HStack(spacing: 3) {
@@ -830,7 +830,7 @@ struct OnboardingFlow: View {
                 .frame(width: 150, height: 44)
                 .background(p.paper, in: RoundedRectangle(cornerRadius: 10))
                 Text(theme.displayName)
-                    .font(.almanac(size: 17, weight: .bold))
+                    .font(LensSpec.serif(17))
                     .foregroundStyle(Ink.text)
                 Spacer(minLength: 0)
                 InkRadio(on: on)

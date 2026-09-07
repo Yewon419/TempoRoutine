@@ -52,6 +52,13 @@ struct LensContent: Equatable {
 
 /// 제네릭 뷰는 static 저장 프로퍼티를 못 가진다 — 렌즈 상수는 여기(2026-09-07 CI 실측).
 enum LensSpec {
+    /// 온보딩 활자 = 프로토 그대로 Gowun Batang(표제·무드·큰 숫자 Bold, eyebrow·라벨 Regular).
+    /// 앱 탭의 은필 표제(Noto Serif Light)와 갈린다 — 실기기 비교(2026-09-07)에서 Light 300은 프로토보다
+    /// 힘이 없어 「촌스럽다」로 읽혔다. 등록 실패 시 시스템 세리프 폴백.
+    static func serif(_ size: CGFloat, bold: Bool = true) -> Font {
+        guard AlmanacFont.available else { return .system(size: size, weight: bold ? .bold : .regular, design: .serif) }
+        return .custom(bold ? "GowunBatang-Bold" : "GowunBatang-Regular", size: size)
+    }
     static let shade = Color(red: 60 / 255, green: 75 / 255, blue: 90 / 255)
     static let nodePhases: [(phase: CyclePhase, deg: Double)] =
         [(.menstrual, -90), (.follicular, 0), (.ovulation, 90), (.luteal, 180)]
@@ -169,7 +176,7 @@ struct TempoLens<Ground: View>: View {
         return ZStack {
             if content.ring { ringView(s) }
             if let f = content.arcFraction { arcView(s, fraction: f) }
-            if let n = content.ticks { TickRing(count: n).stroke(Ink.winter.opacity(0.55), lineWidth: 1.2) }
+            if let n = content.ticks { TickRing(count: n).stroke(Ink.winter.opacity(0.55), lineWidth: 1.2 * s) }
             if content.nodes { nodesView(s) }
             if content.orbit && !reduceMotion { orbitView(s) }
             if content.wave { waveView(s) }
@@ -183,7 +190,7 @@ struct TempoLens<Ground: View>: View {
     private func ringView(_ s: CGFloat) -> some View {
         Circle()
             .trim(from: 0, to: content.drawsRing ? ringDraw : 1)
-            .stroke(Ink.winter.opacity(0.9), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+            .stroke(Ink.winter.opacity(0.9), style: StrokeStyle(lineWidth: 1.6 * s, lineCap: .round))
             .rotationEffect(.degrees(-90))
             .frame(width: 172 * s, height: 172 * s)
     }
@@ -191,7 +198,7 @@ struct TempoLens<Ground: View>: View {
     private func arcView(_ s: CGFloat, fraction: Double) -> some View {
         Circle()
             .trim(from: 0, to: fraction)
-            .stroke(Ink.winter, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+            .stroke(Ink.winter, style: StrokeStyle(lineWidth: 4 * s, lineCap: .round))
             .rotationEffect(.degrees(-90))
             .frame(width: 172 * s, height: 172 * s)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: fraction)
@@ -200,7 +207,7 @@ struct TempoLens<Ground: View>: View {
     private func progressView(_ s: CGFloat, _ p: Double) -> some View {
         Circle()
             .trim(from: 0, to: p)
-            .stroke(Ink.text.opacity(0.85), style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+            .stroke(Ink.text.opacity(0.85), style: StrokeStyle(lineWidth: 2.2 * s, lineCap: .round))
             .rotationEffect(.degrees(-90))
             .frame(width: 172 * s, height: 172 * s)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.7), value: p)
@@ -215,7 +222,7 @@ struct TempoLens<Ground: View>: View {
             ZStack {
                 Circle().fill(Ink.frost).frame(width: 22 * s, height: 22 * s)
                 SeasonGlyph(phase: node.phase, size: 16 * s)
-                haloText(meta.name, size: 11, color: meta.color)
+                haloText(meta.name, font: LensSpec.serif(11 * s, bold: false), color: meta.color)
                     .offset(x: labelDX * s, y: labelDY * s)
             }
             .opacity(nodesIn ? 1 : 0)
@@ -239,7 +246,7 @@ struct TempoLens<Ground: View>: View {
         ZStack {
             LensWaveShape()
                 .trim(from: 0, to: waveDraw)
-                .stroke(Ink.winter.opacity(0.9), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+                .stroke(Ink.winter.opacity(0.9), style: StrokeStyle(lineWidth: 1.6 * s, lineCap: .round))
             ForEach(Array(LensSpec.waveNodes.enumerated()), id: \.offset) { index, node in
                 ZStack {
                     Circle().fill(Ink.frost.opacity(0.9)).frame(width: 20 * s, height: 20 * s)
@@ -253,7 +260,7 @@ struct TempoLens<Ground: View>: View {
     }
 
     private func sketchView(_ s: CGFloat, _ kind: CardKind) -> some View {
-        let style = StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)
+        let style = StrokeStyle(lineWidth: 1.6 * s, lineCap: .round, lineJoin: .round)
         let ink = Ink.text.opacity(0.8)
         return Group {
             switch kind {
@@ -267,19 +274,17 @@ struct TempoLens<Ground: View>: View {
 
     private func numberView(_ s: CGFloat, _ n: Int) -> some View {
         VStack(spacing: 2 * s) {
-            haloText("\(n)", size: 40 * s, color: Ink.text, serif: true)
+            haloText("\(n)", font: LensSpec.serif(40 * s), color: Ink.text)
                 .contentTransition(.numericText(value: Double(n)))
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: n)
-            haloText(Loc.str("일"), size: 12 * s, color: Ink.text.opacity(0.6), weight: .medium)
+            haloText(Loc.str("일"), font: .system(size: 12 * s, weight: .medium), color: Ink.text.opacity(0.6))
         }
         .offset(y: 4 * s)
     }
 
     /// 지면색 헤일로 활자 — 프로토 paint-order:stroke 대역(렌즈 속 가독, 2026-09-07 디테일 ③)
-    private func haloText(_ text: String, size: CGFloat, color: Color, serif: Bool = false,
-                          weight: Font.Weight = .regular) -> some View {
-        let font: Font = serif ? .almanac(size: size, weight: .bold) : .almanacBody(.caption2, size: size, weight: weight)
-        return Text(text)
+    private func haloText(_ text: String, font: Font, color: Color) -> some View {
+        Text(text)
             .font(font)
             .foregroundStyle(color)
             .background {
