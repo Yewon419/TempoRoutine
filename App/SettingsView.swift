@@ -438,6 +438,7 @@ struct SettingsView: View {
                 .listRowBackground(Self.themedRowGround)
             }
             .scrollContentBackground(.hidden)
+            .toggleStyle(MatteToggleStyle())   // 무광 스위치(2026-09-07 은필 v2 — 은필·기본만, 그 외 시스템)
             .centeredColumn(680)   // 아이패드 중앙 조판(2026-07-23) — 배경은 루트로 이동
 
             if undoSnapshot != nil {

@@ -350,14 +350,18 @@ struct SeasonCalendarView: View {
                 // 상단 순서 = 시안 `.cal-wrap .season-row { order:-1 }` 전 테마 공통(2026-08-23 대표님
                 // "프로토타입 디자인대로"): 계절 줄·생리 기록 → 브랜드 표식·소식란 → 거대 표제·월 이동.
                 // 종전엔 포인트컬러 전용 분기(seasonRowFirst)였고 08-16 개편 뒤엔 전 테마가 표제 아래였다.
-                seasonHeaderRow
-                HStack {
-                    BrandMark(diameter: 22, color: Ink.text.opacity(0.75))   // 오늘 탭과 동일 보정(2026-08-09 피드백)
-                        .padding(.leading, 6)
-                    Spacer()
-                    noticeButton()
+                // 헤더 블록은 8pt 리듬으로 조인다(2026-09-07 은필 v2 — 종전 12·12로 헤더가 화면 3분의 1을
+                // 먹었다). 바깥 VStack 간격은 격자·범례 몫이라 그대로.
+                VStack(alignment: .leading, spacing: ThemeStore.chrome.almanacCards ? 6 : 12) {
+                    seasonHeaderRow
+                    HStack {
+                        BrandMark(diameter: 22, color: Ink.text.opacity(0.75))   // 오늘 탭과 동일 보정(2026-08-09 피드백)
+                            .padding(.leading, 6)
+                        Spacer()
+                        noticeButton()
+                    }
+                    monthHeader
                 }
-                monthHeader
                 // 활판 = 표제 아래 계절 고전 인용문(시안 §2.3-5, 2026-08-24 "인앱에도")
                 if ThemeStore.chrome.latinCalendarHeader, !lpQuoteHidden {
                     letterpressQuoteBlock
@@ -695,17 +699,46 @@ struct SeasonCalendarView: View {
                 lightFeedback += 1
                 shiftMonth(-1)
             } label: {
-                Image(systemName: "chevron.left").frame(width: 44, height: 44)
+                monthArrow("chevron.left")
             }
             Button {
                 lightFeedback += 1
                 shiftMonth(1)
             } label: {
-                Image(systemName: "chevron.right").frame(width: 44, height: 44)
+                monthArrow("chevron.right")
             }
             // 소식란은 브랜드 표식 행 우측(시안 .cal-top) — 2026-08-23 이동
         }
         .foregroundStyle(Ink.text)
+    }
+
+    /// 계절 시작 마커 — 11pt 지면색 원 + 글리프 7(띠 세로 중심에 앉아 위아래 3.5pt씩 걸친다). 식 분리는 타입체크 시간 규칙.
+    private func seasonStartMark(meta: SeasonMeta, projected: Bool) -> some View {
+        let disc: some View = Circle().fill(Ink.frost)
+        let rim: some View = Circle().strokeBorder(Ink.accent.opacity(0.3), lineWidth: 1)
+        return SeasonGlyph(phase: meta.phase, size: 7)
+            .padding(2)
+            .background(disc)
+            .overlay(rim)
+            .opacity(projected ? 0.7 : 1)
+            .offset(x: -1)
+    }
+
+    /// 월 이동 화살표 — 은필·기본 = 괘선 원 버튼 36(2026-09-07 은필 v2, 히트 44 유지), 그 외 종전 맨 화살표
+    @ViewBuilder
+    private func monthArrow(_ symbol: String) -> some View {
+        if ThemeStore.chrome.almanacCards {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Ink.text.opacity(0.75))
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Ink.surface.opacity(0.5)))
+                .overlay(Circle().strokeBorder(Ink.accent.opacity(0.45), lineWidth: 1))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        } else {
+            Image(systemName: symbol).frame(width: 44, height: 44)
+        }
     }
 
     /// 소식란(2026-08-09 사용자 지시 — 우상단 확성기, 미읽음 점).
@@ -875,11 +908,17 @@ struct SeasonCalendarView: View {
         // 바로 밑 y 25.5~29.5. 일정 띠·박스는 3.5pt 간격을 두고 33.5부터(시안 결정).
         // 활판 = 헤어라인 1.5pt + 불투명 .9/.35(§2.3-8 — 얇아진 만큼 진하게 눌러야 띠로 읽힌다)
         let hairline = ThemeStore.chrome.hairlineSeasonBand
+        // 계절 시작일 글리프 마커(2026-09-07 은필 v2) — 띠가 새로 시작하는 날(달 경계 아님)에 지면색 원 안
+        // 글리프를 앉힌다. 색만으로 읽던 계절 경계를 형태로도(§8.1 색맹 담보와 같은 원칙). 은필·기본만.
+        let starts = !prev && ThemeStore.chrome.almanacCards
         return Rectangle()
             .fill(meta.glow.opacity(hairline ? (projected ? 0.35 : 0.9) : (projected ? 0.25 : 0.5)))
             .frame(height: hairline ? 1.5 : 4)
             .padding(.leading, roundLeft ? 3 : 0)
             .padding(.trailing, roundRight ? 3 : 0)
+            .overlay(alignment: .leading) {
+                if starts { seasonStartMark(meta: meta, projected: projected) }
+            }
             .frame(maxHeight: .infinity, alignment: .top)
             .padding(.top, 25.5)
             .allowsHitTesting(false)
@@ -890,8 +929,11 @@ struct SeasonCalendarView: View {
             ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { index, s in
                 let weekday = (cal.firstWeekday - 1 + index) % 7 + 1
                 Text(s)
+                    // 은필·기본 = 번들 명조 + 자간(2026-09-07 은필 v2 — 책력 요일 줄), 활판 = 라틴 세리프
                     .font(ThemeStore.chrome.latinCalendarHeader
-                          ? .system(size: 11, design: .serif) : .system(size: 11))
+                          ? .system(size: 11, design: .serif)
+                          : ThemeStore.chrome.almanacCards ? .almanacBody(.caption2, size: 11) : .system(size: 11))
+                    .kerning(ThemeStore.chrome.almanacCards ? 1 : 0)
                     // 활판(§2.3-4) = 전행 빨강 세리프(원본 문법 — 날짜 숫자는 토=파랑 유지)
                     .foregroundStyle(ThemeStore.chrome.latinCalendarHeader ? Ink.autumn
                                      : weekday == 1 ? Ink.holiday
@@ -1276,6 +1318,11 @@ struct SeasonCalendarView: View {
                             if isToday {
                                 // 기본 = 표제와 같은 먹색(2026-08-09 베타 피드백 "8월 글씨색이랑 같게"
                                 // — §8.1 은필 확정을 뒤집는 사용자 결정) / 모던 = accent(흰) 시안 유지
+                                // 은필 헤일로(2026-09-07 은필 v2): 지면색 2pt 틈 + 흑청 1pt — 글로우 위에서 원이 뜬다
+                                if ThemeStore.chrome.almanacCards {
+                                    Circle().strokeBorder(Ink.accent.opacity(0.55), lineWidth: 1).frame(width: 33, height: 33)
+                                    Circle().fill(Ink.frost).frame(width: 31, height: 31)
+                                }
                                 Circle().fill(ThemeStore.chrome.todayCircleUsesAccent ? Ink.accent : Ink.text)
                             } else if ThemeStore.chrome.circlesRecordedDays && render.periodShown.contains(date) {
                                 Circle().fill(Ink.record.opacity(0.3))
