@@ -173,6 +173,35 @@ jobs:
           privacy: location
           wait: '8'
           fail-on-crash: 'false'
+      # ── 찰칵: 심플·포인트컬러 실사용 상태(2026-09-07 — 두 테마 디자인 패스 기준선) ─────────
+      # 표본·완료 상태는 은필 스텝과 같고 테마 인자만 다르다. 포인트컬러는 기본 포인트색(다홍).
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          defaults: |
+            onboardingDone -bool true
+            devModeActive -bool true
+            tutorialChainDone -bool true
+            coach.today -bool true
+            coach.calendar -bool true
+            coach.rhythm -bool true
+            coach.seed -bool true
+            coach.themeShop -bool true
+          screens: |
+            p-today     | -rootTab today    -appTheme plain  -appLanguage ko -AppleLanguages (ko)
+            p-calendar  | -rootTab calendar -appTheme plain  -appLanguage ko -AppleLanguages (ko)
+            p-rhythm    | -rootTab rhythm   -appTheme plain  -appLanguage ko -AppleLanguages (ko)
+            p-settings  | -rootTab settings -appTheme plain  -appLanguage ko -AppleLanguages (ko)
+            m-today     | -rootTab today    -appTheme modern -appLanguage ko -AppleLanguages (ko)
+            m-calendar  | -rootTab calendar -appTheme modern -appLanguage ko -AppleLanguages (ko)
+            m-rhythm    | -rootTab rhythm   -appTheme modern -appLanguage ko -AppleLanguages (ko)
+            m-settings  | -rootTab settings -appTheme modern -appLanguage ko -AppleLanguages (ko)
+          output-dir: screenshots-plain-point
+          artifact-name: screenshots-plain-point
+          title: '템포루틴 심플·포인트컬러 실사용 찰칵'
+          privacy: location
+          wait: '8'
+          fail-on-crash: 'false'
 
   testflight:
     name: TestFlight upload (archive + cloud signing)
