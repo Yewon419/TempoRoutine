@@ -87,8 +87,8 @@ struct TempoLens<Ground: View>: View {
         }
         .frame(width: diameter, height: diameter)
         .clipShape(Circle())
-        .shadow(color: LensSpec.shade.opacity(0.18), radius: 20, y: 18)
-        .shadow(color: LensSpec.shade.opacity(0.10), radius: 3, y: 2)
+        .shadow(color: LensSpec.shade.opacity(0.14), radius: 18, y: 12)
+        .shadow(color: LensSpec.shade.opacity(0.08), radius: 3, y: 2)
         .position(center)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -115,15 +115,16 @@ struct TempoLens<Ground: View>: View {
                                                   .float(0.10)),
                           maxSampleOffset: CGSize(width: diameter * 0.06, height: diameter * 0.06),
                           isEnabled: !flat && !reduceMotion)
-        .saturation(0.75)
+        .saturation(0.85)
         .contrast(1.05)
     }
 
-    /// 서리 층 — 기본 .5, 숫자·선화 단계는 중앙 방사형(.78 → .5)으로 가독을 올린다(2026-09-07 디테일 ③)
+    /// 서리 층 — 기본 .42(실기기 교정 2026-09-07: .5는 흰 원반으로 읽혔다), 숫자·선화 단계는
+    /// 중앙 방사형(.78 → .5)으로 가독을 올린다(디테일 ③)
     private var frostLayer: some View {
         let base = Color(red: 238 / 255, green: 241 / 255, blue: 242 / 255)
         return ZStack {
-            base.opacity(0.5)
+            base.opacity(0.42)
             if content.focus {
                 RadialGradient(stops: [.init(color: Ink.frost.opacity(0.78), location: 0),
                                        .init(color: Ink.frost.opacity(0.5), location: 0.7),
@@ -133,26 +134,31 @@ struct TempoLens<Ground: View>: View {
         }
     }
 
+    /// 광 — 타원 클립 안 원형 그라데이션은 위아래가 잘려 흰 덩어리로 읽혔다(실기기 2026-09-07).
+    /// 원형 그라데이션을 세로로 눌러 가장자리까지 스러지게 한다.
     private var sheen: some View {
         ZStack {
-            Ellipse()
-                .fill(RadialGradient(colors: [Color.white.opacity(0.55), .clear],
+            Circle()
+                .fill(RadialGradient(colors: [Color.white.opacity(0.45), .clear],
                                      center: .center, startRadius: 0, endRadius: diameter * 0.3))
-                .frame(width: diameter * 0.6, height: diameter * 0.4)
+                .frame(width: diameter * 0.6, height: diameter * 0.6)
+                .scaleEffect(x: 1, y: 0.66)
                 .position(x: diameter * 0.3, y: diameter * 0.22)
-            Ellipse()
-                .fill(RadialGradient(colors: [Color(red: 120 / 255, green: 140 / 255, blue: 160 / 255).opacity(0.14), .clear],
+            Circle()
+                .fill(RadialGradient(colors: [Color(red: 120 / 255, green: 140 / 255, blue: 160 / 255).opacity(0.12), .clear],
                                      center: .center, startRadius: 0, endRadius: diameter * 0.4))
-                .frame(width: diameter * 0.8, height: diameter * 0.6)
+                .frame(width: diameter * 0.8, height: diameter * 0.8)
+                .scaleEffect(x: 1, y: 0.75)
                 .position(x: diameter * 0.7, y: diameter * 0.9)
         }
     }
 
-    /// 림 — 흰 1px 테 + 상좌 안쪽 광(inset 2 3 8 white) + 하우 안쪽 그림자(inset −6 −10 22 shade)
+    /// 림 — 흰 1px 테 + 상좌 안쪽 광(inset 2 3 8 white) + 하우 안쪽 그림자(inset −6 −10 22 shade).
+    /// CSS inset 22px 블러를 stroke 22로 옮기면 두 배 두꺼운 검은 초승달이 된다(실기기 2026-09-07) — 10/12로.
     private var rim: some View {
         ZStack {
-            Circle().stroke(Color.white.opacity(0.55), lineWidth: 6).blur(radius: 6).offset(x: 2, y: 3)
-            Circle().stroke(LensSpec.shade.opacity(0.14), lineWidth: 22).blur(radius: 11).offset(x: -6, y: -10)
+            Circle().stroke(Color.white.opacity(0.5), lineWidth: 5).blur(radius: 6).offset(x: 2, y: 3)
+            Circle().stroke(LensSpec.shade.opacity(0.11), lineWidth: 10).blur(radius: 12).offset(x: -4, y: -7)
             Circle().strokeBorder(Color.white.opacity(0.55), lineWidth: 1)
         }
     }

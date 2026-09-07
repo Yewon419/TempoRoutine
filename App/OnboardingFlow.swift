@@ -226,7 +226,7 @@ struct OnboardingFlow: View {
                           magnify: entering ? 1.02 : current.spot.magnify,
                           containerSize: size, content: entering ? LensContent() : current.content,
                           flat: plainSurface, reduceMotion: reduceMotion) {
-                    silverGround
+                    lensGround
                 }
                 .opacity(current.hideLens && !entering ? 0 : 1)
                 .animation(reduceMotion ? nil : .spring(response: entering ? 0.9 : 0.72, dampingFraction: 0.86), value: stageKey)
@@ -302,6 +302,15 @@ struct OnboardingFlow: View {
         ZStack {
             Ink.frost
             SeasonLight(phase: .menstrual, motif: .onboarding)   // 온보딩 = 겨울 배경 고정(사용자 확정)
+        }
+    }
+
+    /// 렌즈 속 지면 — 선화를 카드 농도(46%)로. 프로토는 렌즈 안에서 선화가 원본 농도로 확대돼 비쳐
+    /// 「돋보기」로 읽히는데, 온보딩 감쇠(14%)를 그대로 쓰니 흰 원반이 됐다(실기기 2026-09-07).
+    private var lensGround: some View {
+        ZStack {
+            Ink.frost
+            SeasonLight(phase: .menstrual, motif: .card)
         }
     }
 
