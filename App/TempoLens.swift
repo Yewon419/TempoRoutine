@@ -50,6 +50,15 @@ struct LensContent: Equatable {
     }
 }
 
+/// 제네릭 뷰는 static 저장 프로퍼티를 못 가진다 — 렌즈 상수는 여기(2026-09-07 CI 실측).
+enum LensSpec {
+    static let shade = Color(red: 60 / 255, green: 75 / 255, blue: 90 / 255)
+    static let nodePhases: [(phase: CyclePhase, deg: Double)] =
+        [(.menstrual, -90), (.follicular, 0), (.ovulation, 90), (.luteal, 180)]
+    static let waveNodes: [(phase: CyclePhase, x: CGFloat, y: CGFloat)] =
+        [(.menstrual, 30, 158), (.follicular, 72, 81), (.ovulation, 100, 53), (.luteal, 172, 138)]
+}
+
 // ── 렌즈 ──────────────────────────────────────────────────
 struct TempoLens<Ground: View>: View {
     let center: CGPoint
@@ -68,8 +77,6 @@ struct TempoLens<Ground: View>: View {
     @State private var waveDraw: CGFloat = 0
     @State private var sketchDraw: CGFloat = 0
 
-    private static let shade = Color(red: 60 / 255, green: 75 / 255, blue: 90 / 255)
-
     var body: some View {
         ZStack {
             glass
@@ -80,8 +87,8 @@ struct TempoLens<Ground: View>: View {
         }
         .frame(width: diameter, height: diameter)
         .clipShape(Circle())
-        .shadow(color: Self.shade.opacity(0.18), radius: 20, y: 18)
-        .shadow(color: Self.shade.opacity(0.10), radius: 3, y: 2)
+        .shadow(color: LensSpec.shade.opacity(0.18), radius: 20, y: 18)
+        .shadow(color: LensSpec.shade.opacity(0.10), radius: 3, y: 2)
         .position(center)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -145,7 +152,7 @@ struct TempoLens<Ground: View>: View {
     private var rim: some View {
         ZStack {
             Circle().stroke(Color.white.opacity(0.55), lineWidth: 6).blur(radius: 6).offset(x: 2, y: 3)
-            Circle().stroke(Self.shade.opacity(0.14), lineWidth: 22).blur(radius: 11).offset(x: -6, y: -10)
+            Circle().stroke(LensSpec.shade.opacity(0.14), lineWidth: 22).blur(radius: 11).offset(x: -6, y: -10)
             Circle().strokeBorder(Color.white.opacity(0.55), lineWidth: 1)
         }
     }
@@ -193,11 +200,8 @@ struct TempoLens<Ground: View>: View {
             .animation(reduceMotion ? nil : .easeOut(duration: 0.7), value: p)
     }
 
-    private static let nodePhases: [(phase: CyclePhase, deg: Double)] =
-        [(.menstrual, -90), (.follicular, 0), (.ovulation, 90), (.luteal, 180)]
-
     private func nodesView(_ s: CGFloat) -> some View {
-        ForEach(Array(Self.nodePhases.enumerated()), id: \.offset) { index, node in
+        ForEach(Array(LensSpec.nodePhases.enumerated()), id: \.offset) { index, node in
             let a = node.deg * .pi / 180
             let meta = seasonMeta(for: node.phase)
             let labelDX: CGFloat = node.deg == 0 ? -24 : node.deg == 180 ? 24 : 0
@@ -224,16 +228,13 @@ struct TempoLens<Ground: View>: View {
             .animation(.easeOut(duration: 0.6), value: orbitOn)
     }
 
-    private static let waveNodes: [(phase: CyclePhase, x: CGFloat, y: CGFloat)] =
-        [(.menstrual, 30, 158), (.follicular, 72, 81), (.ovulation, 100, 53), (.luteal, 172, 138)]
-
     /// 곡선 장면 — 계절 라벨은 글리프만(2026-09-07 대표님 "글씨 말고 아이콘만")
     private func waveView(_ s: CGFloat) -> some View {
         ZStack {
             LensWaveShape()
                 .trim(from: 0, to: waveDraw)
                 .stroke(Ink.winter.opacity(0.9), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
-            ForEach(Array(Self.waveNodes.enumerated()), id: \.offset) { index, node in
+            ForEach(Array(LensSpec.waveNodes.enumerated()), id: \.offset) { index, node in
                 ZStack {
                     Circle().fill(Ink.frost.opacity(0.9)).frame(width: 20 * s, height: 20 * s)
                     SeasonGlyph(phase: node.phase, size: 16 * s)
