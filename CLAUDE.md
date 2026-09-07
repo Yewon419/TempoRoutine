@@ -151,6 +151,11 @@
   남았다 — 컴파일은 통과하고 실기기에서만 드러나는 유형). 시안(CSS) 좌표를 Shape로 옮길 때
   호 방향은 "위로 파려면 clockwise: true"로 뒤집어 생각할 것.
 
+- **심사 승인된 MARKETING_VERSION 트레인은 닫힌다** — 같은 버전 문자열로는 TestFlight 업로드가
+  `Invalid Pre-Release Train … closed for new build submissions`으로 거부된다(2026-09-07 실측, 0.1.0 승인 후
+  첫 dispatch). 승인 뒤 첫 배포 전에 `project.yml`의 MARKETING_VERSION을 **앱·위젯 두 타깃 같이** 올릴 것
+  (ASC 표시명 「1.0」과 번들 문자열 0.1.0은 다르다 — 트레인은 번들 문자열 기준).
+
 ## Android (`android/`, MASTER §5.13)
 
 - **tempocore는 iOS TempoCore의 1:1 이식이다.** 알고리즘·상수·테스트 이름을 같이 바꾼다 —
