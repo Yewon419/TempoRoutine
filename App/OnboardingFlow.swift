@@ -225,7 +225,8 @@ struct OnboardingFlow: View {
                 TempoLens(center: lensSpot.center, diameter: lensSpot.diameter,
                           magnify: entering ? 1.02 : current.spot.magnify,
                           containerSize: size, content: entering ? LensContent() : current.content,
-                          flat: plainSurface, reduceMotion: reduceMotion) {
+                          flat: plainSurface, reduceMotion: reduceMotion,
+                          groundInsets: geo.safeAreaInsets) {
                     lensGround
                 }
                 .opacity(current.hideLens && !entering ? 0 : 1)

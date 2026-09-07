@@ -119,6 +119,9 @@ struct TempoLens<Ground: View>: View {
     let content: LensContent
     let flat: Bool              // 심플 지면 = 평면색, 굴절 없음
     let reduceMotion: Bool
+    /// 지면은 세이프 영역을 무시하고 화면 전체에 깔리는데 렌즈 좌표는 세이프 영역 기준이다 — 그 차이(상단
+    /// 59pt)만큼 복사본이 어긋나 렌즈 안에 위쪽 그림이 비쳤다(프로토 대조 2026-09-07). 인셋을 받아 맞춘다.
+    var groundInsets: EdgeInsets = EdgeInsets()
     @ViewBuilder let ground: () -> Ground
 
     @State private var ringDraw: CGFloat = 0
@@ -148,16 +151,18 @@ struct TempoLens<Ground: View>: View {
 
     // 지면 재합성 — 렌즈 중심을 기준으로 배율 m, 렌즈 프레임 중심으로 옮겨 원으로 자른다
     private var glass: some View {
-        let w = max(containerSize.width, 1)
-        let h = max(containerSize.height, 1)
+        let w = max(containerSize.width + groundInsets.leading + groundInsets.trailing, 1)
+        let h = max(containerSize.height + groundInsets.top + groundInsets.bottom, 1)
+        let cx = center.x + groundInsets.leading
+        let cy = center.y + groundInsets.top
         return ZStack {
             if flat {
                 Color(red: 245 / 255, green: 245 / 255, blue: 247 / 255)
             } else {
                 ground()
                     .frame(width: w, height: h)
-                    .scaleEffect(magnify, anchor: UnitPoint(x: center.x / w, y: center.y / h))
-                    .offset(x: w / 2 - center.x, y: h / 2 - center.y)
+                    .scaleEffect(magnify, anchor: UnitPoint(x: cx / w, y: cy / h))
+                    .offset(x: w / 2 - cx, y: h / 2 - cy)
             }
         }
         .frame(width: diameter, height: diameter)
