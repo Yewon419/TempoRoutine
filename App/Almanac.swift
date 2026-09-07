@@ -773,22 +773,29 @@ struct MatteToggleStyle: ToggleStyle {
         }
     }
 
+    /// 실기기 교정(2026-09-07 "스위치도 그대로인데"): 꺼짐 상태가 시스템 스위치와 구분되지 않았다.
+    /// 원반을 24로 줄여 캡슐 괘선이 사방에 보이게 하고, 원반에 브랜드 표식(원 + 정점의 겨울 점)을 새긴다 —
+    /// 켜지면 점이 먹 위에서 지면색으로 뒤집힌다.
     private func track(isOn: Bool) -> some View {
-        let knobShadow: Color = isOn ? Ink.paper.opacity(0.6) : Ink.accent.opacity(0.55)
+        let knobRim: Color = isOn ? Ink.paper.opacity(0.7) : Ink.accent.opacity(0.7)
+        let dot: Color = isOn ? Ink.paper : Ink.winter
         return ZStack(alignment: .leading) {
-            Capsule().fill(Ink.text.opacity(0.06))
+            Capsule().fill(Ink.text.opacity(0.07))
             Circle()
                 .fill(Ink.text.opacity(0.74))
                 .frame(width: 32, height: 32)
                 .scaleEffect(isOn ? 3 : 0.01, anchor: .center)
                 .offset(x: 11)
-            Capsule().strokeBorder(Ink.accent.opacity(0.42), lineWidth: 1)
+            Capsule().strokeBorder(Ink.accent.opacity(0.5), lineWidth: 1)
             Circle()
                 .fill(isOn ? Ink.paper.opacity(0.94) : Ink.paper)
-                .overlay(Circle().strokeBorder(knobShadow, lineWidth: 1))
-                .shadow(color: .black.opacity(isOn ? 0.18 : 0.12), radius: 1, y: 1)
-                .frame(width: 26, height: 26)
-                .padding(3)
+                .overlay(Circle().strokeBorder(knobRim, lineWidth: 1.2))
+                .overlay(alignment: .top) {
+                    Circle().fill(dot).frame(width: 4, height: 4).padding(.top, 4)
+                }
+                .shadow(color: .black.opacity(isOn ? 0.18 : 0.10), radius: 1, y: 1)
+                .frame(width: 24, height: 24)
+                .padding(4)
                 .offset(x: isOn ? 22 : 0)
         }
         .frame(width: 54, height: 32)
