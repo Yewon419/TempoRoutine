@@ -298,21 +298,12 @@ struct OnboardingFlow: View {
     }
 
     // ── 지면 — 심플(평면) 위에 은필(frost + 겨울 계절광 + 선화)이 렌즈 중심에서 원형으로 열린다 ──
-    private var silverGround: some View {
-        ZStack {
-            Ink.frost
-            SeasonLight(phase: .menstrual, motif: .onboarding)   // 온보딩 = 겨울 배경 고정(사용자 확정)
-        }
-    }
+    /// 온보딩 = 겨울 지면 고정(사용자 확정). 구성은 프로토 `.world` 그대로(OnboardingGround) —
+    /// 앱 지면(SeasonLight 두 장)은 굵은 줄기가 가운데를 지나가 프로토와 달랐다(2026-09-07 대조).
+    private var silverGround: some View { OnboardingGround() }
 
-    /// 렌즈 속 지면 — 선화를 카드 농도(46%)로. 프로토는 렌즈 안에서 선화가 원본 농도로 확대돼 비쳐
-    /// 「돋보기」로 읽히는데, 온보딩 감쇠(14%)를 그대로 쓰니 흰 원반이 됐다(실기기 2026-09-07).
-    private var lensGround: some View {
-        ZStack {
-            Ink.frost
-            SeasonLight(phase: .menstrual, motif: .lens)
-        }
-    }
+    /// 렌즈 속 지면 — 선화 원본 농도. 프로토는 렌즈 안에서 선화가 확대돼 비쳐 「돋보기」로 읽힌다.
+    private var lensGround: some View { OnboardingGround(motifOpacity: 1) }
 
     private func ground(size: CGSize, column: CGFloat, safeTop: CGFloat) -> some View {
         let origin = LensSpot.hero.resolve(in: size, column: column).center

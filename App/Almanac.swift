@@ -535,8 +535,7 @@ extension CyclePhase {
     static let displayOrder: [CyclePhase] = [.follicular, .ovulation, .luteal, .menstrual]
 }
 
-/// `.lens` = 온보딩 렌즈 속 지면(2026-09-07) — 프로토처럼 선화가 원본 농도로 확대돼 비친다(돋보기)
-enum MotifStyle: Equatable { case card, open, onboarding, lens }
+enum MotifStyle: Equatable { case card, open, onboarding }
 
 /// 계절광 — 시안 .season-light 3겹 radial 이식. 지면(paper) 위에 얹는 상단 빛.
 struct SeasonLight: View {
@@ -660,7 +659,7 @@ struct SeasonLight: View {
         //   걷으면 "그림 살짝 잘린다"(2026-08-10 피드백)로 되돌아간다.
         // 0.30 → 0.46 상향(2026-08-09 사용자 "기본 테마에서 그림이 빠졌던데") — 봄 모티프처럼
         // 잉크가 옅은 판이 밝은 계절광(베이지) 위 multiply에서 안 읽히던 것. 코드 회귀 아님.
-        .opacity(motif == .onboarding ? 0.14 : motif == .lens ? 0.85 : 0.46)
+        .opacity(motif == .onboarding ? 0.14 : 0.46)
         .mask(motifMask)
     }
 

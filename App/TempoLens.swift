@@ -7,6 +7,50 @@
 import SwiftUI
 import TempoCore
 
+// ── 온보딩 지면 ────────────────────────────────────────────
+/// 프로토 `.world` 그대로: frost + 계절광 2겹(우상·좌하) + 겨울 선화 **한 장**(703 @ −36,14, 11% multiply).
+/// 앱 지면(SeasonLight)은 선화 두 장(1.75×·2.4×)이라 굵은 줄기가 화면 가운데를 지나가고 좌상단 광이 하나
+/// 더 있다 — 프로토와 나란히 대조(2026-09-07)했을 때 「촌스러움」의 뿌리였다. 온보딩은 프로토 구성을 따른다.
+/// `motifOpacity` 1 = 렌즈 속(선화가 원본 농도로 확대돼 비치는 돋보기).
+struct OnboardingGround: View {
+    var motifOpacity: Double = 0.11
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = max(geo.size.width, 1)
+            let h = max(geo.size.height, 1)
+            let k = min(w, 430) / 402   // 프로토 폭 402 기준 비례(아이패드는 캡)
+            ZStack(alignment: .topLeading) {
+                Ink.frost
+                light(Color(red: 185 / 255, green: 199 / 255, blue: 209 / 255).opacity(0.42),
+                      rx: 0.9 * w, ry: 0.6 * h, at: CGPoint(x: 0.8 * w, y: 0))
+                light(Color(red: 160 / 255, green: 182 / 255, blue: 199 / 255).opacity(0.52),
+                      rx: 0.7 * w, ry: 0.5 * h, at: CGPoint(x: 0.1 * w, y: h))
+                Image("MotifWinter")
+                    .resizable()
+                    .frame(width: 703.5 * k, height: 703.5 * k)
+                    .offset(x: -36.2 * k, y: 13.6 * k)
+                    .blendMode(.multiply)
+                    .contrast(0.88)
+                    .opacity(motifOpacity)
+            }
+            .frame(width: w, height: h)
+            .clipped()
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    /// CSS `radial-gradient(rx ry at x y, color, transparent 70%)` — 원형 그라데이션을 세로로 눌러 타원으로
+    private func light(_ color: Color, rx: CGFloat, ry: CGFloat, at p: CGPoint) -> some View {
+        Circle()
+            .fill(RadialGradient(colors: [color, .clear], center: .center, startRadius: 0, endRadius: rx * 0.7))
+            .frame(width: rx * 2, height: rx * 2)
+            .scaleEffect(x: 1, y: ry / max(rx, 1))
+            .position(p)
+    }
+}
+
 // ── 렌즈 자리 ──────────────────────────────────────────────
 /// 컨테이너(세이프 영역) 비율 좌표. 프로토(402×874) 값을 비율로 옮겼고 지름은 화면 높이에 비례해 줄인다(최대 1).
 struct LensSpot: Equatable {
