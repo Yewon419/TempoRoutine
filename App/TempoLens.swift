@@ -180,7 +180,7 @@ struct TempoLens<Ground: View>: View {
     private var frostLayer: some View {
         let base = Color(red: 238 / 255, green: 241 / 255, blue: 242 / 255)
         return ZStack {
-            base.opacity(0.42)
+            base.opacity(0.36)   // 프로토 대조 4차: 렌즈 속 가지가 프로토보다 옅어 .42 → .36
             if content.focus {
                 RadialGradient(stops: [.init(color: Ink.frost.opacity(0.78), location: 0),
                                        .init(color: Ink.frost.opacity(0.5), location: 0.7),
