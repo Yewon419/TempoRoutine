@@ -28,7 +28,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.temporoutine.TempoRoutine
-        MARKETING_VERSION: 0.1.0
+        MARKETING_VERSION: 0.1.1           # 0.1.0 트레인은 심사 승인으로 닫힘(2026-09-07 업로드 거부) — 이후 빌드는 0.1.1
         CURRENT_PROJECT_VERSION: 1
         SWIFT_VERSION: 6.0
         TARGETED_DEVICE_FAMILY: "1,2"        # 아이폰 + 아이패드 (§5.10 — CloudKit 동기화 시점에 iPad 동시 추가, 2026-07-23)
@@ -107,7 +107,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.temporoutine.TempoRoutine.widgets
-        MARKETING_VERSION: 0.1.0           # 앱과 동일해야 업로드 통과(appex 버전 일치 요건)
+        MARKETING_VERSION: 0.1.1           # 앱과 동일해야 업로드 통과(appex 버전 일치 요건)
         CURRENT_PROJECT_VERSION: 1         # CI가 run number로 덮음(전 타깃 공통)
         SWIFT_VERSION: 6.0
         TARGETED_DEVICE_FAMILY: "1,2"
