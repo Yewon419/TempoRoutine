@@ -735,16 +735,23 @@ extension ThemeChrome {
         !photographicGround && !skyGround && !videoGround
             && !engravedCards && !liquidGlassCards && !ticketChrome
     }
+
+    /// 컨트롤 틴트(2026-09-07 심플·포인트컬러 패스) — 켜짐·완료·오늘을 표시하는 한 색.
+    /// 포인트컬러 = 포인트색(`winter`, 하단바 선택 탭과 같은 색) / 그 외 = 먹.
+    var controlTint: Color { pointTabTint ? Ink.winter : Ink.text }
 }
 
 /// 무광 스위치 — 은필 괘선 캡슐 + 지면색 원반. 켜지면 원반 뒤에서 먹(74%)이 번진다.
-/// 순먹 100%는 시트 위에서 무거웠다(시안 교정 2026-09-07). 은필·기본 밖 테마는 시스템 스위치 유지.
+/// 순먹 100%는 시트 위에서 무거웠다(시안 교정 2026-09-07). 은필 밖 테마는 시스템 스위치 —
+/// 심플·포인트컬러는 잉크/포인트 틴트(2026-09-07 두 테마 패스), 나머지는 종전 그대로.
 struct MatteToggleStyle: ToggleStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
-        if ThemeStore.chrome.almanacCards {
+        if ThemeStore.chrome.almanacCards, !ThemeStore.chrome.inkChrome {
+            Toggle(configuration).toggleStyle(.switch).tint(ThemeStore.chrome.controlTint)
+        } else if ThemeStore.chrome.inkChrome {
             Button {
                 withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.72)) {
                     configuration.isOn.toggle()
@@ -790,14 +797,16 @@ struct MatteToggleStyle: ToggleStyle {
 }
 
 /// 먹 도장 체크 — 은필 원 안에 먹이 차오르고 체크가 찍힌다(Input 행). 지우면 원만 남는다.
+/// 채움색 = `controlTint`(포인트컬러는 포인트색 — 완료가 곧 한 점 유채, 2026-09-07).
 struct StampCheck: View {
     let checked: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        let tint: Color = ThemeStore.chrome.controlTint
         ZStack {
-            Circle().strokeBorder(Ink.text.opacity(0.35), lineWidth: 1.4)
-            Circle().fill(Ink.text).scaleEffect(checked ? 1 : 0.01)
+            Circle().strokeBorder(tint.opacity(0.35), lineWidth: 1.4)
+            Circle().fill(tint).scaleEffect(checked ? 1 : 0.01)
             Image(systemName: "checkmark")
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(Ink.paper)
@@ -835,10 +844,11 @@ struct SectionChrome: ViewModifier {
     }
 }
 
-/// 주인공 카드(체크인) — 밀크 글래스보다 한 단계 도드라진 지면 + 옅은 그림자. 은필·기본 밖은 밀크 글래스.
+/// 주인공 카드(체크인) — 밀크 글래스보다 한 단계 도드라진 지면 + 옅은 그림자. 은필 밖은 밀크 글래스
+/// (심플·포인트컬러의 흰 카드는 테두리 없는 시스템 그룹 문법 — 2026-09-07).
 struct PrimeCard: ViewModifier {
     func body(content: Content) -> some View {
-        if ThemeStore.chrome.almanacCards {
+        if ThemeStore.chrome.inkChrome {
             content
                 .background {
                     let shape: RoundedRectangle = RoundedRectangle(cornerRadius: 16)
@@ -856,8 +866,11 @@ struct PrimeCard: ViewModifier {
 extension View {
     func sectionChrome(band: Bool, stub: String?) -> some View { modifier(SectionChrome(band: band, stub: stub)) }
     func primeCard() -> some View { modifier(PrimeCard()) }
-    /// 세리프 eyebrow(시안 12/자간 2) — 카드 안 작은 표찰
+    /// 세리프 eyebrow(시안 12/자간 2) — 카드 안 작은 표찰. 시스템 서체(심플·포인트컬러)는 자간을 두지
+    /// 않는다 — SF 한글에 자간 2는 글자가 흩어져 읽혔다(2026-09-07 실측).
     func eyebrowStyle() -> some View {
-        font(.almanacBody(.caption, size: 12)).kerning(2).foregroundStyle(Ink.text.opacity(0.55))
+        font(.almanacBody(.caption, size: 12))
+            .kerning(ThemeStore.chrome.typeFace == .system ? 0 : 2)
+            .foregroundStyle(Ink.text.opacity(0.55))
     }
 }

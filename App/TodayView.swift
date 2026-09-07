@@ -739,7 +739,7 @@ struct TodayView: View {
             rows()
         }
         // 일정 = 풀블리드 띠(§8.2.2, 2026-09-07 실장 — 은필·기본만), Input·Output = 카드
-        .sectionChrome(band: kind == .schedule && ThemeStore.chrome.almanacCards,
+        .sectionChrome(band: kind == .schedule && ThemeStore.chrome.inkChrome,
                        stub: ticketStub(for: kind))
         .ticketCardGap()   // 티켓 간격 34 균일화(2026-08-25 베타)
         .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)

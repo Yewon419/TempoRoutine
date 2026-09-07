@@ -534,6 +534,11 @@ struct ThemeChrome {
         case bare
     }
     var settingsList: SettingsList = .system
+
+    // ── 은필 v2 먹 문법(2026-09-07) — 무광 스위치·일정 풀블리드 띠·주인공 카드 테두리 ──
+    /// 은필 전용. 심플·포인트컬러는 같은 지면(밀크 카드)이지만 컨트롤은 시스템 문법을 지킨다
+    /// (2026-09-07 두 테마 디자인 패스 — Familiarity: 시스템 스위치 + 잉크/포인트 틴트).
+    var inkChrome = false
 }
 
 extension ThemeChrome {
@@ -547,7 +552,7 @@ extension ThemeChrome {
         todayCircleUsesAccent: false,
         circlesRecordedDays: false, boostsContrast: false,
         ticketChrome: false, photographicGround: false, pointTabTint: false,
-        tintedTabBar: true, settingsList: .glass
+        tintedTabBar: true, settingsList: .glass, inkChrome: true
     )
 
     /// 기본 — 장식을 전부 끈다(2026-08-12). 계절 정보(글리프·밴드 색)는 팔레트가 담당하므로

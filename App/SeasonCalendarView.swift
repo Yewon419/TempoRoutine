@@ -1319,11 +1319,16 @@ struct SeasonCalendarView: View {
                                 // 기본 = 표제와 같은 먹색(2026-08-09 베타 피드백 "8월 글씨색이랑 같게"
                                 // — §8.1 은필 확정을 뒤집는 사용자 결정) / 모던 = accent(흰) 시안 유지
                                 // 은필 헤일로(2026-09-07 은필 v2): 지면색 2pt 틈 + 흑청 1pt — 글로우 위에서 원이 뜬다
+                                // 포인트컬러 = 오늘 원이 포인트색(2026-09-07 — 유채 한 점이 「지금」을 가리킨다,
+                                // iOS 캘린더 문법). 헤일로 링도 같은 색.
+                                let todayFill: Color = ThemeStore.chrome.todayCircleUsesAccent ? Ink.accent
+                                    : ThemeStore.chrome.pointTabTint ? Ink.winter : Ink.text
                                 if ThemeStore.chrome.almanacCards {
-                                    Circle().strokeBorder(Ink.accent.opacity(0.55), lineWidth: 1).frame(width: 33, height: 33)
+                                    Circle().strokeBorder((ThemeStore.chrome.pointTabTint ? todayFill : Ink.accent).opacity(0.55), lineWidth: 1)
+                                        .frame(width: 33, height: 33)
                                     Circle().fill(Ink.frost).frame(width: 31, height: 31)
                                 }
-                                Circle().fill(ThemeStore.chrome.todayCircleUsesAccent ? Ink.accent : Ink.text)
+                                Circle().fill(todayFill)
                             } else if ThemeStore.chrome.circlesRecordedDays && render.periodShown.contains(date) {
                                 Circle().fill(Ink.record.opacity(0.3))
                             }

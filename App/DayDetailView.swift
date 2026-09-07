@@ -347,7 +347,7 @@ struct DayDetailView: View {
             }
         }
         // 일정 = 풀블리드 띠(§8.2.2, 2026-09-07 — 오늘 탭과 같은 껍데기), Input·Output = 카드
-        .sectionChrome(band: kind == .schedule && ThemeStore.chrome.almanacCards, stub: ticketStub(kind))
+        .sectionChrome(band: kind == .schedule && ThemeStore.chrome.inkChrome, stub: ticketStub(kind))
         .ticketCardGap()   // 티켓 간격 균일화(2026-08-25)
     }
 
