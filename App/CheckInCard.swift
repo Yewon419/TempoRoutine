@@ -15,6 +15,7 @@ struct CheckInCard: View {
 
     @Environment(\.modelContext) private var modelContext
     @Query private var checkIns: [DailyCheckIn]
+    @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]   // 피드 머리줄의 계절(2026-09-07)
 
     @State private var draftEnergy = 0
     @State private var draftMood = 0
@@ -72,9 +73,13 @@ struct CheckInCard: View {
 
     private var checkInBody: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(title)
-                .font(.almanac(size: 17, weight: .bold))
-                .foregroundStyle(Ink.text)
+            // 표찰 + 물음(2026-09-07 은필 v2) — 체크인은 하루 루프의 주인공이라 카드도 한 단계 도드라진다
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).eyebrowStyle()
+                Text(isToday ? Loc.str("지금 컨디션은 어때요?") : Loc.str("그날 컨디션은 어땠어요?"))
+                    .font(.almanac(size: 17, weight: .bold))
+                    .foregroundStyle(Ink.text)
+            }
             // 예민함·몸 행 = 2026-08-05 사용자 결정으로 제거(기분·에너지와 겹침, 6줄 부담).
             // 저장 필드는 남아 있고 과거 기록은 리듬 집계에 계속 유효하다 — 새 입력 경로만 없다.
             // 항목 ⓘ 설명 = 2026-08-06 베타 피드백 교정으로 여기서 걷고 온보딩 ③으로 이동
@@ -91,14 +96,17 @@ struct CheckInCard: View {
             // 반영(판정은 aggregationWeight). 안내 문구 없이 칩만("안내 말고 증상 토글" — 지시 원문).
             symptomRow
             if draftEnergy > 0 && draftMood > 0 {
-                Text(confirmLine)
-                    .font(.system(.footnote, design: .serif))
-                    .foregroundStyle(Ink.text.opacity(0.6))
+                HStack(spacing: 6) {
+                    Circle().fill(Ink.winter).frame(width: 6, height: 6)
+                    Text(confirmLine)
+                        .font(.almanacBody(.footnote, size: 13))   // 시스템 세리프 = 한글 고딕 폴백(2026-08-01 뿌리) — 번들 서체로
+                        .foregroundStyle(Ink.winter)
+                }
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .milkGlass()
+        .primeCard()   // 주인공 카드(2026-09-07 은필 v2)
     }
 
     /// 두 번째 카드 — 한 줄과 사진(2026-09-05 베타). 추적 항목 토글을 따른다(2026-08-20 감사 —
@@ -108,14 +116,17 @@ struct CheckInCard: View {
             Text(noteLabel)
                 .font(.almanac(size: 17, weight: .bold))
                 .foregroundStyle(Ink.text)
+            // 피드의 첫 칸을 그 자리에서 쓴다(2026-09-07 대표님 "피드처럼, 사진도 들어갈거니까") —
+            // 머리줄(날짜 · 계절) → 사진 → 글. 나의 템포 한 줄 기록 칸과 같은 조판.
+            feedHeader
+            photoRow
             // 안내문구 = prompt(2026-08-05 베타 피드백 "하루를 간단히 남겨봐요" — 07-31 placeholder 제거의 교체)
             TextField("", text: $draftNote, prompt: Text("하루를 간단히 남겨봐요")
                 .foregroundStyle(Ink.text.opacity(0.35)), axis: .vertical)
-                .font(.subheadline)
+                .font(.almanacBody(.subheadline, size: 15))   // 본문 = 명조(피드와 동일)
                 .foregroundStyle(Ink.text)
                 .focused($noteFocused)
                 .onChange(of: draftNote) { persistDraft() }
-            photoRow
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -281,6 +292,26 @@ struct CheckInCard: View {
         }
     }
 
+    /// 피드 머리줄 — 날짜(명조) · 계절 글리프 + 「계절 N일차」. 계절 기록 전이면 날짜만.
+    private var feedHeader: some View {
+        let info = CycleSnapshot(periodDays: periodDays).phaseInfo(on: normalizedDay)
+        return HStack(spacing: 8) {
+            Text(normalizedDay.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
+                .font(.almanacBody(.caption, size: 13))
+                .foregroundStyle(Ink.text.opacity(0.75))
+            if let info {
+                HStack(spacing: 4) {
+                    SeasonGlyph(phase: info.meta.phase, size: 11)
+                    Text(Loc.fmt("%1$@ %2$@일차", "\(info.meta.name)", "\(info.dayInPhase)"))
+                        .font(.almanacBody(.caption, size: 12, weight: .bold))
+                }
+                .foregroundStyle(info.meta.color)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
     /// 한 줄 아래 사진(2026-09-04 베타 "오늘 한줄 밑에 사진 넣기 추가" · "사진 넣는건 최대 한장").
     /// 한 장뿐이라 갤러리가 아니라 자리 하나다 — 있으면 그 자리에 사진, 없으면 넣기 버튼.
     /// PhotosPicker는 앱 밖 프로세스에서 고르게 하므로 사진 접근 권한 문구가 필요 없다.
@@ -296,10 +327,12 @@ struct CheckInCard: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: .infinity, minHeight: 220, maxHeight: 220)
+                    .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)   // 피드 칸과 동일 높이(2026-09-07)
                     .clipped()
                     .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    // 사진 가장자리가 지면에 번지지 않게 안쪽 검정 8% 윤곽(make-interfaces-feel-better)
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
                     .allowsHitTesting(false)
                 Button {
                     removePhoto()

@@ -394,21 +394,16 @@ struct TodayView: View {
                     // 계절명(주인공) + 오늘 날짜(부인공) — 날짜 크게 표시 요청(2026-08-01 베타 피드백).
                     // 하루 상세와 같은 조판 언어: 큰 숫자 + 월·요일 작게. 아래 줄의 날짜 표기는 중복이라 걷음.
                     // 표식 행과의 갭 +6(2026-08-31 베타 "겨울 저거 위에 갭 조금더 줘")
-                    HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        // 모던 = 아웃라인 표제(시안 §1.3-2), 그 외 = 종전 솔리드(v39~41 확정: 58px)
-                        almanacDisplay(info.meta.name,
-                                       size: ThemeStore.chrome.debossDisplay ? 84 : 58,
-                                       color: Ink.onGround(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0),
-                                                           white: snapshot.isSingleRecord ? 0.6 : 1.0))
-                            // 영어 계절명("Autumn")이 날짜 도장과 한 줄에 못 들어가 「Autum / n」으로
-                            // 꺾였다(2026-08-22 베타). 한 줄 고정 + 축소 허용 — 한국어 2자는 무영향.
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .seasonTitleTap()   // B1(2026-08-31) — 티켓 스탬프·날씨 파문(그 외 무반응)
-                        Spacer(minLength: 0)
-                        todayDateStamp
-                    }
-                    .padding(.top, 6)
+                    // 표제는 하나(2026-09-07 은필 v2 — 계절명 58과 날짜 도장 44가 표제 둘로 경쟁했다).
+                    // 날짜는 아래 메타 줄로 내려간다. 활판은 로고타입+스탬프 조판을 그대로 둔다.
+                    almanacDisplay(info.meta.name,
+                                   size: 58,
+                                   color: Ink.onGround(info.meta.color.opacity(snapshot.isSingleRecord ? 0.6 : 1.0),
+                                                       white: snapshot.isSingleRecord ? 0.6 : 1.0))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .seasonTitleTap()   // B1(2026-08-31) — 티켓 스탬프·날씨 파문(그 외 무반응)
+                        .padding(.top, 6)
                     }
                     HStack(spacing: 6) {
                         // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
@@ -418,6 +413,12 @@ struct TodayView: View {
                             .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
                         if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
                         else if info.projected { Text("예상").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
+                        // 날짜 = 메타 줄(2026-09-07) — 활판은 스탬프가 이미 날짜를 담당
+                        if !ThemeStore.chrome.debossDisplay {
+                            Text("·").foregroundStyle(Ink.onGround(Ink.text.opacity(0.35), white: 0.5))
+                            Text(today.formatted(Loc.dateTime.month().day().weekday(.wide)))
+                                .foregroundStyle(Ink.onGround(Ink.text.opacity(0.6), white: 0.7))
+                        }
                     }
                     .font(.almanacBody(.footnote, size: 13))
                     .skyInkShadow()   // 날씨 = 흰 구름 위 가독(2026-08-20)
@@ -427,9 +428,10 @@ struct TodayView: View {
                 // 문장 단위 줄바꿈(2026-08-30 베타 "겨울이에요 어쩌구 그냥 다 문장 단위로 줄바꿈")
                 // — 프로토 .stc 문법의 앱 이식. 마침표+공백 = 문장 경계(전 언어 카피가 이 규약).
                 Text((moodlineText ?? info.meta.moodline).replacingOccurrences(of: ". ", with: ".\n"))
-                    .font(.almanacBody(.body, size: 17))
-                    .foregroundStyle(Ink.onGround(Ink.text.opacity(0.85), white: 0.88))
-                    .padding(.top, 2)
+                    .font(.almanacBody(.body, size: 18))   // 17 → 18(2026-09-07 은필 v2 — 표제 아래 둘째 목소리)
+                    .lineSpacing(3)
+                    .foregroundStyle(Ink.onGround(Ink.text.opacity(0.88), white: 0.88))
+                    .padding(.top, 8)
                     .skyInkShadow()
                     .groundHaze()   // 베타 "가을이에요 문구 뒤에도 뿌옇게"(2026-08-22)
                 // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백). 2026-08-02 교정: 캡슐 버튼+시트가
@@ -636,6 +638,7 @@ struct TodayView: View {
                 .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
         }
         .tint(Ink.text)
+        .toggleStyle(MatteToggleStyle())   // 무광 스위치(2026-09-07 은필 v2 — 은필·기본만, 그 외 시스템)
         // 라벨을 스위치 바로 앞에(2026-08-23 대표님 "오른쪽 버튼 앞에 바짝") — 전폭 Toggle은 라벨을
         // 왼쪽 끝에 두고 사이를 비운다. fixedSize로 내용만큼 줄여 오른쪽으로 몬다.
         .fixedSize()
@@ -735,9 +738,9 @@ struct TodayView: View {
             }
             rows()
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .milkGlass(stub: ticketStub(for: kind))
+        // 일정 = 풀블리드 띠(§8.2.2, 2026-09-07 실장 — 은필·기본만), Input·Output = 카드
+        .sectionChrome(band: kind == .schedule && ThemeStore.chrome.almanacCards,
+                       stub: ticketStub(for: kind))
         .ticketCardGap()   // 티켓 간격 34 균일화(2026-08-25 베타)
         .coachAnchor(kind == .schedule ? .todaySchedule : kind == .input ? .todayInput : .todayOutput)
     }
@@ -884,8 +887,7 @@ struct TodayView: View {
             toggleCheck(item.id)
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: checked ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(checked ? Ink.text : Ink.text.opacity(0.35))
+                StampCheck(checked: checked)   // 먹 도장 체크(2026-09-07 은필 v2)
                 Text(item.title)
                     .font(.almanacBody(.subheadline, size: 14))   // 15 → 14(위 일정 행과 같은 교정)
                     .foregroundStyle(Ink.text)

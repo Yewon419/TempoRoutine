@@ -897,12 +897,23 @@ struct RhythmView: View {
                 Text(entry.day.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
                     .font(.almanacBody(.caption, size: 12))
                     .foregroundStyle(Ink.text.opacity(0.55))
-                if let meta {
-                    Text(meta.name)
-                        .font(.almanacBody(.caption, size: 12))
-                        .foregroundStyle(meta.color.opacity(0.85))
+                // 계절 글리프 + 「계절 N일차」(2026-09-07 피드 머리줄 — 오늘 탭 작성 셀과 동형)
+                if let meta, let info = snapshot.phaseInfo(on: entry.day) {
+                    HStack(spacing: 4) {
+                        SeasonGlyph(phase: meta.phase, size: 11)
+                        Text(Loc.fmt("%1$@ %2$@일차", "\(meta.name)", "\(info.dayInPhase)"))
+                            .font(.almanacBody(.caption, size: 12, weight: .bold))
+                    }
+                    .foregroundStyle(meta.color)
                 }
                 Spacer()
+                if cal.isDateInToday(entry.day) {
+                    Text("오늘")
+                        .font(.almanacBody(.caption2, size: 11))
+                        .foregroundStyle(Ink.text.opacity(0.7))
+                        .padding(.horizontal, 8).padding(.vertical, 2)
+                        .overlay(Capsule().stroke(Ink.accent.opacity(0.4), lineWidth: 1))
+                }
             }
             if let image = CheckInPhotoStore.image(named: entry.photoName) {
                 // 높이를 확정하고 잘라 낸다 — maxHeight만 주면 scaledToFill이 원본 비율대로
@@ -910,20 +921,22 @@ struct RhythmView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: .infinity, minHeight: 240, maxHeight: 240)
+                    .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)   // 240 → 200(2026-09-07 피드 칸 통일)
                     .clipped()
                     .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
                     .allowsHitTesting(false)
             }
             // 한 줄 일기 본문 — 한글이 주라 시스템 세리프면 고딕 폴백(2026-08-01 베타 피드백)
             if let note = entry.note, !note.isEmpty {
                 Text(note)
                     .font(.almanacBody(.subheadline, size: 15))
+                    .lineSpacing(4)   // 피드 본문 행간(2026-09-07)
                     .foregroundStyle(Ink.text)
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 14)   // 10 → 14(2026-09-07 피드 칸 숨통)
         .almanacRule()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(entry.day.formatted(Loc.dateTime.month().day())), \(meta?.name ?? ""), \(entry.note ?? "")")

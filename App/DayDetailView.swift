@@ -311,6 +311,7 @@ struct DayDetailView: View {
                 .foregroundStyle(Ink.text)
         }
         .tint(Ink.text)
+        .toggleStyle(MatteToggleStyle())   // 무광 스위치(2026-09-07 은필 v2)
         .disabled(isFuture)
     }
 
@@ -345,9 +346,8 @@ struct DayDetailView: View {
                 rows()
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .milkGlass(stub: ticketStub(kind))
+        // 일정 = 풀블리드 띠(§8.2.2, 2026-09-07 — 오늘 탭과 같은 껍데기), Input·Output = 카드
+        .sectionChrome(band: kind == .schedule && ThemeStore.chrome.almanacCards, stub: ticketStub(kind))
         .ticketCardGap()   // 티켓 간격 균일화(2026-08-25)
     }
 
@@ -533,8 +533,7 @@ struct DayDetailView: View {
                     toggleCompletion(row.item.id)
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: checked ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(checked ? Ink.text : Ink.text.opacity(0.35))
+                        StampCheck(checked: checked)   // 먹 도장 체크(2026-09-07 은필 v2)
                         Text(row.item.title)
                             .foregroundStyle(Ink.text.opacity(row.projected ? 0.55 : 1.0))
                             .strikethrough(checked, color: Ink.dim)

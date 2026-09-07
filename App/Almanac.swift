@@ -724,3 +724,140 @@ struct SeasonLight: View {
         }
     }
 }
+
+// ── 은필 v2 컨트롤 재질 (2026-09-07 — ui-mockup/theme-v2 시안, 대표님 승인) ──
+// 원칙 둘: 채움은 먹이 번지는 것, 엄지·체크 원반은 무광 지면. 유리는 렌즈(온보딩) 하나뿐.
+
+extension ThemeChrome {
+    /// 카드가 밀크 글래스인 테마(은필·기본). 사진·하늘·영상 지면, 음각·리퀴드 카드, 티켓은 제외 —
+    /// 그 테마들은 각자 시안의 카드 문법을 가진다.
+    var almanacCards: Bool {
+        !photographicGround && !skyGround && !videoGround
+            && !engravedCards && !liquidGlassCards && !ticketChrome
+    }
+}
+
+/// 무광 스위치 — 은필 괘선 캡슐 + 지면색 원반. 켜지면 원반 뒤에서 먹(74%)이 번진다.
+/// 순먹 100%는 시트 위에서 무거웠다(시안 교정 2026-09-07). 은필·기본 밖 테마는 시스템 스위치 유지.
+struct MatteToggleStyle: ToggleStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        if ThemeStore.chrome.almanacCards {
+            Button {
+                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.72)) {
+                    configuration.isOn.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    configuration.label
+                    Spacer(minLength: 0)
+                    track(isOn: configuration.isOn)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .opacity(isEnabled ? 1 : 0.45)
+            .accessibilityAddTraits(.isToggle)
+            .accessibilityValue(configuration.isOn ? Loc.str("켬") : Loc.str("끔"))
+        } else {
+            Toggle(configuration).toggleStyle(.switch)
+        }
+    }
+
+    private func track(isOn: Bool) -> some View {
+        let knobShadow: Color = isOn ? Ink.paper.opacity(0.6) : Ink.accent.opacity(0.55)
+        return ZStack(alignment: .leading) {
+            Capsule().fill(Ink.text.opacity(0.06))
+            Circle()
+                .fill(Ink.text.opacity(0.74))
+                .frame(width: 32, height: 32)
+                .scaleEffect(isOn ? 3 : 0.01, anchor: .center)
+                .offset(x: 11)
+            Capsule().strokeBorder(Ink.accent.opacity(0.42), lineWidth: 1)
+            Circle()
+                .fill(isOn ? Ink.paper.opacity(0.94) : Ink.paper)
+                .overlay(Circle().strokeBorder(knobShadow, lineWidth: 1))
+                .shadow(color: .black.opacity(isOn ? 0.18 : 0.12), radius: 1, y: 1)
+                .frame(width: 26, height: 26)
+                .padding(3)
+                .offset(x: isOn ? 22 : 0)
+        }
+        .frame(width: 54, height: 32)
+        .clipShape(Capsule())
+    }
+}
+
+/// 먹 도장 체크 — 은필 원 안에 먹이 차오르고 체크가 찍힌다(Input 행). 지우면 원만 남는다.
+struct StampCheck: View {
+    let checked: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            Circle().strokeBorder(Ink.text.opacity(0.35), lineWidth: 1.4)
+            Circle().fill(Ink.text).scaleEffect(checked ? 1 : 0.01)
+            Image(systemName: "checkmark")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Ink.paper)
+                .opacity(checked ? 1 : 0)
+                .scaleEffect(checked ? 1 : 0.5)
+                .rotationEffect(.degrees(checked ? 0 : -12))
+        }
+        .frame(width: 22, height: 22)
+        .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.62), value: checked)
+        .accessibilityHidden(true)   // 행 버튼의 accessibilityValue가 상태를 말한다
+    }
+}
+
+/// 카드 껍데기 분기(§8.2.2 — 일정 = 풀블리드 띠, Input·Output = 카드). 띠는 은필·기본에서만.
+struct SectionChrome: ViewModifier {
+    let band: Bool
+    let stub: String?
+
+    func body(content: Content) -> some View {
+        if band {
+            content
+                .padding(.vertical, 14)
+                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Rectangle().fill(Ink.surface.opacity(0.6)))
+                .overlay(alignment: .top) { Rectangle().fill(Ink.accent.opacity(0.24)).frame(height: 1) }
+                .overlay(alignment: .bottom) { Rectangle().fill(Ink.accent.opacity(0.24)).frame(height: 1) }
+                .padding(.horizontal, -20)   // 컨테이너 padding(20)을 상쇄해 화면 폭으로
+        } else {
+            content
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .milkGlass(stub: stub)
+        }
+    }
+}
+
+/// 주인공 카드(체크인) — 밀크 글래스보다 한 단계 도드라진 지면 + 옅은 그림자. 은필·기본 밖은 밀크 글래스.
+struct PrimeCard: ViewModifier {
+    func body(content: Content) -> some View {
+        if ThemeStore.chrome.almanacCards {
+            content
+                .background {
+                    let shape: RoundedRectangle = RoundedRectangle(cornerRadius: 16)
+                    shape.fill(Ink.surface)
+                        .overlay(shape.fill(Color.white.opacity(0.16)))
+                        .overlay(shape.strokeBorder(Ink.accent.opacity(0.34), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.06), radius: 12, y: 6)
+                }
+        } else {
+            content.milkGlass()
+        }
+    }
+}
+
+extension View {
+    func sectionChrome(band: Bool, stub: String?) -> some View { modifier(SectionChrome(band: band, stub: stub)) }
+    func primeCard() -> some View { modifier(PrimeCard()) }
+    /// 세리프 eyebrow(시안 12/자간 2) — 카드 안 작은 표찰
+    func eyebrowStyle() -> some View {
+        font(.almanacBody(.caption, size: 12)).kerning(2).foregroundStyle(Ink.text.opacity(0.55))
+    }
+}

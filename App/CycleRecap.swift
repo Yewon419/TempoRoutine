@@ -73,8 +73,7 @@ struct CycleRecapCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("지난 주기 돌아보기")
-                    .font(.almanacBody(.subheadline, size: 15, weight: .bold))
-                    .foregroundStyle(Ink.text)
+                    .eyebrowStyle()   // 편지체 표찰(2026-09-07 은필 v2)
                 Spacer(minLength: 0)
                 Button(action: onClose) {
                     Image(systemName: "xmark")
@@ -85,25 +84,26 @@ struct CycleRecapCard: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(Loc.str("닫기"))
             }
+            // 본문 = 명조 15(2026-09-07 은필 v2 — 편지 한 통처럼 읽히게. 13 각주체는 카드가 아니라 메모로 읽혔다)
             Text(Loc.fmt("%1$@일의 주기를 한 바퀴 함께했어요.", "\(data.lengthDays)"))
-                .font(.almanacBody(.footnote, size: 13))
-                .foregroundStyle(Ink.text.opacity(0.75))
+                .font(.almanacBody(.subheadline, size: 15))
+                .foregroundStyle(Ink.text.opacity(0.85))
             if data.checkInCount > 0 {
                 Text(Loc.fmt("체크인 %1$@일을 완성했어요.", "\(data.checkInCount)"))
-                    .font(.almanacBody(.footnote, size: 13))
-                    .foregroundStyle(Ink.text.opacity(0.75))
+                    .font(.almanacBody(.subheadline, size: 15))
+                    .foregroundStyle(Ink.text.opacity(0.85))
             }
             if let top = data.topSeason {
                 HStack(spacing: 6) {
                     SeasonGlyph(phase: top.phase, size: 12)
                     Text(Loc.fmt("에너지는 %1$@에 가장 높았어요.", top.name))
-                        .font(.almanacBody(.footnote, size: 13))
+                        .font(.almanacBody(.subheadline, size: 15))
                         .foregroundStyle(top.color)
                 }
             }
             if let note = data.note {
                 Text(Loc.fmt("“%1$@”", note))
-                    .font(.almanacBody(.footnote, size: 13))
+                    .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text.opacity(0.55))
                     .lineLimit(2)
             }
