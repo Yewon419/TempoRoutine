@@ -145,6 +145,34 @@ jobs:
           title: '템포루틴 온보딩 찰칵'
           wait: '6'
           fail-on-crash: 'false'
+      # ── 찰칵: 은필 테마 실사용 상태(2026-09-07 은필 v2 시안 기준선) ────────────────
+      # 개발자 모드(분리 스토어)에 합성 표본 4주기를 심고, 코치마크·튜토리얼 체인은 완료 처리해
+      # 오늘·캘린더·나의 템포(3섹션)·설정을 데이터가 찬 상태로 찍는다. 테마는 런치 인자로 은필 고정.
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          defaults: |
+            onboardingDone -bool true
+            devModeActive -bool true
+            tutorialChainDone -bool true
+            coach.today -bool true
+            coach.calendar -bool true
+            coach.rhythm -bool true
+            coach.seed -bool true
+            coach.themeShop -bool true
+          screens: |
+            s-today           | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko)
+            s-calendar        | -rootTab calendar -appTheme standard -appLanguage ko -AppleLanguages (ko)
+            s-rhythm-seasons  | -rootTab rhythm   -appTheme standard -appLanguage ko -AppleLanguages (ko) -rhythmLastTab "나의 사계"
+            s-rhythm-routines | -rootTab rhythm   -appTheme standard -appLanguage ko -AppleLanguages (ko) -rhythmLastTab "나의 루틴"
+            s-rhythm-diary    | -rootTab rhythm   -appTheme standard -appLanguage ko -AppleLanguages (ko) -rhythmLastTab "한 줄 기록"
+            s-settings        | -rootTab settings -appTheme standard -appLanguage ko -AppleLanguages (ko)
+          output-dir: screenshots-silver
+          artifact-name: screenshots-silver
+          title: '템포루틴 은필 실사용 찰칵'
+          privacy: location
+          wait: '8'
+          fail-on-crash: 'false'
 
   testflight:
     name: TestFlight upload (archive + cloud signing)
