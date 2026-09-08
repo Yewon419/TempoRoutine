@@ -64,9 +64,13 @@ struct CheckInCard: View {
         // 초안은 어제 값이 남아 칩·확인 문구가 어제 상태로 보이고, 손대는 순간 오늘로 복사된다.
         .onChange(of: normalizedDay) { _, _ in reloadDraft() }
         .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
+            // 한 줄 기록이 포커스일 때만 — 안 걸면 같은 화면의 빠른 카드 바 키보드 위에도 뜨는데
+            // 그 「완료」는 이 필드 것이라 아무 일도 안 한다(2026-09-09 찰칵 실측)
+            if noteFocused {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("완료") { noteFocused = false }.foregroundStyle(Ink.text)
+                }
             }
         }
     }

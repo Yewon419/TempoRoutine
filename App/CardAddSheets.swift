@@ -496,6 +496,15 @@ struct QuickCardBar: View {
                     if value.translation.height < -48 { onExpand(trimmed) }
                 }
         )
+        .toolbar {
+            // 키보드 위 「완료」 = 키보드만 내린다(칩·「추가」는 그대로) — 시트들과 같은 문법
+            if titleFocused {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("완료") { titleFocused = false }.foregroundStyle(Ink.text)
+                }
+            }
+        }
         .task {
             #if DEBUG
             if UserDefaults.standard.bool(forKey: "noAutoFocus") { return }   // 찰칵 키보드 없는 컷
