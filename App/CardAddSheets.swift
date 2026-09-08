@@ -419,6 +419,11 @@ struct InputAddSheet: View {
 
     /// nil = 추가 / 값 = 수정(삭제 섹션 노출 — 일정 시트와 같은 문법, 2026-08-08 나의 사계 개선)
     var editing: InputItem? = nil
+    /// 계절 앵커 프리필(2026-09-08 베타 "계절 반복 걸었을 때 그날의 계절과 계절일수 자동으로") —
+    /// 새 카드는 여는 날의 계절·일차로 미리 맞춘다. 수정·계절 칸 경유(preset)는 건드리지 않는다.
+    private let presetGiven: Bool
+    @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
+    @State private var seasonPrefilled = false
 
     /// 지난 날짜에 추가하는 건 대개 "그날 한 번 했다"는 기록이다 — 매일로 잡히면 오늘까지 따라온다.
     /// 오늘·미래는 종전대로 매일 기본(체크리스트가 본질). 2026-07-27 사용자 결정.
@@ -430,6 +435,7 @@ struct InputAddSheet: View {
         self.currentSeason = currentSeason
         self.energyLevel = energyLevel
         self.editing = editing
+        self.presetGiven = presetSeason != nil
         let cal = Calendar.current
         if let item = editing {
             _title = State(initialValue: item.title)
@@ -617,9 +623,25 @@ struct InputAddSheet: View {
         }
     }
 
+    /// 새 카드 = 여는 날(day)의 계절·일차로 앵커 프리필(1회). 기록 전(S0)이면 종전 기본(겨울·0일) 유지.
+    private func prefillSeasonIfNeeded() {
+        guard !seasonPrefilled, editing == nil, !presetGiven else { return }
+        seasonPrefilled = true
+        let target = Calendar.current.startOfDay(for: day)
+        guard let info = CycleSnapshot(periodDays: periodDays).phaseInfo(on: target),
+              let season = SeasonAnchor.allCases.first(where: { $0.phase == info.meta.phase }) else { return }
+        anchor = season
+        offset = min(13, max(0, info.dayInPhase - 1))
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                // 이 시트가 뭘 만드는지 한 줄(2026-09-08 베타 "이 탭에 인풋이 뭔지 설명") — 온보딩·ⓘ와 같은 문안
+                Text(CardKind.input.info)
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.6))
+                    .listRowBackground(Color.clear)
                 TextField(placeholder, text: $title)
                     .onChange(of: title) { applyTitleTimeParse() }
                 cardTimeHint(timeMinutes: timeMinutes) {
@@ -693,6 +715,7 @@ struct InputAddSheet: View {
                 Text("체크 기록이 함께 지워져요. 되돌릴 수 없어요.")
             }
             .navigationTitle(editing == nil ? Loc.str("Input 추가") : Loc.str("Input 수정"))
+            .onAppear { prefillSeasonIfNeeded() }
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
@@ -748,6 +771,10 @@ struct OutputAddSheet: View {
 
     /// nil = 추가 / 값 = 수정(삭제 섹션 노출 — 일정 시트와 같은 문법, 2026-08-08 나의 사계 개선)
     var editing: OutputItem? = nil
+    /// 계절 앵커 프리필(2026-09-08 베타) — InputAddSheet와 같은 규칙
+    private let presetGiven: Bool
+    @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
+    @State private var seasonPrefilled = false
 
     /// 빠른 추가 목록의 기준(2026-08-16) — nil이면 「보통」 목록으로 간다(QuickAdd 주석 참조)
     let energyLevel: EnergyLevel?
@@ -759,6 +786,7 @@ struct OutputAddSheet: View {
         self.day = day
         self.editing = editing
         self.energyLevel = energyLevel
+        self.presetGiven = presetSeason != nil
         if let item = editing {
             _title = State(initialValue: item.title)
             switch item.schedule {
@@ -830,9 +858,25 @@ struct OutputAddSheet: View {
 
     private static let calendarChoices: [ScheduleRepeat] = [.daily, .weekly, .monthly]
 
+    /// 새 카드 = 여는 날(day)의 계절·일차로 앵커 프리필(1회) — InputAddSheet와 같은 규칙
+    private func prefillSeasonIfNeeded() {
+        guard !seasonPrefilled, editing == nil, !presetGiven else { return }
+        seasonPrefilled = true
+        let target = Calendar.current.startOfDay(for: day)
+        guard let info = CycleSnapshot(periodDays: periodDays).phaseInfo(on: target),
+              let season = SeasonAnchor.allCases.first(where: { $0.phase == info.meta.phase }) else { return }
+        anchor = season
+        offset = min(13, max(0, info.dayInPhase - 1))
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                // 이 시트가 뭘 만드는지 한 줄(2026-09-08 베타 "아웃풋이 뭔지 설명") — 온보딩·ⓘ와 같은 문안
+                Text(CardKind.output.info)
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(0.6))
+                    .listRowBackground(Color.clear)
                 TextField("예: 자격증 공부", text: $title)
                     .onChange(of: title) { applyTitleTimeParse() }
                 cardTimeHint(timeMinutes: timeMinutes) {
@@ -985,6 +1029,7 @@ struct OutputAddSheet: View {
                 Text("진행도가 함께 지워져요. 되돌릴 수 없어요.")
             }
             .navigationTitle(editing == nil ? Loc.str("Output 추가") : Loc.str("Output 수정"))
+            .onAppear { prefillSeasonIfNeeded() }
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!title.isEmpty)
             .toolbar {
