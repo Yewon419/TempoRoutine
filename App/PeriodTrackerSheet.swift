@@ -186,7 +186,7 @@ struct PeriodTrackerSheet: View {
                     .background {
                         if selected { Circle().fill(Ink.text) }
                     }
-                RoundedRectangle(cornerRadius: 19)
+                Capsule()
                     .fill(recorded ? Ink.record.opacity(0.38) : Ink.text.opacity(0.06))
                     .frame(width: 38, height: 52)
                     .overlay(alignment: .bottom) {
@@ -291,7 +291,7 @@ struct PeriodTrackerSheet: View {
                     .foregroundStyle(recorded ? Ink.record : Ink.text.opacity(0.5))
             }
             .padding(16)
-            .background(Ink.record.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+            .background(Ink.record.opacity(0.10), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .transaction { $0.animation = nil }
         }
         .disabled(isSelectedFuture)

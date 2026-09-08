@@ -154,7 +154,7 @@ struct OnboardingCalendar: View {
             .font(.system(.subheadline, design: .serif))
             .foregroundStyle(future ? Ink.text.opacity(0.2) : (marked ? Ink.paper : Ink.text))
             .frame(maxWidth: .infinity, minHeight: 40)
-            .background(marked ? Ink.text : Color.clear, in: RoundedRectangle(cornerRadius: 10))
+            .background(marked ? Ink.text : Color.clear, in: RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
             .contentShape(Rectangle())
             .onTapGesture { guard !future, !busy else { return }; tap(day) }
     }

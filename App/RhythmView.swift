@@ -640,10 +640,10 @@ struct RhythmView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
                     .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(.clear),
-                                in: RoundedRectangle(cornerRadius: 3))
+                                in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous))
                     .overlay {
                         if !selected {
-                            RoundedRectangle(cornerRadius: 3)
+                            RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
                                 .stroke(Color.white.opacity(0.38), lineWidth: 1)
                         }
                     }
@@ -924,8 +924,8 @@ struct RhythmView: View {
                     .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)   // 240 → 200(2026-09-07 피드 칸 통일)
                     .clipped()
                     .contentShape(Rectangle())
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
                     .allowsHitTesting(false)
             }
             // 한 줄 일기 본문 — 한글이 주라 시스템 세리프면 고딕 폴백(2026-08-01 베타 피드백)
@@ -1059,7 +1059,7 @@ struct RhythmView: View {
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 30)
-            .background(meta.glow.opacity(0.32), in: RoundedRectangle(cornerRadius: 5))
+            .background(meta.glow.opacity(0.32), in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

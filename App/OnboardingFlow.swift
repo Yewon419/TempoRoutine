@@ -746,7 +746,7 @@ struct OnboardingFlow: View {
             .foregroundStyle(Ink.text)
             .padding(.horizontal, 16)
             .frame(height: 52)
-            .background(Ink.text.opacity(selected ? 0.10 : 0.05), in: RoundedRectangle(cornerRadius: 16))
+            .background(Ink.text.opacity(selected ? 0.10 : 0.05), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
@@ -820,7 +820,7 @@ struct OnboardingFlow: View {
                 }
                 .padding(.horizontal, 10)
                 .frame(width: 150, height: 44)
-                .background(p.paper, in: RoundedRectangle(cornerRadius: 10))
+                .background(p.paper, in: RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
                 Text(theme.displayName)
                     .font(LensSpec.serif(17))
                     .foregroundStyle(Ink.text)
@@ -830,8 +830,8 @@ struct OnboardingFlow: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(Color(red: 250 / 255, green: 250 / 255, blue: 248 / 255).opacity(0.72),
-                        in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Ink.text.opacity(on ? 0.8 : 0.18), lineWidth: 1.5))
+                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).strokeBorder(Ink.text.opacity(on ? 0.8 : 0.18), lineWidth: 1.5))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Loc.fmt("%1$@ 테마", "\(theme.displayName)"))

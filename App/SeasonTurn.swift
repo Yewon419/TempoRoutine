@@ -56,7 +56,7 @@ struct SeasonTurnCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
         .overlay {
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                 .stroke(meta.color.opacity(0.45), lineWidth: 1)
         }
         .accessibilityElement(children: .combine)

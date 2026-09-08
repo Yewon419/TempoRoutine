@@ -11,6 +11,17 @@ import UIKit
 // ── 디자인 토큰 — 테마 팔레트 위임(2026-07-29 테마 시스템, Theme.swift) ──
 // 값 정의는 ThemePalette.standard(종전 리터럴 동값)·.modern — 여기는 정적 API만 유지.
 // 콜사이트 무수정 원칙: Ink.x 문법 그대로, 백킹만 ThemeStore.palette로.
+/// 반경 스케일(2026-09-09, appllama 안티슬롭 「shape lock」) — 앱 전체가 이 넷 + 캡슐만 쓴다.
+/// 카드·시트·큰 표면 = card / 사진·미니 카드·칩·입력 = inner / 띠·게이지·작은 마커 = small /
+/// 폭 4 이하 극세(눈금·조각) = hairline. 모든 RoundedRectangle은 `.continuous`(스쿼클).
+/// 티켓 발권지 4는 small과 같은 값이라 규칙 안이다. 종전 12종(1~20)이 화면마다 섞여 있었다.
+enum Radius {
+    static let card: CGFloat = 16
+    static let inner: CGFloat = 10
+    static let small: CGFloat = 4
+    static let hairline: CGFloat = 2
+}
+
 enum Ink {
     static var winter: Color { ThemeStore.palette.winter }
     static var spring: Color { ThemeStore.palette.spring }
@@ -768,7 +779,7 @@ struct TodayView: View {
             .accessibilityLabel(Loc.str("오늘은 이 안내 닫기"))
         }
         .padding(14)
-        .background(Ink.record.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+        .background(Ink.record.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
     }
 
     private var avgLength: Int { snapshot.averageLength }

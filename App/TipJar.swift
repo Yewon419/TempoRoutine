@@ -308,11 +308,11 @@ struct TipBubble: View {
     /// 테마별 카드 문법(발권물·플레이리스트 유리·활판 음각)은 타지 않는다 — 떠 있는 것은
     /// 지면과 같은 문법을 쓰면 안 된다.
     private var bubbleGround: some View {
-        RoundedRectangle(cornerRadius: 16)
+        RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
             .fill(Ink.paper)
-            .overlay { RoundedRectangle(cornerRadius: 16).fill(Ink.surface) }
+            .overlay { RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(Ink.surface) }
             .overlay {
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                     .stroke(Ink.accent.opacity(0.18), lineWidth: 1)
             }
             .shadow(color: .black.opacity(0.12), radius: 12, y: 4)

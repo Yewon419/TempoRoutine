@@ -1232,7 +1232,7 @@ struct SeasonCalendarView: View {
                     .overlay {
                         // 드래그 기간 선택 명암 — 어디까지 잡혔는지(2026-07-27 사용자 지시)
                         if isSelected(date) {
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
                                 .fill(Ink.text.opacity(0.10))
                                 .allowsHitTesting(false)
                         }
@@ -1380,7 +1380,7 @@ struct SeasonCalendarView: View {
             .overlay {
                 // regular 분할 뷰의 선택일 표시(색만 X — 테두리)
                 if hSize == .regular && (selectedDay ?? today) == date {
-                    RoundedRectangle(cornerRadius: 10).stroke(Ink.text.opacity(0.28), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).stroke(Ink.text.opacity(0.28), lineWidth: 1)
                 }
             }
     }
@@ -1438,7 +1438,7 @@ struct SeasonCalendarView: View {
     /// 하루짜리 일정 = 기간 띠와 같은 박스 문법(2026-07-28 시안 결정 — 통일성). 높이·R2·서체 = 띠 동일
     private func scheduleBox(title: String) -> some View {
         let ink: Color = Ink.text   // 지난 일정 갈색 분기 폐기(2026-08-12 — bandView 주석 참조)
-        return RoundedRectangle(cornerRadius: 2)
+        return RoundedRectangle(cornerRadius: Radius.hairline, style: .continuous)
             .fill(Self.scheduleBandFill)
             .frame(height: bandHeight)
             .frame(maxWidth: .infinity)

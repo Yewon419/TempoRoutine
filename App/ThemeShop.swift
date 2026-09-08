@@ -691,9 +691,9 @@ struct ThemePreviewScreen: View {
                     Image(shot.name)
                         .resizable()
                         .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                                 .stroke(groundInk.opacity(0.14), lineWidth: 1)
                         }
                         .shadow(color: .black.opacity(0.14), radius: 14, y: 6)
@@ -834,7 +834,7 @@ struct ThemePreviewScreen: View {
                 .foregroundStyle(p.dim)
                 .padding(.top, 5)
             }
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
                 .fill(p.summer)
                 .frame(width: 56, height: 56)
         }
@@ -935,21 +935,21 @@ struct ThemePreviewScreen: View {
             card.background {
                 if chrome.engravedCards {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                             .stroke(Color.white, lineWidth: 1)
                             .offset(x: 1, y: 1.2)
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                             .stroke(Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.34),
                                     lineWidth: 1)
                     }
                 } else if chrome.ticketChrome {
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
                         .fill(TicketSpec.ticketPaper)
                         .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
                 } else {
-                    RoundedRectangle(cornerRadius: 14)
+                    RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                         .fill(p.surface)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(p.accent.opacity(0.18), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).stroke(p.accent.opacity(0.18), lineWidth: 1))
                 }
             }
         }
@@ -1001,9 +1001,9 @@ struct ThemeEmblem: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
                 .fill(palette.paper)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(palette.text.opacity(0.15), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).stroke(palette.text.opacity(0.15), lineWidth: 1))
             Circle()
                 .stroke(palette.accent, lineWidth: 1.6)
                 .frame(width: 24, height: 24)
@@ -1076,8 +1076,8 @@ struct ThemePreview: View {
         }
         .padding(12)
         .background { ground(p) }
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(groundInk(p).opacity(0.12), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).stroke(groundInk(p).opacity(0.12), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
         // 이 미니 카드가 보여주는 테마 기준 colorScheme — ThemePreviewScreen과 같은 이유
         // (활성 테마가 다크를 안 켜는 상태에서 이 카드만 라이트 고정 테마일 수 있다).
         // ⚠ preferredColorScheme 금지(2026-08-20 결함 수정) — 그건 프리퍼런스라 카드가 아니라
@@ -1099,12 +1099,12 @@ struct ThemePreview: View {
                 .resizable()
                 .scaledToFill()
                 .overlay(Color.black.opacity(0.28))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
         } else if chrome.skyGround {
             let s = SkySpec.stops(.clear, .day)
             LinearGradient(colors: [s.a, s.b, s.c], startPoint: .top, endPoint: .bottom)
         } else {
-            RoundedRectangle(cornerRadius: 12).fill(p.paper)
+            RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).fill(p.paper)
         }
     }
 
@@ -1205,7 +1205,7 @@ struct TrialEndSheet: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
-        .overlay(RoundedRectangle(cornerRadius: 16)
+        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
             .stroke(Ink.text.opacity(selected ? 0.8 : 0), lineWidth: 1.5))
     }
 

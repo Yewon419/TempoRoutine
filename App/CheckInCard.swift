@@ -334,9 +334,9 @@ struct CheckInCard: View {
                     .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)   // 피드 칸과 동일 높이(2026-09-07)
                     .clipped()
                     .contentShape(Rectangle())
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
                     // 사진 가장자리가 지면에 번지지 않게 안쪽 검정 8% 윤곽(make-interfaces-feel-better)
-                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
                     .allowsHitTesting(false)
                 Button {
                     removePhoto()

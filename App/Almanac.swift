@@ -302,7 +302,7 @@ extension View {
             if ThemeStore.chrome.texture == .motif,
                !ThemeStore.chrome.photographicGround,
                !ThemeStore.chrome.skyGround {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                     .fill(Ink.paper.opacity(0.62))
                     .blur(radius: 12)
                     .padding(.horizontal, -12)
@@ -334,7 +334,7 @@ extension View {
 // ── 재질 위계 (§4 보강 I: 크롬 유리 / 밀크 글래스 2단) ──
 // 콘텐츠 카드 = 밀크 글래스(반투명 지면 + 은필 실선), 배경 계절광이 비쳐 유리감이 성립.
 struct MilkGlass: ViewModifier {
-    var radius: CGFloat = 16
+    var radius: CGFloat = Radius.card
     /// 티켓 테마에서 스텁에 세울 «핵심 값 하나»(시각·진행률·일차). nil = 스텁 없는 카드.
     /// 다른 테마에서는 무시된다 — 값을 넘겨도 렌더에 영향이 없다.
     var stub: String?
@@ -355,7 +355,7 @@ struct MilkGlass: ViewModifier {
             // 스텁 없는 카드도 발권 지면(시안 .card 기본 — radius 4·그림자·유리 재질 없음).
             // 종전엔 둥근 유리 카드가 발권물과 섞여 지면이 두 문법으로 갈렸다(2026-08-17 피드백).
             content.background {
-                RoundedRectangle(cornerRadius: 4)
+                RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
                     .fill(TicketSpec.ticketPaper)
                     .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
             }
@@ -370,17 +370,17 @@ struct MilkGlass: ViewModifier {
             // .clear 변형(2026-08-20) — .regular는 무틴트여도 재질 자체가 뿌옇다(베타 피드백
             // "여전히 안투명", 틴트 0.2로도 재현). .clear가 미디어 지면용 고투명 유리.
             // 2026-08-22: 시스템 글래스 기각(.regular 뿌옇음 · .clear 감광 회색 판) → 자체 유리
-            content.playlistGlass(radius: radius == 16 ? 20 : radius)
+            content.playlistGlass(radius: radius)
         } else if ThemeStore.chrome.engravedCards {
             // 활판(시안 §2.3-7-1) — 배경 없음. **눌린 것은 카드가 아니라 선 하나**다:
             // 어두운 윤곽선 위에 흰 윤곽선을 (1, 1.2) 어긋나게 얹는다(표제 음각과 같은 기법).
             // ⚠ inset 그림자 방식은 기각 이력 — 면 전체가 눌린 것처럼 보인다(§2.6).
             content.background {
                 ZStack {
-                    RoundedRectangle(cornerRadius: radius)
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
                         .stroke(Color.white, lineWidth: 1)
                         .offset(x: 1, y: 1.2)
-                    RoundedRectangle(cornerRadius: radius)
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
                         .stroke(Color(red: 90 / 255, green: 84 / 255, blue: 72 / 255).opacity(0.34),
                                 lineWidth: 1)
                 }
@@ -404,18 +404,18 @@ struct MilkGlass: ViewModifier {
     }
 
     private var surface: some View {
-        RoundedRectangle(cornerRadius: radius)
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
             .fill(.ultraThinMaterial)
             .overlay {
-                RoundedRectangle(cornerRadius: radius).fill(Ink.surface)
+                RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Ink.surface)
             }
             .overlay {
                 // 날씨 = 라이트 재질 위에서도 다크 글래스가 서도록 잉크판 보강(§5.3-2 —
                 // colorScheme 강제 1안 기각 이력은 Color.skyGlassDim 주석)
-                RoundedRectangle(cornerRadius: radius).fill(Color.skyGlassDim)
+                RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Color.skyGlassDim)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: radius)
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .stroke(Ink.accent.opacity(0.18), lineWidth: 1)   // 구조색 테두리(기본=은필 동값)
             }
     }
@@ -424,7 +424,7 @@ struct MilkGlass: ViewModifier {
 extension View {
     /// 콘텐츠 표면 — 카드류 전부 이 재질(§4 보강 I).
     /// `stub`을 주면 티켓 테마에서만 발권물 문법(우측 스텁·V홈)으로 갈아탄다(시안 §3.3-②).
-    func milkGlass(radius: CGFloat = 16, stub: String? = nil) -> some View {
+    func milkGlass(radius: CGFloat = Radius.card, stub: String? = nil) -> some View {
         modifier(MilkGlass(radius: radius, stub: stub))
     }
 
@@ -858,7 +858,7 @@ struct PrimeCard: ViewModifier {
         if ThemeStore.chrome.inkChrome {
             content
                 .background {
-                    let shape: RoundedRectangle = RoundedRectangle(cornerRadius: 16)
+                    let shape: RoundedRectangle = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                     shape.fill(Ink.surface)
                         .overlay(shape.fill(Color.white.opacity(0.16)))
                         .overlay(shape.strokeBorder(Ink.accent.opacity(0.34), lineWidth: 1))

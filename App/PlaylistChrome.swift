@@ -146,7 +146,7 @@ struct PlaylistPlayerCard: View {
     /// 계절색 면을 뒤에 깔아 에셋 결손에도 자리가 무너지지 않는다.
     private var cover: some View {
         let day: Int = Calendar.current.component(.day, from: date)
-        return RoundedRectangle(cornerRadius: 10)
+        return RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
             .fill(meta.glow)
             .overlay {
                 Image(PlaylistSpec.coverAsset(for: phase, day: day))
@@ -154,10 +154,10 @@ struct PlaylistPlayerCard: View {
                     .scaledToFill()
             }
             .frame(width: PlaylistSpec.coverSize, height: PlaylistSpec.coverSize)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
             // 어두운 사진이 카드 경계에 붙는 걸 막는 극세 흰 테두리(§4.4 ④)
             .overlay {
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
                     .stroke(Color.white.opacity(0.1), lineWidth: 1)
             }
             .accessibilityHidden(true)   // 계절명 텍스트가 라벨 담당
@@ -269,8 +269,8 @@ struct PlaylistRecordHeader: View {
                 ZStack {
                     Circle().stroke(Ink.text, lineWidth: 1.4)
                     HStack(spacing: 3) {
-                        RoundedRectangle(cornerRadius: 1).fill(Ink.text).frame(width: 2.6, height: 11)
-                        RoundedRectangle(cornerRadius: 1).fill(Ink.text).frame(width: 2.6, height: 11)
+                        RoundedRectangle(cornerRadius: Radius.hairline, style: .continuous).fill(Ink.text).frame(width: 2.6, height: 11)
+                        RoundedRectangle(cornerRadius: Radius.hairline, style: .continuous).fill(Ink.text).frame(width: 2.6, height: 11)
                     }
                 }
                 .frame(width: 28, height: 28)
@@ -408,7 +408,7 @@ struct PlaylistRecordHeader: View {
             Capsule().fill(rodGray)
                 .frame(width: 5, height: 140)
                 .overlay(alignment: .bottom) {
-                    RoundedRectangle(cornerRadius: 4).fill(headDark)
+                    RoundedRectangle(cornerRadius: Radius.small, style: .continuous).fill(headDark)
                         .frame(width: 11, height: 24)
                         .offset(y: 14)
                 }

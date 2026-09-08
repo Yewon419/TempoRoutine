@@ -89,9 +89,9 @@ struct AchievementBannerHost: View {
         .padding(.vertical, 12)
         .background {
             // 떠 있는 것은 지면 문법을 안 쓴다(TipBubble 전례) — 불투명 지면 + 카드색
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                 .fill(Ink.paper)
-                .overlay { RoundedRectangle(cornerRadius: 16).fill(Ink.surface) }
+                .overlay { RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(Ink.surface) }
                 .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
         }
         .padding(.horizontal, 20)
@@ -140,7 +140,7 @@ private struct CelebrationBurst: View {
         GeometryReader { geo in
             ZStack(alignment: .bottomLeading) {
                 ForEach(flecks) { fleck in
-                    RoundedRectangle(cornerRadius: 1.5)
+                    RoundedRectangle(cornerRadius: Radius.hairline, style: .continuous)
                         .fill(fleck.color)
                         .frame(width: fleck.size, height: fleck.size * 1.6)
                         .rotationEffect(.degrees(launched ? fleck.spin : 0))

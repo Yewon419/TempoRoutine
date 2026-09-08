@@ -131,7 +131,7 @@ struct WeatherCardWetLayer: View {
         let top = Self.headroom
         var clipped = context
         clipped.clip(to: Path(roundedRect: CGRect(x: 0, y: top, width: card.width, height: card.height),
-                              cornerRadius: radius))
+                              cornerRadius: radius, style: .continuous))
         let t: CGFloat = reduceMotion ? 0 : CGFloat(now)
         let ink = Color(red: 235 / 255, green: 243 / 255, blue: 250 / 255)
         for d in bank.drops {

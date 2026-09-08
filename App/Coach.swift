@@ -195,7 +195,7 @@ private struct CoachOverlay: View {
                     }
                     .fill(Color.black.opacity(0.72), style: FillStyle(eoFill: true))
                     .allowsHitTesting(false)
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
                         .stroke(Color.white.opacity(0.7), lineWidth: 2)
                         .frame(width: rect.width, height: rect.height)
                         .offset(x: rect.minX, y: rect.minY)
@@ -303,7 +303,7 @@ private struct CoachOverlay: View {
             .padding(.top, 6)
         }
         .padding(18)
-        .background(Ink.paper, in: RoundedRectangle(cornerRadius: 16))
+        .background(Ink.paper, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .shadow(color: .black.opacity(0.25), radius: 18, y: 6)
         .frame(maxWidth: 440)
         .padding(.horizontal, 16)
