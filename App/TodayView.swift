@@ -405,22 +405,11 @@ struct TodayView: View {
                         .seasonTitleTap()   // B1(2026-08-31) — 티켓 스탬프·날씨 파문(그 외 무반응)
                         .padding(.top, 6)
                     }
-                    HStack(spacing: 6) {
-                        // 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%
-                        // 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 이미 담당, 일차만 남긴다.
-                        // 일차 = 계절 내 일차(2026-08-09 — "봄 10일차" 주기 일차 오독 해소, 전 표면 통일)
-                        Text(Loc.fmt("%lld일차", info.dayInPhase))
-                            .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
-                        if snapshot.isSingleRecord { Text("예측 기반").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
-                        else if info.projected { Text("예상").foregroundStyle(Ink.onGround(Ink.text.opacity(0.45), white: 0.62)) }
-                        // 날짜 = 메타 줄(2026-09-07) — 활판은 스탬프가 이미 날짜를 담당
-                        if !ThemeStore.chrome.debossDisplay {
-                            Text("·").foregroundStyle(Ink.onGround(Ink.text.opacity(0.35), white: 0.5))
-                            Text(today.formatted(Loc.dateTime.month().day().weekday(.wide)))
-                                .foregroundStyle(Ink.onGround(Ink.text.opacity(0.6), white: 0.7))
-                        }
-                    }
-                    .font(.almanacBody(.footnote, size: 13))
+                    // 한 Text로 잇는다(2026-09-08 베타 13 Pro Max 확대 보기 + 큰 글씨 — HStack의 Text들은
+                    // 줄을 못 바꿔 335pt를 넘기면 스크롤 본문 전체가 옆으로 밀렸다). 이어 붙인 Text는 줄바꿈된다.
+                    metaLine(info)
+                        .font(.almanacBody(.footnote, size: 13))
+                        .fixedSize(horizontal: false, vertical: true)
                     .skyInkShadow()   // 날씨 = 흰 구름 위 가독(2026-08-20)
                     .groundHaze()     // 은필·기본 = 선화 위 안개(2026-08-22)
                     skyReadout        // 날씨 테마 전용 수치 줄(2026-08-20 사용자 요청)
@@ -448,6 +437,26 @@ struct TodayView: View {
         }
         // 상단 24pt 제거(2026-08-18 베타 피드백 "로고 위치 캘린더 탭과 같은 위치로") —
         // 캘린더는 20pt(컨테이너)뿐인데 여기만 24pt를 더 얹어 로고가 한 층 낮게 앉았다
+    }
+
+    /// 메타 줄 = 일차 · (예측 기반|예상) · 날짜. 모던 = 니어블랙 가독 보정(시안 §1.3-7): 단계 100%·날짜 68%.
+    /// 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 담당, 일차만(계절 내 일차, 2026-08-09).
+    /// 날짜 = 메타 줄(2026-09-07) — 활판은 스탬프가 이미 날짜를 담당.
+    private func metaLine(_ info: (meta: SeasonMeta, dayInCycle: Int, dayInPhase: Int, projected: Bool)) -> Text {
+        var line = Text(Loc.fmt("%lld일차", info.dayInPhase))
+            .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
+        let dim = Ink.onGround(Ink.text.opacity(0.45), white: 0.62)
+        if snapshot.isSingleRecord {
+            line = line + Text(" ") + Text("예측 기반").foregroundStyle(dim)
+        } else if info.projected {
+            line = line + Text(" ") + Text("예상").foregroundStyle(dim)
+        }
+        if !ThemeStore.chrome.debossDisplay {
+            line = line + Text(" · ").foregroundStyle(Ink.onGround(Ink.text.opacity(0.35), white: 0.5))
+                + Text(today.formatted(Loc.dateTime.month().day().weekday(.wide)))
+                    .foregroundStyle(Ink.onGround(Ink.text.opacity(0.6), white: 0.7))
+        }
+        return line
     }
 
     /// 오늘 날짜 도장 — 하루 상세(§8.2.3)와 같은 문법, 계절명에 눌리지 않게 44px

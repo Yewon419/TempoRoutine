@@ -243,6 +243,29 @@ private struct CoachOverlay: View {
         onFinish?()
     }
 
+    /// 단계가 하나면 건너뛰기와 「알겠어요」가 같은 동작이라 버튼이 둘일 이유가 없다
+    @ViewBuilder
+    private var skipButton: some View {
+        if steps.count > 1 {
+            Button("건너뛰기") { finish() }
+                .font(.subheadline)
+                .foregroundStyle(Ink.text.opacity(0.55))
+        }
+    }
+
+    private func nextButton(shownIndex: Int, isLast: Bool) -> some View {
+        Button {
+            advance(from: shownIndex)
+        } label: {
+            Text(isLast ? (finishLabel ?? Loc.str("알겠어요")) : Loc.str("다음"))
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(Ink.paper)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(Ink.text, in: Capsule())   // 먹색 채움(§8.1)
+        }
+    }
+
     private func card(step: CoachStep, shownIndex: Int, isLast: Bool,
                       rect: CGRect, size: CGSize) -> some View {
         let cardHeight: CGFloat = 250   // 배치용 추정치 — 본문이 길어져 상향(2026-07-25)
@@ -263,24 +286,19 @@ private struct CoachOverlay: View {
                 .font(.subheadline)
                 .foregroundStyle(Ink.text.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
-            HStack {
-                // 단계가 하나면 건너뛰기와 「알겠어요」가 같은 동작이라 버튼이 둘일 이유가 없다
-                if steps.count > 1 {
-                    Button("건너뛰기") { finish() }
-                        .font(.subheadline)
-                        .foregroundStyle(Ink.text.opacity(0.55))
+            // 큰 글씨(접근성 크기)에선 두 버튼이 한 줄에 안 들어가 카드가 화면 밖으로 넘쳤다(2026-09-08 베타
+            // 13 Pro Max 확대 보기). 안 맞으면 세로로 쌓는다.
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    skipButton
+                    Spacer()
+                    nextButton(shownIndex: shownIndex, isLast: isLast)
                 }
-                Spacer()
-                Button {
-                    advance(from: shownIndex)
-                } label: {
-                    Text(isLast ? (finishLabel ?? Loc.str("알겠어요")) : Loc.str("다음"))
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Ink.paper)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Ink.text, in: Capsule())   // 먹색 채움(§8.1)
+                VStack(alignment: .trailing, spacing: 10) {
+                    nextButton(shownIndex: shownIndex, isLast: isLast)
+                    skipButton
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(.top, 6)
         }

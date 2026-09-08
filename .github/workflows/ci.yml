@@ -217,32 +217,14 @@ jobs:
             coach.rhythm -bool true
             coach.seed -bool true
             coach.themeShop -bool true
+          # ⚠ 스텝 안에서 시뮬 상태(개발자 모드 표본·코치 완료)가 화면 사이에 이어진다 — 콜드·코치 상태는
+          #   같은 스텝에 섞지 말 것(2026-09-08 실측: 두 번째 스텝의 defaults가 첫 스텝 표본을 못 지웠다).
           screens: |
             ax-today      | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
-            ax-today-xxxl | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryExtraExtraExtraLarge
             ax-calendar   | -rootTab calendar -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
-            ax-rhythm     | -rootTab rhythm   -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
-            ax-settings   | -rootTab settings -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
           output-dir: screenshots-ax
           artifact-name: screenshots-ax
           title: '템포루틴 좁은 폭 + 큰 글씨 찰칵'
-          privacy: location
-          wait: '8'
-          fail-on-crash: 'false'
-      - uses: Yewon419/chalkak@main
-        with:
-          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
-          device: 'iPhone 16e'
-          defaults: |
-            onboardingDone -bool true
-            tutorialLightLock -bool true
-            tutorialChainDone -bool false
-          screens: |
-            ax-coach-today | -rootTab today -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
-            ax-cold-today  | -rootTab today -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryExtraExtraExtraLarge
-          output-dir: screenshots-ax-coach
-          artifact-name: screenshots-ax-coach
-          title: '템포루틴 콜드 + 코치 + 큰 글씨 찰칵'
           privacy: location
           wait: '8'
           fail-on-crash: 'false'
