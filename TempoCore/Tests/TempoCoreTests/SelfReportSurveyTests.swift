@@ -46,7 +46,7 @@ final class SelfReportSurveyTests: XCTestCase {
         XCTAssertEqual(SelfReportScoring.score(bodilyHeavy).modalityRaw, -6)
     }
 
-    /// 중간 선택지(2026-09-04) — 「조금 그래요」는 문항당 1점. 0으로 접히면 답이 사라진다.
+    /// 중간 선택지(2026-09-04) — 「보통이에요」(somewhat)는 문항당 1점. 0으로 접히면 답이 사라진다.
     func testSomewhatCountsAsHalf() {
         let mid = ["Q1": "somewhat", "Q2": "somewhat", "Q3": "somewhat",
                    "Q4": "same", "Q5": "same", "Q6": "same", "Q9": "much"]
@@ -70,7 +70,7 @@ final class SelfReportSurveyTests: XCTestCase {
         XCTAssertEqual(SelfReportScoring.score(["C1": "within1m", "Q9": "slight"]).type, .andante)
     }
 
-    /// Q1~Q7 전부 "심해져요" + 역문항 Q8도 "심해져요" = 모순 → 무성의로 본다.
+    /// Q1~Q7 전부 "예"(worse) + 역문항 Q8도 "예" = 모순 → 무성의로 본다.
     func testStraightLiningDetection() {
         var all = [String: String]()
         for id in ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"] { all[id] = "worse" }

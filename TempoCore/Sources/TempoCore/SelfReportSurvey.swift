@@ -48,10 +48,12 @@ public enum SelfReportSurvey {
 
     /// 2026-09-04 베타("중간에 조금 그래요 추가") — 이진 척도에 중간값을 넣는다.
     /// 순서는 강도 내림차순. 옛 응답(worse·same)은 값이 그대로라 그대로 읽힌다.
+    /// 2026-09-09 라벨 = 예/보통이에요/아니요(사용자 지시) — 종전 「심해져요/조금 그래요/비슷해요」는
+    /// 동의 축과 비교 축이 섞여 "기운이 넘쳐요 → 심해져요" 같은 조합이 나왔다. 값·채점은 무변경.
     private static let symptomChoices = [
-        SurveyChoice("worse", "심해져요"),
-        SurveyChoice("somewhat", "조금 그래요"),
-        SurveyChoice("same", "비슷해요"),
+        SurveyChoice("worse", "예"),
+        SurveyChoice("somewhat", "보통이에요"),
+        SurveyChoice("same", "아니요"),
     ]
 
     private static let frequencyChoices = [
@@ -173,7 +175,7 @@ public struct SelfReportResult: Equatable, Sendable {
 }
 
 public enum SelfReportScoring {
-    /// 문항당 강도 점수 — 심해져요 2 · 조금 그래요 1 · 비슷해요(무응답) 0.
+    /// 문항당 강도 점수 — 예 2 · 보통이에요 1 · 아니요(무응답) 0.
     /// 중간 선택지를 0으로 접으면 그 답이 계열 점수에서 통째로 사라진다(2026-09-04).
     private static func weight(_ value: String?) -> Int {
         switch value {
@@ -202,7 +204,7 @@ public enum SelfReportScoring {
         return .rubato
     }
 
-    /// 무성의 응답 판별 — Q1~Q7 전부 "심해져요"인데 역문항 Q8도 "심해져요"면 모순이다.
+    /// 무성의 응답 판별 — Q1~Q7 전부 "예"(worse)인데 역문항 Q8도 "예"면 모순이다.
     public static func isStraightLining(_ answers: [String: String]) -> Bool {
         let probes = ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
         return probes.allSatisfy { answers[$0] == "worse" } && answers["Q8"] == "worse"
