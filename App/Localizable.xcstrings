@@ -21885,6 +21885,29 @@
           }
         }
       }
+    },
+    "위로 끌어올리면 자세히": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag up for details"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上に引き上げると詳細"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上拉查看更多"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
