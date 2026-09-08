@@ -664,6 +664,9 @@ struct InputAddSheet: View {
             .ignoresSafeArea()
         }
         .task {
+            #if DEBUG
+            if UserDefaults.standard.bool(forKey: "noAutoFocus") { return }   // 찰칵 대조용
+            #endif
             // 등장 애니와 겹치면 포커스 요청이 씹히는 사례가 있어 한 박자 뒤에 준다(빠른 일정 바와 같은 처리)
             try? await Task.sleep(nanoseconds: 120_000_000)
             titleFocused = true
@@ -951,6 +954,9 @@ struct OutputAddSheet: View {
             .ignoresSafeArea()
         }
         .task {
+            #if DEBUG
+            if UserDefaults.standard.bool(forKey: "noAutoFocus") { return }   // 찰칵 대조용
+            #endif
             try? await Task.sleep(nanoseconds: 120_000_000)
             titleFocused = true
         }
