@@ -403,9 +403,9 @@ extension View {
     /// 외관으로 떨어지던 구멍을 막는다. 시스템 추종 테마는 nil = 무영향.
     /// ⚠ 새 .sheet/.fullScreenCover를 만들면 콘텐츠 루트에 이걸 달 것(내부 미리보기처럼
     /// 자체 스킴을 관리하는 시트만 예외).
+    /// 2026-09-09 다크 모드 전면 제거 — 테마 불문 `.light`. 시그니처는 그대로 둬 호출처 무수정.
     func themeColorScheme() -> some View {
-        preferredColorScheme(ThemeStore.chrome.forcesDarkAppearance ? .dark
-                             : ThemeStore.chrome.forcesLightAppearance ? .light : nil)
+        preferredColorScheme(.light)
     }
 
 }

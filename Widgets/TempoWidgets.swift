@@ -73,8 +73,8 @@ struct WPalette {
     let glowWinter, glowSpring, glowSummer, glowAutumn, accent: Color
 
     private static func dyn(_ light: (Int, Int, Int), _ dark: (Int, Int, Int)) -> Color {
-        Color(uiColor: UIColor { trait in
-            let c = trait.userInterfaceStyle == .dark ? dark : light
+        Color(uiColor: UIColor { _ in
+            let c = light   // 2026-09-09 다크 모드 전면 제거 — 위젯도 라이트 팔레트만
             return UIColor(red: CGFloat(c.0) / 255, green: CGFloat(c.1) / 255,
                            blue: CGFloat(c.2) / 255, alpha: 1)
         })

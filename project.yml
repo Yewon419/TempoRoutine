@@ -41,6 +41,7 @@ targets:
         INFOPLIST_KEY_UIBackgroundModes: remote-notification   # CloudKit 변경 푸시 수신(동기화)
         INFOPLIST_KEY_NSSupportsLiveActivities: YES   # 타이머·스톱워치 잠금화면(2026-08-09)
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO  # 자체 암호화 없음 — 수출 규정 질문 생략(ASC 실측)
+        INFOPLIST_KEY_UIUserInterfaceStyle: Light   # 다크 모드 전면 제거(2026-09-09 대표님 결정) — 시트·알럿·키보드까지 라이트
         # ⚠ 소모품 구입 이력 옵트인(SKIncludeConsumableInAppPurchaseHistory)은 여기 못 적는다 —
         # `INFOPLIST_KEY_` 패스스루는 Xcode가 아는 키만 처리해서 그냥 사라진다(2026-09-04 CI
         # 실측: plutil에 키 없음). 아래 postBuildScripts가 PlistBuddy로 심는다.

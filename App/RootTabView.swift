@@ -118,13 +118,10 @@ struct RootTabView: View {
         // 같은 뿌리가 반대 방향으로도 난다(베타 피드백 2026-08-19) — 인쇄물·유리 문법 테마
         // (티켓·활판·플레이리스트)는 팔레트가 라이트 고정인데, 시스템이 다크면 List 행 배경·
         // glassEffect 재질처럼 내 팔레트를 안 보는 시스템 컴포넌트만 검게 떨어진다.
-        .preferredColorScheme({
-            // 첫 실행 구간(온보딩·튜토리얼)은 라이트 고정(2026-09-04 베타). 끝나면 테마 규칙,
-            // 즉 기기 설정 추종으로 돌아간다 — 다크 강제가 아니다(대표님 확인).
-            if !onboardingDone || tutorialLightLock { return .light }
-            let chrome = (AppTheme(rawValue: appTheme) ?? .plain).chrome
-            return chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil
-        }())
+        // 2026-09-09 다크 모드 전면 제거(대표님 결정): 테마 불문 라이트 고정. Info.plist
+        // UIUserInterfaceStyle=Light가 시스템 컴포넌트까지 잠그고, 여기는 SwiftUI 환경값 명시.
+        // 종전 「온보딩·튜토리얼만 라이트, 이후 기기 추종」 규칙은 폐기.
+        .preferredColorScheme(.light)
         // 테마 변경 = 전체 트리 리빌드(정적 팔레트 캐시 갱신 반영 — Theme.swift 반응성 설계).
         // 변경 진입점은 설정뿐이라 스택·스크롤 초기화는 허용 범위(2026-07-29 계획 리스크 ①).
         // 선택 언어 주입 — Text 리터럴은 이 로케일로 다시 조회된다(값 경로는 Loc.bundle 담당)

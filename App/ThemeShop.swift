@@ -677,7 +677,7 @@ struct ThemePreviewScreen: View {
         .presentationDragIndicator(.visible)
         // 미리보는 테마의 colorScheme — 활성 테마(RootTabView 루트 값)가 아니라 이 시트가
         // 보여주는 테마 기준이어야 한다(2026-08-19 베타 피드백).
-        .preferredColorScheme(chrome.forcesDarkAppearance ? .dark : chrome.forcesLightAppearance ? .light : nil)
+        .preferredColorScheme(.light)   // 2026-09-09 다크 모드 전면 제거 — 미리보기도 라이트
     }
 
     /// 스크린샷 갤러리(2026-09-03 대표님 지시 "테마 탭 미리보기 상세페이지에 스크린샷") —
@@ -1084,8 +1084,7 @@ struct ThemePreview: View {
         // **테마 탭 시트 전체**에 버블돼, 카드 7장이 시트 외관을 서로 뒤집었다(마지막 평가
         // 카드가 승자 — "레전드 일관성없음" 베타 피드백의 유력 뿌리). 환경값은 서브트리 한정.
         .transformEnvironment(\.colorScheme) { scheme in
-            if chrome.forcesDarkAppearance { scheme = .dark }
-            else if chrome.forcesLightAppearance { scheme = .light }
+            scheme = .light   // 2026-09-09 다크 모드 전면 제거
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Loc.fmt("%1$@ 테마 미리보기", "\(theme.displayName)"))
