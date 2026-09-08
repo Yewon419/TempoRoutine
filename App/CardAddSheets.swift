@@ -392,6 +392,154 @@ struct QuickScheduleBar: View {
     }
 }
 
+// ── ①-c 빠른 카드 바 (2026-09-08 대표님: "캘린더 빠른 추가처럼 Input·Output 기본 추가는 하단 바만") ──
+// 오늘 탭 + → 시트 대신 화면 아래 바가 올라온다(뒤 화면 그대로). 제목 + 빠른 추가 칩 + 「추가」만 두고
+// 나머지는 전체 시트의 기본값(오늘 이후 Input = 매일, Output = 단발·퍼센트)으로 저장한다.
+// **바를 잡고 위로 끌면(또는 「자세히」) 전체 시트**가 초안 제목을 물려받아 열린다 — 반복·주기·진행 방식은 거기서.
+// 75차의 컴팩트 디텐트(.height)는 키보드가 뜨면 시트가 전체로 늘어나 바 모양이 안 나와 철회했다.
+/// 바 → 전체 시트 요청(sheet(item:)용). 초안 제목을 실어 나른다.
+struct CardAddRequest: Identifiable {
+    let kind: CardKind
+    let title: String
+    var id: String { kind.id }
+}
+
+struct QuickCardBar: View {
+    /// .input / .output만 온다 — 일정은 종전대로 시트(ScheduleAddSheet)
+    let kind: CardKind
+    let day: Date
+    let currentSeason: SeasonMeta?
+    let energyLevel: EnergyLevel?
+    /// 위로 끌어올림 → 전체 시트. 초안 제목을 넘긴다.
+    let onExpand: (String) -> Void
+    /// 바를 걷는다 — 시트가 아니라 오버레이라 `dismiss`가 없다(QuickScheduleBar와 같다)
+    let onClose: () -> Void
+
+    @Environment(\.modelContext) private var modelContext
+    @FocusState private var titleFocused: Bool
+    @State private var title = ""
+    /// 칩으로 채웠으면 그 진행 방식·목표를 저장에 반영(전체 시트의 칩 처리와 같은 규칙)
+    @State private var picked: QuickAdd.Suggestion?
+    @GestureState private var dragY: CGFloat = 0
+
+    private var trimmed: String { title.trimmingCharacters(in: .whitespaces) }
+
+    private var suggestions: [QuickAdd.Suggestion] {
+        switch kind {
+        case .input:
+            QuickAdd.inputs(category: .other, level: energyLevel ?? QuickAdd.level(forPhase: currentSeason?.phase))
+        default:
+            QuickAdd.outputs(level: energyLevel)
+        }
+    }
+
+    private var eyebrow: String {
+        kind == .input ? Loc.str("Input 추가") : Loc.str("Output 추가")
+    }
+
+    private var placeholder: String {
+        kind == .input ? Loc.fmt("예: %@", Loc.str("스트레칭 10분")) : Loc.str("예: 자격증 공부")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // 손잡이 — "잡고 위로" 자리
+            Capsule().fill(Ink.text.opacity(0.22)).frame(width: 36, height: 4)
+                .frame(maxWidth: .infinity)
+            HStack {
+                Text(eyebrow).eyebrowStyle()
+                Spacer()
+                Button { onExpand(trimmed) } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.up").font(.system(size: 10, weight: .semibold))
+                        Text("위로 끌어올리면 자세히").font(.system(size: 12))
+                    }
+                    .foregroundStyle(Ink.text.opacity(0.5))
+                }
+                .buttonStyle(.plain)
+            }
+            InkTitleField(text: $title, prompt: placeholder)
+                .focused($titleFocused)
+                .onSubmit(save)
+            HStack(alignment: .bottom, spacing: 12) {
+                QuickAddChips(suggestions: suggestions) { suggestion in
+                    title = suggestion.title
+                    picked = suggestion
+                }
+                Button("추가", action: save)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Ink.paper)
+                    .padding(.horizontal, 22)
+                    .frame(height: 40)
+                    .background(Ink.text, in: Capsule())
+                    .opacity(trimmed.isEmpty ? 0.35 : 1)
+                    .disabled(trimmed.isEmpty)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)   // 화면 전폭 바(QuickScheduleBar와 같다)
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+        .padding(.bottom, 14)
+        .background {
+            ZStack {
+                Ink.paper
+                SeasonLight(phase: currentSeason?.phase, motif: .card)
+            }
+        }
+        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20))
+        .shadow(color: Ink.text.opacity(0.12), radius: 12, y: -2)
+        .offset(y: min(0, dragY))   // 손가락을 따라 조금 올라오다 놓으면 전체 시트
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 16)
+                .updating($dragY) { value, state, _ in state = value.translation.height }
+                .onEnded { value in
+                    if value.translation.height < -48 { onExpand(trimmed) }
+                }
+        )
+        .task {
+            // 등장 애니(0.22s)와 겹치면 포커스 요청이 씹히는 사례가 있어 한 박자 뒤에 준다
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            titleFocused = true
+        }
+    }
+
+    private func save() {
+        let name = trimmed
+        guard !name.isEmpty else { return }
+        let cal = Calendar.current
+        let pastDay = cal.startOfDay(for: day) < cal.startOfDay(for: .now)
+        // 시각은 제목에서 읽되 원문은 그대로 둔다(시트의 applyTitleTimeParse와 같은 규칙)
+        let timeMinutes = ScheduleTextParser.parse(name).start?.minutesOfDay
+        switch kind {
+        case .input:
+            // 오늘·미래 = 매일(체크리스트가 본질), 지난 날 = 그날 한 번 — InputAddSheet init과 같은 기본
+            let item = InputItem(title: name, category: .other, schedule: pastDay ? .once : .daily,
+                                 createdAt: anchorDate(for: day), backfilled: pastDay)
+            item.timeMinutes = timeMinutes
+            if let picked {
+                item.progressKind = picked.kind
+                if picked.kind == .sessions { item.targetSessions = 3 }
+                if picked.kind == .timer { item.targetSeconds = picked.seconds > 0 ? picked.seconds : 10 * 60 }
+            }
+            modelContext.insert(item)
+        default:
+            // 단발 + 퍼센트 — OutputAddSheet의 기본. 칩이 있으면 그 진행 방식(nil = 체크만)
+            let progress: OutputProgressKind = picked.map { $0.kind ?? .checkOnly } ?? .percent
+            let item = OutputItem(title: name, schedule: .once, progressKind: progress,
+                                  createdAt: anchorDate(for: day))
+            item.timeMinutes = timeMinutes
+            let sessions = picked?.sessions ?? 0
+            let seconds = picked?.seconds ?? 0
+            if progress == .sessions { item.targetSessions = sessions > 0 ? sessions : 3 }
+            if progress == .timer { item.targetSeconds = seconds > 0 ? seconds : 30 * 60 }
+            if progress == .percent { item.percent = 0 }
+            modelContext.insert(item)
+        }
+        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
+        onClose()   // 저장 후 바를 걷는다(빠른 일정 바와 같은 결정 — 연속 입력 아님)
+    }
+}
+
 // ── ② Input 추가 ──
 struct InputAddSheet: View {
     /// 어느 날에 추가하는가 — 하루 상세에서 지난 날짜에 추가하면 그날부터 시작해야 한다(2026-07-26)
@@ -407,24 +555,18 @@ struct InputAddSheet: View {
     private let presetGiven: Bool
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @State private var seasonPrefilled = false
-    /// 기본 추가 = 하단 바(컴팩트 디텐트)로 뜬다(2026-09-08 대표님 — 캘린더 빠른 일정처럼). 잡고 위로 끌면
-    /// 전체 시트. 수정·계절 칸 경유(preset)는 처음부터 전체. 디텐트 선택은 시트 자신이 쥔다 — 호출부 무수정.
-    private static let compactDetent: PresentationDetent = .height(272)
-    @State private var detent: PresentationDetent = .large
-    @FocusState private var titleFocused: Bool
 
     /// 지난 날짜에 추가하는 건 대개 "그날 한 번 했다"는 기록이다 — 매일로 잡히면 오늘까지 따라온다.
     /// 오늘·미래는 종전대로 매일 기본(체크리스트가 본질). 2026-07-27 사용자 결정.
     /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
     init(day: Date = .now, currentSeason: SeasonMeta?, energyLevel: EnergyLevel? = nil,
          presetSeason: SeasonAnchor? = nil, presetDayOffset: Int? = nil,
-         editing: InputItem? = nil) {
+         editing: InputItem? = nil, presetTitle: String = "") {
         self.day = day
         self.currentSeason = currentSeason
         self.energyLevel = energyLevel
         self.editing = editing
         self.presetGiven = presetSeason != nil
-        _detent = State(initialValue: editing == nil && presetSeason == nil ? Self.compactDetent : .large)
         let cal = Calendar.current
         if let item = editing {
             _title = State(initialValue: item.title)
@@ -466,6 +608,7 @@ struct InputAddSheet: View {
             if let presetDayOffset { _offset = State(initialValue: presetDayOffset) }
         } else {
             _repeats = State(initialValue: cal.startOfDay(for: day) >= cal.startOfDay(for: .now))
+            _title = State(initialValue: presetTitle)   // 빠른 추가 바를 위로 끌어올린 초안(2026-09-08)
         }
     }
 
@@ -619,61 +762,6 @@ struct InputAddSheet: View {
     }
 
     var body: some View {
-        Group {
-            if detent == .large { fullBody } else { compactBody }
-        }
-        .presentationDetents([Self.compactDetent, .large], selection: $detent)
-        .presentationDragIndicator(.visible)
-        .onAppear { prefillSeasonIfNeeded() }
-        .interactiveDismissDisabled(!title.isEmpty)
-    }
-
-    /// 하단 바 — 제목 + 빠른 추가 칩 + 「추가」. 나머지 설정은 기본값(전체 시트와 같은 초기값)으로 저장된다.
-    private var compactBody: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(editing == nil ? Loc.str("Input 추가") : Loc.str("Input 수정")).eyebrowStyle()
-                Spacer()
-                Text("위로 끌어올리면 자세히")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Ink.text.opacity(0.45))
-            }
-            InkTitleField(text: $title, prompt: placeholder)
-                .focused($titleFocused)
-                .onChange(of: title) { applyTitleTimeParse() }
-            QuickAddChips(suggestions: quickAddSuggestions) { picked in
-                title = picked.title
-                applyTitleTimeParse()
-                progressKind = picked.kind
-                if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
-            }
-            Button(action: save) { Text("추가") }
-                .buttonStyle(InkCapsuleButtonStyle())
-                .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                .opacity(title.trimmingCharacters(in: .whitespaces).isEmpty ? 0.35 : 1)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background {
-            ZStack {
-                Ink.paper
-                SeasonLight(phase: currentSeason?.phase, motif: .card)
-            }
-            .ignoresSafeArea()
-        }
-        .task {
-            #if DEBUG
-            if UserDefaults.standard.bool(forKey: "noAutoFocus") { return }   // 찰칵 대조용
-            #endif
-            // 등장 애니와 겹치면 포커스 요청이 씹히는 사례가 있어 한 박자 뒤에 준다(빠른 일정 바와 같은 처리)
-            try? await Task.sleep(nanoseconds: 120_000_000)
-            titleFocused = true
-        }
-    }
-
-    private var fullBody: some View {
         InkSheetScaffold(eyebrow: editing == nil ? Loc.str("Input 추가") : Loc.str("Input 수정"),
                          saveTitle: Loc.str("저장"),
                          saveEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
@@ -710,6 +798,11 @@ struct InputAddSheet: View {
         } message: {
             Text("체크 기록이 함께 지워져요. 되돌릴 수 없어요.")
         }
+        .onAppear {
+            prefillSeasonIfNeeded()
+            if editing == nil { applyTitleTimeParse() }   // 빠른 추가 바에서 끌어올린 초안(presetTitle)의 시각
+        }
+        .interactiveDismissDisabled(!title.isEmpty)
     }
 
     private static let categoryChoices: [(category: InputCategory, label: String)] = [
@@ -807,11 +900,6 @@ struct OutputAddSheet: View {
     private let presetGiven: Bool
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
     @State private var seasonPrefilled = false
-    /// 기본 추가 = 하단 바(컴팩트 디텐트)로 뜬다(2026-09-08 대표님 — 캘린더 빠른 일정처럼). 잡고 위로 끌면
-    /// 전체 시트. 수정·계절 칸 경유(preset)는 처음부터 전체. 디텐트 선택은 시트 자신이 쥔다 — 호출부 무수정.
-    private static let compactDetent: PresentationDetent = .height(272)
-    @State private var detent: PresentationDetent = .large
-    @FocusState private var titleFocused: Bool
 
     /// 빠른 추가 목록의 기준(2026-08-16) — nil이면 「보통」 목록으로 간다(QuickAdd 주석 참조)
     let energyLevel: EnergyLevel?
@@ -819,12 +907,11 @@ struct OutputAddSheet: View {
     /// 나의 사계에서 계절 칸의 +로 들어오면 그 계절 앵커로 미리 맞춰 연다(2026-08-01 베타 피드백)
     init(day: Date = .now, presetSeason: SeasonAnchor? = nil, presetDayOffset: Int? = nil,
          editing: OutputItem? = nil,
-         energyLevel: EnergyLevel? = nil) {
+         energyLevel: EnergyLevel? = nil, presetTitle: String = "") {
         self.day = day
         self.editing = editing
         self.energyLevel = energyLevel
         self.presetGiven = presetSeason != nil
-        _detent = State(initialValue: editing == nil && presetSeason == nil ? Self.compactDetent : .large)
         if let item = editing {
             _title = State(initialValue: item.title)
             switch item.schedule {
@@ -867,6 +954,8 @@ struct OutputAddSheet: View {
                 _wholePhase = State(initialValue: false)
                 _offset = State(initialValue: presetDayOffset)
             }
+        } else {
+            _title = State(initialValue: presetTitle)   // 빠른 추가 바를 위로 끌어올린 초안(2026-09-08)
         }
     }
 
@@ -908,61 +997,6 @@ struct OutputAddSheet: View {
     }
 
     var body: some View {
-        Group {
-            if detent == .large { fullBody } else { compactBody }
-        }
-        .presentationDetents([Self.compactDetent, .large], selection: $detent)
-        .presentationDragIndicator(.visible)
-        .onAppear { prefillSeasonIfNeeded() }
-        .interactiveDismissDisabled(!title.isEmpty)
-    }
-
-    /// 하단 바 — InputAddSheet.compactBody와 같은 문법
-    private var compactBody: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(editing == nil ? Loc.str("Output 추가") : Loc.str("Output 수정")).eyebrowStyle()
-                Spacer()
-                Text("위로 끌어올리면 자세히")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Ink.text.opacity(0.45))
-            }
-            InkTitleField(text: $title, prompt: Loc.str("예: 자격증 공부"))
-                .focused($titleFocused)
-                .onChange(of: title) { applyTitleTimeParse() }
-            QuickAddChips(suggestions: QuickAdd.outputs(level: energyLevel)) { picked in
-                title = picked.title
-                applyTitleTimeParse()
-                kind = picked.kind ?? .checkOnly
-                if picked.sessions > 0 { targetSessions = picked.sessions }
-                if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
-            }
-            Button(action: save) { Text("추가") }
-                .buttonStyle(InkCapsuleButtonStyle())
-                .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                .opacity(title.trimmingCharacters(in: .whitespaces).isEmpty ? 0.35 : 1)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background {
-            ZStack {
-                Ink.paper
-                SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: day)), motif: .card)
-            }
-            .ignoresSafeArea()
-        }
-        .task {
-            #if DEBUG
-            if UserDefaults.standard.bool(forKey: "noAutoFocus") { return }   // 찰칵 대조용
-            #endif
-            try? await Task.sleep(nanoseconds: 120_000_000)
-            titleFocused = true
-        }
-    }
-
-    private var fullBody: some View {
         InkSheetScaffold(eyebrow: editing == nil ? Loc.str("Output 추가") : Loc.str("Output 수정"),
                          saveTitle: Loc.str("저장"),
                          saveEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
@@ -1009,6 +1043,11 @@ struct OutputAddSheet: View {
         } message: {
             Text("진행도가 함께 지워져요. 되돌릴 수 없어요.")
         }
+        .onAppear {
+            prefillSeasonIfNeeded()
+            if editing == nil { applyTitleTimeParse() }   // 빠른 추가 바에서 끌어올린 초안(presetTitle)의 시각
+        }
+        .interactiveDismissDisabled(!title.isEmpty)
     }
 
     private var seasonName: String { seasonMeta(for: anchor.phase).name }

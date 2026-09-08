@@ -134,6 +134,9 @@ struct TodayView: View {
 
     @State private var showLogSheet = false
     @State private var addSheet: CardKind?
+    /// Input·Output 기본 추가 = 하단 바(2026-09-08 대표님 — 캘린더 빠른 일정처럼). 시트는 바를 위로 끌었을 때만.
+    @State private var quickAdd: CardKind?
+    @State private var expandRequest: CardAddRequest?
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var pendingDelete: QuickDeleteTarget?   // 행 길게 누르기 = 빠른 삭제(2026-07-27)
     @State private var isCollapsed = false
@@ -279,6 +282,8 @@ struct TodayView: View {
             compactBar
             }
         }
+        .overlay(alignment: .bottom) { quickAddLayer }
+        .animation(.easeOut(duration: 0.22), value: quickAdd)
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet().themeColorScheme() }
         // 테마 탭 시트 표시는 RootTabView 한 곳 — 진입점이 둘(여기·설정)이라 각자 띄우면
         // 같은 플래그를 보는 시트가 두 개가 된다(2026-08-11). 여기선 플래그만 세운다.
@@ -292,13 +297,29 @@ struct TodayView: View {
             }
             .themeColorScheme()
         }
+        // 빠른 카드 바를 위로 끌어올림 → 전체 시트(초안 제목 승계)
+        .sheet(item: $expandRequest) { request in
+            Group {
+                switch request.kind {
+                case .input:
+                    InputAddSheet(currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel,
+                                  presetTitle: request.title)
+                default:
+                    OutputAddSheet(energyLevel: todayEnergyLevel, presetTitle: request.title)
+                }
+            }
+            .themeColorScheme()
+        }
         .onAppear {
             #if DEBUG
-            // 찰칵 전용(2026-09-08) — `-openSheet schedule|input|output`으로 추가 시트를 바로 연다
+            // 찰칵 전용(2026-09-08) — `-openSheet schedule|input|output`은 + 누른 상태(일정=시트, 카드=바),
+            // `input-full|output-full`은 바를 끌어올린 전체 시트
             switch UserDefaults.standard.string(forKey: "openSheet") {
             case "schedule": addSheet = .schedule
-            case "input": addSheet = .input
-            case "output": addSheet = .output
+            case "input": quickAdd = .input
+            case "output": quickAdd = .output
+            case "input-full": expandRequest = CardAddRequest(kind: .input, title: "")
+            case "output-full": expandRequest = CardAddRequest(kind: .output, title: "")
             default: break
             }
             #endif
@@ -610,6 +631,26 @@ struct TodayView: View {
         .accessibilityAction(named: Loc.str("전체 보기")) { plAdvance(1) }
     }
 
+    /// 빠른 카드 바 — 캘린더 `quickAddLayer`와 같은 구조(옅은 dim + 아래서 올라오는 바). 뒤 오늘 탭은 그대로 읽힌다.
+    @ViewBuilder
+    private var quickAddLayer: some View {
+        if quickAdd != nil {
+            Color.black.opacity(0.12)
+                .ignoresSafeArea()
+                .onTapGesture { quickAdd = nil }
+                .transition(.opacity)
+        }
+        if let kind = quickAdd {
+            QuickCardBar(kind: kind, day: today, currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel,
+                         onExpand: { draft in
+                             quickAdd = nil
+                             expandRequest = CardAddRequest(kind: kind, title: draft)
+                         },
+                         onClose: { quickAdd = nil })
+                .transition(.move(edge: .bottom))
+        }
+    }
+
     private var compactBar: some View {
         HStack {
             Spacer()
@@ -748,7 +789,7 @@ struct TodayView: View {
                 Spacer()
                 Button {
                     lightFeedback += 1
-                    addSheet = kind
+                    if kind == .schedule { addSheet = kind } else { quickAdd = kind }
                 } label: {
                     Image(systemName: "plus")
                         .font(.subheadline.weight(.semibold))

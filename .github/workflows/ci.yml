@@ -170,7 +170,7 @@ jobs:
             s-sheet-schedule  | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet schedule
             s-sheet-input     | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet input
             s-sheet-output    | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet output
-            s-sheet-input-nofocus | -rootTab today -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet input -noAutoFocus 1
+            s-sheet-input-full | -rootTab today   -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet input-full
           output-dir: screenshots-silver
           artifact-name: screenshots-silver
           title: '템포루틴 은필 실사용 찰칵'
