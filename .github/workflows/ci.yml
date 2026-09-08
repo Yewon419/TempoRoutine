@@ -202,6 +202,50 @@ jobs:
           privacy: location
           wait: '8'
           fail-on-crash: 'false'
+      # ── 찰칵: 좁은 폭 + 접근성 큰 글씨(2026-09-08 베타 — 13 Pro Max 확대 보기(375pt) + 더 큰 텍스트에서
+      #    오늘 탭이 좌우로 잘림). 가장 좁은 시뮬(16e, 390pt)에 AX L / XXXL을 런치 인자로 걸어 재현한다.
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          device: 'iPhone 16e'
+          defaults: |
+            onboardingDone -bool true
+            devModeActive -bool true
+            tutorialChainDone -bool true
+            coach.today -bool true
+            coach.calendar -bool true
+            coach.rhythm -bool true
+            coach.seed -bool true
+            coach.themeShop -bool true
+          screens: |
+            ax-today      | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
+            ax-today-xxxl | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryExtraExtraExtraLarge
+            ax-calendar   | -rootTab calendar -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
+            ax-rhythm     | -rootTab rhythm   -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
+            ax-settings   | -rootTab settings -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
+          output-dir: screenshots-ax
+          artifact-name: screenshots-ax
+          title: '템포루틴 좁은 폭 + 큰 글씨 찰칵'
+          privacy: location
+          wait: '8'
+          fail-on-crash: 'false'
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          device: 'iPhone 16e'
+          defaults: |
+            onboardingDone -bool true
+            tutorialLightLock -bool true
+            tutorialChainDone -bool false
+          screens: |
+            ax-coach-today | -rootTab today -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
+            ax-cold-today  | -rootTab today -appTheme standard -appLanguage ko -AppleLanguages (ko) -UIPreferredContentSizeCategoryName UICTContentSizeCategoryExtraExtraExtraLarge
+          output-dir: screenshots-ax-coach
+          artifact-name: screenshots-ax-coach
+          title: '템포루틴 콜드 + 코치 + 큰 글씨 찰칵'
+          privacy: location
+          wait: '8'
+          fail-on-crash: 'false'
 
   testflight:
     name: TestFlight upload (archive + cloud signing)
