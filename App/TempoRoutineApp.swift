@@ -103,6 +103,10 @@ struct TempoRoutineApp: App {
         WindowGroup {
             RootTabView()
                 .id(devModeActive)
+                // Dynamic Type 상한 = xxxLarge(2026-09-08 대표님 결정, 베타 13 Pro Max 확대 보기 + 접근성 글씨에서
+                // 오늘 탭 잘림). 칩·자·캘린더 격자 같은 밀집 조판은 접근성 크기를 감당하지 못한다 — 접근성
+                // 5단계는 포기하고 xxxLarge까지만 따른다. 시트·풀스크린 커버도 환경을 물려받는다.
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             // 다크 = 적응형 토큰으로 대응(Ink — 2026-07-20 사용자 결정). 정식 다크 테마는 미학 패스.
         }
         .modelContainer(devModeActive ? Self.devContainer : Self.container)

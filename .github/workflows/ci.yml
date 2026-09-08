@@ -167,6 +167,9 @@ jobs:
             s-rhythm-routines | -rootTab rhythm   -appTheme standard -appLanguage ko -AppleLanguages (ko) -rhythmLastTab "나의 루틴"
             s-rhythm-diary    | -rootTab rhythm   -appTheme standard -appLanguage ko -AppleLanguages (ko) -rhythmLastTab "한 줄 기록"
             s-settings        | -rootTab settings -appTheme standard -appLanguage ko -AppleLanguages (ko)
+            s-sheet-schedule  | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet schedule
+            s-sheet-input     | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet input
+            s-sheet-output    | -rootTab today    -appTheme standard -appLanguage ko -AppleLanguages (ko) -openSheet output
           output-dir: screenshots-silver
           artifact-name: screenshots-silver
           title: '템포루틴 은필 실사용 찰칵'

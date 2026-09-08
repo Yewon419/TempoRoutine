@@ -292,6 +292,17 @@ struct TodayView: View {
             }
             .themeColorScheme()
         }
+        .onAppear {
+            #if DEBUG
+            // 찰칵 전용(2026-09-08) — `-openSheet schedule|input|output`으로 추가 시트를 바로 연다
+            switch UserDefaults.standard.string(forKey: "openSheet") {
+            case "schedule": addSheet = .schedule
+            case "input": addSheet = .input
+            case "output": addSheet = .output
+            default: break
+            }
+            #endif
+        }
         .sheet(item: $editingSchedule) { item in
             ScheduleAddSheet(defaultDate: today, editing: item).themeColorScheme()
         }

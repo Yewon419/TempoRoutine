@@ -6,26 +6,6 @@ import SwiftUI
 import SwiftData
 import TempoCore
 
-/// 반복 빈도 칩(매일/매주/매달/매년) — 일정·Input 추가 시트 공용(프로토 opt-chips 문법, 2026-07-22)
-private struct FreqChip: View {
-    let label: String
-    let selected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 5)
-                .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(Ink.text.opacity(0.08)),
-                            in: Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 // 계절 앵커 선택 (프로토 v77 Output 시트 문법: 시작 계절 4칩)
 // case 순서 = 표시 순서(봄→여름→가을→겨울, 2026-07-29 피드백). rawValue 불변 — 저장 호환.
 enum SeasonAnchor: String, CaseIterable, Identifiable {
@@ -127,147 +107,150 @@ struct ScheduleAddSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("제목", text: $title)
-                        .font(.title3.weight(.semibold))
-                        .focused($titleFocused)
-                } footer: {
-                    // 빠른 일정과 같은 파서(2026-08-01 베타 피드백 — 추가·수정 시트에도)
-                    if let hint = parseHint {
-                        Text(hint)
-                    }
+        InkSheetScaffold(eyebrow: editing == nil ? Loc.str("일정 추가") : Loc.str("일정 수정"),
+                         saveTitle: Loc.str("저장"),
+                         saveEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
+                         phase: nil, onCancel: { dismiss() }, onSave: save) {
+            InkTitleField(text: $title, prompt: Loc.str("제목"))
+                .focused($titleFocused)
+            // 빠른 일정과 같은 파서(2026-08-01 베타 피드백 — 추가·수정 시트에도)
+            if let hint = parseHint { InkNote(hint) }
+            whenSection
+            repeatSection
+            reminderSection
+            if editing != nil {
+                // 파괴 액션 분리 배치 + 확인(§8.2.6 문법)
+                InkDeleteButton(title: Loc.str("일정 삭제")) { showDeleteConfirm = true }
+            }
+        } footer: {
+            EmptyView()
+        }
+        .confirmationDialog("이 일정을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("삭제", role: .destructive) {
+                if let item = editing {
+                    ScheduleReminder.cancel(id: item.id)
+                    modelContext.delete(item)
                 }
-                Section {
-                    Toggle("하루종일", isOn: $allDay)
-                        .tint(Ink.text)
-                    DatePicker("시작", selection: $start,
-                               displayedComponents: allDay ? [.date] : [.date, .hourAndMinute])
-                    if allDay {
-                        // 종료일을 시작일보다 뒤로 잡으면 여러 날 일정(§8.2.3 — 캘린더에 띠로)
-                        DatePicker("종료", selection: $endDay, in: start...,
-                                   displayedComponents: [.date])
-                        if let span = multiDaySpanLabel {
-                            Text(span)
-                                .font(.footnote)
-                                .foregroundStyle(Ink.text.opacity(0.5))
-                        }
-                    } else {
-                        DatePicker("종료", selection: $end, in: start...,
-                                   displayedComponents: [.date, .hourAndMinute])
-                    }
-                }
-                Section {
-                    Toggle("반복", isOn: Binding(
-                        get: { repeatRule != .none },
-                        set: { on in repeatRule = on ? .daily : .none }
-                    ))
+                dismiss()
+            }
+            Button("취소", role: .cancel) {}
+        }
+        // 제목에서 시각 읽기(2026-08-01) — 사용자가 휠을 직접 돌린 뒤엔 더 이상 덮어쓰지 않는다.
+        // 제목 원문은 건드리지 않는다(입력 중 한글 조합 깨짐 방지 — 빠른 일정과 같은 원칙).
+        .onChange(of: title) { _, newValue in
+            guard !timeManuallySet else { return }
+            let parsed = ScheduleTextParser.parse(newValue)
+            guard let parsedStart = parsed.start, parsed.matchedText != lastAppliedMatch else { return }
+            guard let applied = date(onSameDayAs: start, at: parsedStart) else { return }
+            allDay = false
+            start = applied
+            end = parsed.end.flatMap { date(onSameDayAs: applied, at: $0) }.map { $0 > applied ? $0 : applied.addingTimeInterval(3600) }
+                ?? applied.addingTimeInterval(3600)
+            parserAppliedStart = applied
+            lastAppliedMatch = parsed.matchedText
+        }
+        .onChange(of: start) {
+            // 파서가 넣은 값과 다르면 사용자가 직접 고른 것 — 그때부턴 파서가 물러난다
+            if start != parserAppliedStart { timeManuallySet = true }
+            if end <= start { end = start.addingTimeInterval(3600) }
+            if Calendar.current.startOfDay(for: endDay) < Calendar.current.startOfDay(for: start) {
+                endDay = start
+            }
+        }
+        .onChange(of: allDay) {
+            // 하루종일 전환 시 알림 선택지가 달라짐 — 유효하지 않은 값은 없음으로
+            if !reminderChoices.contains(where: { $0.minutes == reminderMinutes }) { reminderMinutes = -1 }
+        }
+        .interactiveDismissDisabled(!title.isEmpty)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("완료") { titleFocused = false }.foregroundStyle(Ink.text)
+            }
+        }
+    }
+
+    private var whenSection: some View {
+        InkSection(eyebrow: Loc.str("언제")) {
+            InkToggleRow(label: Loc.str("하루종일"), isOn: $allDay)
+            InkDivider()
+            InkRow(label: Loc.str("시작")) {
+                DatePicker("", selection: $start,
+                           displayedComponents: allDay ? [.date] : [.date, .hourAndMinute])
+                    .labelsHidden()
                     .tint(Ink.text)
-                    if repeatRule != .none {
-                        HStack(spacing: 6) {
-                            ForEach(Self.repeatChoices, id: \.self) { freq in
-                                FreqChip(label: freq.shortLabel ?? "", selected: repeatRule == freq) {
-                                    repeatRule = freq
-                                }
-                            }
-                        }
-                    }
-                }
-                Section {
-                    Picker("알림", selection: $reminderMinutes) {
-                        ForEach(reminderChoices, id: \.minutes) { choice in
-                            Text(choice.label).tag(choice.minutes)
-                        }
-                    }
-                }
-                if editing != nil {
-                    // 파괴 액션 분리 배치 + 확인(§8.2.6 문법)
-                    Section {
-                        Button("일정 삭제", role: .destructive) { showDeleteConfirm = true }
-                            .foregroundStyle(Ink.danger)
-                    }
-                }
             }
-            .confirmationDialog("이 일정을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-                Button("삭제", role: .destructive) {
-                    if let item = editing {
-                        ScheduleReminder.cancel(id: item.id)
-                        modelContext.delete(item)
-                    }
-                    dismiss()
+            InkDivider()
+            if allDay {
+                // 종료일을 시작일보다 뒤로 잡으면 여러 날 일정(§8.2.3 — 캘린더에 띠로)
+                InkRow(label: Loc.str("종료")) {
+                    DatePicker("", selection: $endDay, in: start..., displayedComponents: [.date])
+                        .labelsHidden()
+                        .tint(Ink.text)
                 }
-                Button("취소", role: .cancel) {}
-            }
-            .scrollDismissesKeyboard(.interactively)
-            // 제목에서 시각 읽기(2026-08-01) — 사용자가 휠을 직접 돌린 뒤엔 더 이상 덮어쓰지 않는다.
-            // 제목 원문은 건드리지 않는다(입력 중 한글 조합 깨짐 방지 — 빠른 일정과 같은 원칙).
-            .onChange(of: title) { _, newValue in
-                guard !timeManuallySet else { return }
-                let parsed = ScheduleTextParser.parse(newValue)
-                guard let parsedStart = parsed.start, parsed.matchedText != lastAppliedMatch else { return }
-                guard let applied = date(onSameDayAs: start, at: parsedStart) else { return }
-                allDay = false
-                start = applied
-                end = parsed.end.flatMap { date(onSameDayAs: applied, at: $0) }.map { $0 > applied ? $0 : applied.addingTimeInterval(3600) }
-                    ?? applied.addingTimeInterval(3600)
-                parserAppliedStart = applied
-                lastAppliedMatch = parsed.matchedText
-            }
-            .onChange(of: start) {
-                // 파서가 넣은 값과 다르면 사용자가 직접 고른 것 — 그때부턴 파서가 물러난다
-                if start != parserAppliedStart { timeManuallySet = true }
-                if end <= start { end = start.addingTimeInterval(3600) }
-                if Calendar.current.startOfDay(for: endDay) < Calendar.current.startOfDay(for: start) {
-                    endDay = start
-                }
-            }
-            .onChange(of: allDay) {
-                // 하루종일 전환 시 알림 선택지가 달라짐 — 유효하지 않은 값은 없음으로
-                if !reminderChoices.contains(where: { $0.minutes == reminderMinutes }) { reminderMinutes = -1 }
-            }
-            .navigationTitle(editing == nil ? Loc.str("일정 추가") : Loc.str("일정 수정"))
-            .navigationBarTitleDisplayMode(.inline)
-            .interactiveDismissDisabled(!title.isEmpty)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("저장") {
-                        if let item = editing {
-                            item.title = title
-                            item.date = start
-                            item.isAllDay = allDay
-                            item.repeatRule = repeatRule
-                            item.endDate = allDay ? allDayEndDate : end
-                            item.reminderMinutes = reminderMinutes
-                            ScheduleReminder.cancel(id: item.id)   // 알림 재예약 — 시간·반복이 바뀌었을 수 있음
-                            ScheduleReminder.schedule(id: item.id, title: title, date: start,
-                                                      isAllDay: allDay, repeatRule: repeatRule,
-                                                      reminderMinutes: reminderMinutes)
-                        } else {
-                            let item = ScheduleItem(title: title, date: start, isAllDay: allDay,
-                                                    repeatRule: repeatRule,
-                                                    endDate: allDay ? allDayEndDate : end,
-                                                    reminderMinutes: reminderMinutes)
-                            modelContext.insert(item)
-                            ScheduleReminder.schedule(id: item.id, title: item.title, date: start,
-                                                      isAllDay: allDay, repeatRule: repeatRule,
-                                                      reminderMinutes: reminderMinutes)
-                        }
-                        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
-                        dismiss()
-                    }
-                    .foregroundStyle(Ink.text)
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("완료") { titleFocused = false }.foregroundStyle(Ink.text)
+                if let span = multiDaySpanLabel { InkNote(span) }
+            } else {
+                InkRow(label: Loc.str("종료")) {
+                    DatePicker("", selection: $end, in: start..., displayedComponents: [.date, .hourAndMinute])
+                        .labelsHidden()
+                        .tint(Ink.text)
                 }
             }
         }
+    }
+
+    private var repeatSection: some View {
+        InkSection(eyebrow: Loc.str("반복")) {
+            InkToggleRow(label: Loc.str("반복"), isOn: Binding(
+                get: { repeatRule != .none },
+                set: { on in repeatRule = on ? .daily : .none }
+            ))
+            if repeatRule != .none {
+                InkChipFlow {
+                    ForEach(Self.repeatChoices, id: \.self) { freq in
+                        InkChoiceChip(label: freq.shortLabel ?? "", on: repeatRule == freq) { repeatRule = freq }
+                    }
+                }
+            }
+        }
+    }
+
+    private var reminderSection: some View {
+        InkSection(eyebrow: Loc.str("알림")) {
+            InkChipFlow {
+                ForEach(reminderChoices, id: \.minutes) { choice in
+                    InkChoiceChip(label: choice.label, on: reminderMinutes == choice.minutes) {
+                        reminderMinutes = choice.minutes
+                    }
+                }
+            }
+        }
+    }
+
+    private func save() {
+        if let item = editing {
+            item.title = title
+            item.date = start
+            item.isAllDay = allDay
+            item.repeatRule = repeatRule
+            item.endDate = allDay ? allDayEndDate : end
+            item.reminderMinutes = reminderMinutes
+            ScheduleReminder.cancel(id: item.id)   // 알림 재예약 — 시간·반복이 바뀌었을 수 있음
+            ScheduleReminder.schedule(id: item.id, title: title, date: start,
+                                      isAllDay: allDay, repeatRule: repeatRule,
+                                      reminderMinutes: reminderMinutes)
+        } else {
+            let item = ScheduleItem(title: title, date: start, isAllDay: allDay,
+                                    repeatRule: repeatRule,
+                                    endDate: allDay ? allDayEndDate : end,
+                                    reminderMinutes: reminderMinutes)
+            modelContext.insert(item)
+            ScheduleReminder.schedule(id: item.id, title: item.title, date: start,
+                                      isAllDay: allDay, repeatRule: repeatRule,
+                                      reminderMinutes: reminderMinutes)
+        }
+        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
+        dismiss()
     }
 }
 
@@ -544,33 +527,28 @@ struct InputAddSheet: View {
     /// 진행 방식(2026-08-12 사용자 지시) — Output 시트와 같은 문법이되 **값이 날짜별**이다.
     /// 퍼센트 초기값 슬라이더는 두지 않는다: 그날치 값이라 "처음 진행도"가 성립하지 않는다.
     /// 뷰가 커지면 타입 체커가 터진다(repo CLAUDE.md) — 섹션·항목 편집기를 따로 뗐다.
-    @ViewBuilder
+    private static let progressChoices: [(kind: OutputProgressKind?, label: String)] = [
+        (nil, Loc.str("체크만")), (.subtasks, Loc.str("체크리스트")), (.sessions, Loc.str("세션")),
+        (.percent, Loc.str("퍼센트")), (.timer, Loc.str("타이머")), (.stopwatch, Loc.str("스톱워치")),
+    ]
+
     private var progressSection: some View {
-        Section {
-            Picker("진행 방식", selection: $progressKind) {
-                Text("체크만").tag(OutputProgressKind?.none)
-                Text("체크리스트").tag(OutputProgressKind?.some(.subtasks))
-                Text("세션").tag(OutputProgressKind?.some(.sessions))
-                Text("퍼센트").tag(OutputProgressKind?.some(.percent))
-                Text("타이머").tag(OutputProgressKind?.some(.timer))
-                Text("스톱워치").tag(OutputProgressKind?.some(.stopwatch))
+        InkSection(eyebrow: Loc.str("진행 방식")) {
+            InkChipFlow {
+                ForEach(Array(Self.progressChoices.enumerated()), id: \.offset) { _, choice in
+                    InkChoiceChip(label: choice.label, on: progressKind == choice.kind) { progressKind = choice.kind }
+                }
             }
-            .pickerStyle(.menu)
-            .tint(Ink.text)
             if progressKind == .sessions {
-                Stepper(Loc.fmt("목표 %lld회", targetSessions), value: $targetSessions, in: 1...50)
+                InkStepper(label: Loc.fmt("목표 %lld회", targetSessions), value: $targetSessions, range: 1...50)
             }
             if progressKind == .timer {
-                Stepper(Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, in: 1...240)
-                Text("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요.")
-                    .font(.footnote)
-                    .foregroundStyle(Ink.text.opacity(0.5))
+                InkStepper(label: Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, range: 1...240)
+                InkNote(Loc.str("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요."))
             }
             if progressKind == .subtasks {
                 subtaskEditor
             }
-        } header: {
-            Text("진행 방식")
         }
     }
 
@@ -635,132 +613,127 @@ struct InputAddSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                // 이 시트가 뭘 만드는지 한 줄(2026-09-08 베타 "이 탭에 인풋이 뭔지 설명") — 온보딩·ⓘ와 같은 문안
-                Text(CardKind.input.info)
-                    .font(.footnote)
-                    .foregroundStyle(Ink.text.opacity(0.6))
-                    .listRowBackground(Color.clear)
-                TextField(placeholder, text: $title)
-                    .onChange(of: title) { applyTitleTimeParse() }
-                cardTimeHint(timeMinutes: timeMinutes) {
-                    rejectedMatch = lastMatch
-                    timeMinutes = nil
-                    lastMatch = nil
+        InkSheetScaffold(eyebrow: editing == nil ? Loc.str("Input 추가") : Loc.str("Input 수정"),
+                         saveTitle: Loc.str("저장"),
+                         saveEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
+                         phase: currentSeason?.phase, onCancel: { dismiss() }, onSave: save) {
+            // 이 시트가 뭘 만드는지 한 줄(2026-09-08 베타 "이 탭에 인풋이 뭔지 설명") — 온보딩·ⓘ와 같은 문안
+            InkNote(CardKind.input.info)
+            InkTitleField(text: $title, prompt: placeholder)
+                .onChange(of: title) { applyTitleTimeParse() }
+            cardTimeHint(timeMinutes: timeMinutes) {
+                rejectedMatch = lastMatch
+                timeMinutes = nil
+                lastMatch = nil
+            }
+            categorySection
+            repeatSection
+            progressSection
+            if editing != nil {
+                // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
+                InkDeleteButton(title: Loc.str("Input 삭제")) { showDeleteConfirm = true }
+            }
+        } footer: {
+            EmptyView()
+        }
+        .confirmationDialog("이 Input을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("삭제", role: .destructive) {
+                if let item = editing {
+                    // 완료 기록 동반 삭제(§5.5.2 고아 방지) — QuickDelete와 같은 경로
+                    let all = (try? modelContext.fetch(FetchDescriptor<ItemCompletion>())) ?? []
+                    QuickDeleteTarget.input(item).delete(from: modelContext, completions: all)
                 }
-                Picker("카테고리", selection: $category) {
-                    Text("식단").tag(InputCategory.food)
-                    Text("운동").tag(InputCategory.exercise)
-                    Text("미디어").tag(InputCategory.media)
-                    Text("기타").tag(InputCategory.other)
-                }
-                // 빠른 추가(2026-08-16) — 카테고리 아래에 둔다. 카테고리가 정해져야 목록이 나온다.
-                // 진행 방식까지 세팅(2026-08-18 사용자 지시) — 「N분」 문구면 타이머, 그 외 체크만.
-                QuickAddChips(suggestions: quickAddSuggestions) { picked in
-                    title = picked.title
-                    applyTitleTimeParse()
-                    progressKind = picked.kind
-                    if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
-                }
-                Section {
-                    // 상호 배타(둘 다 끔 = 단발 체크 — Output과 동일 문법, 2026-07-23)
-                    Toggle("반복", isOn: Binding(
-                        get: { repeats },
-                        set: { on in repeats = on; if on { cycleBased = false } }
-                    ))
-                    .tint(Ink.text)
-                    if repeats {
-                        HStack(spacing: 6) {
-                            ForEach(Self.calendarChoices, id: \.self) { freq in
-                                FreqChip(label: freq.shortLabel ?? "", selected: calendarFreq == freq) {
-                                    calendarFreq = freq
-                                }
-                            }
-                        }
-                    }
-                    Toggle("주기 기준", isOn: Binding(
-                        get: { cycleBased },
-                        set: { on in cycleBased = on; if on { repeats = false } }
-                    ))
-                    .tint(Ink.text)
-                    if cycleBased {
-                        Picker("시작 계절", selection: $anchor) {
-                            ForEach(SeasonAnchor.allCases) { Text(seasonMeta(for: $0.phase).name).tag($0) }   // rawValue = 저장 키, 표시 아님
-                        }
-                        Stepper(Loc.fmt("계절 시작 +%1$@일", "\(offset)"), value: $offset, in: 0...13)
-                        Toggle("매 주기 반복", isOn: $everyCycle)
-                    }
-                }
-                progressSection
-                if editing != nil {
-                    // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
-                    Section {
-                        Button("Input 삭제", role: .destructive) { showDeleteConfirm = true }
-                            .foregroundStyle(Ink.danger)
-                    }
+                dismiss()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("체크 기록이 함께 지워져요. 되돌릴 수 없어요.")
+        }
+        .onAppear { prefillSeasonIfNeeded() }
+        .interactiveDismissDisabled(!title.isEmpty)
+    }
+
+    private static let categoryChoices: [(category: InputCategory, label: String)] = [
+        (.food, Loc.str("식단")), (.exercise, Loc.str("운동")), (.media, Loc.str("미디어")), (.other, Loc.str("기타")),
+    ]
+
+    private var categorySection: some View {
+        InkSection(eyebrow: Loc.str("카테고리")) {
+            InkChipFlow {
+                ForEach(Array(Self.categoryChoices.enumerated()), id: \.offset) { _, choice in
+                    InkChoiceChip(label: choice.label, on: category == choice.category) { category = choice.category }
                 }
             }
-            .confirmationDialog("이 Input을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-                Button("삭제", role: .destructive) {
-                    if let item = editing {
-                        // 완료 기록 동반 삭제(§5.5.2 고아 방지) — QuickDelete와 같은 경로
-                        let all = (try? modelContext.fetch(FetchDescriptor<ItemCompletion>())) ?? []
-                        QuickDeleteTarget.input(item).delete(from: modelContext, completions: all)
-                    }
-                    dismiss()
-                }
-                Button("취소", role: .cancel) {}
-            } message: {
-                Text("체크 기록이 함께 지워져요. 되돌릴 수 없어요.")
-            }
-            .navigationTitle(editing == nil ? Loc.str("Input 추가") : Loc.str("Input 수정"))
-            .onAppear { prefillSeasonIfNeeded() }
-            .navigationBarTitleDisplayMode(.inline)
-            .interactiveDismissDisabled(!title.isEmpty)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("저장") {
-                        let schedule: InputSchedule
-                        if cycleBased {
-                            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase), dayOffset: offset,
-                                                                      repeatsEveryCycle: everyCycle, overflowRule: .clamp))
-                        } else if repeats {
-                            switch calendarFreq {
-                            case .weekly:  schedule = .weekly
-                            case .monthly: schedule = .monthly
-                            default:       schedule = .daily
-                            }
-                        } else {
-                            schedule = .once
-                        }
-                        if let item = editing {
-                            // createdAt·backfilled는 건드리지 않는다 — 시작 기준선·소급 플래그는 생성 시점의 사실
-                            item.title = title
-                            item.category = category
-                            item.schedule = schedule
-                            item.timeMinutes = timeMinutes
-                            applyProgress(to: item)
-                        } else {
-                            let cal = Calendar.current
-                            let item = InputItem(title: title, category: category, schedule: schedule,
-                                                 createdAt: anchorDate(for: day),
-                                                 backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now))
-                            item.timeMinutes = timeMinutes
-                            applyProgress(to: item)
-                            modelContext.insert(item)
-                        }
-                        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
-                        dismiss()
-                    }
-                    .foregroundStyle(Ink.text)
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
+            // 빠른 추가(2026-08-16) — 카테고리 아래에 둔다. 카테고리가 정해져야 목록이 나온다.
+            // 진행 방식까지 세팅(2026-08-18 사용자 지시) — 「N분」 문구면 타이머, 그 외 체크만.
+            QuickAddChips(suggestions: quickAddSuggestions) { picked in
+                title = picked.title
+                applyTitleTimeParse()
+                progressKind = picked.kind
+                if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
             }
         }
+    }
+
+    private var repeatSection: some View {
+        InkSection(eyebrow: Loc.str("반복")) {
+            // 상호 배타(둘 다 끔 = 단발 체크 — Output과 동일 문법, 2026-07-23)
+            InkToggleRow(label: Loc.str("반복"), isOn: Binding(
+                get: { repeats },
+                set: { on in repeats = on; if on { cycleBased = false } }
+            ))
+            if repeats {
+                InkChipFlow {
+                    ForEach(Self.calendarChoices, id: \.self) { freq in
+                        InkChoiceChip(label: freq.shortLabel ?? "", on: calendarFreq == freq) { calendarFreq = freq }
+                    }
+                }
+            }
+            InkDivider()
+            InkToggleRow(label: Loc.str("주기 기준"), isOn: Binding(
+                get: { cycleBased },
+                set: { on in cycleBased = on; if on { repeats = false } }
+            ))
+            if cycleBased {
+                SeasonChipRow(selection: $anchor)
+                InkStepper(label: Loc.fmt("계절 시작 +%1$@일", "\(offset)"), value: $offset, range: 0...13)
+                InkToggleRow(label: Loc.str("매 주기 반복"), isOn: $everyCycle)
+            }
+        }
+    }
+
+    private func save() {
+        let schedule: InputSchedule
+        if cycleBased {
+            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase), dayOffset: offset,
+                                                      repeatsEveryCycle: everyCycle, overflowRule: .clamp))
+        } else if repeats {
+            switch calendarFreq {
+            case .weekly:  schedule = .weekly
+            case .monthly: schedule = .monthly
+            default:       schedule = .daily
+            }
+        } else {
+            schedule = .once
+        }
+        if let item = editing {
+            // createdAt·backfilled는 건드리지 않는다 — 시작 기준선·소급 플래그는 생성 시점의 사실
+            item.title = title
+            item.category = category
+            item.schedule = schedule
+            item.timeMinutes = timeMinutes
+            applyProgress(to: item)
+        } else {
+            let cal = Calendar.current
+            let item = InputItem(title: title, category: category, schedule: schedule,
+                                 createdAt: anchorDate(for: day),
+                                 backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now))
+            item.timeMinutes = timeMinutes
+            applyProgress(to: item)
+            modelContext.insert(item)
+        }
+        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
+        dismiss()
     }
 }
 
@@ -870,228 +843,226 @@ struct OutputAddSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                // 이 시트가 뭘 만드는지 한 줄(2026-09-08 베타 "아웃풋이 뭔지 설명") — 온보딩·ⓘ와 같은 문안
-                Text(CardKind.output.info)
-                    .font(.footnote)
-                    .foregroundStyle(Ink.text.opacity(0.6))
-                    .listRowBackground(Color.clear)
-                TextField("예: 자격증 공부", text: $title)
-                    .onChange(of: title) { applyTitleTimeParse() }
-                cardTimeHint(timeMinutes: timeMinutes) {
-                    rejectedMatch = lastMatch
-                    timeMinutes = nil
-                    lastMatch = nil
+        InkSheetScaffold(eyebrow: editing == nil ? Loc.str("Output 추가") : Loc.str("Output 수정"),
+                         saveTitle: Loc.str("저장"),
+                         saveEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
+                         phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: day)),
+                         onCancel: { dismiss() }, onSave: save) {
+            // 이 시트가 뭘 만드는지 한 줄(2026-09-08 베타 "아웃풋이 뭔지 설명") — 온보딩·ⓘ와 같은 문안
+            InkNote(CardKind.output.info)
+            InkTitleField(text: $title, prompt: Loc.str("예: 자격증 공부"))
+                .onChange(of: title) { applyTitleTimeParse() }
+            cardTimeHint(timeMinutes: timeMinutes) {
+                rejectedMatch = lastMatch
+                timeMinutes = nil
+                lastMatch = nil
+            }
+            // 빠른 추가(2026-08-16) — 제목만이 아니라 진행 방식·목표까지 채운다.
+            // 수정 모드에선 띄우지 않는다: 이미 값이 있는 카드를 덮어쓸 자리가 아니다.
+            if editing == nil {
+                QuickAddChips(suggestions: QuickAdd.outputs(level: energyLevel)) { picked in
+                    title = picked.title
+                    applyTitleTimeParse()
+                    kind = picked.kind ?? .checkOnly
+                    if picked.sessions > 0 { targetSessions = picked.sessions }
+                    if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
                 }
-                // 빠른 추가(2026-08-16) — 제목만이 아니라 진행 방식·목표까지 채운다.
-                // 수정 모드에선 띄우지 않는다: 이미 값이 있는 카드를 덮어쓸 자리가 아니다.
-                if editing == nil {
-                    QuickAddChips(suggestions: QuickAdd.outputs(level: energyLevel)) { picked in
-                        title = picked.title
-                        applyTitleTimeParse()
-                        kind = picked.kind ?? .checkOnly
-                        if picked.sessions > 0 { targetSessions = picked.sessions }
-                        if picked.seconds > 0 { targetMinutes = picked.seconds / 60 }
+            }
+            repeatSection
+            targetDateSection
+            progressSection
+            if editing != nil {
+                // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
+                InkDeleteButton(title: Loc.str("Output 삭제")) { showDeleteConfirm = true }
+            }
+        } footer: {
+            EmptyView()
+        }
+        .confirmationDialog("이 Output을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("삭제", role: .destructive) {
+                if let item = editing {
+                    QuickDeleteTarget.output(item).delete(from: modelContext, completions: [])
+                }
+                dismiss()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("진행도가 함께 지워져요. 되돌릴 수 없어요.")
+        }
+        .onAppear { prefillSeasonIfNeeded() }
+        .interactiveDismissDisabled(!title.isEmpty)
+    }
+
+    private var seasonName: String { seasonMeta(for: anchor.phase).name }
+
+    private var repeatSection: some View {
+        InkSection(eyebrow: Loc.str("반복")) {
+            // 표기 개편(2026-08-01 베타 피드백): 「반복」→「기간 반복」(달력 주기),
+            // 「주기 기준」→「<계절> 반복」(몸의 주기). 상호 배타 — 둘 다 끄면 반복 없음.
+            InkToggleRow(label: Loc.str("기간 반복"), isOn: Binding(
+                get: { repeats },
+                set: { on in repeats = on; if on { cycleBased = false } }
+            ))
+            if repeats {
+                InkChipFlow {
+                    ForEach(Self.calendarChoices, id: \.self) { freq in
+                        InkChoiceChip(label: freq.shortLabel ?? "", on: calendarFreq == freq) { calendarFreq = freq }
                     }
                 }
-                Section {
-                    // 표기 개편(2026-08-01 베타 피드백): 「반복」→「기간 반복」(달력 주기),
-                    // 「주기 기준」→「<계절> 반복」(몸의 주기). 상호 배타 — 둘 다 끄면 반복 없음.
-                    Toggle("기간 반복", isOn: Binding(
-                        get: { repeats },
-                        set: { on in repeats = on; if on { cycleBased = false } }
-                    ))
-                    .tint(Ink.text)
-                    if repeats {
-                        HStack(spacing: 6) {
-                            ForEach(Self.calendarChoices, id: \.self) { freq in
-                                FreqChip(label: freq.shortLabel ?? "", selected: calendarFreq == freq) {
-                                    calendarFreq = freq
-                                }
-                            }
-                        }
-                    }
-                    Toggle(Loc.fmt("%1$@ 반복", "\(seasonMeta(for: anchor.phase).name)"), isOn: Binding(
-                        get: { cycleBased },
-                        set: { on in cycleBased = on; if on { repeats = false } }
-                    ))
-                    .tint(Ink.text)
-                    if cycleBased {
-                        Picker("어느 계절", selection: $anchor) {
-                            ForEach(SeasonAnchor.allCases) { Text(seasonMeta(for: $0.phase).name).tag($0) }   // rawValue = 저장 키, 표시 아님
-                        }
-                        // 계절 전체 ↔ N일차(2026-08-01) — 전체는 그 계절 내내, N일차는 하루만
-                        Picker("범위", selection: $wholePhase) {
-                            Text(Loc.fmt("%1$@ 전체", "\(seasonMeta(for: anchor.phase).name)")).tag(true)
-                            Text(Loc.fmt("%1$@ 며칠째", "\(seasonMeta(for: anchor.phase).name)")).tag(false)
-                        }
-                        .pickerStyle(.segmented)
-                        if wholePhase {
-                            Text(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(seasonMeta(for: anchor.phase).name)"))
-                                .font(.footnote)
-                                .foregroundStyle(Ink.text.opacity(0.5))
-                        } else {
-                            Stepper(Loc.fmt("%1$@ %2$@일차", "\(seasonMeta(for: anchor.phase).name)", "\(offset + 1)"), value: $offset, in: 0...13)
-                        }
-                        Toggle("매 주기 반복", isOn: $everyCycle)
-                    }
+            }
+            InkDivider()
+            InkToggleRow(label: Loc.fmt("%1$@ 반복", "\(seasonName)"), isOn: Binding(
+                get: { cycleBased },
+                set: { on in cycleBased = on; if on { repeats = false } }
+            ))
+            if cycleBased {
+                SeasonChipRow(selection: $anchor)
+                // 계절 전체 ↔ N일차(2026-08-01) — 전체는 그 계절 내내, N일차는 하루만
+                InkChipFlow {
+                    InkChoiceChip(label: Loc.fmt("%1$@ 전체", "\(seasonName)"), on: wholePhase) { wholePhase = true }
+                    InkChoiceChip(label: Loc.fmt("%1$@ 며칠째", "\(seasonName)"), on: !wholePhase) { wholePhase = false }
                 }
-                // 디데이(2026-08-01 베타 피드백) — 남은 날짜를 카드에 표시. 알림·마감 강제는 없다.
-                Section {
-                    Toggle("목표일 정하기", isOn: $hasTargetDate.animation())
+                if wholePhase {
+                    InkNote(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(seasonName)"))
+                } else {
+                    InkStepper(label: Loc.fmt("%1$@ %2$@일차", "\(seasonName)", "\(offset + 1)"), value: $offset, range: 0...13)
+                }
+                InkToggleRow(label: Loc.str("매 주기 반복"), isOn: $everyCycle)
+            }
+        }
+    }
+
+    /// 디데이(2026-08-01 베타 피드백) — 남은 날짜를 카드에 표시. 알림·마감 강제는 없다.
+    private var targetDateSection: some View {
+        InkSection {
+            InkToggleRow(label: Loc.str("목표일 정하기"), isOn: $hasTargetDate)
+            if hasTargetDate {
+                // 하한 = 오늘(2026-08-20 감사 — 과거 목표일은 occursByCalendar의
+                // 생성일≤일≤목표일이 공집합이 돼 전 표면에서 안 뜨는 유령 카드가 된다).
+                // 기존 아이템의 과거 목표일은 min으로 살려 편집은 막지 않는다
+                InkRow(label: Loc.str("목표일")) {
+                    DatePicker("", selection: $targetDate,
+                               in: min(targetDate, Calendar.current.startOfDay(for: .now))...,
+                               displayedComponents: [.date])
+                        .labelsHidden()
                         .tint(Ink.text)
-                    if hasTargetDate {
-                        // 하한 = 오늘(2026-08-20 감사 — 과거 목표일은 occursByCalendar의
-                        // 생성일≤일≤목표일이 공집합이 돼 전 표면에서 안 뜨는 유령 카드가 된다).
-                        // 기존 아이템의 과거 목표일은 min으로 살려 편집은 막지 않는다
-                        DatePicker("목표일", selection: $targetDate,
-                                   in: min(targetDate, Calendar.current.startOfDay(for: .now))...,
-                                   displayedComponents: [.date])
-                    }
-                }
-                Section("진행 방식") {
-                    // 5종이 되며 segmented가 좁아져 menu로 전환(2026-08-09 타이머·스톱워치 추가)
-                    // 체크만 추가(2026-08-18 사용자 지시) — 저장은 percent 0↔1(파생 완료 유지)
-                    Picker("진행 방식", selection: $kind) {
-                        // 라벨만 개명(2026-08-01 베타 피드백) — rawValue "subtasks"는 저장 호환 때문에 불변
-                        // 「체크만」은 하루 만에 철회(2026-08-18 베타 "체크리스트가 이미 있네") —
-                        // enum 케이스·렌더 경로는 유지한다(빌드 385로 만든 저장분 호환).
-                        Text("체크리스트").tag(OutputProgressKind.subtasks)
-                        Text("세션").tag(OutputProgressKind.sessions)
-                        Text("퍼센트").tag(OutputProgressKind.percent)
-                        Text("타이머").tag(OutputProgressKind.timer)
-                        Text("스톱워치").tag(OutputProgressKind.stopwatch)
-                    }
-                    .pickerStyle(.menu)
-                    .tint(Ink.text)
-                    if kind == .sessions {
-                        Stepper(Loc.fmt("목표 %lld세션", targetSessions), value: $targetSessions, in: 1...50)
-                    }
-                    if kind == .timer {
-                        Stepper(Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, in: 5...240, step: 5)
-                        Text("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요.")
-                            .font(.footnote)
-                            .foregroundStyle(Ink.text.opacity(0.5))
-                    }
-                    if kind == .stopwatch {
-                        Text("시작하면 잠금화면에서도 현재 시간을 확인할 수 있어요.")
-                            .font(.footnote)
-                            .foregroundStyle(Ink.text.opacity(0.5))
-                    }
-                    if kind == .subtasks {
-                        // 수정 모드: 기존 항목은 체크 상태 보존을 위해 여기서 안 고친다 — 추가만(체크·해제는 카드에서)
-                        if let existing = editing?.subtasks?.sorted(by: { $0.order < $1.order }),
-                           !existing.isEmpty {
-                            ForEach(existing) { sub in
-                                Text(sub.title).font(.footnote).foregroundStyle(Ink.text.opacity(0.6))
-                            }
-                        }
-                        ForEach(subtasks, id: \.self) { Text($0).font(.footnote) }
-                        HStack {
-                            TextField("체크리스트 항목 추가", text: $subtaskDraft)
-                            Button("추가") {
-                                let t = subtaskDraft.trimmingCharacters(in: .whitespaces)
-                                if !t.isEmpty { subtasks.append(t); subtaskDraft = "" }
-                            }
-                            .disabled(subtaskDraft.trimmingCharacters(in: .whitespaces).isEmpty)
-                        }
-                    }
-                    if kind == .percent {
-                        HStack(spacing: 10) {
-                            Slider(value: $initialPercent, in: 0...1)
-                                .tint(Ink.text)
-                            Text(initialPercent.formatted(.percent.precision(.fractionLength(0))))
-                                .font(.footnote)
-                                .monospacedDigit()
-                                .foregroundStyle(Ink.text.opacity(0.7))
-                                .frame(width: 44, alignment: .trailing)
-                        }
-                    }
-                }
-                if editing != nil {
-                    // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
-                    Section {
-                        Button("Output 삭제", role: .destructive) { showDeleteConfirm = true }
-                            .foregroundStyle(Ink.danger)
-                    }
-                }
-            }
-            .confirmationDialog("이 Output을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-                Button("삭제", role: .destructive) {
-                    if let item = editing {
-                        QuickDeleteTarget.output(item).delete(from: modelContext, completions: [])
-                    }
-                    dismiss()
-                }
-                Button("취소", role: .cancel) {}
-            } message: {
-                Text("진행도가 함께 지워져요. 되돌릴 수 없어요.")
-            }
-            .navigationTitle(editing == nil ? Loc.str("Output 추가") : Loc.str("Output 수정"))
-            .onAppear { prefillSeasonIfNeeded() }
-            .navigationBarTitleDisplayMode(.inline)
-            .interactiveDismissDisabled(!title.isEmpty)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { dismiss() }.foregroundStyle(Ink.text)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("저장") {
-                        let schedule: OutputSchedule
-                        if cycleBased {
-                            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase),
-                                                                      dayOffset: wholePhase ? 0 : offset,
-                                                                      repeatsEveryCycle: everyCycle,
-                                                                      overflowRule: .clamp,
-                                                                      wholePhase: wholePhase ? true : nil))
-                        } else if repeats {
-                            switch calendarFreq {
-                            case .weekly:  schedule = .weekly
-                            case .monthly: schedule = .monthly
-                            default:       schedule = .daily
-                            }
-                        } else {
-                            schedule = .once
-                        }
-                        if let item = editing {
-                            // createdAt·완료 기록(loggedSessions·기존 서브태스크 isDone·경과 시간)은 보존
-                            item.title = title
-                            item.schedule = schedule
-                            item.progressKind = kind
-                            item.timeMinutes = timeMinutes
-                            if kind == .sessions { item.targetSessions = targetSessions }
-                            if kind == .timer { item.targetSeconds = targetMinutes * 60 }
-                            if kind == .subtasks, !subtasks.isEmpty {
-                                let base = (item.subtasks ?? []).map(\.order).max().map { $0 + 1 } ?? 0
-                                let added = subtasks.enumerated().map {
-                                    OutputSubtask(title: $0.element, order: base + $0.offset)
-                                }
-                                item.subtasks = (item.subtasks ?? []) + added
-                            }
-                            if kind == .percent { item.percent = initialPercent }
-                            item.targetDate = hasTargetDate ? Calendar.current.startOfDay(for: targetDate) : nil
-                        } else {
-                            let item = OutputItem(title: title, schedule: schedule, progressKind: kind,
-                                                  createdAt: anchorDate(for: day))
-                            item.timeMinutes = timeMinutes
-                            if kind == .sessions { item.targetSessions = targetSessions }
-                            if kind == .timer { item.targetSeconds = targetMinutes * 60 }
-                            if kind == .subtasks {
-                                item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
-                            }
-                            if kind == .percent { item.percent = initialPercent }
-                            if hasTargetDate { item.targetDate = Calendar.current.startOfDay(for: targetDate) }
-                            modelContext.insert(item)
-                        }
-                        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
-                        dismiss()
-                    }
-                    .foregroundStyle(Ink.text)
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
         }
+    }
+
+    // 5종이 되며 segmented가 좁아져 칩으로(2026-08-09 타이머·스톱워치 추가 → 2026-09-08 은필 칩).
+    // 라벨만 개명(2026-08-01 베타 피드백) — rawValue "subtasks"는 저장 호환 때문에 불변.
+    // 「체크만」은 하루 만에 철회(2026-08-18 베타 "체크리스트가 이미 있네") — enum 케이스·렌더 경로는 유지.
+    private static let kindChoices: [(kind: OutputProgressKind, label: String)] = [
+        (.subtasks, Loc.str("체크리스트")), (.sessions, Loc.str("세션")), (.percent, Loc.str("퍼센트")),
+        (.timer, Loc.str("타이머")), (.stopwatch, Loc.str("스톱워치")),
+    ]
+
+    private var progressSection: some View {
+        InkSection(eyebrow: Loc.str("진행 방식")) {
+            InkChipFlow {
+                ForEach(Array(Self.kindChoices.enumerated()), id: \.offset) { _, choice in
+                    InkChoiceChip(label: choice.label, on: kind == choice.kind) { kind = choice.kind }
+                }
+            }
+            if kind == .sessions {
+                InkStepper(label: Loc.fmt("목표 %lld세션", targetSessions), value: $targetSessions, range: 1...50)
+            }
+            if kind == .timer {
+                InkStepper(label: Loc.fmt("목표 %1$@분", "\(targetMinutes)"), value: $targetMinutes, range: 5...240, step: 5)
+                InkNote(Loc.str("시작하면 잠금화면에서도 남은 시간을 확인할 수 있어요."))
+            }
+            if kind == .stopwatch {
+                InkNote(Loc.str("시작하면 잠금화면에서도 현재 시간을 확인할 수 있어요."))
+            }
+            if kind == .subtasks { subtaskEditor }
+            if kind == .percent {
+                HStack(spacing: 10) {
+                    Slider(value: $initialPercent, in: 0...1)
+                        .tint(Ink.text)
+                    Text(initialPercent.formatted(.percent.precision(.fractionLength(0))))
+                        .font(.footnote)
+                        .monospacedDigit()
+                        .foregroundStyle(Ink.text.opacity(0.7))
+                        .frame(width: 44, alignment: .trailing)
+                }
+            }
+        }
+    }
+
+    /// 수정 모드: 기존 항목은 체크 상태 보존을 위해 여기서 안 고친다 — 추가만(체크·해제는 카드에서)
+    @ViewBuilder
+    private var subtaskEditor: some View {
+        if let existing = editing?.subtasks?.sorted(by: { $0.order < $1.order }), !existing.isEmpty {
+            ForEach(existing) { sub in
+                Text(sub.title).font(.footnote).foregroundStyle(Ink.text.opacity(0.6))
+            }
+        }
+        ForEach(subtasks, id: \.self) { Text($0).font(.footnote).foregroundStyle(Ink.text) }
+        HStack {
+            TextField("체크리스트 항목 추가", text: $subtaskDraft)
+                .font(.system(size: 15))
+                .foregroundStyle(Ink.text)
+            Button("추가") {
+                let t = subtaskDraft.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty { subtasks.append(t); subtaskDraft = "" }
+            }
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(Ink.text)
+            .disabled(subtaskDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
+    }
+
+    private func save() {
+        let schedule: OutputSchedule
+        if cycleBased {
+            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase),
+                                                      dayOffset: wholePhase ? 0 : offset,
+                                                      repeatsEveryCycle: everyCycle,
+                                                      overflowRule: .clamp,
+                                                      wholePhase: wholePhase ? true : nil))
+        } else if repeats {
+            switch calendarFreq {
+            case .weekly:  schedule = .weekly
+            case .monthly: schedule = .monthly
+            default:       schedule = .daily
+            }
+        } else {
+            schedule = .once
+        }
+        if let item = editing {
+            // createdAt·완료 기록(loggedSessions·기존 서브태스크 isDone·경과 시간)은 보존
+            item.title = title
+            item.schedule = schedule
+            item.progressKind = kind
+            item.timeMinutes = timeMinutes
+            if kind == .sessions { item.targetSessions = targetSessions }
+            if kind == .timer { item.targetSeconds = targetMinutes * 60 }
+            if kind == .subtasks, !subtasks.isEmpty {
+                let base = (item.subtasks ?? []).map(\.order).max().map { $0 + 1 } ?? 0
+                let added = subtasks.enumerated().map {
+                    OutputSubtask(title: $0.element, order: base + $0.offset)
+                }
+                item.subtasks = (item.subtasks ?? []) + added
+            }
+            if kind == .percent { item.percent = initialPercent }
+            item.targetDate = hasTargetDate ? Calendar.current.startOfDay(for: targetDate) : nil
+        } else {
+            let item = OutputItem(title: title, schedule: schedule, progressKind: kind,
+                                  createdAt: anchorDate(for: day))
+            item.timeMinutes = timeMinutes
+            if kind == .sessions { item.targetSessions = targetSessions }
+            if kind == .timer { item.targetSeconds = targetMinutes * 60 }
+            if kind == .subtasks {
+                item.subtasks = subtasks.enumerated().map { OutputSubtask(title: $0.element, order: $0.offset) }
+            }
+            if kind == .percent { item.percent = initialPercent }
+            if hasTargetDate { item.targetDate = Calendar.current.startOfDay(for: targetDate) }
+            modelContext.insert(item)
+        }
+        confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
+        dismiss()
     }
 
     /// 제목에서 시각 읽기 — InputAddSheet와 동형(원문 불변·지운 표현 재적용 안 함)
@@ -1173,14 +1144,16 @@ struct QuickAddChips: View {
         drawn = Array(suggestions.shuffled().prefix(2))
     }
 
+    /// 은필 윤곽 칩(2026-09-08 시트 재질 통일 — InkChoiceChip 꺼짐 상태와 같은 재질)
     private func chip(_ title: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "plus").font(.caption2.weight(.semibold))
-            Text(title).font(.footnote)
+            Text(title).font(.system(size: 14))
         }
         .foregroundStyle(Ink.text.opacity(0.85))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Ink.text.opacity(0.07), in: Capsule())
+        .padding(.horizontal, 14)
+        .frame(height: 38)
+        .background(Color(red: 250 / 255, green: 250 / 255, blue: 248 / 255).opacity(0.6), in: Capsule())
+        .overlay(Capsule().strokeBorder(Ink.winter.opacity(0.45), lineWidth: 1))
     }
 }
