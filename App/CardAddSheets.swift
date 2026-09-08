@@ -497,6 +497,9 @@ struct QuickCardBar: View {
                 }
         )
         .task {
+            #if DEBUG
+            if UserDefaults.standard.bool(forKey: "noAutoFocus") { return }   // 찰칵 키보드 없는 컷
+            #endif
             // 등장 애니(0.22s)와 겹치면 포커스 요청이 씹히는 사례가 있어 한 박자 뒤에 준다
             try? await Task.sleep(nanoseconds: 120_000_000)
             titleFocused = true

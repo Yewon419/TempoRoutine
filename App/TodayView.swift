@@ -188,7 +188,7 @@ struct TodayView: View {
         return MoodlinePool.base(for: info.meta.phase, on: today)
     }
 
-    var body: some View {
+    private var todayBody: some View {
         ZStack(alignment: .top) {
             if ThemeStore.chrome.photographicGround {
                 TicketGround(phase: snapshot.phase(on: today))   // 계절 유화 + 스크림(시안 §3)
@@ -282,7 +282,16 @@ struct TodayView: View {
             compactBar
             }
         }
-        .overlay(alignment: .bottom) { quickAddLayer }
+    }
+
+    var body: some View {
+        // 바깥 ZStack = 빠른 카드 바의 그릇(캘린더와 같은 구조 — 본문에만 키보드 무시를 걸어야 바만 키보드를 따라
+        // 올라온다). 단 여기는 체크인 한 줄 기록의 키보드 회피가 필요해서 바가 떠 있는 동안만 끈다.
+        ZStack(alignment: .bottom) {
+            todayBody
+                .ignoresSafeArea(.keyboard, edges: quickAdd == nil ? [] : .bottom)
+            quickAddLayer
+        }
         .animation(.easeOut(duration: 0.22), value: quickAdd)
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet().themeColorScheme() }
         // 테마 탭 시트 표시는 RootTabView 한 곳 — 진입점이 둘(여기·설정)이라 각자 띄우면
