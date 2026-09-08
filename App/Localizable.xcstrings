@@ -9241,25 +9241,25 @@
         }
       }
     },
-    "매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!": {
+    "매일 체크인하면 씨앗이 모이고, 씨앗으로 새 테마를 살 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check in every day to collect seeds, and use your seeds to buy new themes!"
+            "value": "Check in every day to collect seeds, and spend them on new themes."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "毎日チェックインするとたねが集まり、たねで新しいテーマを購入できます！"
+            "value": "毎日チェックインするとたねが集まり、たねで新しいテーマを購入できます。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "每天打卡就能收集种子，用种子可以购买新主题！"
+            "value": "每天打卡就能收集种子，用种子可以购买新主题。"
           }
         }
       }
@@ -10613,25 +10613,25 @@
         }
       }
     },
-    "봄이에요. 기록상 이맘때 에너지가 생긴대요. 슬슬 시동을 걸어볼까요!": {
+    "봄이에요. 기록상 이맘때 에너지가 생긴대요. 슬슬 시동을 걸어볼까요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "It's Spring. Your records say energy tends to come back around now. Shall we slowly get going!"
+            "value": "It's Spring. Your records say energy tends to come back around now. Shall we slowly get going?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "春です。記録では、この時期にエネルギーが戻ってくるようです。そろそろ動き出してみましょうか！"
+            "value": "春です。記録では、この時期にエネルギーが戻ってくるようです。そろそろ動き出してみましょうか。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "春天了。记录显示这个时候精力会回来。可以慢慢动起来啦！"
+            "value": "春天了。记录显示这个时候精力会回来。可以慢慢动起来了。"
           }
         }
       }
@@ -11480,25 +11480,25 @@
         }
       }
     },
-    "새로운 테마, 새로운 기분으로 템포루틴을 즐겨보세요!": {
+    "새 테마로 갈아입었어요. 새 기분으로 지내봐요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enjoy TempoRoutine with a new theme and a new mood!"
+            "value": "Your new theme is on. Enjoy the fresh mood."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "新しいテーマで、新しい気分でテンポルーティンを楽しんでください！"
+            "value": "新しいテーマに着替えました。新しい気分で過ごしてみてください。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用新主题、新心情享受 TempoRoutine 吧！"
+            "value": "换上新主题了。用新心情过日子吧。"
           }
         }
       }
@@ -14324,25 +14324,25 @@
         }
       }
     },
-    "여름이에요. 기록상 이맘때 가장 빛났어요. 마음껏 몰입해도 좋아요!": {
+    "여름이에요. 기록상 이맘때 가장 빛났어요. 마음껏 몰입해도 좋아요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "It's Summer. Your records show you shone brightest around now. Feel free to dive right in!"
+            "value": "It's Summer. Your records show you shone brightest around now. Feel free to dive right in."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "夏です。記録では、この時期がいちばん輝いていました。思いきり没頭しても大丈夫です！"
+            "value": "夏です。記録では、この時期がいちばん輝いていました。思いきり没頭しても大丈夫です。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "夏天了。记录显示这个时候你最闪耀。可以尽情投入！"
+            "value": "夏天了。记录显示这个时候你最闪耀。可以尽情投入。"
           }
         }
       }
@@ -14392,25 +14392,25 @@
         }
       }
     },
-    "여름이에요. 기록상 이맘때의 당신은 밝았어요. 하고 싶은 만큼 해봐요!": {
+    "여름이에요. 기록상 이맘때는 밝았어요. 하고 싶은 만큼 해봐요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "It's Summer. Your records show you were bright around this time. Do as much as you feel like!"
+            "value": "It's Summer. Your records show this time was bright. Do as much as you feel like."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "夏です。記録では、この時期のあなたは明るかったです。やりたいだけやってみてください！"
+            "value": "夏です。記録では、この時期は明るかったです。やりたいだけやってみてください。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "现在是夏。记录显示这个时候的你很明亮。想做多少就做多少吧！"
+            "value": "夏天了。记录显示这个时候很明亮。想做多少就做多少。"
           }
         }
       }
@@ -19867,25 +19867,25 @@
         }
       }
     },
-    "커피 %1$@잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!": {
+    "커피 %1$@잔을 받았어요. 덕분에 며칠 더 즐겁게 개발하게 됐어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "I received %1$@ cups of coffee. Thanks to your kindness, I get to keep building happily for a few more days!"
+            "value": "I received %1$@ cups of coffee. Thanks to you, I get to keep building happily for a few more days."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "コーヒーを%1$@杯いただきました。あなたのやさしさのおかげで、あと数日も楽しく開発できます！"
+            "value": "コーヒーを%1$@杯いただきました。おかげで、あと数日も楽しく開発できます。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "收到了%1$@杯咖啡。多亏你的这份心意，我又能开开心心地多开发几天了！"
+            "value": "收到了%1$@杯咖啡。多亏了你，我又能开开心心地多开发几天。"
           }
         }
       }

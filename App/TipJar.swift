@@ -335,7 +335,7 @@ struct TipBubble: View {
 
     private var message: String {
         if store.cups > 0 {
-            return Loc.fmt("커피 %1$@잔을 받았어요. 당신의 친절 덕에 며칠 더 즐겁게 개발하게 됐어요!", "\(store.cups)")
+            return Loc.fmt("커피 %1$@잔을 받았어요. 덕분에 며칠 더 즐겁게 개발하게 됐어요.", "\(store.cups)")
         }
         return Loc.str("광고도 구독도 안 넣고 혼자 개발하고 있어요")
     }

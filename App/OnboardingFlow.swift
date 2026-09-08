@@ -617,7 +617,7 @@ struct OnboardingFlow: View {
     private var primaryLabel: String {
         switch step {
         case 0: Loc.str("다음")   // 「계속」 → 「다음」 단일 라벨(2026-09-07 규칙)
-        case 1: introScene == 0 ? Loc.str("시작") : Loc.str("다음")
+        case 1: introScene == 0 ? Loc.str("시작하기") : Loc.str("다음")   // 「시작」→「시작하기」 단일(2026-09-09 라벨 통일)
         case 2, 3, 4, 5, 6: Loc.str("다음")
         // ⑥ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
         default: selfReports.isEmpty ? Loc.str("시작하기") : Loc.str("오늘 화면으로")

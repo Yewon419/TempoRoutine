@@ -583,6 +583,7 @@ struct RhythmView: View {
                     .frame(height: 2)
             }
             .fixedSize()
+            .frame(minWidth: 44, minHeight: 44)   // 히트 영역 44(2026-09-09 appllama 완료 정의) — 시각은 caption 그대로
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

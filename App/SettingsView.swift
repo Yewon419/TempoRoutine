@@ -164,7 +164,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
-                    Text("매일매일 체크인하면 씨앗을 모을 수 있고, 씨앗으로 새 테마를 구매할 수 있어요!")
+                    Text("매일 체크인하면 씨앗이 모이고, 씨앗으로 새 테마를 살 수 있어요.")
                         .foregroundStyle(Ink.groundSub)
                 }
                 // 구입 내역(2026-09-04 대표님 지시) — 결제(테마 패스·커피)와 씨앗 구매를 한 화면에.

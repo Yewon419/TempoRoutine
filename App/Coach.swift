@@ -125,7 +125,7 @@ enum CoachSteps {
         CoachStep(anchor: .themeSeedBalance, title: Loc.str("지금 가진 씨앗"),
                   body: Loc.str("하루 체크인을 완성하면 씨앗이 하나씩 모여요.")),
         CoachStep(anchor: .themeCardAction, title: Loc.str("테마의 적용도 이곳에서 할 수 있어요."),
-                  body: Loc.str("새로운 테마, 새로운 기분으로 템포루틴을 즐겨보세요!")),
+                  body: Loc.str("새 테마로 갈아입었어요. 새 기분으로 지내봐요.")),
     ]
 }
 
