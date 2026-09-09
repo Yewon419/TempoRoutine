@@ -50,6 +50,13 @@ struct InkSheetScaffold<Content: View, Footer: View>: View {
         .padding(.top, 6)
         .padding(.bottom, 4)
         .centeredColumn(560)
+        .frame(maxWidth: .infinity)
+        // 하단 바와 같은 지면 배경(2026-09-09 베타 "스크롤하면 취소랑 글씨 겹치는거") — 본문이 밑으로 흐른다
+        .background {
+            Ink.paper.opacity(0.92)
+                .overlay(alignment: .bottom) { Rectangle().fill(Ink.accent.opacity(0.18)).frame(height: 1) }
+                .ignoresSafeArea(edges: .top)
+        }
     }
 
     private var bottomBar: some View {

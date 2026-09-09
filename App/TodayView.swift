@@ -149,6 +149,8 @@ struct TodayView: View {
     @State private var addSheet: CardKind?
     /// Input·Output 기본 추가 = 하단 바(2026-09-08 대표님 — 캘린더 빠른 일정처럼). 시트는 바를 위로 끌었을 때만.
     @State private var quickAdd: CardKind?
+    /// 일정 + = 캘린더와 같은 빠른 일정 바(2026-09-09 베타 "일정도 일단 하단바부터 띄워줘")
+    @State private var quickSchedule = false
     /// 빈 구획 예시 칩에서 연 빠른 바의 초안(2026-09-09)
     @State private var quickPreset: QuickAdd.Suggestion?
     @State private var expandRequest: CardAddRequest?
@@ -157,7 +159,6 @@ struct TodayView: View {
     @State private var isCollapsed = false
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
-    @State private var recapDismissTick = 0  // 리캡 닫기 리렌더(2026-08-31 A3 — 판정이 UserDefaults라)
     // 계절 넘김(2026-08-31 A1) — 마지막으로 본 계절. 빈 값 = 첫 실행(task가 조용히 채움)
     @AppStorage(SeasonTurnStore.lastSeenKey) private var lastSeenPhaseRaw = ""
     // 알림 권한 안내 카드(2026-08-08) — 기본 켬 알림의 능동 권한 획득 경로, 1회
@@ -256,15 +257,8 @@ struct TodayView: View {
                         section(kind: .input) { inputSection }
                         section(kind: .output) { outputSection }
                     }
-                    // 주기 리캡(2026-08-31 A3) — 새 주기 첫 진입에 한 장, 닫으면 발행 확정.
-                    // 맨 아래로(2026-09-09) — 돌아보기는 오늘 할 일이 아니라 읽을거리다.
-                    if let recap = CycleRecapData.pending(snapshot: snapshot, checkIns: checkIns) {
-                        CycleRecapCard(data: recap) {
-                            lightFeedback += 1
-                            CycleRecapStore.markIssued(newStart: recap.end)
-                            recapDismissTick += 1   // 저장만으론 뷰가 안 갱신된다 — 리렌더 트리거
-                        }
-                    }
+                    // 주기 리캡(2026-08-31 A3)은 오늘 탭에서 내렸다(2026-09-09 베타 "지난 주기 돌아보기 없애자").
+                    // 판정·발행 코드(CycleRecap.swift)는 존치 — 다른 표면에 다시 올릴 때 그대로 쓴다.
                 }
                 .padding(20)   // 상단 추가 여백 없음 — 캘린더 탭과 로고 높이 통일(2026-08-18 베타 피드백)
                 .centeredColumn(1000)
@@ -341,7 +335,7 @@ struct TodayView: View {
             // 찰칵 전용(2026-09-08) — `-openSheet schedule|input|output`은 + 누른 상태(일정=시트, 카드=바),
             // `input-full|output-full`은 바를 끌어올린 전체 시트
             switch UserDefaults.standard.string(forKey: "openSheet") {
-            case "schedule": addSheet = .schedule
+            case "schedule": quickSchedule = true
             case "input": quickAdd = .input
             case "output": quickAdd = .output
             case "input-full": expandRequest = CardAddRequest(kind: .input, title: "")
@@ -663,11 +657,15 @@ struct TodayView: View {
     /// 빠른 카드 바 — 캘린더 `quickAddLayer`와 같은 구조(옅은 dim + 아래서 올라오는 바). 뒤 오늘 탭은 그대로 읽힌다.
     @ViewBuilder
     private var quickAddLayer: some View {
-        if quickAdd != nil {
+        if quickAdd != nil || quickSchedule {
             Color.black.opacity(0.12)
                 .ignoresSafeArea()
-                .onTapGesture { quickAdd = nil }
+                .onTapGesture { quickAdd = nil; quickSchedule = false }
                 .transition(.opacity)
+        }
+        if quickSchedule {
+            QuickScheduleBar(day: today, onClose: { quickSchedule = false })
+                .transition(.move(edge: .bottom))
         }
         if let kind = quickAdd {
             QuickCardBar(kind: kind, day: today, currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel,
@@ -819,7 +817,7 @@ struct TodayView: View {
                 Spacer()
                 Button {
                     lightFeedback += 1
-                    if kind == .schedule { addSheet = kind } else { quickAdd = kind }
+                    if kind == .schedule { quickSchedule = true } else { quickAdd = kind }
                 } label: {
                     Image(systemName: "plus")
                         .font(.subheadline.weight(.semibold))

@@ -14892,6 +14892,144 @@
         }
       }
     },
+    "했으면 체크 하나로 끝나요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One check when it's done."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "やったらチェックひとつで終わり。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "做完打个勾就行。"
+          }
+        }
+      }
+    },
+    "항목을 나눠 하나씩 체크해요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Split it into items and check them off one by one."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "項目に分けてひとつずつチェックします。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分成小项，一项一项打勾。"
+          }
+        }
+      }
+    },
+    "목표 횟수를 정하고 할 때마다 한 번씩 더해요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a target count and add one each time you do it."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標回数を決めて、やるたびに1回ずつ足します。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "定个目标次数，每做一次加一。"
+          }
+        }
+      }
+    },
+    "얼마나 됐는지 %로 남겨요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log how far along you are as a percentage."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "どこまで進んだかを%で残します。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用百分比记录进度。"
+          }
+        }
+      }
+    },
+    "목표 시간을 정하고 시작하면 남은 시간을 세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a target time and count down once you start."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標時間を決めて、始めたら残り時間を数えます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "定个目标时间，开始后倒计时。"
+          }
+        }
+      }
+    },
+    "쓴 시간을 그대로 재요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just measure the time you spend."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使った時間をそのまま計ります。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直接计时。"
+          }
+        }
+      }
+    },
     "예": {
       "extractionState": "manual",
       "localizations": {

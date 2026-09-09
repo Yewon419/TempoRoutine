@@ -162,12 +162,8 @@ struct ScheduleAddSheet: View {
             if !reminderChoices.contains(where: { $0.minutes == reminderMinutes }) { reminderMinutes = -1 }
         }
         .interactiveDismissDisabled(!title.isEmpty)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("완료") { titleFocused = false }.foregroundStyle(Ink.text)
-            }
-        }
+        // 키보드 「완료」 없음(2026-09-09 베타 "추가랑 완료 버튼이 겹침" — iOS 26 부유 키보드 툴바가
+        // 바의 「추가」 위에 앉는다). 리턴 = 저장, 바깥 탭 = 닫기라 「완료」가 할 일이 없다.
     }
 
     private var whenSection: some View {
@@ -501,15 +497,8 @@ struct QuickCardBar: View {
                     if value.translation.height < -48 { onExpand(trimmed) }
                 }
         )
-        .toolbar {
-            // 키보드 위 「완료」 = 키보드만 내린다(칩·「추가」는 그대로) — 시트들과 같은 문법
-            if titleFocused {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("완료") { titleFocused = false }.foregroundStyle(Ink.text)
-                }
-            }
-        }
+        // 키보드 「완료」 없음(2026-09-09 베타 "추가랑 완료 버튼이 겹침" — iOS 26 부유 키보드 툴바가
+        // 바의 「추가」 위에 앉았다). 리턴 = 저장, 바깥 탭 = 닫기라 「완료」가 할 일이 없다.
         .task {
             #if DEBUG
             if UserDefaults.standard.bool(forKey: "noAutoFocus") { return }   // 찰칵 키보드 없는 컷
@@ -705,6 +694,7 @@ struct InputAddSheet: View {
                     InkChoiceChip(label: choice.label, on: progressKind == choice.kind) { progressKind = choice.kind }
                 }
             }
+            InkNote(progressKindNote(progressKind))   // 고른 방식이 무엇인지 한 줄(2026-09-09 베타)
             if progressKind == .sessions {
                 InkStepper(label: Loc.fmt("목표 %lld회", targetSessions), value: $targetSessions, range: 1...50)
             }
@@ -864,9 +854,10 @@ struct InputAddSheet: View {
                 set: { on in cycleBased = on; if on { repeats = false } }
             ))
             if cycleBased {
+                // 계절만 고른다(2026-09-09 베타 "주기 기준 반복 너무 복잡함, 세부사항 다 없애고 그 계절
+                // 전체 반복으로") — 그 계절 내내 매일, 매 주기. N일차·1회 옵션은 UI에서 내렸다(모델은 그대로).
                 SeasonChipRow(selection: $anchor)
-                InkStepper(label: Loc.fmt("계절 시작 +%1$@일", "\(offset)"), value: $offset, range: 0...13)
-                InkToggleRow(label: Loc.str("매 주기 반복"), isOn: $everyCycle)
+                InkNote(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(seasonMeta(for: anchor.phase).name)"))
             }
         }
     }
@@ -874,8 +865,9 @@ struct InputAddSheet: View {
     private func save() {
         let schedule: InputSchedule
         if cycleBased {
-            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase), dayOffset: offset,
-                                                      repeatsEveryCycle: everyCycle, overflowRule: .clamp))
+            schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase), dayOffset: 0,
+                                                      repeatsEveryCycle: true, overflowRule: .clamp,
+                                                      wholePhase: true))
         } else if repeats {
             switch calendarFreq {
             case .weekly:  schedule = .weekly
@@ -1090,18 +1082,9 @@ struct OutputAddSheet: View {
                 set: { on in cycleBased = on; if on { repeats = false } }
             ))
             if cycleBased {
+                // 계절만 고른다(2026-09-09 베타) — 그 계절 내내 매일, 매 주기. 전체/N일차·1회 옵션은 내렸다.
                 SeasonChipRow(selection: $anchor)
-                // 계절 전체 ↔ N일차(2026-08-01) — 전체는 그 계절 내내, N일차는 하루만
-                InkChipFlow {
-                    InkChoiceChip(label: Loc.fmt("%1$@ 전체", "\(seasonName)"), on: wholePhase) { wholePhase = true }
-                    InkChoiceChip(label: Loc.fmt("%1$@ 며칠째", "\(seasonName)"), on: !wholePhase) { wholePhase = false }
-                }
-                if wholePhase {
-                    InkNote(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(seasonName)"))
-                } else {
-                    InkStepper(label: Loc.fmt("%1$@ %2$@일차", "\(seasonName)", "\(offset + 1)"), value: $offset, range: 0...13)
-                }
-                InkToggleRow(label: Loc.str("매 주기 반복"), isOn: $everyCycle)
+                InkNote(Loc.fmt("%1$@인 날엔 매일 보여요.", "\(seasonName)"))
             }
         }
     }
@@ -1140,6 +1123,7 @@ struct OutputAddSheet: View {
                     InkChoiceChip(label: choice.label, on: kind == choice.kind) { kind = choice.kind }
                 }
             }
+            InkNote(progressKindNote(kind))   // 고른 방식이 무엇인지 한 줄(2026-09-09 베타)
             if kind == .sessions {
                 InkStepper(label: Loc.fmt("목표 %lld세션", targetSessions), value: $targetSessions, range: 1...50)
             }
@@ -1192,10 +1176,10 @@ struct OutputAddSheet: View {
         let schedule: OutputSchedule
         if cycleBased {
             schedule = .cycleAnchored(CycleRecurrence(anchor: .phase(anchor.phase),
-                                                      dayOffset: wholePhase ? 0 : offset,
-                                                      repeatsEveryCycle: everyCycle,
+                                                      dayOffset: 0,
+                                                      repeatsEveryCycle: true,
                                                       overflowRule: .clamp,
-                                                      wholePhase: wholePhase ? true : nil))
+                                                      wholePhase: true))
         } else if repeats {
             switch calendarFreq {
             case .weekly:  schedule = .weekly
@@ -1289,6 +1273,19 @@ func anchorDate(for day: Date) -> Date {
 /// ⚠ **탭해도 저장되지 않는다.** 입력칸을 채울 뿐이고 저장은 시트의 「저장」이 한다 —
 ///   잘못 눌렀을 때 되돌릴 자리가 있어야 하고, 시트가 탭 한 번에 닫히면 수정할 기회가 없다.
 /// 세로로 쌓는 이유: 문구가 길어(「소화 편한 죽 한 그릇」) 가로 한 줄에 3개가 안 들어간다.
+/// 진행 방식 설명 한 줄(2026-09-09 베타 "글씨만 써놓으면 선택하기 힘들잖아") — Input·Output 공용.
+func progressKindNote(_ kind: OutputProgressKind?) -> String {
+    switch kind {
+    case nil: Loc.str("했으면 체크 하나로 끝나요.")
+    case .checkOnly: Loc.str("했으면 체크 하나로 끝나요.")
+    case .subtasks: Loc.str("항목을 나눠 하나씩 체크해요.")
+    case .sessions: Loc.str("목표 횟수를 정하고 할 때마다 한 번씩 더해요.")
+    case .percent: Loc.str("얼마나 됐는지 %로 남겨요.")
+    case .timer: Loc.str("목표 시간을 정하고 시작하면 남은 시간을 세요.")
+    case .stopwatch: Loc.str("쓴 시간을 그대로 재요.")
+    }
+}
+
 struct QuickAddChips: View {
     let suggestions: [QuickAdd.Suggestion]
     let onPick: (QuickAdd.Suggestion) -> Void

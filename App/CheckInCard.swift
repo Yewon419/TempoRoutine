@@ -300,9 +300,12 @@ struct CheckInCard: View {
     private var feedHeader: some View {
         let info = CycleSnapshot(periodDays: periodDays).phaseInfo(on: normalizedDay)
         return HStack(spacing: 8) {
-            Text(normalizedDay.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
-                .font(.almanacBody(.caption, size: 13))
-                .foregroundStyle(Ink.text.opacity(0.75))
+            // 오늘 카드는 날짜를 안 적는다(2026-09-09 베타 "오늘 한 줄에선 날짜 빼") — 표제 메타 줄과 중복.
+            if !isToday {
+                Text(normalizedDay.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
+                    .font(.almanacBody(.caption, size: 13))
+                    .foregroundStyle(Ink.text.opacity(0.75))
+            }
             if let info {
                 HStack(spacing: 4) {
                     SeasonGlyph(phase: info.meta.phase, size: 11)
