@@ -8068,25 +8068,25 @@
         }
       }
     },
-    "당신만의 패턴이 보이기 시작할 거예요.": {
+    "컨디션을 기록하면 계절마다 어땠는지 보여요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your own pattern will start to show."
+            "value": "Log how you feel and you'll see how each season went."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなただけのパターンが見えはじめます。"
+            "value": "コンディションを記録すると、季節ごとの様子が見えてきます。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你自己的规律会慢慢显现出来。"
+            "value": "记录状态，就能看到每个季节的情况。"
           }
         }
       }

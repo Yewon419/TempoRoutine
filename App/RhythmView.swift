@@ -144,9 +144,6 @@ struct RhythmView: View {
                         if unlockedPhases.count < Self.allPhases.count {
                             coldCard
                         }
-                        if unlockedPhases.isEmpty {   // 패턴이 하나라도 열리면 일반론 카드는 물러남(2026-07-23)
-                            meanwhileCard
-                        }
                         if showSwitcher {
                             signalSwitcher    // 신호 하위 칩(2026-08-13)
                             signalStack
@@ -260,18 +257,18 @@ struct RhythmView: View {
         RhythmTab(rawValue: lastTabRaw) ?? .seasons
     }
 
+    /// 상위 스위처 = 시스템 세그먼트(2026-09-09 — 캡슐 칩 3개 + 밑줄 탭 4개가 두 층으로 읽히지
+    /// 않았다. 네이티브 컨트롤이 층위를 대신 말한다). 하위 신호 스위처는 그대로 밑줄 탭.
     private var sectionSwitcher: some View {
-        HStack(spacing: 8) {
+        Picker("보기 선택", selection: Binding(get: { tab }, set: { item in
+            lightFeedback += 1   // 전환 햅틱(2026-08-09 사용자 지시)
+            lastTabRaw = item.rawValue
+        })) {
             ForEach(RhythmTab.allCases) { item in
-                chip(label: item.title, selected: tab == item) {
-                    lightFeedback += 1   // 칩 전환 햅틱(2026-08-09 사용자 지시)
-                    lastTabRaw = item.rawValue
-                }
+                Text(item.title).tag(item)
             }
-            Spacer(minLength: 0)
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("보기 선택")
+        .pickerStyle(.segmented)
     }
 
     /// 사계에 올릴 신호 — 수면·식욕은 추적 끔+표본 0이면 숨김(꺼진 항목 거짓 안내 방지, 구 칩 규칙 승계)
@@ -628,47 +625,11 @@ struct RhythmView: View {
         }
     }
 
-    /// 칩 공용 렌더 — v68 칩 시각 그대로(2026-08-09 단일 행 병합 후에도 유지).
-    @ViewBuilder
-    private func chip(label: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        if ThemeStore.chrome.photographicGround {
-            // 티켓 = 지면 위 칩(시안 흰 덮기 목록): 미선택 흰 윤곽 + 직각 R3(발권물),
-            // 선택 = 잉크 솔리드에 발권지 글자. Ink.paper는 이 테마에서 블루그레이 지면색이라 못 쓴다.
-            Button(action: action) {
-                Text(label)
-                    .font(.caption)
-                    .foregroundStyle(selected ? TicketSpec.ticketPaper : .white.opacity(0.78))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(selected ? AnyShapeStyle(Ink.text) : AnyShapeStyle(.clear),
-                                in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous))
-                    .overlay {
-                        if !selected {
-                            RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
-                                .stroke(Color.white.opacity(0.38), lineWidth: 1)
-                        }
-                    }
-            }
-            .accessibilityAddTraits(selected ? [.isSelected] : [])
-        } else {
-            Button(action: action) {
-                Text(label)
-                    .font(.caption)
-                    .foregroundStyle(selected ? Ink.paper : Ink.text.opacity(0.7))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(selected ? AnyShapeStyle(Ink.text)
-                                         : AnyShapeStyle(Ink.text.opacity(0.08)), in: Capsule())
-            }
-            .accessibilityAddTraits(selected ? [.isSelected] : [])
-        }
-    }
-
     // ── 콜드스타트 카드 (§8.2.5 개정 2026-07-23 — "약 41일" 폐기) ──
     // 날짜 약속 대신 가까운 마일스톤: 이번 계절 기록 3회(EnergyProfile.minSamples) → 네 계절 채우기.
     private var progressInfo: (progress: Double, title: String, body: String, label: String) {
         if snapshot.isColdStart {
-            return (0, Loc.str("첫 패턴을 기다리는 중"), Loc.str("당신만의 패턴이 보이기 시작할 거예요."),
+            return (0, Loc.str("첫 패턴을 기다리는 중"), Loc.str("컨디션을 기록하면 계절마다 어땠는지 보여요."),
                     Loc.str("첫 생리일을 기록하면 시작돼요"))
         }
         let goal = EnergyProfile.minSamples
@@ -725,20 +686,6 @@ struct RhythmView: View {
                 .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(Ink.text.opacity(0.5))
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .milkGlass()
-    }
-
-    private var meanwhileCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("그동안은")
-                .font(.almanac(size: 17, weight: .bold))
-                .foregroundStyle(Ink.text)
-            Text("많은 사람이 겨울엔 에너지가 낮아진다고 느껴요. 당신의 리듬도 금방 찾게 될 거에요.")
-                .font(.subheadline)
-                .foregroundStyle(Ink.text.opacity(0.75))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

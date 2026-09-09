@@ -33,10 +33,15 @@ enum CoachID: String, CaseIterable {
 
 enum CoachStore {
     private static func key(_ id: CoachID) -> String { "coach.\(id.rawValue)" }
-    static func isDone(_ id: CoachID) -> Bool { UserDefaults.standard.bool(forKey: key(id)) }
+    /// 첫 실행 자동 코치 폐지(2026-09-09 베타 "튜토리얼은 어차피 안 읽는다"): 설정 「사용법 다시 보기」를
+    /// 누른 사람에게만 화면별 1회 뜬다. 첫 사용의 안내는 빈 상태 예시 칩·ⓘ 설명·콜드 카드가 맡는다.
+    private static let optInKey = "coach.optIn"
+    static var optedIn: Bool { UserDefaults.standard.bool(forKey: optInKey) }
+    static func isDone(_ id: CoachID) -> Bool { !optedIn || UserDefaults.standard.bool(forKey: key(id)) }
     static func markDone(_ id: CoachID) { UserDefaults.standard.set(true, forKey: key(id)) }
-    /// 설정 「사용법 다시 보기」 — 전 화면 완료 표시를 지운다(JejuNow resetAllCoach와 동형)
+    /// 설정 「사용법 다시 보기」 — 옵트인을 켜고 전 화면 완료 표시를 지운다(JejuNow resetAllCoach와 동형)
     static func resetAll() {
+        UserDefaults.standard.set(true, forKey: optInKey)
         CoachID.allCases.forEach { UserDefaults.standard.removeObject(forKey: key($0)) }
     }
 }

@@ -703,9 +703,8 @@ struct OnboardingFlow: View {
         if isRevisit, let raw = restoreThemeRaw {
             ThemeStore.apply(raw, pointRawValue: UserDefaults.standard.string(forKey: PointColor.storageKey))
         }
-        // 첫 실행만 튜토리얼 체인을 태운다(2026-09-04 베타) — 재진입(「온보딩 다시 보기」)은
-        // 이미 쓰던 사람이라 탭을 옮기지 않는다.
-        if !isRevisit { TutorialGate.arm() }
+        // 첫 실행 튜토리얼 체인(2026-09-04)은 폐지(2026-09-09 — 코치는 설정 옵트인 전용, CoachStore).
+        // TutorialGate는 잔여 잠금 해제 경로만 남는다.
         isRevisit = false
         onboardingDone = true
     }
