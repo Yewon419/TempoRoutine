@@ -8,7 +8,7 @@
 // 에피소드 수 → 지속일 → 월 캘린더 → 에피소드 1개일 때만 주기), ③ 세 가지 카드 + 예시 담기,
 // ④ 추적 항목, ⑤ 저장 위치(아이패드·iCloud 행 추가 — §5.2 2층 계약: 생리 기록은 기기 잔류),
 // ⑥ 리듬 설문(primary + 「지금은 넘어가기」). 실권한은 실제 연동 순간만(§3.6.1).
-// 상태(step·introScene·baselinePage·cardPage)와 찰칵 런치 인자 계약은 유지 — 표현층만 바뀌었다.
+// 상태(step·baselinePage)와 찰칵 런치 인자 계약은 유지 — 표현층만 바뀌었다.
 
 import SwiftUI
 import SwiftData
@@ -21,8 +21,10 @@ struct OnboardingFlow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
 
+    // 단계(2026-09-09 다이어트, 15장 → 최대 8장): 0 언어 · 1 브랜드 · 2 테마 · 3 내 주기(최대 4장) · 4 저장 위치 → 오늘.
+    // 걷어낸 것 = 사이클 싱킹 강의 2장·하루의 구성 3장·기록할 것·리듬 설문(베타 "설명 없이 못 쓰겠다" —
+    // 온보딩은 설정에 필요한 답만 묻고, 개념은 화면의 빈 상태·ⓘ가 그 자리에서 말한다).
     @State private var step = 0   // 0 = 언어 선택(2026-08-22 베타 "첫 탭을 따로") — 재진입은 1부터
-    @State private var introScene = 0          // 0=A 브랜드·원 / 1=B 곡선 / 2=C 네 계절
     /// 첫 화면 언어 선택(2026-08-21) — 저장값이 없으면 시스템 따름이라 어느 칩도 선택 상태가 아니다
     @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
     /// ①.5 테마 선택(2026-08-19) — 기본 선택 = 은필(사용자: "우리 정체성"). 저장은 case 2,
@@ -58,36 +60,19 @@ struct OnboardingFlow: View {
     /// 분기의 유일한 기준 = 병합 결과 에피소드 수(§5.7 — 권한 거부는 판별 불가)
     private var episodeCount: Int { PeriodMath.episodeStarts(days: periodDays.map(\.day)).count }
 
-    // ③ 추적 항목 — 예민함·몸은 2026-08-05 사용자 결정으로 제거(기분·에너지와 겹침).
-    // M축 수집이 함께 중단됐다(§3.11 개정). 과거 저장분은 리듬 집계에 계속 유효.
-    @State private var trackSleep = true
-    @State private var trackAppetite = true
-    @State private var trackNote = true
-    // ③ 세 가지 카드 — 탭 진행형(2026-08-09): 0=일정 / 1=Input / 2=Output + 예시 담기
-    @State private var cardPage = 0
-    @State private var addedExamples: Set<String> = []
-    // 재탭 = 빠짐(2026-08-09 베타 피드백) — 지우려면 참조가 필요해 담은 실물을 들고 있는다
-    @State private var exampleInputs: [String: InputItem] = [:]
-    @State private var exampleOutputs: [String: OutputItem] = [:]
     // 설정 「온보딩 다시 보기」 재진입 표식(2026-08-09 베타 피드백) — 좌상단 X 노출 조건.
     // 첫 실행 온보딩엔 X가 없다(최초 설정은 건너뛸 수 없음).
     @AppStorage("onboardingRevisit") private var isRevisit = false
 
-    // ⑤ 리듬 설문(2026-08-05 사용자 결정) — 온보딩 마지막 단계에서 제안, 강요하지 않는다
-    @State private var showSurvey = false
-    @Query private var selfReports: [SelfReportRecord]
-
     init() {
         #if DEBUG
         // 찰칵(CI 스크린샷) 전용 — 런치 인자(argument 도메인)로 단계를 바로 연다(2026-09-06).
-        // `-onboardingStep N [-onboardingIntroScene N] [-onboardingBaselinePage N] [-onboardingCardPage N]`
+        // `-onboardingStep N [-onboardingBaselinePage N]`
         // 인자가 없으면 아무것도 건드리지 않는다. 릴리스 빌드엔 이 경로가 없다.
         let args = UserDefaults.standard
         guard args.object(forKey: "onboardingStep") != nil else { return }
         _step = State(initialValue: args.integer(forKey: "onboardingStep"))
-        _introScene = State(initialValue: args.integer(forKey: "onboardingIntroScene"))
         _baselinePage = State(initialValue: args.integer(forKey: "onboardingBaselinePage"))
-        _cardPage = State(initialValue: args.integer(forKey: "onboardingCardPage"))
         _showSplash = State(initialValue: false)   // 컷마다 스플래시 2.7초를 안 기다린다
         _revealProgress = State(initialValue: args.integer(forKey: "onboardingStep") > 0 ? 1 : 0)
         #endif
@@ -105,10 +90,10 @@ struct OnboardingFlow: View {
         var content = LensContent()
         var hideLens = false
         var bare = false              // 시트 유리 없음(CTA만)
-        var dialStep: Int? = nil      // 진행 다이얼 1~6
+        var dialStep: Int? = nil      // 진행 다이얼 1~3
     }
 
-    private static let dialTotal = 6
+    private static let dialTotal = 3
 
     private var stage: Stage {
         switch step {
@@ -116,26 +101,13 @@ struct OnboardingFlow: View {
             return Stage(eyebrow: Loc.str("템포루틴"), title: Loc.str("언어"),
                          body: [Loc.str("앱에서 쓸 언어를 골라 주세요.")], spot: .hero, hideLens: true)
         case 1:
-            switch introScene {
-            case 0:
-                return Stage(eyebrow: Loc.str("템포루틴"), title: Loc.str("당신 몸의\n템포에 맞게."), hero: true,
-                             mood: Loc.str("당신만의 속도를 찾아서."),
-                             body: [Loc.str("생리 주기를 네 계절로 보고,"), Loc.str("계절에 맞게 계획하는 플래너예요.")],
-                             // 비의료 고지(5.1.1(ix) 방어) — 문구 = 2026-08-05 사용자 지정
-                             fine: [Loc.str("템포루틴은 당신이 기록해 놓은 과거를 기반으로\n당신만의 템포를 보여주는 앱입니다.\n의학적 진단이나 조언은 포함되어 있지 않습니다.")],
-                             spot: .hero, content: LensContent(ring: true, drawsRing: true, nodes: true, orbit: true),
-                             bare: true)
-            case 1:
-                return Stage(eyebrow: Loc.str("사이클 싱킹"), title: Loc.str("리듬에 맞춰\n계획하는 법"),
-                             body: [Loc.str("한 주기 안에서도 에너지와 컨디션은 오르내립니다."),
-                                    Loc.str("사이클 싱킹은 그 흐름을 계획에 맞추는 대신,"),
-                                    Loc.str("계획을 당신에게 맞추는 방법이에요.")],
-                             fine: [Loc.str("사람마다 리듬은 모두 달라요."), Loc.str("템포루틴이 당신만의 리듬을 찾게 도와줄게요.")],
-                             spot: .hero, content: LensContent(wave: true), bare: true)
-            default:
-                return Stage(eyebrow: Loc.str("사이클 싱킹"), title: Loc.str("한 달 안의 사계절"),
-                             spot: .top, content: LensContent(ring: true, nodes: true))
-            }
+            return Stage(eyebrow: Loc.str("템포루틴"), title: Loc.str("몸의 템포에\n맞게."), hero: true,
+                         mood: Loc.str("나만의 속도를 찾아서."),
+                         body: [Loc.str("생리 주기를 네 계절로 보고,"), Loc.str("계절에 맞게 계획하는 플래너예요.")],
+                         // 비의료 고지(5.1.1(ix) 방어) — 문구 = 2026-08-05 사용자 지정
+                         fine: [Loc.str("템포루틴은 당신이 기록해 놓은 과거를 기반으로\n당신만의 템포를 보여주는 앱입니다.\n의학적 진단이나 조언은 포함되어 있지 않습니다.")],
+                         spot: .hero, content: LensContent(ring: true, drawsRing: true, nodes: true, orbit: true),
+                         bare: true)
         case 2:
             return Stage(eyebrow: Loc.str("당신의 테마"), title: Loc.str("어떤 지면으로\n시작할까요?"),
                          spot: .dial, content: dial(1), dialStep: 1)
@@ -162,26 +134,9 @@ struct OnboardingFlow: View {
                              body: [Loc.str("지난 생리에서 다음 생리까지의 간격을 알려주세요.")],
                              spot: .mid, content: c, dialStep: 2)
             }
-        case 4:
-            let kind = CardKind.allCases[min(cardPage, 2)]
-            var c = dial(3)
-            c.sketch = kind
-            return Stage(eyebrow: Loc.fmt("하루의 구성 %1$@ / 3", "\(cardPage + 1)"), title: kind.title,
-                         body: [kind.info], spot: .mid, content: c, bare: kind == .schedule, dialStep: 3)
-        case 5:
-            return Stage(eyebrow: Loc.str("기록할 것"), title: Loc.str("무엇을 기록할까요?"),
-                         body: [Loc.str("절댓값보다는 오르내림과 편차를 알아보는 데 의미를 가집니다."),
-                                Loc.str("나중에 설정에서 바꿀 수 있어요.")],
-                         spot: .dial, content: dial(4), dialStep: 4)
-        case 6:
-            return Stage(eyebrow: Loc.str("저장 위치"), title: Loc.str("기록의 저장은 \n오로지 이곳에만"),
-                         body: storageBody, spot: .dial, content: dial(5), dialStep: 5)
         default:
-            return Stage(eyebrow: Loc.str("마지막으로"), title: Loc.str("당신의 리듬,\n조금 더 알려주실래요?"),
-                         body: [Loc.str("리듬의 모양은 사람마다 다르기에,"),
-                                Loc.str("2분짜리 설문으로 초기 세팅을 빠르게 할 수 있어요."),
-                                Loc.str("응답은 이 기기에만 저장됩니다.")],
-                         spot: .dial, content: dial(6), dialStep: 6)
+            return Stage(eyebrow: Loc.str("저장 위치"), title: Loc.str("기록의 저장은 \n오로지 이곳에만"),
+                         body: storageBody, spot: .dial, content: dial(3), dialStep: 3)
         }
     }
 
@@ -190,7 +145,7 @@ struct OnboardingFlow: View {
     }
 
     /// 단계 정체성 — 카피·시트 전환(크로스페이드)과 렌즈 이동 애니메이션의 트리거
-    private var stageKey: String { "\(step)-\(introScene)-\(baselinePage)-\(cardPage)-\(entering)" }
+    private var stageKey: String { "\(step)-\(baselinePage)-\(entering)" }
 
     /// 심플 지면 — 언어 단계, 그리고 테마 단계부터 심플을 고른 동안(라이브 전환)
     private var plainSurface: Bool { step == 0 || (step >= 2 && themeChoice == .plain) }
@@ -246,10 +201,6 @@ struct OnboardingFlow: View {
             }
             .overlay(alignment: .bottom) { sheet(current, column: column).opacity(entering ? 0 : 1) }
         }
-        // 설문을 제출하고 닫혔으면 온보딩도 끝낸다 — "오늘 화면으로"를 한 번 더 누르게 하지 않는다.
-        .sheet(isPresented: $showSurvey, onDismiss: {
-            if !selfReports.isEmpty { finishOnboarding() }
-        }) { SelfReportFlow().themeColorScheme() }
         .alert("건강 앱 연동", isPresented: Binding(get: { syncMessage != nil },
                                               set: { if !$0 { syncMessage = nil; syncOffersPermission = false; consumeLinkAdvance() } })) {
             if syncOffersPermission {
@@ -390,7 +341,7 @@ struct OnboardingFlow: View {
                 }
                 .accessibilityLabel("온보딩 닫기")
             }
-            if step >= 2 || (step == 1 && (introScene > 0 || !isRevisit)) {
+            if step >= 2 || (step == 1 && !isRevisit) {
                 Button {
                     lightFeedback += 1
                     goBack()
@@ -405,7 +356,7 @@ struct OnboardingFlow: View {
                 Color.clear
                     .frame(width: 44, height: 44)
                     .accessibilityElement()
-                    .accessibilityLabel(Loc.fmt("진행 %lld / 6", n))
+                    .accessibilityLabel(Loc.fmt("진행 %lld / 3", n))
             }
         }
         .frame(height: 44)
@@ -414,19 +365,13 @@ struct OnboardingFlow: View {
     private func goBack() {
         let anim: Animation? = reduceMotion ? nil : .easeInOut(duration: 0.4)
         withAnimation(anim) {
-            if step == 1 && introScene > 0 {
-                introScene -= 1
-            } else if step == 1 {
-                step = 0   // 인트로 첫 씬에서 뒤로 = 언어 단계(신규만)
+            if step == 1 {
+                step = 0   // 브랜드 장에서 뒤로 = 언어 단계(신규만)
             } else if step == 3, let prev = baselineStack.popLast() {
                 baselinePage = prev
-            } else if step == 4 && cardPage > 0 {
-                cardPage -= 1
             } else {
                 step -= 1
                 if isRevisit && step == 2 { step = 1 }   // 재진입은 테마 단계를 안 거친다
-                if step == 1 { introScene = 2 }
-                if step == 4 { cardPage = 2 }   // ④에서 돌아오면 마지막 장부터(인트로와 동형)
             }
         }
     }
@@ -506,7 +451,7 @@ struct OnboardingFlow: View {
     private func sheetBody(_ current: Stage) -> some View {
         switch step {
         case 0: languageOptions
-        case 1: if introScene == 2 { seasonsList }
+        case 1: EmptyView()
         case 2: themeCards
         case 3:
             switch baselinePage {
@@ -518,23 +463,7 @@ struct OnboardingFlow: View {
             default:
                 RulerSlider(value: $cycleLengthAnswer, range: 21...35, unit: Loc.str("일")) { lightFeedback += 1 }
             }
-        case 4:
-            if cardPage == 1 {
-                exampleBlock(chips: [(Loc.str("아침명상 5분"), "input-meditation"),
-                                     (Loc.str("잠들기 전 차 한 잔"), "input-tea")])
-            } else if cardPage == 2 {
-                exampleBlock(chips: [(Loc.str("시험공부 6챕터"), "output-study"),
-                                     (Loc.str("영어 듣기 30분"), "output-listening")])
-            }
-        case 5: signalRows
-        case 6: storageRows
-        default:
-            if !selfReports.isEmpty {
-                Label("답이 담겼어요. 고마워요.", systemImage: "checkmark.seal")
-                    .font(.footnote)
-                    .foregroundStyle(Ink.text.opacity(0.6))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+        default: storageRows
         }
     }
 
@@ -559,13 +488,8 @@ struct OnboardingFlow: View {
             if step == 2 {
                 caption("앞으로 7일간 모든 테마를 자유롭게 바꿔볼 수 있어요.")
             }
-            if step == 6 {
-                caption("당신만이 언제든 내보내고 지울 수 있어요.")
-            }
-            // ⑥ 설문 건너뛰기(2026-08-09 사용자 결정) — 설문은 primary로 승격하되 강요는 안 한다.
-            if step == 7 && selfReports.isEmpty {
-                ghostButton("지금은 넘어가기") { finishOnboarding() }
-                caption("언제든 설정에서 다시 답변할 수 있어요.")
+            if step == 4 {
+                caption("언제든 내보내고 지울 수 있어요.")
             }
         }
     }
@@ -616,18 +540,18 @@ struct OnboardingFlow: View {
 
     private var primaryLabel: String {
         switch step {
-        case 0: Loc.str("다음")   // 「계속」 → 「다음」 단일 라벨(2026-09-07 규칙)
-        case 1: introScene == 0 ? Loc.str("시작하기") : Loc.str("다음")   // 「시작」→「시작하기」 단일(2026-09-09 라벨 통일)
-        case 2, 3, 4, 5, 6: Loc.str("다음")
-        // ⑥ 설문 미답 = 설문 시작이 primary(2026-08-09 승격). 답이 있으면 마무리만 남는다.
-        default: selfReports.isEmpty ? Loc.str("시작하기") : Loc.str("오늘 화면으로")
+        case 0, 1, 2, 3: Loc.str("다음")   // 「계속」 → 「다음」 단일 라벨(2026-09-07 규칙)
+        default: Loc.str("시작하기")       // 마지막 장 하나만 「시작하기」(한 의도 = 한 라벨)
         }
     }
 
     private func primaryAction() {
         switch step {
         case 0: advance { step = 1 }
-        case 1: advanceIntro()
+        case 1:
+            // 재진입(다시 보기)은 테마 단계 스킵(2026-08-19) — 이미 쓰는 테마가 있는데
+            // 여기서 고르게 하면 닫는 순간 그 선택으로 갈아타 버린다.
+            advance { step = isRevisit ? 3 : 2 }
         case 2:
             // 테마 선택 저장(2026-08-19) — 종료 시트의 기본 선택값으로도 쓴다("이전 거랑 연결").
             // 적용은 여기서 하지 않는다 — 테마 변경 = 루트 `.id` 리빌드가 이 플로우의 step을
@@ -647,35 +571,8 @@ struct OnboardingFlow: View {
                 advance { step = 4 }
             default: break
             }
-        case 4: advanceCardPage()   // ③ 세 가지 카드 — 장 안에서 진행, 마지막 장이면 ④로
-        case 5:
-            // pain·irritability = false 고정(2026-08-05 병합) — 입력 행이 없는데 켜두면
-            // 설정 복원·백업 경로에서 유령 행이 부활한다. 스키마 필드는 저장 호환 위해 유지.
-            AppSettings.trackedSignals = TrackedSignals(sleep: trackSleep, pain: false,
-                                                        appetite: trackAppetite, note: trackNote,
-                                                        irritability: false)
-            advance { step = 6 }
-        case 6: advance { step = 7 }   // ⑥ 리듬 설문(2026-08-05 사용자 결정 — 코드 장은 2026-08-09 폐기)
-        default:
-            if selfReports.isEmpty { showSurvey = true }   // 「시작하기」 — 제출·닫힘 처리는 sheet onDismiss
-            else { finishOnboarding() }
+        default: finishOnboarding()   // 저장 위치 = 마지막 장
         }
-    }
-
-    private func advanceIntro() {
-        if introScene < 2 {
-            advance { introScene += 1 }
-        } else {
-            // 재진입(다시 보기)은 테마 단계 스킵(2026-08-19) — 이미 쓰는 테마가 있는데
-            // 여기서 고르게 하면 닫는 순간 그 선택으로 갈아타 버린다.
-            advance { step = isRevisit ? 3 : 2 }
-        }
-    }
-
-    private func advanceCardPage() {
-        lightFeedback += 1
-        if cardPage < 2 { advance { cardPage += 1 } }
-        else { advance { step = 5 } }
     }
 
     /// 온보딩 종료 한 창구 — 마지막 연출(렌즈가 창이 된다) 뒤 commitFinish. 재진입·Reduce Motion은 즉시.
@@ -749,43 +646,6 @@ struct OnboardingFlow: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
-    }
-
-    // ── 사계 — 나열 순서 = 표시 순서(봄여름가을겨울, 2026-08-08 베타), 카피 = 사용자 지정 문안 ──
-    private var seasonsList: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            seasonRow(.follicular, Loc.str("미뤄둔 일이 만만해지는 시간"), first: true)
-            seasonRow(.ovulation, Loc.str("의욕이 충만해지는 시간"), first: false)
-            seasonRow(.luteal, Loc.str("나를 돌보기 시작하는 시간"), first: false)
-            seasonRow(.menstrual, Loc.str("스스로에게 휴식을 줘도 괜찮은 시간"), first: false)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("상단의 설명은 일반적인 경향입니다.")
-                Text("당신의 계절은 기록이 쌓이며 맞춰집니다.")
-            }
-            .font(.system(size: 12))
-            .foregroundStyle(Ink.text.opacity(0.45))
-            .padding(.top, 12)
-        }
-    }
-
-    private func seasonRow(_ phase: CyclePhase, _ desc: String, first: Bool) -> some View {
-        let meta = seasonMeta(for: phase)
-        return HStack(spacing: 10) {
-            SeasonGlyph(phase: phase, size: 16)
-            Text(meta.name)
-                .font(LensSpec.serif(16))
-                .foregroundStyle(meta.color)
-                .frame(width: 44, alignment: .leading)
-            Text(desc)
-                .font(.system(size: 15))
-                .foregroundStyle(Ink.text.opacity(0.72))
-                .fixedSize(horizontal: false, vertical: true)   // 압축 시 말줄임 금지 — 줄바꿈으로(2026-08-08 베타)
-            Spacer(minLength: 0)
-        }
-        .frame(minHeight: 52)
-        .overlay(alignment: .top) {
-            if !first { Rectangle().fill(Ink.winter.opacity(0.18)).frame(height: 1) }
-        }
     }
 
     // ── 테마 선택(2026-08-19 사용자 결정 — 기본·은필 택1 + 7일 체험 고지). 고르면 지면이 라이브로 바뀐다 ──
@@ -901,102 +761,6 @@ struct OnboardingFlow: View {
     }
 
     // ── ③ 예시 칩 — 탭 = 실제 아이템 추가, 다시 탭 = 빠짐(2026-08-09 베타 피드백 토글 전환) ──
-    private func exampleBlock(chips: [(label: String, key: String)]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // 2026-08-12 베타 피드백("간단하게만 안내") — 담는 법 한 가지만 남긴다.
-            Text("탭해서 담아볼 수 있어요.")
-                .font(.system(size: 12))
-                .foregroundStyle(Ink.text.opacity(0.45))
-            HStack(spacing: 8) {
-                ForEach(chips, id: \.key) { chip in
-                    StampChip(label: chip.label, on: addedExamples.contains(chip.key)) { toggleExample(chip.key) }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func toggleExample(_ key: String) {
-        lightFeedback += 1
-        if addedExamples.contains(key) {
-            addedExamples.remove(key)
-            if let item = exampleInputs.removeValue(forKey: key) { modelContext.delete(item) }
-            if let item = exampleOutputs.removeValue(forKey: key) { modelContext.delete(item) }
-            return
-        }
-        addedExamples.insert(key)
-        switch key {
-        case "input-meditation":
-            let item = InputItem(title: Loc.str("아침명상 5분"), category: .other, schedule: .daily)
-            exampleInputs[key] = item
-            modelContext.insert(item)
-        case "input-tea":
-            let item = InputItem(title: Loc.str("잠들기 전 차 한 잔"), category: .food, schedule: .daily)
-            exampleInputs[key] = item
-            modelContext.insert(item)
-        case "output-study":
-            let item = OutputItem(title: Loc.str("시험공부"), schedule: .once, progressKind: .subtasks)
-            item.subtasks = (1...6).map { OutputSubtask(title: Loc.fmt("%1$@챕터", "\($0)"), order: $0 - 1) }
-            exampleOutputs[key] = item
-            modelContext.insert(item)
-        case "output-listening":
-            let item = OutputItem(title: Loc.str("영어 듣기"), schedule: .once, progressKind: .timer)
-            item.targetSeconds = 30 * 60
-            exampleOutputs[key] = item
-            modelContext.insert(item)
-        default:
-            break
-        }
-    }
-
-    // ── ④ 추적 항목 — 항목 ⓘ 설명(2026-08-08 베타 피드백) ──
-    private var signalRows: some View {
-        VStack(spacing: 0) {
-            baseRow(Loc.str("에너지"), info: Loc.str("몸의 에너지와 컨디션을 기록합니다."), first: true)
-            baseRow(Loc.str("기분"), info: Loc.str("감정과 기분을 기록합니다."), first: false)
-            toggleRow(Loc.str("수면"), $trackSleep, info: Loc.str("지난밤 수면의 질을 기록합니다."))
-            toggleRow(Loc.str("식욕"), $trackAppetite, info: Loc.str("입맛과 식사량 등 종합적인 식욕을 기록합니다."))
-            toggleRow(Loc.str("오늘 한 줄"), $trackNote, info: Loc.str("자유롭게 하루를 한 문장으로 남기는 특별한 기록입니다. 일기도 좋고, 메모도 좋습니다."))
-        }
-        .onAppear {
-            let current = AppSettings.trackedSignals
-            trackSleep = current.sleep
-            trackAppetite = current.appetite
-            trackNote = current.note
-        }
-    }
-
-    private func baseRow(_ name: String, info: String, first: Bool) -> some View {
-        HStack(spacing: 4) {
-            InfoBadge(title: name, message: info)
-            Text(name).font(.system(size: 16)).foregroundStyle(Ink.text)
-            Text("기본")
-                .font(.system(size: 11))
-                .foregroundStyle(Ink.text.opacity(0.5))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .overlay(Capsule().stroke(Ink.text.opacity(0.25), lineWidth: 1))
-            Spacer()
-        }
-        .frame(minHeight: 44)
-        .overlay(alignment: .top) {
-            if !first { Rectangle().fill(Ink.text.opacity(0.12)).frame(height: 1) }
-        }
-    }
-
-    private func toggleRow(_ name: String, _ value: Binding<Bool>, info: String) -> some View {
-        Toggle(isOn: value) {
-            HStack(spacing: 4) {
-                InfoBadge(title: name, message: info)
-                Text(name).font(.system(size: 16)).foregroundStyle(Ink.text)
-            }
-        }
-        .toggleStyle(MatteToggleStyle())
-        .frame(minHeight: 44)
-        .overlay(alignment: .top) { Rectangle().fill(Ink.text.opacity(0.12)).frame(height: 1) }
-        .onChange(of: value.wrappedValue) { _, _ in lightFeedback += 1 }
-    }
-
     // ── ⑤ 저장 위치 — 아이패드·iCloud 행(2026-09-07 디테일 ②): 같은 Apple ID면 플래너·체크인만 이어진다 ──
     // 2026-07-23 개정(§5.2 동기화 실장): iCloud 행·카피는 실제 활성일 때만(정확성 — §7 privacy-washing 금지).
     private var storageRows: some View {

@@ -8022,7 +8022,7 @@
         }
       }
     },
-    "당신 몸의\n템포에 맞게.": {
+    "몸의 템포에\n맞게.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -8045,7 +8045,7 @@
         }
       }
     },
-    "당신만의 속도를 찾아서.": {
+    "나만의 속도를 찾아서.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -21978,25 +21978,25 @@
         }
       }
     },
-    "진행 %lld / 6": {
+    "진행 %lld / 3": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Progress %lld of 6"
+            "value": "Progress %lld of 3"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "進行 %lld / 6"
+            "value": "進行 %lld / 3"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "进度 %lld / 6"
+            "value": "进度 %lld / 3"
           }
         }
       }
