@@ -392,7 +392,7 @@ struct QuickScheduleBar: View {
     }
 }
 
-// ── ①-c 빠른 카드 바 (2026-09-08 대표님: "캘린더 빠른 추가처럼 Input·Output 기본 추가는 하단 바만") ──
+// ── ①-c 빠른 카드 바 (2026-09-08 대표님: "캘린더 빠른 추가처럼 루틴·목표 기본 추가는 하단 바만") ──
 // 오늘 탭 + → 시트 대신 화면 아래 바가 올라온다(뒤 화면 그대로). 제목 + 빠른 추가 칩 + 「추가」만 두고
 // 나머지는 전체 시트의 기본값(오늘 이후 Input = 매일, Output = 단발·퍼센트)으로 저장한다.
 // **바를 잡고 위로 끌면(또는 「자세히」) 전체 시트**가 초안 제목을 물려받아 열린다 — 반복·주기·진행 방식은 거기서.
@@ -434,7 +434,7 @@ struct QuickCardBar: View {
     }
 
     private var eyebrow: String {
-        kind == .input ? Loc.str("Input 추가") : Loc.str("Output 추가")
+        kind == .input ? Loc.str("루틴 추가") : Loc.str("목표 추가")
     }
 
     private var placeholder: String {
@@ -774,7 +774,7 @@ struct InputAddSheet: View {
     }
 
     var body: some View {
-        InkSheetScaffold(eyebrow: editing == nil ? Loc.str("Input 추가") : Loc.str("Input 수정"),
+        InkSheetScaffold(eyebrow: editing == nil ? Loc.str("루틴 추가") : Loc.str("루틴 수정"),
                          saveTitle: Loc.str("저장"),
                          saveEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
                          phase: currentSeason?.phase, onCancel: { dismiss() }, onSave: save) {
@@ -792,12 +792,12 @@ struct InputAddSheet: View {
             progressSection
             if editing != nil {
                 // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
-                InkDeleteButton(title: Loc.str("Input 삭제")) { showDeleteConfirm = true }
+                InkDeleteButton(title: Loc.str("루틴 삭제")) { showDeleteConfirm = true }
             }
         } footer: {
             EmptyView()
         }
-        .confirmationDialog("이 Input을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+        .confirmationDialog("이 루틴을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("삭제", role: .destructive) {
                 if let item = editing {
                     // 완료 기록 동반 삭제(§5.5.2 고아 방지) — QuickDelete와 같은 경로
@@ -1009,7 +1009,7 @@ struct OutputAddSheet: View {
     }
 
     var body: some View {
-        InkSheetScaffold(eyebrow: editing == nil ? Loc.str("Output 추가") : Loc.str("Output 수정"),
+        InkSheetScaffold(eyebrow: editing == nil ? Loc.str("목표 추가") : Loc.str("목표 수정"),
                          saveTitle: Loc.str("저장"),
                          saveEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty,
                          phase: CycleSnapshot(periodDays: periodDays).phase(on: Calendar.current.startOfDay(for: day)),
@@ -1039,12 +1039,12 @@ struct OutputAddSheet: View {
             progressSection
             if editing != nil {
                 // 파괴 액션 분리 배치 + 확인(§8.2.6 문법 — 일정 시트와 동형)
-                InkDeleteButton(title: Loc.str("Output 삭제")) { showDeleteConfirm = true }
+                InkDeleteButton(title: Loc.str("목표 삭제")) { showDeleteConfirm = true }
             }
         } footer: {
             EmptyView()
         }
-        .confirmationDialog("이 Output을 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+        .confirmationDialog("이 목표를 삭제할까요?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("삭제", role: .destructive) {
                 if let item = editing {
                     QuickDeleteTarget.output(item).delete(from: modelContext, completions: [])

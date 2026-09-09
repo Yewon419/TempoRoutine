@@ -121,7 +121,7 @@ struct ThemeShopView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 28)
                         }
-                        Text("씨앗은 하루 체크인을 완성하면 하나씩 모여요.")
+                        Text("씨앗은 하루 컨디션 기록을 완성하면 하나씩 모여요.")
                             .font(.caption)
                             .foregroundStyle(Ink.text.opacity(0.45))
                         // 구매 복원(2026-08-27) — 비소모품(₩5,000 패스)의 심사 요구 버튼.
@@ -733,8 +733,8 @@ struct ThemePreviewScreen: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 sampleCard(title: Loc.str("일정"), rows: [(Loc.str("저녁 산책"), "19:00")], trackCount: 1)
-                sampleCard(title: "Input", rows: [(Loc.str("아침명상 5분"), Loc.str("체크")), (Loc.str("물 자주 마시기"), Loc.str("체크"))], trackCount: 2)
-                sampleCard(title: "Output", rows: [(Loc.str("자격증 공부"), Loc.str("30:00 타이머"))], trackCount: 1)
+                sampleCard(title: Loc.str("루틴"), rows: [(Loc.str("아침명상 5분"), Loc.str("체크")), (Loc.str("물 자주 마시기"), Loc.str("체크"))], trackCount: 2)
+                sampleCard(title: Loc.str("목표"), rows: [(Loc.str("자격증 공부"), Loc.str("30:00 타이머"))], trackCount: 1)
                 Spacer(minLength: 0)
                 tabBarMock
             }

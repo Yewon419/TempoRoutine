@@ -14,7 +14,13 @@ enum CardKind: String, CaseIterable, Identifiable {
     case output = "Output"
     var id: String { rawValue }
     /// 표시는 번역을 거친다 — rawValue는 저장·식별 키(2026-08-22). Input/Output은 키 그대로 나온다.
-    var title: String { Loc.text(rawValue) }
+    var title: String {
+        switch self {   // 2026-09-09 어휘 평문화 — 저장 키(rawValue)는 그대로, 표시만 한국어
+        case .schedule: Loc.str("일정")
+        case .input: Loc.str("루틴")
+        case .output: Loc.str("목표")
+        }
+    }
 
     /// 구획 ⓘ 설명(2026-08-06 베타 피드백 — 체크인 행이 아니라 구획 제목 뒤).
     /// 문안 = 코치마크(§3.6 카드 정의의 사용자 언어)와 같은 계열.
@@ -22,8 +28,8 @@ enum CardKind: String, CaseIterable, Identifiable {
         switch self {
         case .schedule: Loc.str("약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요.")
         // 「각」 앞에서 줄바꿈(2026-08-16 베타 피드백) — 온보딩 장에서 "각"만 첫 줄 끝에 걸렸다
-        case .input: Loc.str("식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요.")
-        case .output: Loc.str("프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?")
+        case .input: Loc.str("식단·운동·물 마시기처럼 매일 하는 일이에요.\n체크만 하면 돼요.")
+        case .output: Loc.str("공부·프로젝트처럼 조금씩 진행하는 일이에요. 진행도를 남겨요.")
         }
     }
 }

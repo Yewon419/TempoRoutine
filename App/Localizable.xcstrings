@@ -2482,94 +2482,94 @@
         }
       }
     },
-    "Input 삭제": {
+    "루틴 삭제": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete Input"
+            "value": "Delete Routine"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "インプットを削除"
+            "value": "ルーティンを削除"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "删除 Input"
+            "value": "删除日常"
           }
         }
       }
     },
-    "Input 수정": {
+    "루틴 수정": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Edit Input"
+            "value": "Edit Routine"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "インプットを編集"
+            "value": "ルーティンを編集"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "编辑 Input"
+            "value": "编辑日常"
           }
         }
       }
     },
-    "Input 여부": {
+    "루틴 여부": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Input status"
+            "value": "Routine status"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "インプットの有無"
+            "value": "ルーティンの有無"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Input 有无"
+            "value": "日常有无"
           }
         }
       }
     },
-    "Input 추가": {
+    "루틴 추가": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Input"
+            "value": "Add Routine"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "インプットを追加"
+            "value": "ルーティンを追加"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加 Input"
+            "value": "添加日常"
           }
         }
       }
@@ -2597,71 +2597,71 @@
         }
       }
     },
-    "Output 삭제": {
+    "목표 삭제": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete Output"
+            "value": "Delete Goal"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アウトプットを削除"
+            "value": "目標を削除"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "删除 Output"
+            "value": "删除目标"
           }
         }
       }
     },
-    "Output 수정": {
+    "목표 수정": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Edit Output"
+            "value": "Edit Goal"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アウトプットを編集"
+            "value": "目標を編集"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "编辑 Output"
+            "value": "编辑目标"
           }
         }
       }
     },
-    "Output 추가": {
+    "목표 추가": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Output"
+            "value": "Add Goal"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アウトプットを追加"
+            "value": "目標を追加"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加 Output"
+            "value": "添加目标"
           }
         }
       }
@@ -2712,7 +2712,7 @@
         }
       }
     },
-    "iCloud (플래너·체크인)": {
+    "iCloud (플래너·컨디션 기록)": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -6738,25 +6738,25 @@
         }
       }
     },
-    "기준일": {
+    "내 주기": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reference date"
+            "value": "My cycle"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "基準日"
+            "value": "私の周期"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "基准日"
+            "value": "我的周期"
           }
         }
       }
@@ -6806,24 +6806,24 @@
         }
       }
     },
-    "깊은 새벽에 체크인을 완성했어요": {
+    "깊은 새벽에 컨디션을 기록했어요": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Completed a check-in in the small hours"
+            "value": "Logged how you feel in the small hours"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "深夜のチェックインを完成しました"
+            "value": "深夜にコンディションを記録しました"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在深夜完成了签到"
+            "value": "在深夜记录了状态"
           }
         }
       }
@@ -9241,25 +9241,25 @@
         }
       }
     },
-    "매일 체크인하면 씨앗이 모이고, 씨앗으로 새 테마를 살 수 있어요.": {
+    "매일 컨디션을 기록하면 씨앗이 모이고, 씨앗으로 새 테마를 살 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check in every day to collect seeds, and spend them on new themes."
+            "value": "Log how you feel every day to collect seeds, and spend them on new themes."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "毎日チェックインするとたねが集まり、たねで新しいテーマを購入できます。"
+            "value": "毎日コンディションを記録するとたねが集まり、たねで新しいテーマを購入できます。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "每天打卡就能收集种子，用种子可以购买新主题。"
+            "value": "每天记录状态就能收集种子，用种子可以购买新主题。"
           }
         }
       }
@@ -12787,25 +12787,25 @@
         }
       }
     },
-    "식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요.": {
+    "식단·운동·물 마시기처럼 매일 하는 일이에요.\n체크만 하면 돼요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Things that fill you up, like meals or exercise.\nFill yourself with the Input that suits each season."
+            "value": "Everyday things like meals, exercise, or drinking water.\nJust check them off."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "食事や運動のように、自分を満たすことです。\n季節に合ったインプットで自分を満たしてみましょう。"
+            "value": "食事・運動・水分補給のような毎日のことです。\nチェックするだけで大丈夫です。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "像饮食和运动一样，是充实自己的事。\n用适合每个季节的 Input 来充实自己吧。"
+            "value": "像饮食、运动、喝水这样每天做的事。\n打个勾就行。"
           }
         }
       }
@@ -13292,7 +13292,7 @@
         }
       }
     },
-    "씨앗은 하루 체크인을 완성하면 하나씩 모여요.": {
+    "씨앗은 하루 컨디션 기록을 완성하면 하나씩 모여요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -14777,6 +14777,121 @@
         }
       }
     },
+    "루틴": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ルーティン"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日常"
+          }
+        }
+      }
+    },
+    "목표": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goals"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标"
+          }
+        }
+      }
+    },
+    "생리 끝난 뒤": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After my period"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生理のあと"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月经结束后"
+          }
+        }
+      }
+    },
+    "배란 무렵": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Around ovulation"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "排卵のころ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "排卵期前后"
+          }
+        }
+      }
+    },
+    "생리 전": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Before my period"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生理前"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月经前"
+          }
+        }
+      }
+    },
     "예": {
       "extractionState": "manual",
       "localizations": {
@@ -15053,48 +15168,48 @@
         }
       }
     },
-    "오늘 챙길 Input을 목록으로 보여줘요.": {
+    "오늘 챙길 루틴을 목록으로 보여줘요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Shows today's Inputs as a list."
+            "value": "Shows today's Routines as a list."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日のインプットをリストで表示します。"
+            "value": "今日のルーティンをリストで表示します。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "把今天要做的 Input 以清单形式显示。"
+            "value": "把今天要做的日常以清单形式显示。"
           }
         }
       }
     },
-    "오늘 챙길 Input이 없어요": {
+    "오늘 챙길 루틴이 없어요": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No Input to take care of today"
+            "value": "No Routine to take care of today"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日のインプットはありません"
+            "value": "今日のルーティンはありません"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天没有要打理的 Input"
+            "value": "今天没有要打理的日常"
           }
         }
       }
@@ -15329,48 +15444,48 @@
         }
       }
     },
-    "오늘의 Input": {
+    "오늘의 루틴": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today's Input"
+            "value": "Today's Routine"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日のインプット"
+            "value": "今日のルーティン"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天的 Input"
+            "value": "今天的日常"
           }
         }
       }
     },
-    "오늘의 Output": {
+    "오늘의 목표": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today's Output"
+            "value": "Today's Goal"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日のアウトプット"
+            "value": "今日の目標"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天的 Output"
+            "value": "今天的目标"
           }
         }
       }
@@ -15398,48 +15513,48 @@
         }
       }
     },
-    "오늘의 일정·Input·Output을 한눈에 보여줘요.": {
+    "오늘의 일정·루틴·목표를 한눈에 보여줘요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Shows today's schedule, Input, and Output at a glance."
+            "value": "Shows today's schedule, Routine, and Goal at a glance."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日の予定・インプット・アウトプットをひと目で見せてくれます。"
+            "value": "今日の予定・ルーティン・目標をひと目で見せてくれます。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "一眼就能看到今天的日程、Input 和 Output。"
+            "value": "一眼就能看到今天的日程、日常和目标。"
           }
         }
       }
     },
-    "오늘의 체크인": {
+    "오늘의 기록": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today's check-in"
+            "value": "Today's log"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日のチェックイン"
+            "value": "今日の記録"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天的打卡"
+            "value": "今天的记录"
           }
         }
       }
@@ -15993,48 +16108,48 @@
         }
       }
     },
-    "이 Input을 삭제할까요?": {
+    "이 루틴을 삭제할까요?": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete this Input?"
+            "value": "Delete this Routine?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このインプットを削除しますか？"
+            "value": "このルーティンを削除しますか？"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "要删除这个 Input 吗？"
+            "value": "要删除这个日常吗？"
           }
         }
       }
     },
-    "이 Output을 삭제할까요?": {
+    "이 목표를 삭제할까요?": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete this Output?"
+            "value": "Delete this Goal?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このアウトプットを削除しますか？"
+            "value": "この目標を削除しますか？"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "要删除这个 Output 吗？"
+            "value": "要删除这个目标吗？"
           }
         }
       }
@@ -16246,7 +16361,7 @@
         }
       }
     },
-    "이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$@일 · 체크인 %2$@건": {
+    "이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$@일 · 컨디션 기록 %2$@건": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -16338,25 +16453,25 @@
         }
       }
     },
-    "이날의 체크인": {
+    "이날의 기록": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check-in for this day"
+            "value": "Log for this day"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この日のチェックイン"
+            "value": "この日の記録"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这一天的打卡"
+            "value": "这一天的记录"
           }
         }
       }
@@ -16980,25 +17095,25 @@
         }
       }
     },
-    "일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 연동됩니다. 생리 기록은 iCloud로 보내지 않습니다.": {
+    "일정·루틴·목표·컨디션 기록이 같은 Apple 계정의 기기끼리 당신의 iCloud로 연동됩니다. 생리 기록은 iCloud로 보내지 않습니다.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Events, Input, Output, and check-ins sync through your iCloud between devices signed in to the same Apple Account. Period records are not sent to iCloud."
+            "value": "Events, Routine, Goal, and check-ins sync through your iCloud between devices signed in to the same Apple Account. Period records are not sent to iCloud."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "予定・Input・Output・チェックインは、同じAppleアカウントの端末どうしで、あなたのiCloudを通じて同期されます。生理の記録はiCloudに送信されません。"
+            "value": "予定・ルーティン・目標・チェックインは、同じAppleアカウントの端末どうしで、あなたのiCloudを通じて同期されます。生理の記録はiCloudに送信されません。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "日程、Input、Output 和打卡会在登录同一 Apple 账户的设备之间，通过你的 iCloud 同步。月经记录不会发送到 iCloud。"
+            "value": "日程、日常、目标和打卡会在登录同一 Apple 账户的设备之间，通过你的 iCloud 同步。月经记录不会发送到 iCloud。"
           }
         }
       }
@@ -18771,48 +18886,48 @@
         }
       }
     },
-    "진행 중인 Output과 남은 날짜를 보여줘요.": {
+    "진행 중인 목표와 남은 날짜를 보여줘요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Shows your Outputs in progress and the days left."
+            "value": "Shows your Goals in progress and the days left."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "進行中のアウトプットと残りの日数を表示します。"
+            "value": "進行中の目標と残りの日数を表示します。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "显示进行中的 Output 和剩余天数。"
+            "value": "显示进行中的目标和剩余天数。"
           }
         }
       }
     },
-    "진행 중인 Output이 없어요": {
+    "진행 중인 목표가 없어요": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No Output in progress"
+            "value": "No Goal in progress"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "進行中のアウトプットはありません"
+            "value": "進行中の目標はありません"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有进行中的 Output"
+            "value": "没有进行中的目标"
           }
         }
       }
@@ -19046,24 +19161,24 @@
         }
       }
     },
-    "첫 체크인을 완성해요": {
+    "첫 컨디션 기록을 남겨요": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Complete your first check-in"
+            "value": "Log how you feel for the first time"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "はじめてのチェックインを完成"
+            "value": "はじめてコンディションを記録"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "完成第一次签到"
+            "value": "第一次记录状态"
           }
         }
       }
@@ -19228,7 +19343,7 @@
         }
       }
     },
-    "체크인 %1$@일을 완성했어요.": {
+    "컨디션 기록 %1$@일을 완성했어요.": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -19250,7 +19365,7 @@
         }
       }
     },
-    "체크인 100일을 완성해요": {
+    "컨디션 기록 100일을 완성해요": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -19272,7 +19387,7 @@
         }
       }
     },
-    "체크인 10일을 완성해요": {
+    "컨디션 기록 10일을 완성해요": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -19294,7 +19409,7 @@
         }
       }
     },
-    "체크인 365일을 완성해요": {
+    "컨디션 기록 365일을 완성해요": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -19316,7 +19431,7 @@
         }
       }
     },
-    "체크인 50일을 완성해요": {
+    "컨디션 기록 50일을 완성해요": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -19338,7 +19453,7 @@
         }
       }
     },
-    "체크인으로 모은 씨앗을 낸 테마예요. 원장에는 낸 씨앗 수만 남아서 날짜는 알 수 없어요.": {
+    "컨디션 기록으로 모은 씨앗을 낸 테마예요. 원장에는 낸 씨앗 수만 남아서 날짜는 알 수 없어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -19361,7 +19476,7 @@
         }
       }
     },
-    "체크인을 모으거나 숨은 것을 발견하면 배지가 하나씩 쌓여요. 눌러서 모은 배지를 볼 수 있어요.": {
+    "컨디션 기록을 모으거나 숨은 것을 발견하면 배지가 하나씩 쌓여요. 눌러서 모은 배지를 볼 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -20876,30 +20991,30 @@
         }
       }
     },
-    "프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?": {
+    "공부·프로젝트처럼 조금씩 진행하는 일이에요. 진행도를 남겨요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "These are the things you put out, like projects or study. How about adjusting how much you take on by season?"
+            "value": "Things you make progress on bit by bit, like studying or a project. Log your progress."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プロジェクトや勉強のように、外に出していくことです。季節に合わせて量を調整してみてはどうでしょうか？"
+            "value": "勉強やプロジェクトのように、少しずつ進めることです。進み具合を残します。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "像项目或学习这样向外输出的事情。不妨按季节调整一下分量？"
+            "value": "像学习、项目这样一点点推进的事。记录进度。"
           }
         }
       }
     },
-    "플래너와 체크인은 당신의 iCloud로 기기 간에 이어지고,": {
+    "플래너와 컨디션 기록은 당신의 iCloud로 기기 간에 이어지고,": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -21014,7 +21129,7 @@
         }
       }
     },
-    "하루 체크인을 완성하면 씨앗이 하나씩 모여요.": {
+    "하루 컨디션 기록을 완성하면 씨앗이 하나씩 모여요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -21037,7 +21152,7 @@
         }
       }
     },
-    "하루 체크인을 완성할 때마다 씨앗이 하나씩 모여요. 탭하면 테마 화면이 열리고, 모은 씨앗으로 새 테마를 구매할 수 있어요.": {
+    "하루 컨디션 기록을 완성할 때마다 씨앗이 하나씩 모여요. 탭하면 테마 화면이 열리고, 모은 씨앗으로 새 테마를 구매할 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -21794,7 +21909,7 @@
         }
       }
     },
-    "같은 Apple ID면 플래너와 체크인이 이어져요. 생리 기록은 넘어가지 않아요.": {
+    "같은 Apple ID면 플래너와 컨디션 기록이 이어져요. 생리 기록은 넘어가지 않아요.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -21817,7 +21932,7 @@
         }
       }
     },
-    "생리 기록 · 플래너 · 체크인 전부": {
+    "생리 기록 · 플래너 · 컨디션 기록 전부": {
       "extractionState": "manual",
       "localizations": {
         "en": {

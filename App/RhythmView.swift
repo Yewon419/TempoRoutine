@@ -181,8 +181,8 @@ struct RhythmView: View {
                             isPresented: Binding(get: { addingSeason != nil && addKind == nil },
                                                  set: { if !$0 && addKind == nil { addingSeason = nil } }),
                             titleVisibility: .visible) {
-            Button("Input") { addKind = .input }
-            Button("Output") { addKind = .output }
+            Button(Loc.str("루틴")) { addKind = .input }
+            Button(Loc.str("목표")) { addKind = .output }
             Button("취소", role: .cancel) { addingSeason = nil }
         }
         .sheet(isPresented: $showSelfReport) { SelfReportFlow().themeColorScheme() }
@@ -767,8 +767,8 @@ struct RhythmView: View {
         /// 종류 구분 태그 — §3.5.1 렌더 금지 목록(날짜·주기 시점·체크인·메모·진행도) 밖
         var kindLabel: String {
             switch self {
-            case .input: "Input"
-            case .output: "Output"
+            case .input: Loc.str("루틴")
+            case .output: Loc.str("목표")
             }
         }
         var deleteTarget: QuickDeleteTarget {

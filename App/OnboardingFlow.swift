@@ -142,23 +142,23 @@ struct OnboardingFlow: View {
         case 3:
             switch baselinePage {
             case 0:
-                return Stage(eyebrow: Loc.str("기준일"), title: Loc.str("쓰던 기록이 있다면,\n그대로 이어져요."),
+                return Stage(eyebrow: Loc.str("내 주기"), title: Loc.str("쓰던 기록이 있다면,\n그대로 이어져요."),
                              body: [Loc.str("건강 앱에 남은 생리 기록을 불러오면"), Loc.str("보다 편한 시작을 할 수 있어요.")],
                              spot: .dial, content: dial(2), dialStep: 2)
             case 1:
                 var c = dial(2)
                 c.ring = true; c.number = periodLength
                 c.arcFraction = Double(periodLength) / Double(max(cycleLengthAnswer, 1))
-                return Stage(eyebrow: Loc.str("기준일"), title: Loc.str("생리는 보통\n며칠간 하나요?"),
+                return Stage(eyebrow: Loc.str("내 주기"), title: Loc.str("생리는 보통\n며칠간 하나요?"),
                              spot: .mid, content: c, dialStep: 2)
             case 2:
-                return Stage(eyebrow: Loc.str("기준일"), title: Loc.str("마지막 생리는..."),
+                return Stage(eyebrow: Loc.str("내 주기"), title: Loc.str("마지막 생리는..."),
                              body: [Loc.str("마지막 생리 시작일을 선택해주세요."), Loc.str("지난달로 넘기면 이전 생리도 기록할 수 있어요.")],
                              spot: .dial, content: dial(2), dialStep: 2)
             default:
                 var c = dial(2)
                 c.ring = true; c.number = cycleLengthAnswer; c.ticks = cycleLengthAnswer
-                return Stage(eyebrow: Loc.str("기준일"), title: Loc.str("주기가 보통\n며칠쯤인가요?"),
+                return Stage(eyebrow: Loc.str("내 주기"), title: Loc.str("주기가 보통\n며칠쯤인가요?"),
                              body: [Loc.str("지난 생리에서 다음 생리까지의 간격을 알려주세요.")],
                              spot: .mid, content: c, dialStep: 2)
             }
@@ -207,7 +207,7 @@ struct OnboardingFlow: View {
             lines.append(AppStores.cloudEnabled ? Loc.str("기록은 이 기기에 저장됩니다.") : Loc.str("기록은 이 기기에만 저장됩니다."))
         }
         if AppStores.cloudEnabled {
-            lines.append(Loc.str("플래너와 체크인은 당신의 iCloud로 기기 간에 이어지고,"))
+            lines.append(Loc.str("플래너와 컨디션 기록은 당신의 iCloud로 기기 간에 이어지고,"))
             lines.append(Loc.str("별도의 서버나 데이터베이스에 저장되지 않습니다."))
         }
         return lines
@@ -1004,13 +1004,13 @@ struct OnboardingFlow: View {
         let cloudOn = AppStores.cloudEnabled
         return VStack(spacing: 0) {
             placeRow(icon: "iphone", name: Loc.str("이 기기"),
-                     sub: cloudOn ? Loc.str("생리 기록은 여기에만") : Loc.str("생리 기록 · 플래너 · 체크인 전부"), first: true)
+                     sub: cloudOn ? Loc.str("생리 기록은 여기에만") : Loc.str("생리 기록 · 플래너 · 컨디션 기록 전부"), first: true)
             if healthOn {
                 placeRow(icon: "heart", name: Loc.str("Apple 건강 앱"), sub: nil, first: false)
             }
             if cloudOn {
                 placeRow(icon: "ipad", name: Loc.str("아이패드 · iCloud"),
-                         sub: Loc.str("같은 Apple ID면 플래너와 체크인이 이어져요. 생리 기록은 넘어가지 않아요."), first: false)
+                         sub: Loc.str("같은 Apple ID면 플래너와 컨디션 기록이 이어져요. 생리 기록은 넘어가지 않아요."), first: false)
             }
         }
     }

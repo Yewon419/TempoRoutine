@@ -77,6 +77,8 @@ struct SeasonMeta {
     /// 다른 언어에서 조용히 어긋난다(2026-08-20 로컬라이제이션에서 실제로 드러난 결함).
     let phase: CyclePhase
     let name: String
+    /// 계절명 옆 평문 뜻(2026-09-09 어휘 평문화) — 「겨울」이 무엇인지 설명 없이 읽히게. 의학 단계명 금지(M-1c) 유지.
+    let plain: String
     let color: Color
     let glow: Color        // 캘린더 지면 빛 전용(채도·명도 상향판, 2026-07-28)
     let moodline: String
@@ -104,22 +106,22 @@ func seasonMeta(for phase: CyclePhase) -> SeasonMeta {
     // 사용자 표면 금지인데 필드가 있으니 플레이리스트 이식이 부제에 갖다 썼다 —
     // 없으면 같은 사고가 구조적으로 불가능하다. 단계가 필요하면 `phase`(CyclePhase)를 쓸 것.
     case .menstrual:
-        SeasonMeta(phase: .menstrual, name: Loc.str("겨울"),
+        SeasonMeta(phase: .menstrual, name: Loc.str("겨울"), plain: Loc.str("생리 중"),
                    color: Ink.winter, glow: Ink.glowWinter,
                    moodline: Loc.str("이번 주는 겨울이에요. 조금은 쉬어가도 괜찮아요."),
                    lever: Loc.str("오늘은 천천히 이어가볼까요?"))
     case .follicular:
-        SeasonMeta(phase: .follicular, name: Loc.str("봄"),
+        SeasonMeta(phase: .follicular, name: Loc.str("봄"), plain: Loc.str("생리 끝난 뒤"),
                    color: Ink.spring, glow: Ink.glowSpring,
                    moodline: Loc.str("봄이에요. 가볍게 시작해보기 좋은 때예요."),
                    lever: Loc.str("시동 거는 주기예요. 가볍게 시작해도 좋아요."))
     case .ovulation:
-        SeasonMeta(phase: .ovulation, name: Loc.str("여름"),
+        SeasonMeta(phase: .ovulation, name: Loc.str("여름"), plain: Loc.str("배란 무렵"),
                    color: Ink.summer, glow: Ink.glowSummer,
                    moodline: Loc.str("여름이에요. 하고 싶은 만큼 빛나도 좋아요."),
                    lever: Loc.str("마음껏 몰입해도 좋아요."))
     case .luteal:
-        SeasonMeta(phase: .luteal, name: Loc.str("가을"),
+        SeasonMeta(phase: .luteal, name: Loc.str("가을"), plain: Loc.str("생리 전"),
                    color: Ink.autumn, glow: Ink.glowAutumn,
                    moodline: Loc.str("가을이에요. 스스로를 돌아보는 시간을 가져봐요."),
                    lever: Loc.str("조금 더 해볼 수 있나요? 무리하지는 말아요."))
@@ -495,8 +497,11 @@ struct TodayView: View {
     /// 개정 M-1c: 의학 단계명 제거 — 계절명은 위 대형 표기가 담당, 일차만(계절 내 일차, 2026-08-09).
     /// 날짜 = 메타 줄(2026-09-07) — 활판은 스탬프가 이미 날짜를 담당.
     private func metaLine(_ info: (meta: SeasonMeta, dayInCycle: Int, dayInPhase: Int, projected: Bool)) -> Text {
-        var line = Text(Loc.fmt("%lld일차", info.dayInPhase))
-            .foregroundStyle(Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9))
+        let seasonInk = Ink.onGround(info.meta.color.opacity(ThemeStore.chrome.boostsContrast ? 1.0 : 0.85), white: 0.9)
+        // 평문 뜻이 먼저(2026-09-09): 「생리 중 · 1일차 예상 · 9월 8일 화요일」
+        var line = Text(info.meta.plain).foregroundStyle(seasonInk)
+            + Text(" · ").foregroundStyle(Ink.onGround(Ink.text.opacity(0.35), white: 0.5))
+            + Text(Loc.fmt("%lld일차", info.dayInPhase)).foregroundStyle(seasonInk)
         let dim = Ink.onGround(Ink.text.opacity(0.45), white: 0.62)
         if snapshot.isSingleRecord {
             line = line + Text(" ") + Text("예측 기반").foregroundStyle(dim)

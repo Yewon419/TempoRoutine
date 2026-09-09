@@ -77,8 +77,8 @@ struct InputTodayWidget: Widget {
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
                 .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
-        .configurationDisplayName("오늘의 Input")
-        .description("오늘 챙길 Input을 목록으로 보여줘요.")
+        .configurationDisplayName("오늘의 루틴")
+        .description("오늘 챙길 루틴을 목록으로 보여줘요.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
@@ -103,9 +103,9 @@ struct InputTodayView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            CardHeader(day: entry.day, label: "Input", trailing: counter)
+            CardHeader(day: entry.day, label: Loc.str("루틴"), trailing: counter)
             if lines.isEmpty {
-                CardEmpty(text: Loc.str("오늘 챙길 Input이 없어요"))
+                CardEmpty(text: Loc.str("오늘 챙길 루틴이 없어요"))
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(lines.prefix(rowLimit).enumerated()), id: \.offset) { _, line in
@@ -155,8 +155,8 @@ struct OutputTodayWidget: Widget {
                 .containerBackground(for: .widget) { WWidgetGround(date: entry.date) }
                 .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
-        .configurationDisplayName("오늘의 Output")
-        .description("진행 중인 Output과 남은 날짜를 보여줘요.")
+        .configurationDisplayName("오늘의 목표")
+        .description("진행 중인 목표와 남은 날짜를 보여줘요.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
@@ -172,10 +172,10 @@ struct OutputTodayView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            CardHeader(day: entry.day, label: "Output",
+            CardHeader(day: entry.day, label: Loc.str("목표"),
                        trailing: hiddenCount > 0 ? "+\(hiddenCount)" : nil)
             if lines.isEmpty {
-                CardEmpty(text: Loc.str("진행 중인 Output이 없어요"))
+                CardEmpty(text: Loc.str("진행 중인 목표가 없어요"))
             } else {
                 VStack(alignment: .leading, spacing: family == .systemSmall ? 8 : 9) {
                     ForEach(Array(lines.prefix(rowLimit).enumerated()), id: \.offset) { _, line in

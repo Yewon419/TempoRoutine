@@ -164,7 +164,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     // 서체 고지(Pretendard 라이선스 권장 표기 — 시안 §1.6)
-                    Text("매일 체크인하면 씨앗이 모이고, 씨앗으로 새 테마를 살 수 있어요.")
+                    Text("매일 컨디션을 기록하면 씨앗이 모이고, 씨앗으로 새 테마를 살 수 있어요.")
                         .foregroundStyle(Ink.groundSub)
                 }
                 // 구입 내역(2026-09-04 대표님 지시) — 결제(테마 패스·커피)와 씨앗 구매를 한 화면에.
@@ -309,7 +309,7 @@ struct SettingsView: View {
                     }
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("일정·Input·Output·체크인이 같은 Apple 계정의 기기끼리 당신의 iCloud로 연동됩니다. 생리 기록은 iCloud로 보내지 않습니다.")
+                        Text("일정·루틴·목표·컨디션 기록이 같은 Apple 계정의 기기끼리 당신의 iCloud로 연동됩니다. 생리 기록은 iCloud로 보내지 않습니다.")
                         if !PlannerSync.shared.lastReport.isEmpty {
                             Text(Loc.fmt("마지막 동기화 · %1$@", "\(PlannerSync.shared.lastReport)"))
                         }
@@ -393,7 +393,7 @@ struct SettingsView: View {
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
                         // 저장 실측 표시(2026-07-23 진단 겸 정보) — 스토어에 실제로 있는 개수
-                        Text(Loc.fmt("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$@일 · 체크인 %2$@건", "\(periodDays.count)", "\(checkIns.count)"))
+                        Text(Loc.fmt("이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$@일 · 컨디션 기록 %2$@건", "\(periodDays.count)", "\(checkIns.count)"))
                         // 기기 이전 경로 노출(2026-08-19, 개정 P 후속) — 경로는 종전부터 동작, 카피만 신설
                         Text("기기를 바꾸시나요? 내보내기 파일을 새 기기로 보내고 「백업 가져오기」로 열면 기록이 이어져요.")
                         // 사진의 한계를 먼저 말한다(2026-09-04) — 옮겨진 줄 알았다가 잃는 게 제일 나쁘다

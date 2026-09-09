@@ -89,10 +89,10 @@ enum CoachSteps {
     static let today: [CoachStep] = [
         CoachStep(anchor: .todaySchedule, title: Loc.str("일정"),
                   body: Loc.str("약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요.")),
-        CoachStep(anchor: .todayInput, title: "Input",
-                  body: Loc.str("식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요.")),
-        CoachStep(anchor: .todayOutput, title: "Output",
-                  body: Loc.str("프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?")),
+        CoachStep(anchor: .todayInput, title: Loc.str("루틴"),
+                  body: Loc.str("식단·운동·물 마시기처럼 매일 하는 일이에요.\n체크만 하면 돼요.")),
+        CoachStep(anchor: .todayOutput, title: Loc.str("목표"),
+                  body: Loc.str("공부·프로젝트처럼 조금씩 진행하는 일이에요. 진행도를 남겨요.")),
     ]
     /// 캘린더 탭 — 생리 기록 입구 + 그리드 읽는 법
     static let calendar: [CoachStep] = [
@@ -110,7 +110,7 @@ enum CoachSteps {
         CoachStep(anchor: .rhythmSwitcher, title: Loc.str("기록이 쌓이면 여기서 보여요"),
                   body: Loc.str("계절마다 컨디션이 어땠는지, 루틴은 얼마나 했는지, 그날의 한 줄은 무엇이었는지를 나눠서 볼 수 있어요.")),
         CoachStep(anchor: .rhythmBadges, title: Loc.str("기념 배지"),
-                  body: Loc.str("체크인을 모으거나 숨은 것을 발견하면 배지가 하나씩 쌓여요. 눌러서 모은 배지를 볼 수 있어요.")),
+                  body: Loc.str("컨디션 기록을 모으거나 숨은 것을 발견하면 배지가 하나씩 쌓여요. 눌러서 모은 배지를 볼 수 있어요.")),
     ]
     /// 씨앗 최초 획득 — 오늘 탭 우상단 배지에서 1회(2026-08-12 사용자 지시).
     /// 얻는 법·쓰는 곳을 한 번에 말한다. 재촉은 하지 않는다(§7) — 사실만.
@@ -118,12 +118,12 @@ enum CoachSteps {
         // 제목에 개수를 넣지 않는다 — 「사용법 다시 보기」로 리셋하면 이미 여러 개를 가진
         // 사람에게도 다시 뜬다(2026-08-12).
         CoachStep(anchor: .todaySeed, title: Loc.str("씨앗이 모였어요"),
-                  body: Loc.str("하루 체크인을 완성할 때마다 씨앗이 하나씩 모여요. 탭하면 테마 화면이 열리고, 모은 씨앗으로 새 테마를 구매할 수 있어요.")),
+                  body: Loc.str("하루 컨디션 기록을 완성할 때마다 씨앗이 하나씩 모여요. 탭하면 테마 화면이 열리고, 모은 씨앗으로 새 테마를 구매할 수 있어요.")),
     ]
     /// 테마 탭 첫 진입 — 잔액이 무엇인지, 구매와 적용이 왜 따로인지(§3.8.1 구매·적용 분리)
     static let themeShop: [CoachStep] = [
         CoachStep(anchor: .themeSeedBalance, title: Loc.str("지금 가진 씨앗"),
-                  body: Loc.str("하루 체크인을 완성하면 씨앗이 하나씩 모여요.")),
+                  body: Loc.str("하루 컨디션 기록을 완성하면 씨앗이 하나씩 모여요.")),
         CoachStep(anchor: .themeCardAction, title: Loc.str("테마의 적용도 이곳에서 할 수 있어요."),
                   body: Loc.str("새 테마로 갈아입었어요. 새 기분으로 지내봐요.")),
     ]

@@ -42,7 +42,7 @@ struct CheckInCard: View {
     private var isToday: Bool { normalizedDay == cal.startOfDay(for: .now) }
     private var record: DailyCheckIn? { checkIns.first { $0.day == normalizedDay } }
 
-    private var title: String { isToday ? Loc.str("오늘의 체크인") : Loc.str("이날의 체크인") }
+    private var title: String { isToday ? Loc.str("오늘의 기록") : Loc.str("이날의 기록") }
     private var noteLabel: String { isToday ? Loc.str("오늘 한 줄") : Loc.str("그날 한 줄") }
     private var confirmLine: String {
         // 탭 개명 추종(2026-08-18 「나의 리듬」→「나의 템포」) — 이 문구는 그 탭을 가리킨다

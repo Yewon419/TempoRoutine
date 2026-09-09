@@ -89,7 +89,7 @@ struct CycleRecapCard: View {
                 .font(.almanacBody(.subheadline, size: 15))
                 .foregroundStyle(Ink.text.opacity(0.85))
             if data.checkInCount > 0 {
-                Text(Loc.fmt("체크인 %1$@일을 완성했어요.", "\(data.checkInCount)"))
+                Text(Loc.fmt("컨디션 기록 %1$@일을 완성했어요.", "\(data.checkInCount)"))
                     .font(.almanacBody(.subheadline, size: 15))
                     .foregroundStyle(Ink.text.opacity(0.85))
             }

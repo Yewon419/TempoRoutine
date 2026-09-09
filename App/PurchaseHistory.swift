@@ -195,7 +195,7 @@ struct PurchaseHistoryView: View {
                 Text("씨앗으로 연 테마")
                     .foregroundStyle(Ink.groundSub)
             } footer: {
-                Text("체크인으로 모은 씨앗을 낸 테마예요. 원장에는 낸 씨앗 수만 남아서 날짜는 알 수 없어요.")
+                Text("컨디션 기록으로 모은 씨앗을 낸 테마예요. 원장에는 낸 씨앗 수만 남아서 날짜는 알 수 없어요.")
                     .foregroundStyle(Ink.groundSub)
             }
         }

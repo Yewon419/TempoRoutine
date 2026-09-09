@@ -32,8 +32,8 @@ enum QuickDeleteTarget: Identifiable {
     var kindLabel: String {
         switch self {
         case .schedule: Loc.str("일정")
-        case .input: "Input"
-        case .output: "Output"
+        case .input: Loc.str("루틴")
+        case .output: Loc.str("목표")
         }
     }
 

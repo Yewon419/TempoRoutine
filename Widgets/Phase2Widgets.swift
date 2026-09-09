@@ -165,7 +165,7 @@ struct TodayScheduleWidget: Widget {
                 .environment(\.locale, Loc.locale)   // 앱의 언어 선택 추종(App Group 경유, 2026-08-21)
         }
         .configurationDisplayName("오늘")
-        .description("오늘의 일정·Input·Output을 한눈에 보여줘요.")
+        .description("오늘의 일정·루틴·목표를 한눈에 보여줘요.")
         .supportedFamilies([.systemMedium])
     }
 }
@@ -241,7 +241,7 @@ struct TodayScheduleView: View {
 
     private var inputColumn: some View {
         let lines = entry.day?.inputs ?? []
-        return column("Input", empty: lines.isEmpty) {
+        return column(Loc.str("루틴"), empty: lines.isEmpty) {
             ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
                 HStack(spacing: 4) {
                     Image(systemName: line.done ? "checkmark.circle.fill" : "circle")
@@ -266,7 +266,7 @@ struct TodayScheduleView: View {
 
     private var outputColumn: some View {
         let lines = entry.day?.outputs ?? []
-        return column("Output", empty: lines.isEmpty) {
+        return column(Loc.str("목표"), empty: lines.isEmpty) {
             ForEach(Array(lines.prefix(3).enumerated()), id: \.offset) { _, line in
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
