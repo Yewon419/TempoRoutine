@@ -149,6 +149,8 @@ struct TodayView: View {
     @State private var addSheet: CardKind?
     /// Input·Output 기본 추가 = 하단 바(2026-09-08 대표님 — 캘린더 빠른 일정처럼). 시트는 바를 위로 끌었을 때만.
     @State private var quickAdd: CardKind?
+    /// 빈 구획 예시 칩에서 연 빠른 바의 초안(2026-09-09)
+    @State private var quickPreset: QuickAdd.Suggestion?
     @State private var expandRequest: CardAddRequest?
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var pendingDelete: QuickDeleteTarget?   // 행 길게 누르기 = 빠른 삭제(2026-07-27)
@@ -223,14 +225,6 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     largeHeader
                     stateSurfaces
-                    // 주기 리캡(2026-08-31 A3) — 새 주기 첫 진입에 한 장, 닫으면 발행 확정
-                    if let recap = CycleRecapData.pending(snapshot: snapshot, checkIns: checkIns) {
-                        CycleRecapCard(data: recap) {
-                            lightFeedback += 1
-                            CycleRecapStore.markIssued(newStart: recap.end)
-                            recapDismissTick += 1   // 저장만으론 뷰가 안 갱신된다 — 리렌더 트리거
-                        }
-                    }
                     // 계절 넘김(2026-08-31 A1) — 전환 뒤 첫 진입에 인사 한 장(겨울 = 리캡이 담당)
                     if let turn = seasonTurn {
                         SeasonTurnCard(meta: turn) {
@@ -252,14 +246,24 @@ struct TodayView: View {
                             CheckInCard(day: today).ticketCardGap().frame(width: 360)
                         }
                     } else {
+                        // 2026-09-09 위계 재배치(베타 "설명 없이는 못 쓰겠다"): 앱을 굴리는 행동
+                        // (생리 기록 토글 → 오늘 컨디션)이 화면 위쪽에 오고, 루틴·목표는 그 아래.
+                        // 종전 「체크인 = Output 아래」(2026-08-26)는 플리 슬라이드 단계 폐기 문맥의
+                        // 결정이라 이 배치로 대체한다. 플리 s0→s1 구조는 그대로.
+                        CheckInCard(day: today).ticketCardGap()
                         // 콜드에도 연다(2026-08-25 베타) — 콜드 안내(stateSurfaces)와 공존
                         section(kind: .schedule) { scheduleSection }
                         section(kind: .input) { inputSection }
                         section(kind: .output) { outputSection }
-                        // 체크인 = 항상 Output 아래(2026-08-26 대표님 "슬라이드 없이 아웃풋 아래
-                        // 바로 달아줘" — 플리 s2 단계 폐기. "한 다섯번 스크롤해야" 열리던 전환 자체가
-                        // 은유보다 비쌌다). 플리는 s0(플레이어 단독)→s1(전체)만 남는다.
-                        CheckInCard(day: today).ticketCardGap()
+                    }
+                    // 주기 리캡(2026-08-31 A3) — 새 주기 첫 진입에 한 장, 닫으면 발행 확정.
+                    // 맨 아래로(2026-09-09) — 돌아보기는 오늘 할 일이 아니라 읽을거리다.
+                    if let recap = CycleRecapData.pending(snapshot: snapshot, checkIns: checkIns) {
+                        CycleRecapCard(data: recap) {
+                            lightFeedback += 1
+                            CycleRecapStore.markIssued(newStart: recap.end)
+                            recapDismissTick += 1   // 저장만으론 뷰가 안 갱신된다 — 리렌더 트리거
+                        }
                     }
                 }
                 .padding(20)   // 상단 추가 여백 없음 — 캘린더 탭과 로고 높이 통일(2026-08-18 베타 피드백)
@@ -667,11 +671,12 @@ struct TodayView: View {
         }
         if let kind = quickAdd {
             QuickCardBar(kind: kind, day: today, currentSeason: todayInfo?.meta, energyLevel: todayEnergyLevel,
+                         preset: quickPreset,
                          onExpand: { draft in
-                             quickAdd = nil
+                             quickAdd = nil; quickPreset = nil
                              expandRequest = CardAddRequest(kind: kind, title: draft)
                          },
-                         onClose: { quickAdd = nil })
+                         onClose: { quickAdd = nil; quickPreset = nil })
                 .transition(.move(edge: .bottom))
         }
     }
@@ -996,7 +1001,7 @@ struct TodayView: View {
     @ViewBuilder
     private var inputSection: some View {
         if todayInputs.isEmpty {
-            Text("아직 없어요").font(.almanacBody(.footnote, size: 13)).foregroundStyle(Ink.text.opacity(0.45))
+            emptyChips(kind: .input)
         } else {
             ForEach(todayInputs) { item in
                 VStack(alignment: .leading, spacing: 4) {
@@ -1048,10 +1053,27 @@ struct TodayView: View {
                               : Loc.str("아직 없어요")
     }
 
+    /// 빈 구획 = 「아직 없어요」 대신 예시 칩(2026-09-09 — 설명 없이 첫 행동이 보이게).
+    /// 칩을 누르면 빠른 카드 바가 그 제목·진행 방식을 물고 열린다(바의 칩과 같은 규칙).
+    private func emptyChips(kind: CardKind) -> some View {
+        let level = todayEnergyLevel ?? QuickAdd.level(forPhase: todayInfo?.meta.phase)
+        let pool: [QuickAdd.Suggestion] = kind == .input
+            ? QuickAdd.inputs(category: .other, level: level)
+            : QuickAdd.outputs(level: todayEnergyLevel)
+        return QuickAddChips(suggestions: pool) { suggestion in
+            quickPreset = suggestion
+            quickAdd = kind
+        }
+    }
+
     @ViewBuilder
     private var outputSection: some View {
         if todayOutputs.isEmpty {
-            Text(outputEmptyMessage).font(.almanacBody(.footnote, size: 13)).foregroundStyle(Ink.text.opacity(0.45))
+            if snapshot.isColdStart, outputEmptyMessage != Loc.str("아직 없어요") {
+                Text(outputEmptyMessage).font(.almanacBody(.footnote, size: 13)).foregroundStyle(Ink.text.opacity(0.45))
+            } else {
+                emptyChips(kind: .output)
+            }
         } else {
             ForEach(todayOutputs) { item in
                 VStack(alignment: .leading, spacing: 8) {

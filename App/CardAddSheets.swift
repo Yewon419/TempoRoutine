@@ -410,6 +410,8 @@ struct QuickCardBar: View {
     let day: Date
     let currentSeason: SeasonMeta?
     let energyLevel: EnergyLevel?
+    /// 빈 구획 예시 칩에서 열렸을 때의 초안(2026-09-09) — 제목·진행 방식을 그대로 문다
+    var preset: QuickAdd.Suggestion? = nil
     /// 위로 끌어올림 → 전체 시트. 초안 제목을 넘긴다.
     let onExpand: (String) -> Void
     /// 바를 걷는다 — 시트가 아니라 오버레이라 `dismiss`가 없다(QuickScheduleBar와 같다)
@@ -461,6 +463,9 @@ struct QuickCardBar: View {
             InkTitleField(text: $title, prompt: placeholder)
                 .focused($titleFocused)
                 .onSubmit(save)
+                .onAppear {
+                    if let preset, title.isEmpty { title = preset.title; picked = preset }
+                }
             HStack(alignment: .bottom, spacing: 12) {
                 QuickAddChips(suggestions: suggestions) { suggestion in
                     title = suggestion.title
