@@ -250,15 +250,14 @@ struct TodayView: View {
                             CheckInCard(day: today).ticketCardGap().frame(width: 360)
                         }
                     } else {
-                        // 2026-09-09 위계 재배치(베타 "설명 없이는 못 쓰겠다"): 앱을 굴리는 행동
-                        // (생리 기록 토글 → 오늘 컨디션)이 화면 위쪽에 오고, 루틴·목표는 그 아래.
-                        // 종전 「체크인 = Output 아래」(2026-08-26)는 플리 슬라이드 단계 폐기 문맥의
-                        // 결정이라 이 배치로 대체한다. 플리 s0→s1 구조는 그대로.
-                        CheckInCard(day: today).ticketCardGap()
+                        // 순서 = 일정 · 루틴 · 목표 · 컨디션 기록 · 한 줄 기록(2026-09-09 대표님 지시).
+                        // 같은 날 위로 올렸던 것을 되돌린다 — 한 줄 기록은 컨디션 카드 안에 딸려 있어
+                        // 이 한 줄을 옮기면 뒤 두 자리가 함께 따라온다.
                         // 콜드에도 연다(2026-08-25 베타) — 콜드 안내(stateSurfaces)와 공존
                         section(kind: .schedule) { scheduleSection }
                         section(kind: .input) { inputSection }
                         section(kind: .output) { outputSection }
+                        CheckInCard(day: today).ticketCardGap()
                     }
                     // 주기 리캡(2026-08-31 A3)은 오늘 탭에서 내렸다(2026-09-09 베타 "지난 주기 돌아보기 없애자").
                     // 판정·발행 코드(CycleRecap.swift)는 존치 — 다른 표면에 다시 올릴 때 그대로 쓴다.
