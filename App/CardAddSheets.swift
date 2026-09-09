@@ -50,9 +50,11 @@ struct ScheduleAddSheet: View {
     private static let allDayReminders: [(label: String, minutes: Int)] =
         [(Loc.str("없음"), -1), (Loc.str("당일 아침"), 0), (Loc.str("전날 아침"), 1440)]
 
-    init(defaultDate: Date, editing: ScheduleItem? = nil) {
+    init(defaultDate: Date, editing: ScheduleItem? = nil, presetTitle: String = "") {
         self.defaultDate = defaultDate
         self.editing = editing
+        // 빠른 일정 바에서 끌어올려 열렸으면 적던 제목을 물려받는다(2026-09-09 베타)
+        if editing == nil, !presetTitle.isEmpty { _title = State(initialValue: presetTitle) }
         if let item = editing {
             _title = State(initialValue: item.title)
             _allDay = State(initialValue: item.isAllDay)
@@ -264,10 +266,13 @@ struct QuickScheduleBar: View {
     var endDay: Date? = nil
     /// 바를 걷는다 — 시트가 아니라 오버레이라 `dismiss`가 없다(2026-08-01)
     let onClose: () -> Void
+    /// 위로 끌어올림 → 전체 시트(2026-09-09 베타). nil이면 손잡이·확장 제스처가 없다(기간 모드).
+    var onExpand: ((String) -> Void)? = nil
 
     @Environment(\.modelContext) private var modelContext
     @FocusState private var titleFocused: Bool
     @State private var title = ""
+    @GestureState private var dragY: CGFloat = 0
 
     private var cal: Calendar { Calendar.current }
     private var parsed: ParsedScheduleText { ScheduleTextParser.parse(title) }
@@ -290,6 +295,23 @@ struct QuickScheduleBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if let onExpand {
+                // 손잡이 — "잡고 위로" 자리(QuickCardBar와 같은 문법)
+                Capsule().fill(Ink.text.opacity(0.22)).frame(width: 36, height: 4)
+                    .frame(maxWidth: .infinity)
+                HStack {
+                    Text("일정 추가").eyebrowStyle()
+                    Spacer()
+                    Button { onExpand(effectiveTitle) } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.up").font(.system(size: 10, weight: .semibold))
+                            Text("위로 끌어올리면 자세히").font(.system(size: 12))
+                        }
+                        .foregroundStyle(Ink.text.opacity(0.5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
             TextField("무엇을 적어둘까요?", text: $title)
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Ink.text)
@@ -318,6 +340,16 @@ struct QuickScheduleBar: View {
         .background(Ink.paper)
         .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20))
         .shadow(color: Ink.text.opacity(0.12), radius: 12, y: -2)
+        .offset(y: min(0, dragY))   // 손가락을 따라 조금 올라오다 놓으면 전체 시트
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 16)
+                .updating($dragY) { value, state, _ in
+                    state = onExpand == nil ? 0 : value.translation.height
+                }
+                .onEnded { value in
+                    if value.translation.height < -48 { onExpand?(effectiveTitle) }
+                }
+        )
         .task {
             // 등장 애니(0.22s)와 겹치면 포커스 요청이 씹히는 사례가 있어 한 박자 뒤에 준다
             try? await Task.sleep(nanoseconds: 120_000_000)
@@ -394,6 +426,14 @@ struct QuickScheduleBar: View {
 // **바를 잡고 위로 끌면(또는 「자세히」) 전체 시트**가 초안 제목을 물려받아 열린다 — 반복·주기·진행 방식은 거기서.
 // 75차의 컴팩트 디텐트(.height)는 키보드가 뜨면 시트가 전체로 늘어나 바 모양이 안 나와 철회했다.
 /// 바 → 전체 시트 요청(sheet(item:)용). 초안 제목을 실어 나른다.
+/// 빠른 일정 바 → 전체 시트 요청(2026-09-09 베타 "여기도 위로 스크롤하면 상세지정 탭 열어주자").
+/// 기간 드래그(endDay 있음)는 확장을 안 준다 — 시트가 종료 날짜를 받지 않아 기간이 유실된다.
+struct ScheduleExpandRequest: Identifiable {
+    let id = UUID()
+    let day: Date
+    let title: String
+}
+
 struct CardAddRequest: Identifiable {
     let kind: CardKind
     let title: String

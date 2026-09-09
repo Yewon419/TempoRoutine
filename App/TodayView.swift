@@ -151,6 +151,8 @@ struct TodayView: View {
     @State private var quickAdd: CardKind?
     /// 일정 + = 캘린더와 같은 빠른 일정 바(2026-09-09 베타 "일정도 일단 하단바부터 띄워줘")
     @State private var quickSchedule = false
+    /// 그 바를 끌어올려 여는 전체 일정 시트(2026-09-09 베타)
+    @State private var expandSchedule: ScheduleExpandRequest?
     /// 빈 구획 예시 칩에서 연 빠른 바의 초안(2026-09-09)
     @State private var quickPreset: QuickAdd.Suggestion?
     @State private var expandRequest: CardAddRequest?
@@ -223,7 +225,8 @@ struct TodayView: View {
                 playlistStageZero
             } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                // 카드 간격 16 → 12(2026-09-09 베타 "카드간 간격을 좀 좁혀도 될듯")
+                VStack(alignment: .leading, spacing: 12) {
                     largeHeader
                     stateSurfaces
                     // 계절 넘김(2026-08-31 A1) — 전환 뒤 첫 진입에 인사 한 장(겨울 = 리캡이 담당)
@@ -237,8 +240,8 @@ struct TodayView: View {
                     if hSize == .regular {
                         // 아이패드: 3구획 좌열 + 체크인 우측 레일(2026-07-23).
                         // 콜드에도 연다(2026-08-25 베타 "계절 기록 전에도 일정·인풋·아웃풋 열어둬")
-                        HStack(alignment: .top, spacing: 16) {
-                            VStack(spacing: 16) {
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(spacing: 12) {
                                 section(kind: .schedule) { scheduleSection }
                                 section(kind: .input) { inputSection }
                                 section(kind: .output) { outputSection }
@@ -316,6 +319,11 @@ struct TodayView: View {
                 }
             }
             .themeColorScheme()
+        }
+        // 빠른 일정 바를 위로 끌어올림 → 전체 일정 시트(초안 제목 승계)
+        .sheet(item: $expandSchedule) { request in
+            ScheduleAddSheet(defaultDate: request.day, presetTitle: request.title)
+                .themeColorScheme()
         }
         // 빠른 카드 바를 위로 끌어올림 → 전체 시트(초안 제목 승계)
         .sheet(item: $expandRequest) { request in
@@ -664,7 +672,11 @@ struct TodayView: View {
                 .transition(.opacity)
         }
         if quickSchedule {
-            QuickScheduleBar(day: today, onClose: { quickSchedule = false })
+            QuickScheduleBar(day: today, onClose: { quickSchedule = false },
+                             onExpand: { draft in
+                                 quickSchedule = false
+                                 expandSchedule = ScheduleExpandRequest(day: today, title: draft)
+                             })
                 .transition(.move(edge: .bottom))
         }
         if let kind = quickAdd {

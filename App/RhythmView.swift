@@ -101,12 +101,6 @@ struct RhythmView: View {
         .id(achievementRevision)   // 원장 방송 — 달성 직후 카운트 갱신
     }
 
-    /// 패널 노출 = 비교 서술 가능한 신호가 하나라도 있을 때(§5.6.3 임계).
-    /// 그 전엔 콜드 문법 유지 — 진행 카드만.
-    private var showSwitcher: Bool {
-        SignalKind.allCases.contains { RhythmEngine.narratable(signalSummaries, signal: $0) }
-    }
-
     var body: some View {
         ZStack {
             if ThemeStore.chrome.photographicGround {
@@ -144,14 +138,16 @@ struct RhythmView: View {
                         if unlockedPhases.count < Self.allPhases.count {
                             coldCard
                         }
-                        if showSwitcher {
-                            signalSwitcher    // 신호 하위 칩(2026-08-13)
-                            signalStack
-                            preWindowNote     // 생리 전 저컨디션 윈도우 서술(§5.3 P 소비처)
-                            routineNote       // 계절별 루틴 수행(2026-08-13)
-                            cycleLengthNote   // 주기 길이(2026-08-13)
-                            predictionErrorNote   // 예측 오차 자가 표시(2026-08-18)
-                        }
+                        // 링 4개·표는 분석 전에도 빈 채로 보여준다(2026-09-09 베타 "분석 안끝났어도
+                        // 원 네개랑 표 보여줘, 내용물은 비게 두고"). 종전엔 서술 가능한 신호가 하나도
+                        // 없으면 스위처째 감췄다 — 무엇이 채워질 자리인지 보이지 않았다.
+                        // 아래 서술 카드들은 각자 임계를 들고 있어 조건 미달이면 알아서 침묵한다.
+                        signalSwitcher    // 신호 하위 칩(2026-08-13)
+                        signalStack
+                        preWindowNote     // 생리 전 저컨디션 윈도우 서술(§5.3 P 소비처)
+                        routineNote       // 계절별 루틴 수행(2026-08-13)
+                        cycleLengthNote   // 주기 길이(2026-08-13)
+                        predictionErrorNote   // 예측 오차 자가 표시(2026-08-18)
                     case .routines:
                         routinesSheet
                     case .diary:

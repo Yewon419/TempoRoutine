@@ -159,10 +159,9 @@ struct SignalPanel: View {
                 .foregroundStyle(Ink.text)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if narratable {
-                chart
-                stats
-            }
+            // 표본이 없어도 링 4개와 표는 그린다(2026-09-09 베타) — 값 자리는 비운다.
+            chart
+            stats
 
             // 일차 곡선 — narratable과 별개 게이트(계절 비교는 안 돼도 일차 3곳이면 선은 그린다)
             if dayCurve.count >= Self.curveMinDays {
@@ -490,31 +489,33 @@ extension SignalPanel {
     // ── ④ 하이라이트 스탯 2행 ──
     @ViewBuilder
     private var stats: some View {
-        if let high = highest, let low = lowest {
-            VStack(spacing: 0) {
-                statRow(label: statHighLabel, summary: high)
-                statRow(label: statLowLabel, summary: low)
-            }
+        VStack(spacing: 0) {
+            statRow(label: statHighLabel, summary: highest)
+            statRow(label: statLowLabel, summary: lowest)
         }
     }
 
-    private func statRow(label: String, summary: PhaseSignalSummary) -> some View {
-        let meta = seasonMeta(for: summary.phase)
+    /// 표본이 없으면 계절·값 자리를 비운다(2026-09-09 베타) — 표의 뼈대는 그대로 선다.
+    private func statRow(label: String, summary: PhaseSignalSummary?) -> some View {
+        let meta = summary.map { seasonMeta(for: $0.phase) }
         return HStack(spacing: 8) {
             Text(label)
                 .font(.caption)
                 .foregroundStyle(Ink.text.opacity(0.55))
-            Text(meta.name)
+            Text(meta?.name ?? Self.blank)
                 .font(.almanacBody(.subheadline, size: 15, weight: .bold))
-                .foregroundStyle(meta.color)
+                .foregroundStyle(meta?.color ?? Ink.text.opacity(0.3))
             Spacer()
-            Text("\(scaled(summary.mean))")
+            Text(summary.map { "\(scaled($0.mean))" } ?? Self.blank)
                 .font(.subheadline)
                 .monospacedDigit()
-                .foregroundStyle(Ink.text.opacity(0.75))
+                .foregroundStyle(Ink.text.opacity(summary == nil ? 0.3 : 0.75))
         }
         .padding(.vertical, 8)
         .almanacRule()
         .accessibilityElement(children: .combine)
     }
+
+    /// 빈 값 자리표 — 숫자 자리에도 쓰므로 하이픈이 아니라 대시 하나
+    private static let blank = "–"
 }

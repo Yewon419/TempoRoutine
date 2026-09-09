@@ -43,6 +43,8 @@ struct SeasonCalendarView: View {
     @State private var selectedDay: Date?       // regular 분할 뷰의 우측 하루 상세 선택(2026-07-23)
     @State private var quickAddDay: Date?       // 길게 누른 날짜 → 빠른 일정 시트(2026-07-25)
     @State private var quickAddEnd: Date?       // 드래그 기간 선택의 끝 날짜 — nil = 하루(2026-07-27)
+    /// 빠른 일정 바를 끌어올려 여는 전체 시트(2026-09-09 베타). 기간 모드에는 없다.
+    @State private var expandSchedule: ScheduleExpandRequest?
     @State private var dragStart: Date?         // 드래그 중 선택 앵커(누른 셀)
     @State private var dragEnd: Date?           // 드래그 중 현재 셀
     @State private var gridSize: CGSize = .zero // 드래그 좌표 → 셀 역산용
@@ -144,6 +146,9 @@ struct SeasonCalendarView: View {
             PeriodTrackerSheet().themeColorScheme()
         }
         .sheet(isPresented: $showNotices) { NoticesView().themeColorScheme() }
+        .sheet(item: $expandSchedule) { request in
+            ScheduleAddSheet(defaultDate: request.day, presetTitle: request.title).themeColorScheme()
+        }
         .task { await noticeFeed.refresh() }   // 캘린더 진입 시 미읽음 점 갱신(1시간 캐시)
         // 기능 튜토리얼(2026-07-23). 첫 실행 체인이면 나의 템포 탭으로 이어진다(2026-09-04 베타)
         .coachOverlay(id: .calendar, steps: CoachSteps.calendar,
@@ -256,7 +261,11 @@ struct SeasonCalendarView: View {
                 .transition(.opacity)
         }
         if let quickAddDay {
-            QuickScheduleBar(day: quickAddDay, endDay: quickAddEnd, onClose: closeQuickAdd)
+            QuickScheduleBar(day: quickAddDay, endDay: quickAddEnd, onClose: closeQuickAdd,
+                             onExpand: quickAddEnd == nil ? { draft in
+                                 closeQuickAdd()
+                                 expandSchedule = ScheduleExpandRequest(day: quickAddDay, title: draft)
+                             } : nil)
                 .transition(.move(edge: .bottom))
         }
     }
