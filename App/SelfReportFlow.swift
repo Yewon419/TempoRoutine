@@ -107,7 +107,9 @@ struct SelfReportFlow: View {
         case 1: questionGroup(title: nil,
                               note: Loc.str("이제 그때를 떠올리면서 답해주세요."),
                               questions: [SelfReportSurvey.calibration])
-        case 2: questionGroup(title: nil, note: nil, questions: SelfReportSurvey.phaseQuestions)
+        // 복수 응답 안내(2026-09-09) — 체크 모양만으로는 여러 개를 골라도 된다는 걸 모른다
+        case 2: questionGroup(title: nil, note: Loc.str("여러 개 고를 수 있어요."),
+                              questions: SelfReportSurvey.phaseQuestions)
         case 3: questionGroup(title: symptomAnchorTitle(p2: answers["P2"]),
                               note: Loc.str("꼭 생리 중이 아니라도 가장 힘들었던 때를 떠올려주세요."),
                               questions: symptomOrder)
@@ -120,10 +122,15 @@ struct SelfReportFlow: View {
     /// **합성**해서 돌려주므로 그대로는 번역 키가 아니다. 순수 모듈을 건드리지 않으려고
     /// 합성만 앱으로 가져온다(판정 규칙·선택지 자체는 그대로 TempoCore가 소유).
     private func symptomAnchorTitle(p2: String?) -> String {
-        guard let p2, p2 != "none", p2 != "unknown",
-              let choice = SelfReportSurvey.phaseChoices.first(where: { $0.value == p2 })
+        // 복수 응답(2026-09-09)이면 고른 것을 전부 나열한다 — TempoCore의 symptomAnchorLine과 같은 규칙.
+        let labels = SelfReportSurvey.values(p2)
+            .filter { !SelfReportSurvey.exclusivePhaseValues.contains($0) }
+            .compactMap { value in
+                SelfReportSurvey.phaseChoices.first(where: { $0.value == value }).map { Loc.text($0.label) }
+            }
+        guard !labels.isEmpty
         else { return Loc.str("그나마 힘들었던 때를 떠올려서, 평소와 비교해서 답해주세요.") }
-        return Loc.fmt("「%1$@」, 평소와 비교해서 답해주세요.", Loc.text(choice.label))
+        return Loc.fmt("「%1$@」, 평소와 비교해서 답해주세요.", labels.joined(separator: " · "))
     }
 
     private var intro: some View {
@@ -167,6 +174,10 @@ struct SelfReportFlow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("이 페이지의 질문은 건너뛰셔도 괜찮아요.")
                     .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
+                // 저장 위치 재고지(2026-09-09 베타) — 인트로에 이미 한 줄 있지만, 답하기를 망설이는
+                // 자리는 이 페이지다. 물어보는 화면에서 다시 말해야 읽힌다.
+                Text("답변은 당신의 기기 안에만 저장돼요.")
+                    .font(.footnote).foregroundStyle(Ink.text.opacity(0.55))
             }
             ForEach(SelfReportSurvey.optionalQuestions, id: \.id) { question in
                 questionBlock(question)
@@ -189,12 +200,16 @@ struct SelfReportFlow: View {
     }
 
     private func choiceRow(question: SurveyQuestion, choice: SurveyChoice) -> some View {
-        let selected = answers[question.id] == choice.value
+        let selected: Bool = SelfReportSurvey.values(answers[question.id]).contains(choice.value)
+        // 복수 문항은 라디오가 아니라 체크 — 하나만 고르는 줄로 읽히면 여러 개를 고를 생각을 못 한다
+        let mark: String = question.allowsMultiple
+            ? (selected ? "checkmark.square.fill" : "square")
+            : (selected ? "circle.inset.filled" : "circle")
         return Button {
             select(question: question, choice: choice, wasSelected: selected)
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: selected ? "circle.inset.filled" : "circle")
+                Image(systemName: mark)
                     .font(.subheadline)
                     .foregroundStyle(selected ? Ink.text : Ink.text.opacity(0.3))
                 Text(choice.label)
@@ -247,7 +262,12 @@ struct SelfReportFlow: View {
     /// 선택 반영 + 단문항 장이면 자동 진행(2026-08-12). 재탭 해제로는 넘어가지 않는다.
     /// 한 박자 늦추는 이유 = 고른 표시(라디오 채움)를 보고 넘어가야 무엇을 골랐는지 남는다.
     private func select(question: SurveyQuestion, choice: SurveyChoice, wasSelected: Bool) {
-        answers[question.id] = wasSelected ? nil : choice.value
+        if question.allowsMultiple {
+            answers[question.id] = toggledMultiValue(question: question, choice: choice,
+                                                     wasSelected: wasSelected)
+        } else {
+            answers[question.id] = wasSelected ? nil : choice.value
+        }
         guard !wasSelected, isSingleQuestionStep, !autoAdvancedSteps.contains(step) else { return }
         let armedStep = step
         Task { @MainActor in
@@ -257,6 +277,23 @@ struct SelfReportFlow: View {
             autoAdvancedSteps.insert(armedStep)
             advance()
         }
+    }
+
+    /// 복수 문항 토글 — 선택 순서가 아니라 **선택지 순서**로 이어 저장한다(같은 답이면 같은 문자열).
+    /// 「딱히 없어요」·「잘 모르겠어요」는 배타 — 고르면 나머지가 빠지고, 반대로 다른 것을 고르면 빠진다.
+    private func toggledMultiValue(question: SurveyQuestion, choice: SurveyChoice,
+                                   wasSelected: Bool) -> String? {
+        var picked = Set(SelfReportSurvey.values(answers[question.id]))
+        if wasSelected {
+            picked.remove(choice.value)
+        } else if SelfReportSurvey.exclusivePhaseValues.contains(choice.value) {
+            picked = [choice.value]
+        } else {
+            picked.subtract(SelfReportSurvey.exclusivePhaseValues)
+            picked.insert(choice.value)
+        }
+        let ordered = question.choices.map(\.value).filter { picked.contains($0) }
+        return ordered.isEmpty ? nil : ordered.joined(separator: ",")
     }
 
     private func advance() {

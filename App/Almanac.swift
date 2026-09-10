@@ -311,6 +311,22 @@ extension View {
         }
     }
 
+    /// 하늘 지면 위 계절 표제 뒤 어두운 헤일로(2026-09-09 베타 "봄 글씨 잘 안보임").
+    /// 날씨 계절 4색은 **어두운 하늘 위 발광 파스텔**로 잡힌 값이라(#E8D084 봄), 흰 구름이
+    /// 지나가는 구간에서는 그림자(0.35/7)만으로 안 버틴다. 활자를 어둡게 바꾸면 계절색이
+    /// 죽으므로 지면 쪽을 어둡게 한다 — 은필의 `groundHaze`와 같은 수법, 색만 반대.
+    func skyHeadingHaze() -> some View {
+        background {
+            if ThemeStore.chrome.skyGround {
+                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                    .fill(Color(red: 4 / 255, green: 14 / 255, blue: 28 / 255).opacity(0.26))
+                    .blur(radius: 16)
+                    .padding(.horizontal, -14)
+                    .padding(.vertical, -6)
+            }
+        }
+    }
+
     /// 플레이리스트 카드 유리(2026-08-22) — 시스템 `glassEffect`는 두 변형 모두 실기기에서 기각됐다:
     /// `.regular`는 재질 자체가 뿌옇고(틴트 0으로도 — 08-20 "여전히 안투명"), `.clear`는 **미디어 위
     /// 전용이라 감광층을 깐다**(밝은 지면에선 회색 판 — 08-22 "리퀴드글래스라며"). 시안 §4.4 ⑥의

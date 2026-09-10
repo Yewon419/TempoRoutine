@@ -9195,6 +9195,29 @@
         }
       }
     },
+    "많이 달라요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Very different"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "かなり違います"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "差很多"
+          }
+        }
+      }
+    },
     "매번 달라요": {
       "extractionState": "manual",
       "localizations": {
@@ -16196,6 +16219,75 @@
           "stringUnit": {
             "state": "translated",
             "value": "回答只保存在这台设备上。"
+          }
+        }
+      }
+    },
+    "그때그때 달라요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It varies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その時によります"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看情况"
+          }
+        }
+      }
+    },
+    "답변은 당신의 기기 안에만 저장돼요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your answers stay on your device."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回答はあなたの端末の中だけに保存されます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您的回答只保存在您的设备里。"
+          }
+        }
+      }
+    },
+    "여러 개 고를 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can pick more than one."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "複数選べます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以选择多项。"
           }
         }
       }

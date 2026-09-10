@@ -461,6 +461,7 @@ struct TodayView: View {
                                                        white: snapshot.isSingleRecord ? 0.6 : 1.0))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
+                        .skyHeadingHaze()   // 날씨 = 흰 구름 위 계절색 표제 가독(2026-09-09 베타)
                         .seasonTitleTap()   // B1(2026-08-31) — 티켓 스탬프·날씨 파문(그 외 무반응)
                         .padding(.top, 6)
                     }
@@ -469,6 +470,7 @@ struct TodayView: View {
                     metaLine(info)
                         .font(.almanacBody(.footnote, size: 13))
                         .fixedSize(horizontal: false, vertical: true)
+                        .skyHeadingHaze()   // 표제와 같은 이유 — 계절색 일차도 구름에 잠긴다
                     .skyInkShadow()   // 날씨 = 흰 구름 위 가독(2026-08-20)
                     .groundHaze()     // 은필·기본 = 선화 위 안개(2026-08-22)
                     skyReadout        // 날씨 테마 전용 수치 줄(2026-08-20 사용자 요청)

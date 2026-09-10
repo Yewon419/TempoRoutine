@@ -87,23 +87,23 @@ struct RootTabView: View {
     var body: some View {
         TabView(selection: $rootTab) {
             TodayView()
-                .skyTabBarPlate()
+                .themeTabBarPlate()
                 .tabItem { tabLabel("오늘", symbol: "circle.inset.filled", ticketAsset: "TicketIconSun") }
                 .tag(RootTab.today.rawValue)
             NavigationStack {
                 SeasonCalendarView()
             }
-            .skyTabBarPlate()
+            .themeTabBarPlate()
             .tabItem { tabLabel("캘린더", symbol: "calendar", ticketAsset: "TicketIconMoon") }
             .tag(RootTab.calendar.rawValue)
             RhythmView()
-                .skyTabBarPlate()
+                .themeTabBarPlate()
                 .tabItem { tabLabel("나의 템포", symbol: "chart.xyaxis.line", ticketAsset: "TicketIconWave") }
                 .tag(RootTab.rhythm.rawValue)
             NavigationStack {
                 SettingsView()
             }
-            .skyTabBarPlate()
+            .themeTabBarPlate()
             .tabItem { tabLabel("설정", symbol: "gearshape", ticketAsset: "TicketIconStar") }
             .tag(RootTab.settings.rawValue)
         }
@@ -408,13 +408,21 @@ struct RootTabView: View {
 // **라이트 유리(뿌연 흰색)**가 드러난다. 4차 = 유리 재질 자체를 다크로 강제
 // (`toolbarColorScheme` — 배경 지정과 별개 축이라 배경이 무시돼도 어두운 유리가 남는다).
 private extension View {
+    /// 하단바 판때기 강제 — UIKit 외관 지정이 무시되는 iOS 26 회귀를 SwiftUI 축으로 덮는다.
+    /// 2026-09-09 티켓 추가(베타 "티켓은 하단바 흰색 고정"): 날씨와 같은 증상이었다 —
+    /// `UITabBar.appearance()`의 웜 화이트가 무시되면 어두운 유리가 그대로 드러난다.
     @ViewBuilder
-    func skyTabBarPlate() -> some View {
+    func themeTabBarPlate() -> some View {
         if ThemeStore.chrome.skyGround {
             self
                 .toolbarBackground(Color.flatRGB(0x2A, 0x2F, 0x38), for: .tabBar)
                 .toolbarBackgroundVisibility(.visible, for: .tabBar)
                 .toolbarColorScheme(.dark, for: .tabBar)
+        } else if ThemeStore.chrome.ticketChrome {
+            self
+                .toolbarBackground(TicketSpec.ticketPaper, for: .tabBar)
+                .toolbarBackgroundVisibility(.visible, for: .tabBar)
+                .toolbarColorScheme(.light, for: .tabBar)
         } else {
             self
         }

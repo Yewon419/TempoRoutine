@@ -36,6 +36,32 @@ final class SelfReportSurveyTests: XCTestCase {
         }
     }
 
+    /// P1·P2는 복수 응답(2026-09-09) — 저장은 쉼표로 이은 한 문자열이다.
+    func testPhaseQuestionsAllowMultiple() {
+        XCTAssertTrue(SelfReportSurvey.phaseQuestions.allSatisfy(\.allowsMultiple))
+        XCTAssertFalse(SelfReportSurvey.symptomQuestions.contains { $0.allowsMultiple })
+        XCTAssertEqual(SelfReportSurvey.values("menstrual,before"), ["menstrual", "before"])
+        XCTAssertEqual(SelfReportSurvey.values(nil), [])
+        XCTAssertEqual(SelfReportSurvey.values(""), [])
+    }
+
+    /// 복수로 고른 위상은 앵커에 전부 나열한다 — 하나만 골라 쓰면 나머지가 화면에서 사라진다.
+    func testAnchorListsEveryPickedPhase() {
+        let line = SelfReportSurvey.symptomAnchorLine(p2: "menstrual,before")
+        XCTAssertTrue(line.contains("생리 중"))
+        XCTAssertTrue(line.contains("다음 생리 오기 일주일쯤 전"))
+        // 배타 값이 섞여 들어와도 문구에는 실제 위상만 남는다
+        let mixed = SelfReportSurvey.symptomAnchorLine(p2: "menstrual,unknown")
+        XCTAssertTrue(mixed.contains("생리 중"))
+        XCTAssertFalse(mixed.contains("잘 모르겠어요"))
+    }
+
+    /// Q9는 3지(2026-09-09) — 선택지가 곧 유형이다. 늘리면 판정 경계가 다시 흐려진다.
+    func testAmplitudeChoicesMapOneToOne() {
+        let q9 = SelfReportSurvey.amplitudeQuestions.first { $0.id == "Q9" }
+        XCTAssertEqual(q9?.choices.map(\.value), ["same", "much", "varies"])
+    }
+
     func testModalityRawRange() {
         let emotionalHeavy = ["Q1": "worse", "Q2": "worse", "Q3": "worse",
                               "Q4": "same", "Q5": "same", "Q6": "same", "Q9": "much"]
@@ -46,7 +72,8 @@ final class SelfReportSurveyTests: XCTestCase {
         XCTAssertEqual(SelfReportScoring.score(bodilyHeavy).modalityRaw, -6)
     }
 
-    /// 중간 선택지(2026-09-04) — 「보통이에요」(somewhat)는 문항당 1점. 0으로 접히면 답이 사라진다.
+    /// 중간 선택지(2026-09-04) — 「그때그때 달라요」(somewhat)는 문항당 1점. 0으로 접히면 답이 사라진다.
+    /// 2026-09-09 라벨이 바뀌어도 채점은 1점 유지(대표님 결정).
     func testSomewhatCountsAsHalf() {
         let mid = ["Q1": "somewhat", "Q2": "somewhat", "Q3": "somewhat",
                    "Q4": "same", "Q5": "same", "Q6": "same", "Q9": "much"]
@@ -63,6 +90,8 @@ final class SelfReportSurveyTests: XCTestCase {
         XCTAssertEqual(SelfReportScoring.score(["C1": "within1m", "Q9": "varies"]).type, .rubato)
     }
 
+    /// `total`·`slight`는 화면에서 내린 옛 값이다(2026-09-09 Q9 축소) — 그 전에 답한 기록이
+    /// 유형 없이 떨어지지 않게 채점 집합에는 남아 있어야 한다.
     func testAmplitudeSplit() {
         XCTAssertEqual(SelfReportScoring.score(["C1": "within1m", "Q9": "much"]).type, .vivace)
         XCTAssertEqual(SelfReportScoring.score(["C1": "within1m", "Q9": "total"]).type, .vivace)
