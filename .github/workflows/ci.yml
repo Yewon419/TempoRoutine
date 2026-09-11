@@ -200,6 +200,34 @@ jobs:
           privacy: location
           wait: '8'
           fail-on-crash: 'false'
+      # ── 찰칵: 티켓·날씨 오늘 탭(2026-09-10 대표님 지시 — 88차 수정 2건이 이 두 테마에만 나타난다:
+      #    티켓 하단바 흰색 고정 / 날씨 계절 표제 뒤 어두운 헤일로). 날씨는 조건·시간대를 구름·낮으로
+      #    고정해 문제 상황(흰 구름 위 계절색)을 재현한다 — 기본 폴백(맑음)이면 어두운 하늘이라 안 드러난다.
+      #    ⚠ 개발자 표본은 오늘이 겨울 1일차다(주기 29일 × 4, 기준일 = 오늘) — 베타에서 보고된 봄은
+      #    이 컷으로 못 본다. 봄 표제 대비는 실기기 확인 큐.
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          defaults: |
+            onboardingDone -bool true
+            devModeActive -bool true
+            tutorialChainDone -bool true
+            coach.today -bool true
+            coach.calendar -bool true
+            coach.rhythm -bool true
+            coach.seed -bool true
+            coach.themeShop -bool true
+          screens: |
+            t-today       | -rootTab today    -appTheme ticket  -appLanguage ko -AppleLanguages (ko)
+            t-calendar    | -rootTab calendar -appTheme ticket  -appLanguage ko -AppleLanguages (ko)
+            w-today-cloud | -rootTab today    -appTheme weather -appLanguage ko -AppleLanguages (ko) -wxDebugCondition cloud -wxDebugDaypart day
+            w-today-snow  | -rootTab today    -appTheme weather -appLanguage ko -AppleLanguages (ko) -wxDebugCondition snow  -wxDebugDaypart day
+          output-dir: screenshots-ticket-weather
+          artifact-name: screenshots-ticket-weather
+          title: '템포루틴 티켓·날씨 찰칵'
+          privacy: location
+          wait: '8'
+          fail-on-crash: 'false'
       # ── 찰칵: 좁은 폭 + 접근성 큰 글씨(2026-09-08 베타 — 13 Pro Max 확대 보기(375pt) + 더 큰 텍스트에서
       #    오늘 탭이 좌우로 잘림). 가장 좁은 시뮬(16e, 390pt)에 AX L / XXXL을 런치 인자로 걸어 재현한다.
       - uses: Yewon419/chalkak@main
