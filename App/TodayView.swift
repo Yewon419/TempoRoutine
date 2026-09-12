@@ -181,12 +181,12 @@ struct TodayView: View {
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
 
     /// 계절 넘김 판정(A1) — 순수 계산, 저장은 카드 닫기·첫 실행 task가 한다.
-    /// 겨울은 리캡(A3)이 그 순간을 담당하므로 건너뛴다(SeasonTurn.swift 머리말).
+    /// 겨울도 인사한다(2026-09-12) — 종전엔 리캡(A3)이 겨울을 맡는다고 건너뛰었는데, 리캡이 오늘 탭에서
+    /// 내려간 뒤(85차) 새 겨울 첫 진입에 아무 카드도 없었다. 리캡은 나의 템포 탭으로 갔다.
     private var seasonTurn: SeasonMeta? {
         guard !lastSeenPhaseRaw.isEmpty,
               let phase = snapshot.phase(on: today),
-              phase.rawValue != lastSeenPhaseRaw,
-              phase != .menstrual
+              phase.rawValue != lastSeenPhaseRaw
         else { return nil }
         return seasonMeta(for: phase)
     }

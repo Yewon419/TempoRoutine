@@ -29,6 +29,7 @@ struct RhythmView: View {
     @State private var pendingDelete: QuickDeleteTarget?
     @State private var confirmFeedback = 0
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 칩 전환, 확정 아님. 2026-08-09 사용자 지시)
+    @State private var recapDismissTick = 0  // 리캡 닫기 리렌더(A3 — 판정이 UserDefaults라 저장만으론 안 갱신)
     @Query private var selfReports: [SelfReportRecord]
     @State private var showSelfReport = false
     // 「나중에」 즉시 반영(2026-08-31 베타 "나중에 선택해도 안꺼지는데" → "바로 꺼지게 해줘") —
@@ -128,6 +129,16 @@ struct RhythmView: View {
                     almanacDisplay(Loc.str("나의 템포"), size: ThemeStore.chrome.debossDisplay ? 54 : 44,   // 68은 과함(2026-08-18 베타)
                                    color: Ink.onGround(Ink.text, white: 1.0))
                     selfReportPrompt
+                    // 주기 리캡(A3) — 2026-09-12 이 탭으로 이관. 오늘 탭에선 「오늘 할 일」 사이에 끼어
+                    // 「없애자」(2026-09-09 베타)가 됐지만, 돌아보기는 이 탭의 본업이다(§3.1 주기 루프 ②).
+                    // 세그먼트 위에 두어 마지막 본 탭이 무엇이든 새 주기 첫 진입에 보인다. 닫으면 발행 확정.
+                    if let recap = CycleRecapData.pending(snapshot: snapshot, checkIns: checkIns) {
+                        CycleRecapCard(data: recap) {
+                            lightFeedback += 1
+                            CycleRecapStore.markIssued(newStart: recap.end)
+                            recapDismissTick += 1
+                        }
+                    }
                     sectionSwitcher
                         .coachAnchor(.rhythmSwitcher)   // 나의 템포 코치 1단계(2026-09-04)
                     switch tab {
