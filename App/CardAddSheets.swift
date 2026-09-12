@@ -874,13 +874,22 @@ struct InputAddSheet: View {
         }
     }
 
+    /// 반복 방식 = 세그먼트 하나(2026-09-12 기능 점검). 종전 「반복」·「주기 기준」 토글 둘은 서로를 끄는
+    /// 라디오 관계였는데 스위치로 그려져 있었다 — 시스템 세그먼트가 배타를 대신 말한다(83차 나의 템포 전례).
+    /// 저장 모델(repeats·cycleBased)은 그대로, 바인딩만 셋 중 하나로 접는다.
+    private var repeatMode: Binding<Int> {
+        Binding(get: { cycleBased ? 2 : (repeats ? 1 : 0) },
+                set: { mode in repeats = mode == 1; cycleBased = mode == 2 })
+    }
+
     private var repeatSection: some View {
         InkSection(eyebrow: Loc.str("반복")) {
-            // 상호 배타(둘 다 끔 = 단발 체크 — Output과 동일 문법, 2026-07-23)
-            InkToggleRow(label: Loc.str("반복"), isOn: Binding(
-                get: { repeats },
-                set: { on in repeats = on; if on { cycleBased = false } }
-            ))
+            Picker("반복", selection: repeatMode) {
+                Text("없음").tag(0)
+                Text("날짜로").tag(1)
+                Text("계절로").tag(2)
+            }
+            .pickerStyle(.segmented)
             if repeats {
                 InkChipFlow {
                     ForEach(Self.calendarChoices, id: \.self) { freq in
@@ -888,11 +897,6 @@ struct InputAddSheet: View {
                     }
                 }
             }
-            InkDivider()
-            InkToggleRow(label: Loc.str("주기 기준"), isOn: Binding(
-                get: { cycleBased },
-                set: { on in cycleBased = on; if on { repeats = false } }
-            ))
             if cycleBased {
                 // 계절만 고른다(2026-09-09 베타 "주기 기준 반복 너무 복잡함, 세부사항 다 없애고 그 계절
                 // 전체 반복으로") — 그 계절 내내 매일, 매 주기. N일차·1회 옵션은 UI에서 내렸다(모델은 그대로).
@@ -1101,14 +1105,21 @@ struct OutputAddSheet: View {
 
     private var seasonName: String { seasonMeta(for: anchor.phase).name }
 
+    /// 반복 방식 = 세그먼트 하나(2026-09-12 기능 점검, 루틴 시트와 같은 문법). 2026-08-01 표기 개편의
+    /// 「기간 반복」·「<계절> 반복」 두 토글은 서로를 끄는 라디오였다 — 시스템 세그먼트로 접는다.
+    private var repeatMode: Binding<Int> {
+        Binding(get: { cycleBased ? 2 : (repeats ? 1 : 0) },
+                set: { mode in repeats = mode == 1; cycleBased = mode == 2 })
+    }
+
     private var repeatSection: some View {
         InkSection(eyebrow: Loc.str("반복")) {
-            // 표기 개편(2026-08-01 베타 피드백): 「반복」→「기간 반복」(달력 주기),
-            // 「주기 기준」→「<계절> 반복」(몸의 주기). 상호 배타 — 둘 다 끄면 반복 없음.
-            InkToggleRow(label: Loc.str("기간 반복"), isOn: Binding(
-                get: { repeats },
-                set: { on in repeats = on; if on { cycleBased = false } }
-            ))
+            Picker("반복", selection: repeatMode) {
+                Text("없음").tag(0)
+                Text("날짜로").tag(1)
+                Text("계절로").tag(2)
+            }
+            .pickerStyle(.segmented)
             if repeats {
                 InkChipFlow {
                     ForEach(Self.calendarChoices, id: \.self) { freq in
@@ -1116,11 +1127,6 @@ struct OutputAddSheet: View {
                     }
                 }
             }
-            InkDivider()
-            InkToggleRow(label: Loc.fmt("%1$@ 반복", "\(seasonName)"), isOn: Binding(
-                get: { cycleBased },
-                set: { on in cycleBased = on; if on { repeats = false } }
-            ))
             if cycleBased {
                 // 계절만 고른다(2026-09-09 베타) — 그 계절 내내 매일, 매 주기. 전체/N일차·1회 옵션은 내렸다.
                 SeasonChipRow(selection: $anchor)
