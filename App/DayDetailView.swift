@@ -22,6 +22,17 @@ enum CardKind: String, CaseIterable, Identifiable {
         }
     }
 
+    /// 제목 옆 한 줄 정의(2026-09-12 기능 점검) — ⓘ는 눌러야 보여서 「루틴·목표가 뭔지」가 3초 안에
+    /// 안 읽혔다(베타 미처리분). 일정은 말 그대로라 없음. 두 카드를 가르는 축 = 날마다 새로 시작하느냐
+    /// 이어가느냐(§3.6 2026-08-12 개정)를 두 낱말로.
+    var brief: String? {
+        switch self {
+        case .schedule: nil
+        case .input: Loc.str("매일 체크")
+        case .output: Loc.str("조금씩 진행")
+        }
+    }
+
     /// 구획 ⓘ 설명(2026-08-06 베타 피드백 — 체크인 행이 아니라 구획 제목 뒤).
     /// 문안 = 코치마크(§3.6 카드 정의의 사용자 언어)와 같은 계열.
     var info: String {
@@ -330,6 +341,12 @@ struct DayDetailView: View {
                 Text(kind.title)
                     .font(.almanac(size: 17, weight: .bold))
                     .foregroundStyle(Ink.text)
+                // 한 줄 정의 — 오늘 탭 section(kind:)과 같은 규칙(2026-09-12)
+                if let brief = kind.brief, !ThemeStore.chrome.playlistChrome {
+                    Text(brief)
+                        .font(.caption)
+                        .foregroundStyle(Ink.text.opacity(0.5))
+                }
                 InfoBadge(title: kind.title, message: kind.info)   // 제목 뒤 ⓘ(2026-08-06 베타 피드백)
                 Spacer()
                 Button {

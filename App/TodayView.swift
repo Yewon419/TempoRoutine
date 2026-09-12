@@ -846,9 +846,18 @@ struct TodayView: View {
             TicketFieldLabel(text: ticketFieldName(kind))   // 발권 필드명(시안 §3.3-④, 티켓만)
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(kind.title)
-                        .font(.almanac(size: 17, weight: .bold))
-                        .foregroundStyle(Ink.text)
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(kind.title)
+                            .font(.almanac(size: 17, weight: .bold))
+                            .foregroundStyle(Ink.text)
+                        // 한 줄 정의(2026-09-12 기능 점검 — 「루틴·목표가 뭔지」 베타 미처리분). ⓘ는 눌러야
+                        // 보이지만 이건 3초 안에 읽혀야 한다. 플레이리스트는 곡수 메타 자리라 뺀다(§4.4 ⑦ 전례).
+                        if let brief = kind.brief, !ThemeStore.chrome.playlistChrome {
+                            Text(brief)
+                                .font(.caption)
+                                .foregroundStyle(Ink.text.opacity(0.5))
+                        }
+                    }
                     // 플레이리스트 = 곡수 메타(시안 §4.4 ⑦ — 유형 라벨은 제목과 중복이라 기각)
                     if let meta = playlistTrackMeta(kind) {
                         Text(meta)

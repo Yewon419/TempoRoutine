@@ -342,6 +342,10 @@ struct SettingsView: View {
                 } header: {
                     Text("다시 보기")
                         .foregroundStyle(Ink.groundSub)
+                } footer: {
+                    // 두 행의 차이가 라벨만으론 안 보였다(2026-09-12 기능 점검) — 각각 무엇을 다시 보여주는지
+                    Text("사용법은 각 탭에 말풍선 안내로 다시 뜨고, 온보딩은 첫 소개와 내 주기 설정을 다시 보여줘요.")
+                        .foregroundStyle(Ink.groundSub)
                 }
 
                 // 앱 내 자기보고 설문(v1.6 §4) — 언제든 재진입. 웹 응답과 연결하지 않는다.
@@ -500,7 +504,10 @@ struct SettingsView: View {
             Button("취소", role: .cancel) {}
         } message: {
             // §5.7: 이 앱이 쓴 것만 지움 — 타 앱·건강앱 원본은 건강 앱에서
+            // 사진은 되돌리기 봉투에 안 실린다(undoWipe 주석) — 지우기 전에 말한다(2026-09-12 기능 점검)
             Text("이 기기의 생리·컨디션·계획 기록이 모두 지워지고, 건강 앱 연동은 꺼져요(켜 두면 건강 앱 기록을 곧바로 다시 가져와요). 건강 앱 옵션은 이 앱이 건강 앱에 쓴 기록만 지우고, 다른 앱이나 건강 앱의 원본은 건강 앱에서 지울 수 있어요.")
+                + Text(" ")
+                + Text("기록에 넣은 사진은 되돌리기로도 돌아오지 않아요.")
         }
         // 초기화 확인 2단(undo가 없어서) — 1단 = 지워지는 것 명시, 2단 = 최종 확인
         .confirmationDialog("앱을 초기화할까요?", isPresented: $showResetConfirm, titleVisibility: .visible) {

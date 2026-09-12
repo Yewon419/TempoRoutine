@@ -15237,6 +15237,121 @@
         }
       }
     },
+    "매일 체크": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "daily check"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日チェック"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日打卡"
+          }
+        }
+      }
+    },
+    "조금씩 진행": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "progress over time"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "少しずつ進める"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逐步推进"
+          }
+        }
+      }
+    },
+    "씨앗은 에너지·기분과 켜둔 항목을 다 적으면 하루 하나 모여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You earn one seed a day by logging energy, mood, and any signals you have turned on."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エネルギー・気分と、オンにした項目をすべて記録すると1日1つ種がたまります。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录能量、心情和已开启的项目后，每天可获得一颗种子。"
+          }
+        }
+      }
+    },
+    "기록에 넣은 사진은 되돌리기로도 돌아오지 않아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos attached to check-ins cannot be restored, even with Undo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録に添えた写真は、元に戻しても復元されません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录中添加的照片即使撤销也无法恢复。"
+          }
+        }
+      }
+    },
+    "사용법은 각 탭에 말풍선 안내로 다시 뜨고, 온보딩은 첫 소개와 내 주기 설정을 다시 보여줘요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tips reappear as callouts in each tab. Onboarding replays the intro and your cycle setup."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使い方は各タブに吹き出し案内として再表示され、オンボーディングは最初の紹介と周期設定をもう一度見せます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用说明会在各个标签页以气泡提示再次出现；引导则重新展示首次介绍和周期设置。"
+          }
+        }
+      }
+    },
     "오늘 생리 기록": {
       "extractionState": "manual",
       "localizations": {

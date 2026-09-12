@@ -121,7 +121,9 @@ struct ThemeShopView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 28)
                         }
-                        Text("씨앗은 하루 컨디션 기록을 완성하면 하나씩 모여요.")
+                        // 「완성」의 뜻을 말한다(2026-09-12 기능 점검) — 저장은 에너지·기분 둘이면 되지만(§3.4)
+                        // 씨앗은 켜둔 신호까지 다 채워야 온다(Seeds.isComplete). 수면·식욕을 켠 사람이 왜 안 오는지 몰랐다.
+                        Text("씨앗은 에너지·기분과 켜둔 항목을 다 적으면 하루 하나 모여요.")
                             .font(.caption)
                             .foregroundStyle(Ink.text.opacity(0.45))
                         // 구매 복원(2026-08-27) — 비소모품(₩5,000 패스)의 심사 요구 버튼.
