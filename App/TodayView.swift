@@ -486,7 +486,9 @@ struct TodayView: View {
                     .groundHaze()   // 베타 "가을이에요 문구 뒤에도 뿌옇게"(2026-08-22)
                 // 기록 진입을 오늘 탭에도(2026-08-01 베타 피드백). 2026-08-02 교정: 캡슐 버튼+시트가
                 // 아니라 하루 상세와 같은 인라인 토글이다("이 스위치야") — 그 자리에서 켜고 끈다.
-                periodToggle
+                // 2026-09-12 기능 점검: 스위치는 「오늘」만 켜고 끈다 — 이틀 전 시작한 생리를 적을 길이
+                // 이 탭엔 없었다. 캘린더 탭의 「생리 기록」 캡슐(시트 진입)을 같은 줄 왼쪽에 둔다(대표님 지시).
+                periodRow
                     .padding(.top, 8)
                 TicketSerial(date: today)   // 발권 번호(시안 §3.3-⑤, 티켓만)
             } else {
@@ -719,6 +721,34 @@ struct TodayView: View {
         .allowsHitTesting(false)
     }
 
+    /// 생리 기록 줄 = 왼쪽 시트 진입 캡슐(캘린더 탭 `seasonHeaderRow`와 같은 생김새) + 오른쪽 오늘 스위치.
+    /// 캡슐이 「생리 기록」을 말하니 스위치 라벨은 「오늘」 — 한 줄이 "생리 기록 · 오늘 [스위치]"로 읽힌다.
+    private var periodRow: some View {
+        HStack(alignment: .center) {
+            periodLogButton
+            Spacer(minLength: 12)
+            periodToggle
+        }
+    }
+
+    private var periodLogButton: some View {
+        Button {
+            lightFeedback += 1
+            showLogSheet = true
+        } label: {
+            HStack(spacing: 5) {
+                Circle().fill(Ink.record).frame(width: 7, height: 7)
+                Text("생리 기록")
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .overlay(Capsule().stroke(Ink.onGround(Ink.text.opacity(0.3), white: 0.5), lineWidth: 1))
+        }
+        .accessibilityHint(Loc.str("날짜를 골라 생리 기록을 고쳐요"))
+    }
+
     // ── 생리 기록 토글 (DayDetailView.periodToggle과 동형 — 2026-08-02 베타 피드백 교정) ──
     // 오늘 탭은 기준일이 항상 오늘이라 하루 상세의 미래 금지 가드(§5.5.4)는 걸 필요가 없다.
     private var periodToggle: some View {
@@ -735,10 +765,11 @@ struct TodayView: View {
                 }
             }
         )) {
-            Text("생리 기록")
+            Text("오늘")   // 「생리 기록」은 같은 줄 캡슐이 말한다(2026-09-12)
                 .font(.almanacBody(.subheadline, size: 15))
                 .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
         }
+        .accessibilityLabel(Loc.str("오늘 생리 기록"))
         .tint(Ink.text)
         .toggleStyle(MatteToggleStyle())   // 무광 스위치(2026-09-07 은필 v2 — 은필·기본만, 그 외 시스템)
         // 라벨을 스위치 바로 앞에(2026-08-23 대표님 "오른쪽 버튼 앞에 바짝") — 전폭 Toggle은 라벨을
