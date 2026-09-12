@@ -569,8 +569,9 @@ struct QuickCardBar: View {
             }
             modelContext.insert(item)
         default:
-            // 단발 + 퍼센트 — OutputAddSheet의 기본. 칩이 있으면 그 진행 방식(nil = 체크만)
-            let progress: OutputProgressKind = picked.map { $0.kind ?? .checkOnly } ?? .percent
+            // 단발 + 체크리스트 — OutputAddSheet의 기본(2026-09-12 대표님 결정, 종전 퍼센트).
+            // 칩이 있으면 그 진행 방식(nil = 체크만)
+            let progress: OutputProgressKind = picked.map { $0.kind ?? .checkOnly } ?? .subtasks
             let item = OutputItem(title: name, schedule: .once, progressKind: progress,
                                   createdAt: anchorDate(for: day))
             item.timeMinutes = timeMinutes
@@ -1028,7 +1029,7 @@ struct OutputAddSheet: View {
     @State private var wholePhase = true          // 계절 전체 ↔ N일차(2026-08-01) — 기본은 전체
     @State private var hasTargetDate = false      // 디데이(2026-08-01)
     @State private var targetDate = Date()
-    @State private var kind: OutputProgressKind = .percent
+    @State private var kind: OutputProgressKind = .subtasks   // 기본 = 체크리스트(2026-09-12 대표님 결정, 종전 퍼센트)
     @State private var targetSessions = 3
     @State private var targetMinutes = 30   // 타이머 목표(분, 2026-08-09)
     @State private var subtaskDraft = ""
