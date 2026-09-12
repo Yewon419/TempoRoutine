@@ -21,10 +21,13 @@ struct OnboardingFlow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \PeriodDay.day) private var periodDays: [PeriodDay]
 
-    // 단계(2026-09-09 다이어트, 15장 → 최대 8장): 0 언어 · 1 브랜드 · 2 테마 · 3 내 주기(최대 4장) · 4 저장 위치 → 오늘.
-    // 걷어낸 것 = 사이클 싱킹 강의 2장·하루의 구성 3장·기록할 것·리듬 설문(베타 "설명 없이 못 쓰겠다" —
-    // 온보딩은 설정에 필요한 답만 묻고, 개념은 화면의 빈 상태·ⓘ가 그 자리에서 말한다).
+    // 단계(2026-09-12 사계절 4장 추가, 최대 12장): 0 언어 · 1 브랜드 · 2 사계절(4장) · 3 테마 · 4 내 주기(최대 4장) · 5 저장 위치 → 오늘.
+    // 2026-09-09 다이어트(15 → 8)에서 걷어낸 것 = 사이클 싱킹 강의 2장·하루의 구성 3장·기록할 것·리듬 설문(베타 "설명 없이
+    // 못 쓰겠다" — 온보딩은 설정에 필요한 답만 묻고, 개념은 화면의 빈 상태·ⓘ가 그 자리에서 말한다). 사계절은 설명이 아니라
+    // 광고 스틸 한 컷 + 두 줄이라 되살렸다(대표님 "온보딩을 줄인 김에 계절 설명만 늘리자").
     @State private var step = 0   // 0 = 언어 선택(2026-08-22 베타 "첫 탭을 따로") — 재진입은 1부터
+    @State private var seasonPage = 0   // 2단계 안 계절 인덱스 0~3 = 겨울·봄·여름·가을(앱 순서)
+    private static let seasonOrder: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
     /// 첫 화면 언어 선택(2026-08-21) — 저장값이 없으면 시스템 따름이라 어느 칩도 선택 상태가 아니다
     @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
     /// ①.5 테마 선택(2026-08-19) — 기본 선택 = 은필(사용자: "우리 정체성"). 저장은 case 2,
@@ -67,12 +70,13 @@ struct OnboardingFlow: View {
     init() {
         #if DEBUG
         // 찰칵(CI 스크린샷) 전용 — 런치 인자(argument 도메인)로 단계를 바로 연다(2026-09-06).
-        // `-onboardingStep N [-onboardingBaselinePage N]`
+        // `-onboardingStep N [-onboardingBaselinePage N] [-onboardingSeasonPage N]`
         // 인자가 없으면 아무것도 건드리지 않는다. 릴리스 빌드엔 이 경로가 없다.
         let args = UserDefaults.standard
         guard args.object(forKey: "onboardingStep") != nil else { return }
         _step = State(initialValue: args.integer(forKey: "onboardingStep"))
         _baselinePage = State(initialValue: args.integer(forKey: "onboardingBaselinePage"))
+        _seasonPage = State(initialValue: args.integer(forKey: "onboardingSeasonPage"))
         _showSplash = State(initialValue: false)   // 컷마다 스플래시 2.7초를 안 기다린다
         _revealProgress = State(initialValue: args.integer(forKey: "onboardingStep") > 0 ? 1 : 0)
         #endif
@@ -91,6 +95,8 @@ struct OnboardingFlow: View {
         var hideLens = false
         var bare = false              // 시트 유리 없음(CTA만)
         var dialStep: Int? = nil      // 진행 다이얼 1~3
+        var photo: CyclePhase? = nil  // 사계절 장 — 창에 찰 계절 사진(SeasonWindow)
+        var titleColor: Color? = nil  // 표제 계절색(사계절 장만)
     }
 
     private static let dialTotal = 3
@@ -109,9 +115,21 @@ struct OnboardingFlow: View {
                          spot: .hero, content: LensContent(ring: true, drawsRing: true, nodes: true, orbit: true),
                          bare: true)
         case 2:
+            // 사계절 4장(2026-09-12) — 계절마다 한 컷, 티저 광고 스틸이 렌즈 창에 찬다(SeasonWindow).
+            // 카피 = seasonMeta의 허락 톤 그대로: 단계명(M-1c)·처방·인구 평균 없음. 마지막 장에만 「처방하지 않는다」 고지.
+            let phase = Self.seasonOrder[min(max(seasonPage, 0), 3)]
+            let meta = seasonMeta(for: phase)
+            return Stage(eyebrow: Loc.fmt("한 달 안의 사계절 %1$lld / 4", seasonPage + 1), title: meta.name,
+                         mood: seasonMood(phase), body: seasonBody(phase),
+                         fine: seasonPage == 3
+                             ? [Loc.str("같은 계절도 사람마다 다르게 지나가요."),
+                                Loc.str("템포루틴은 처방하지 않고, 당신의 기록 안에서 당신의 계절을 찾아요.")]
+                             : [],
+                         spot: .hero, hideLens: true, bare: true, photo: phase, titleColor: meta.color)
+        case 3:
             return Stage(eyebrow: Loc.str("당신의 테마"), title: Loc.str("어떤 지면으로\n시작할까요?"),
                          spot: .dial, content: dial(1), dialStep: 1)
-        case 3:
+        case 4:
             switch baselinePage {
             case 0:
                 return Stage(eyebrow: Loc.str("내 주기"), title: Loc.str("쓰던 기록이 있다면,\n그대로 이어져요."),
@@ -144,11 +162,44 @@ struct OnboardingFlow: View {
         LensContent(progress: Double(n) / Double(Self.dialTotal))
     }
 
+    /// 사계절 장 카피 — 첫 줄은 계절의 평문 뜻(seasonMeta.plain과 같은 어휘), 본문 두 줄은 무드라인 톤.
+    private func seasonMood(_ phase: CyclePhase) -> String {
+        switch phase {
+        case .menstrual: Loc.str("생리 중이에요.")
+        case .follicular: Loc.str("생리가 끝난 뒤예요.")
+        case .ovulation: Loc.str("배란 무렵이에요.")
+        case .luteal: Loc.str("생리 전이에요.")
+        }
+    }
+
+    private func seasonBody(_ phase: CyclePhase) -> [String] {
+        switch phase {
+        case .menstrual: [Loc.str("주기는 여기서 시작해요."), Loc.str("조금은 쉬어가도 괜찮아요.")]
+        case .follicular: [Loc.str("몸이 다시 가벼워지는 때."), Loc.str("작은 것부터 하나씩 깨워봐요.")]
+        case .ovulation: [Loc.str("한 달 중 가장 밝은 때."), Loc.str("하고 싶은 만큼 빛나도 좋아요.")]
+        case .luteal: [Loc.str("한 달 중 가장 긴 계절."), Loc.str("스스로를 돌아보는 시간을 가져봐요.")]
+        }
+    }
+
     /// 단계 정체성 — 카피·시트 전환(크로스페이드)과 렌즈 이동 애니메이션의 트리거
-    private var stageKey: String { "\(step)-\(baselinePage)-\(entering)" }
+    private var stageKey: String { "\(step)-\(seasonPage)-\(baselinePage)-\(entering)" }
 
     /// 심플 지면 — 언어 단계, 그리고 테마 단계부터 심플을 고른 동안(라이브 전환)
-    private var plainSurface: Bool { step == 0 || (step >= 2 && themeChoice == .plain) }
+    private var plainSurface: Bool { step == 0 || (step >= 3 && themeChoice == .plain) }
+
+    /// 사계절 창(2026-09-12) — 브랜드 렌즈 자리에서 열려 화면을 덮는다. 테마 장부터는 덮인 채 사라지고,
+    /// 뒤로 돌아오면 다시 뜬다. 브랜드 장으로 되돌아가면 렌즈 자리로 오므라든다.
+    private var seasonWindowOpen: Bool { step == 2 && !entering }
+
+    private func seasonWindow(_ current: Stage, in size: CGSize, column: CGFloat, insets: EdgeInsets) -> some View {
+        let hero = LensSpot.hero.resolve(in: size, column: column)
+        let cover: CGFloat = max(size.width, size.height) * 2.2
+        let phase: CyclePhase = current.photo ?? Self.seasonOrder[min(max(seasonPage, 0), 3)]
+        return SeasonWindow(phase: phase, diameter: step >= 2 ? cover : hero.diameter, center: hero.center,
+                            containerSize: size, safeInsets: insets, reduceMotion: reduceMotion)
+            .opacity(seasonWindowOpen ? 1 : 0)
+            .animation(reduceMotion ? nil : .spring(response: 0.9, dampingFraction: 0.86), value: seasonWindowOpen)
+    }
 
     private var healthOn: Bool { mirror.linked && mirror.writeAuthorized }
 
@@ -177,6 +228,7 @@ struct OnboardingFlow: View {
             let lensSpot = lensGeometry(current, in: size, column: column)
             ZStack(alignment: .top) {
                 ground(size: size, column: column, safeTop: geo.safeAreaInsets.top)
+                seasonWindow(current, in: size, column: column, insets: geo.safeAreaInsets)
                 TempoLens(center: lensSpot.center, diameter: lensSpot.diameter,
                           magnify: entering ? 1.02 : current.spot.magnify,
                           containerSize: size, content: entering ? LensContent() : current.content,
@@ -367,11 +419,14 @@ struct OnboardingFlow: View {
         withAnimation(anim) {
             if step == 1 {
                 step = 0   // 브랜드 장에서 뒤로 = 언어 단계(신규만)
-            } else if step == 3, let prev = baselineStack.popLast() {
+            } else if step == 2, seasonPage > 0 {
+                seasonPage -= 1   // 사계절 안에서는 장 단위로
+            } else if step == 4, let prev = baselineStack.popLast() {
                 baselinePage = prev
             } else {
                 step -= 1
-                if isRevisit && step == 2 { step = 1 }   // 재진입은 테마 단계를 안 거친다
+                if isRevisit && step == 3 { step = 2 }   // 재진입은 테마 단계를 안 거친다
+                if step == 2 { seasonPage = 3 }          // 사계절로 되돌아오면 마지막 장(가을)부터
             }
         }
     }
@@ -385,12 +440,22 @@ struct OnboardingFlow: View {
                     .font(plain ? .system(size: 12, weight: .medium) : LensSpec.serif(12, bold: false))
                     .kerning(plain ? 1.5 : 2)
                     .foregroundStyle(Ink.text.opacity(0.55))
-                Text(current.title)
-                    .font(plain ? .system(size: current.hero ? 36 : 30, weight: .semibold)
-                                : LensSpec.serif(current.hero ? 36 : 30))
-                    .foregroundStyle(Ink.text)
-                    .lineSpacing(5)
-                    .fixedSize(horizontal: false, vertical: true)
+                if let photo = current.photo {
+                    // 사계절 장 — 계절 글리프 + 계절색 표제(시안 B). 글리프는 장식, 라벨은 표제가 담당.
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        SeasonGlyph(phase: photo, size: 22, color: current.titleColor)
+                        Text(current.title)
+                            .font(LensSpec.serif(36))
+                            .foregroundStyle(current.titleColor ?? Ink.text)
+                    }
+                } else {
+                    Text(current.title)
+                        .font(plain ? .system(size: current.hero ? 36 : 30, weight: .semibold)
+                                    : LensSpec.serif(current.hero ? 36 : 30))
+                        .foregroundStyle(Ink.text)
+                        .lineSpacing(5)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if let mood = current.mood {
                     Text(mood)
                         .font(LensSpec.serif(16, bold: false))
@@ -451,9 +516,9 @@ struct OnboardingFlow: View {
     private func sheetBody(_ current: Stage) -> some View {
         switch step {
         case 0: languageOptions
-        case 1: EmptyView()
-        case 2: themeCards
-        case 3:
+        case 1, 2: EmptyView()   // 브랜드·사계절 = 시트 없음(bare)
+        case 3: themeCards
+        case 4:
             switch baselinePage {
             case 0: linkRow
             case 1:
@@ -471,7 +536,7 @@ struct OnboardingFlow: View {
     private func actions(_ current: Stage) -> some View {
         VStack(spacing: 6) {
             // ② 연동 페이지의 주 행동은 콘텐츠의 스위치 — 하단은 secondary만(프로토 확정 위계)
-            if step == 3 && baselinePage == 0 {
+            if step == 4 && baselinePage == 0 {
                 ghostButton("직접 기록할게요") { pushBaseline(1) }
             } else {
                 Button(primaryLabel) { lightFeedback += 1; primaryAction() }
@@ -479,16 +544,16 @@ struct OnboardingFlow: View {
                     .disabled(!primaryEnabled)
                     .opacity(primaryEnabled ? 1 : 0.35)
             }
-            if step == 3 && baselinePage == 2 {
-                ghostButton("나중에 기록할게요") { advance { step = 4 } }   // 구 "기억 안 나요" 승계 — S0 처리
+            if step == 4 && baselinePage == 2 {
+                ghostButton("나중에 기록할게요") { advance { step = 5 } }   // 구 "기억 안 나요" 승계 — S0 처리
             }
-            if step == 3 && baselinePage == 3 {
-                ghostButton("잘 모르겠어요") { AppSettings.cycleLengthPrior = nil; advance { step = 4 } }
+            if step == 4 && baselinePage == 3 {
+                ghostButton("잘 모르겠어요") { AppSettings.cycleLengthPrior = nil; advance { step = 5 } }
             }
-            if step == 2 {
+            if step == 3 {
                 caption("앞으로 7일간 모든 테마를 자유롭게 바꿔볼 수 있어요.")
             }
-            if step == 4 {
+            if step == 5 {
                 caption("언제든 내보내고 지울 수 있어요.")
             }
         }
@@ -503,7 +568,7 @@ struct OnboardingFlow: View {
 
     /// ② 캘린더 페이지의 「다음」은 에피소드 1개 이상일 때만 — 스킵은 secondary가 담당
     private var primaryEnabled: Bool {
-        if step == 3 && baselinePage == 2 { return episodeCount >= 1 }
+        if step == 4 && baselinePage == 2 { return episodeCount >= 1 }
         return true
     }
 
@@ -530,45 +595,50 @@ struct OnboardingFlow: View {
 
     /// 연동 알럿이 닫힌 뒤 1회 — 분기 = 병합 결과 에피소드 수(프로토 확정)
     private func consumeLinkAdvance() {
-        guard pendingLinkAdvance, step == 3 else { return }
+        guard pendingLinkAdvance, step == 4 else { return }
         pendingLinkAdvance = false
         let n = episodeCount
-        if n >= 2 { advance { step = 4 } }   // 실측 gap 확보 → ②-2~④ 전부 스킵
+        if n >= 2 { advance { step = 5 } }   // 실측 gap 확보 → ②-2~④ 전부 스킵
         else if n == 1 { pushBaseline(3) }   // 주기 질문만
         else { pushBaseline(1) }             // 거부·빈 건강앱 → 직접 기록
     }
 
     private var primaryLabel: String {
         switch step {
-        case 0, 1, 2, 3: Loc.str("다음")   // 「계속」 → 「다음」 단일 라벨(2026-09-07 규칙)
-        default: Loc.str("시작하기")       // 마지막 장 하나만 「시작하기」(한 의도 = 한 라벨)
+        case 0, 1, 2, 3, 4: Loc.str("다음")   // 「계속」 → 「다음」 단일 라벨(2026-09-07 규칙)
+        default: Loc.str("시작하기")          // 마지막 장 하나만 「시작하기」(한 의도 = 한 라벨)
         }
     }
 
     private func primaryAction() {
         switch step {
         case 0: advance { step = 1 }
-        case 1:
-            // 재진입(다시 보기)은 테마 단계 스킵(2026-08-19) — 이미 쓰는 테마가 있는데
-            // 여기서 고르게 하면 닫는 순간 그 선택으로 갈아타 버린다.
-            advance { step = isRevisit ? 3 : 2 }
+        case 1: advance { step = 2; seasonPage = 0 }   // 사계절은 재진입에도 보여준다(설명 장)
         case 2:
+            if seasonPage < 3 {
+                advance { seasonPage += 1 }
+            } else {
+                // 재진입(다시 보기)은 테마 단계 스킵(2026-08-19) — 이미 쓰는 테마가 있는데
+                // 여기서 고르게 하면 닫는 순간 그 선택으로 갈아타 버린다.
+                advance { step = isRevisit ? 4 : 3 }
+            }
+        case 3:
             // 테마 선택 저장(2026-08-19) — 종료 시트의 기본 선택값으로도 쓴다("이전 거랑 연결").
             // 적용은 여기서 하지 않는다 — 테마 변경 = 루트 `.id` 리빌드가 이 플로우의 step을
             // 날린다(2026-08-11 결함과 같은 경로). finishOnboarding에서 적용.
             UserDefaults.standard.set(themeChoice.rawValue, forKey: ThemeTrial.choiceKey)
-            advance { step = 3 }
-        case 3:
+            advance { step = 4 }
+        case 4:
             switch baselinePage {
             case 1:
                 AppSettings.periodLengthPrior = periodLength   // §5.3 층 2 M 초기값(개정 M)
                 pushBaseline(2)
             case 2:
                 if episodeCount == 1 { pushBaseline(3) }   // 실측 gap 없음 → 주기 질문
-                else { advance { step = 4 } }              // ≥2 = 실측 gap 있음 → 안 묻는다
+                else { advance { step = 5 } }              // ≥2 = 실측 gap 있음 → 안 묻는다
             case 3:
                 AppSettings.cycleLengthPrior = cycleLengthAnswer
-                advance { step = 4 }
+                advance { step = 5 }
             default: break
             }
         default: finishOnboarding()   // 저장 위치 = 마지막 장

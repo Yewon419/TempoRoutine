@@ -123,16 +123,21 @@ jobs:
           defaults: |
             onboardingDone -bool false
           screens: |
-            ob-00-lang      | -onboardingStep 0 -appLanguage ko -AppleLanguages (ko)
-            ob-01-brand     | -onboardingStep 1 -appLanguage ko -AppleLanguages (ko)
-            ob-02-theme     | -onboardingStep 2 -appLanguage ko -AppleLanguages (ko)
-            ob-03-link      | -onboardingStep 3 -onboardingBaselinePage 0 -appLanguage ko -AppleLanguages (ko)
-            ob-03-duration  | -onboardingStep 3 -onboardingBaselinePage 1 -appLanguage ko -AppleLanguages (ko)
-            ob-03-calendar  | -onboardingStep 3 -onboardingBaselinePage 2 -appLanguage ko -AppleLanguages (ko)
-            ob-03-cycle     | -onboardingStep 3 -onboardingBaselinePage 3 -appLanguage ko -AppleLanguages (ko)
-            ob-04-storage   | -onboardingStep 4 -appLanguage ko -AppleLanguages (ko)
-            ob-01-brand-en  | -onboardingStep 1
-            ob-03-link-en   | -onboardingStep 3 -onboardingBaselinePage 0
+            ob-00-lang          | -onboardingStep 0 -appLanguage ko -AppleLanguages (ko)
+            ob-01-brand         | -onboardingStep 1 -appLanguage ko -AppleLanguages (ko)
+            ob-02-season-winter | -onboardingStep 2 -onboardingSeasonPage 0 -appLanguage ko -AppleLanguages (ko)
+            ob-02-season-spring | -onboardingStep 2 -onboardingSeasonPage 1 -appLanguage ko -AppleLanguages (ko)
+            ob-02-season-summer | -onboardingStep 2 -onboardingSeasonPage 2 -appLanguage ko -AppleLanguages (ko)
+            ob-02-season-autumn | -onboardingStep 2 -onboardingSeasonPage 3 -appLanguage ko -AppleLanguages (ko)
+            ob-03-theme         | -onboardingStep 3 -appLanguage ko -AppleLanguages (ko)
+            ob-04-link          | -onboardingStep 4 -onboardingBaselinePage 0 -appLanguage ko -AppleLanguages (ko)
+            ob-04-duration      | -onboardingStep 4 -onboardingBaselinePage 1 -appLanguage ko -AppleLanguages (ko)
+            ob-04-calendar      | -onboardingStep 4 -onboardingBaselinePage 2 -appLanguage ko -AppleLanguages (ko)
+            ob-04-cycle         | -onboardingStep 4 -onboardingBaselinePage 3 -appLanguage ko -AppleLanguages (ko)
+            ob-05-storage       | -onboardingStep 5 -appLanguage ko -AppleLanguages (ko)
+            ob-01-brand-en      | -onboardingStep 1
+            ob-02-season-winter-en | -onboardingStep 2 -onboardingSeasonPage 0
+            ob-04-link-en       | -onboardingStep 4 -onboardingBaselinePage 0
           output-dir: screenshots-onboarding
           artifact-name: screenshots-onboarding
           title: '템포루틴 온보딩 찰칵'

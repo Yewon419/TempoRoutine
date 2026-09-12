@@ -16292,6 +16292,126 @@
         }
       }
     },
+    "한 달 안의 사계절 %1$lld / 4": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Four seasons in a month %1$lld / 4" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ひと月の四季 %1$lld / 4" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "一个月里的四季 %1$lld / 4" } }
+      }
+    },
+    "생리 중이에요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "You're on your period." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "生理中です。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "正在经期。" } }
+      }
+    },
+    "주기는 여기서 시작해요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The cycle starts here." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "周期はここから始まります。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "周期从这里开始。" } }
+      }
+    },
+    "조금은 쉬어가도 괜찮아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "It's okay to slow down a little." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "少し休んでも大丈夫。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "稍微休息一下也没关系。" } }
+      }
+    },
+    "생리가 끝난 뒤예요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Your period has just ended." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "生理が終わった後です。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "经期刚刚结束。" } }
+      }
+    },
+    "몸이 다시 가벼워지는 때.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "When your body feels lighter again." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "体がまた軽くなる頃。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "身体重新变轻的时候。" } }
+      }
+    },
+    "작은 것부터 하나씩 깨워봐요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Wake things up, one small step at a time." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "小さなことから一つずつ目覚めさせて。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "从小事开始，一件件唤醒。" } }
+      }
+    },
+    "배란 무렵이에요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Around ovulation." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "排卵の頃です。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "排卵期前后。" } }
+      }
+    },
+    "한 달 중 가장 밝은 때.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The brightest time of the month." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ひと月で一番明るい頃。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "一个月里最明亮的时候。" } }
+      }
+    },
+    "하고 싶은 만큼 빛나도 좋아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Shine as much as you like." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "好きなだけ輝いていい。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "想发光就尽情发光吧。" } }
+      }
+    },
+    "생리 전이에요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Before your period." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "生理前です。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "经期之前。" } }
+      }
+    },
+    "한 달 중 가장 긴 계절.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The longest season of the month." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ひと月で一番長い季節。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "一个月里最长的季节。" } }
+      }
+    },
+    "스스로를 돌아보는 시간을 가져봐요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Take some time to look back at yourself." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "自分を振り返る時間を持ってみて。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "给自己一点回顾的时间。" } }
+      }
+    },
+    "같은 계절도 사람마다 다르게 지나가요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The same season passes differently for everyone." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "同じ季節でも、人によって違います。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "同一个季节，每个人的经历都不一样。" } }
+      }
+    },
+    "템포루틴은 처방하지 않고, 당신의 기록 안에서 당신의 계절을 찾아요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "TempoRoutine doesn't prescribe. It finds your seasons in your own records." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "テンポルーティンは処方しません。あなたの記録の中からあなたの季節を見つけます。" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "TempoRoutine 不开处方，而是在你的记录里找到你的季节。" } }
+      }
+    },
     "응답은 이 기기에만 저장됩니다.": {
       "extractionState": "manual",
       "localizations": {
