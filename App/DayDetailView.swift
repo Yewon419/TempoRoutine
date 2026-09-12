@@ -285,14 +285,16 @@ struct DayDetailView: View {
         }
     }
 
-    /// 가을 후반 자기돌봄 안내 — §5.3 `P` 소비처(개정 M). 카피 = §2.2 E+P 동반 하강 확정 문구.
+    /// 가을 후반 자기돌봄 안내 — §5.3 `P` 소비처(개정 M).
+    /// 카피 = 관찰형(2026-09-13 대표님 결정, 기능 점검 ⑬). 종전 「두 호르몬이 함께 낮아지는 시기라…」는
+    /// 트리거가 개인 기록(AxisProfile)인데 문장만 생리학 일반론이라 §7 「관찰형만·인구 평균 문구 ❌」와 충돌했다.
     /// 침묵 조건(원칙 4): confidence low·S0·투영 지평 밖. P = 홀드아웃 채택 게이트 통과분(없으면 5).
     private var selfCareLine: String? {
         guard snapshot.horizonCycles > 1 else { return nil }   // low = 1 (§5.6.2)
         guard let r = snapshot.daysUntilNextStart(on: day) else { return nil }
         let axis = AxisProfile(checkIns: checkIns, snapshot: snapshot)
         guard r <= axis.adoptedPreWindow else { return nil }
-        return Loc.str("두 호르몬이 함께 낮아지는 시기라 몸과 마음이 예민해질 수 있어요.")
+        return Loc.str("지난 주기 기록상 이맘때 컨디션이 낮은 편이었어요.")
     }
 
     /// 애플 공휴일 캘린더(연동 시) 우선, 내장 테이블 폴백 — SeasonCalendarView와 같은 규칙

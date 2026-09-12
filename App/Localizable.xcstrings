@@ -15352,6 +15352,29 @@
         }
       }
     },
+    "지난 주기 기록상 이맘때 컨디션이 낮은 편이었어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In your past cycles, your condition tended to be lower around this time."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これまでの周期の記録では、この時期はコンディションが低めでした。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "根据过去周期的记录，这段时间你的状态通常偏低。"
+          }
+        }
+      }
+    },
     "오늘 생리 기록": {
       "extractionState": "manual",
       "localizations": {
