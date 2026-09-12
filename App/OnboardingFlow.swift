@@ -97,6 +97,7 @@ struct OnboardingFlow: View {
         var dialStep: Int? = nil      // 진행 다이얼 1~3
         var photo: CyclePhase? = nil  // 사계절 장 — 창에 찰 계절 사진(SeasonWindow)
         var titleColor: Color? = nil  // 표제 계절색(사계절 장만)
+        var seasonDots: Int? = nil    // 사계절 장 위치(0~3) — eyebrow의 「N / 4」를 대신하는 점 인디케이터
     }
 
     private static let dialTotal = 3
@@ -119,13 +120,15 @@ struct OnboardingFlow: View {
             // 카피 = seasonMeta의 허락 톤 그대로: 단계명(M-1c)·처방·인구 평균 없음. 마지막 장에만 「처방하지 않는다」 고지.
             let phase = Self.seasonOrder[min(max(seasonPage, 0), 3)]
             let meta = seasonMeta(for: phase)
-            return Stage(eyebrow: Loc.fmt("한 달 안의 사계절 %1$lld / 4", seasonPage + 1), title: meta.name,
+            // 위치는 점 인디케이터가 말한다 — 같은 정보를 eyebrow 카운터로 한 번 더 쓰지 않는다(2026-09-12 C안).
+            return Stage(eyebrow: Loc.str("한 달 안의 사계절"), title: meta.name,
                          mood: seasonMood(phase), body: seasonBody(phase),
                          fine: seasonPage == 3
                              ? [Loc.str("같은 계절도 사람마다 다르게 지나가요."),
                                 Loc.str("템포루틴은 처방하지 않고, 당신의 기록 안에서 당신의 계절을 찾아요.")]
                              : [],
-                         spot: .hero, hideLens: true, bare: true, photo: phase, titleColor: meta.color)
+                         spot: .hero, hideLens: true, bare: true, photo: phase, titleColor: meta.color,
+                         seasonDots: seasonPage)
         case 3:
             return Stage(eyebrow: Loc.str("당신의 테마"), title: Loc.str("어떤 지면으로\n시작할까요?"),
                          spot: .dial, content: dial(1), dialStep: 1)
@@ -240,9 +243,16 @@ struct OnboardingFlow: View {
                 .animation(reduceMotion ? nil : .spring(response: entering ? 0.9 : 0.72, dampingFraction: 0.86), value: stageKey)
                 VStack(alignment: .leading, spacing: 0) {
                     topBar(current)
-                    copyBlock(current)
-                        .padding(.top, 8)
-                    Spacer(minLength: 0)
+                    // 사계절 장은 카피가 아래로 — 사진의 주 피사체가 상단에 있어 둘이 같은 자리를 다퉜다(C안).
+                    if current.photo != nil {
+                        Spacer(minLength: 0)
+                        copyBlock(current)
+                            .padding(.bottom, 86)   // 하단 CTA 시트(52 + 여백)를 비운다
+                    } else {
+                        copyBlock(current)
+                            .padding(.top, 8)
+                        Spacer(minLength: 0)
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 8)   // 뒤로가기 버튼을 위로(2026-07-22 사용자 요청)
@@ -431,6 +441,20 @@ struct OnboardingFlow: View {
         }
     }
 
+    /// 사계절 장 위치 인디케이터 — 활성은 알약(16), 나머지는 점(5).
+    /// 화면에서 뺀 「N / 4」는 VoiceOver 라벨로 남긴다(기존 카탈로그 키 재사용).
+    private func seasonDots(_ index: Int) -> some View {
+        HStack(spacing: 5) {
+            ForEach(0..<4, id: \.self) { n in
+                Capsule(style: .continuous)
+                    .fill(Ink.text.opacity(n == index ? 0.66 : 0.24))
+                    .frame(width: n == index ? 16 : 5, height: 5)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel(Loc.fmt("한 달 안의 사계절 %1$lld / 4", index + 1))
+    }
+
     // ── 카피 블록 — 표제·본문은 은필 명조, 언어·심플 지면은 산세리프(지면과 함께 서체도 열린다) ──
     private func copyBlock(_ current: Stage) -> some View {
         let plain = plainSurface
@@ -440,8 +464,9 @@ struct OnboardingFlow: View {
                     .font(plain ? .system(size: 12, weight: .medium) : LensSpec.serif(12, bold: false))
                     .kerning(plain ? 1.5 : 2)
                     .foregroundStyle(Ink.text.opacity(0.55))
+                if let index = current.seasonDots { seasonDots(index) }
                 if let photo = current.photo {
-                    // 사계절 장 — 계절 글리프 + 계절색 표제(시안 B). 글리프는 장식, 라벨은 표제가 담당.
+                    // 사계절 장 — 계절 글리프 + 계절색 표제. 글리프는 장식, 라벨은 표제가 담당.
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         SeasonGlyph(phase: photo, size: 22, color: current.titleColor)
                         Text(current.title)
@@ -456,18 +481,20 @@ struct OnboardingFlow: View {
                         .lineSpacing(5)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                // 사계절 장은 mood·body의 대비를 벌린다 — 16/15로 두면 한 덩어리로 읽혔다(2026-09-12 C안).
+                let photoStage = current.photo != nil
                 if let mood = current.mood {
                     Text(mood)
-                        .font(LensSpec.serif(16, bold: false))
-                        .foregroundStyle(Ink.text.opacity(0.9))
+                        .font(LensSpec.serif(photoStage ? 18 : 16, bold: false))
+                        .foregroundStyle(Ink.text.opacity(photoStage ? 0.95 : 0.9))
                 }
                 if !current.body.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
                         ForEach(current.body, id: \.self) { line in Text(line) }
                     }
-                    .font(.system(size: 15))
+                    .font(.system(size: photoStage ? 14.5 : 15))
                     .lineSpacing(5)
-                    .foregroundStyle(Ink.text.opacity(0.72))
+                    .foregroundStyle(Ink.text.opacity(photoStage ? 0.62 : 0.72))
                     .fixedSize(horizontal: false, vertical: true)
                 }
                 if !current.fine.isEmpty {

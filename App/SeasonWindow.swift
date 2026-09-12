@@ -57,18 +57,22 @@ struct SeasonWindow: View {
     }
 
     /// 서리 스크림 — 위는 카피 자리(56%까지 스러짐), 아래는 CTA 자리(26%). 시안 B 값 그대로.
+    /// 서리 스크림 — 위는 상태바·뒤로가기 보호만(17%까지), 아래는 카피 자리(66%까지).
+    /// ⚠ 2026-09-12 C안: 종전 값(상단 56%)은 사진의 주 피사체(인물 머리·얼굴)를 통째로 지웠다.
+    /// 사진을 넣은 이유가 화면에 남지 않아 카피를 아래로 내리고 스크림도 뒤집었다.
     private var scrim: some View {
         ZStack {
             LinearGradient(stops: [
-                .init(color: Ink.frost.opacity(0.94), location: 0),
-                .init(color: Ink.frost.opacity(0.86), location: 0.26),
-                .init(color: Ink.frost.opacity(0.55), location: 0.40),
-                .init(color: Ink.frost.opacity(0), location: 0.56),
+                .init(color: Ink.frost.opacity(0.58), location: 0),
+                .init(color: Ink.frost.opacity(0.16), location: 0.09),
+                .init(color: Ink.frost.opacity(0), location: 0.17),
             ], startPoint: .top, endPoint: .bottom)
             LinearGradient(stops: [
-                .init(color: Ink.frost.opacity(0.9), location: 0),
-                .init(color: Ink.frost.opacity(0.6), location: 0.12),
-                .init(color: Ink.frost.opacity(0), location: 0.26),
+                .init(color: Ink.frost.opacity(0.97), location: 0),
+                .init(color: Ink.frost.opacity(0.94), location: 0.22),
+                .init(color: Ink.frost.opacity(0.76), location: 0.37),
+                .init(color: Ink.frost.opacity(0.30), location: 0.52),
+                .init(color: Ink.frost.opacity(0), location: 0.66),
             ], startPoint: .bottom, endPoint: .top)
         }
     }
