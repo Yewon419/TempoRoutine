@@ -196,7 +196,7 @@ struct OnboardingFlow: View {
         let cover: CGFloat = max(size.width, size.height) * 2.2
         let phase: CyclePhase = current.photo ?? Self.seasonOrder[min(max(seasonPage, 0), 3)]
         return SeasonWindow(phase: phase, diameter: step >= 2 ? cover : hero.diameter, center: hero.center,
-                            containerSize: size, safeInsets: insets, reduceMotion: reduceMotion)
+                            safeInsets: insets, reduceMotion: reduceMotion)
             .opacity(seasonWindowOpen ? 1 : 0)
             .animation(reduceMotion ? nil : .spring(response: 0.9, dampingFraction: 0.86), value: seasonWindowOpen)
     }

@@ -16,7 +16,6 @@ struct SeasonWindow: View {
     let diameter: CGFloat
     /// 창 중심 — 세이프 영역 좌표(렌즈와 동일). 지면처럼 세이프 영역을 무시하고 깔리므로 인셋만큼 보정한다.
     let center: CGPoint
-    let containerSize: CGSize
     let safeInsets: EdgeInsets
     let reduceMotion: Bool
 
@@ -30,13 +29,13 @@ struct SeasonWindow: View {
     }
 
     var body: some View {
-        let w: CGFloat = containerSize.width + safeInsets.leading + safeInsets.trailing
-        let h: CGFloat = containerSize.height + safeInsets.top + safeInsets.bottom
-        return ZStack {
-            photo(width: w, height: h)
-            scrim.frame(width: w, height: h)
+        // ⚠ 명시 프레임(컨테이너 + 인셋)을 주면 부모 ZStack이 그 크기로 커져 하단 시트(overlay bottom)가
+        // 세이프 영역 아래로 밀려난다(89차 찰칵: 「다음」이 사라짐). 지면(OnboardingGround)처럼 프레임 없이
+        // `.ignoresSafeArea()`만 — 사진은 overlay로 얹어 레이아웃 크기에 안 끼어들게 한다.
+        ZStack {
+            Color.clear.overlay { photo }.clipped()
+            scrim
         }
-        .frame(width: w, height: h)
         .mask {
             Circle()
                 .frame(width: diameter, height: diameter)
@@ -49,12 +48,10 @@ struct SeasonWindow: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.42), value: phase)
     }
 
-    private func photo(width: CGFloat, height: CGFloat) -> some View {
+    private var photo: some View {
         Image(Self.assetName(phase))
             .resizable()
             .aspectRatio(contentMode: .fill)
-            .frame(width: width, height: height)
-            .clipped()
             .id(phase)
             .transition(.opacity)
     }
