@@ -275,7 +275,9 @@ struct QuickScheduleBar: View {
     @GestureState private var dragY: CGFloat = 0
 
     private var cal: Calendar { Calendar.current }
-    private var parsed: ParsedScheduleText { ScheduleTextParser.parse(title) }
+    /// 키 입력마다 한 번만 파싱(베타 09-13 "버벅거린다") — 종전 계산 프로퍼티는 body 한 번에
+    /// startTime·endTime·effectiveTitle 경로로 세 번 파싱했다.
+    @State private var parsed = ScheduleTextParser.parse("")
 
     /// 제목에서 읽은 시작 시각 — 기간 모드는 파서 미적용
     private var startTime: ParsedTime? {
@@ -318,6 +320,7 @@ struct QuickScheduleBar: View {
                 .focused($titleFocused)
                 .submitLabel(.done)
                 .onSubmit(save)
+                .onChange(of: title) { _, text in parsed = ScheduleTextParser.parse(text) }
             HStack(spacing: 10) {
                 dayChip
                 if let start = startTime {
