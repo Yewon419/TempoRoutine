@@ -721,18 +721,6 @@ struct SeasonCalendarView: View {
         .foregroundStyle(Ink.text)
     }
 
-    /// 계절 시작 마커 — 11pt 지면색 원 + 글리프 7(띠 세로 중심에 앉아 위아래 3.5pt씩 걸친다). 식 분리는 타입체크 시간 규칙.
-    private func seasonStartMark(meta: SeasonMeta, projected: Bool) -> some View {
-        let disc: some View = Circle().fill(Ink.frost)
-        let rim: some View = Circle().strokeBorder(Ink.accent.opacity(0.3), lineWidth: 1)
-        return SeasonGlyph(phase: meta.phase, size: 7)
-            .padding(2)
-            .background(disc)
-            .overlay(rim)
-            .opacity(projected ? 0.7 : 1)
-            .offset(x: -1)
-    }
-
     /// 월 이동 화살표 — 은필·기본 = 괘선 원 버튼 36(2026-09-07 은필 v2, 히트 44 유지), 그 외 종전 맨 화살표
     @ViewBuilder
     private func monthArrow(_ symbol: String) -> some View {
@@ -917,17 +905,13 @@ struct SeasonCalendarView: View {
         // 바로 밑 y 25.5~29.5. 일정 띠·박스는 3.5pt 간격을 두고 33.5부터(시안 결정).
         // 활판 = 헤어라인 1.5pt + 불투명 .9/.35(§2.3-8 — 얇아진 만큼 진하게 눌러야 띠로 읽힌다)
         let hairline = ThemeStore.chrome.hairlineSeasonBand
-        // 계절 시작일 글리프 마커(2026-09-07 은필 v2) — 띠가 새로 시작하는 날(달 경계 아님)에 지면색 원 안
-        // 글리프를 앉힌다. 색만으로 읽던 계절 경계를 형태로도(§8.1 색맹 담보와 같은 원칙). 은필·기본만.
-        let starts = !prev && ThemeStore.chrome.almanacCards
+        // 계절 시작일 글리프 마커(2026-09-07 은필 v2)는 걷었다(베타 09-13 "계절 줄에 있는 동그라미 없애").
+        // 계절 식별은 범례의 글리프+라벨이 계속 담당한다(§8.1 색맹 담보).
         return Rectangle()
             .fill(meta.glow.opacity(hairline ? (projected ? 0.35 : 0.9) : (projected ? 0.25 : 0.5)))
             .frame(height: hairline ? 1.5 : 4)
             .padding(.leading, roundLeft ? 3 : 0)
             .padding(.trailing, roundRight ? 3 : 0)
-            .overlay(alignment: .leading) {
-                if starts { seasonStartMark(meta: meta, projected: projected) }
-            }
             .frame(maxHeight: .infinity, alignment: .top)
             .padding(.top, 25.5)
             .allowsHitTesting(false)
