@@ -18,6 +18,8 @@ import app.temporoutine.core.OutputProgressKind
 import app.temporoutine.core.OutputSchedule
 import app.temporoutine.core.PeriodMath
 import app.temporoutine.core.SelfReportSurvey
+import app.temporoutine.core.SurveyChoice
+import app.temporoutine.core.SurveyQuestion
 import app.temporoutine.core.TrackedSignals
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -191,6 +193,20 @@ object SurveyLogic {
 
     /** 문항이 하나뿐인 장 — 선택이 곧 그 장의 답. 1장 = 캘리브레이션 단문항. */
     fun isSingleQuestionStep(step: Int): Boolean = step == 1
+
+    /** 복수 문항 토글(iOS SelfReportFlow.toggledMultiValue, 2026-09-09) — 선택 순서가 아니라 **선택지 순서**로
+     *  이어 저장한다(같은 답이면 같은 문자열). 「딱히 없어요」·「잘 모르겠어요」는 배타 — 고르면 나머지가 빠지고,
+     *  반대로 다른 것을 고르면 빠진다. 전부 해제되면 null(= 무응답). */
+    fun toggledMultiValue(question: SurveyQuestion, choice: SurveyChoice, current: String?): String? {
+        val picked = SelfReportSurvey.values(current).toMutableSet()
+        when {
+            choice.value in picked -> picked.remove(choice.value)
+            choice.value in SelfReportSurvey.exclusivePhaseValues -> { picked.clear(); picked.add(choice.value) }
+            else -> { picked.removeAll(SelfReportSurvey.exclusivePhaseValues); picked.add(choice.value) }
+        }
+        val ordered = question.choices.map { it.value }.filter { it in picked }
+        return ordered.takeIf { it.isNotEmpty() }?.joinToString(",")
+    }
 
     fun whitelist(answers: Map<String, String>): Map<String, String> {
         val allowed = SelfReportSurvey.allQuestionIDs

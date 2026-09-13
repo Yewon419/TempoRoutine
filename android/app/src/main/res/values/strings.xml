@@ -197,7 +197,9 @@
     <string name="survey_intro_prefilled">이전 응답이 채워져 있어요. 넘기면서 확인하고, 바뀐 것만 고쳐주세요.</string>
     <string name="survey_note_calibration">이제 그때를 떠올리면서 답해주세요.</string>
     <string name="survey_note_symptom">꼭 생리 중이 아니라도 가장 힘들었던 때를 떠올려주세요.</string>
+    <string name="survey_note_multiple">여러 개 고를 수 있어요.</string>
     <string name="survey_note_optional">이 페이지의 질문은 건너뛰셔도 괜찮아요.</string>
+    <string name="survey_note_optional_local">답변은 당신의 기기 안에만 저장돼요.</string>
     <string name="survey_anchor_fallback">그나마 힘들었던 때를 떠올려서, 평소와 비교해서 답해주세요.</string>
     <string name="survey_anchor_format">「%1$s」, 평소와 비교해서 답해주세요.</string>
 

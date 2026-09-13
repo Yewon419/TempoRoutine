@@ -93,8 +93,15 @@ fun SelfReportFlow(previousAnswers: Map<String, String> = emptyMap(), onSubmit: 
     fun advance() { if (step < SurveyLogic.TOTAL_STEPS) step += 1 else finish() }
     /** 선택 반영 + 단문항 장이면 자동 진행 예약. 재탭 해제로는 넘어가지 않는다. */
     fun select(question: SurveyQuestion, choice: SurveyChoice) {
-        val wasSelected = answers[question.id] == choice.value
-        if (wasSelected) answers.remove(question.id) else answers[question.id] = choice.value
+        val wasSelected = choice.value in SelfReportSurvey.values(answers[question.id])
+        if (question.allowsMultiple) {
+            val next = SurveyLogic.toggledMultiValue(question, choice, answers[question.id])
+            if (next == null) answers.remove(question.id) else answers[question.id] = next
+        } else if (wasSelected) {
+            answers.remove(question.id)
+        } else {
+            answers[question.id] = choice.value
+        }
         if (!wasSelected && SurveyLogic.isSingleQuestionStep(step) && step !in autoAdvanced) armedStep = step
     }
 
@@ -133,11 +140,17 @@ fun SelfReportFlow(previousAnswers: Map<String, String> = emptyMap(), onSubmit: 
                     ProgressHeader(step)
                     when (step) {
                         0 -> Intro(prefilled)
-                        1 -> QuestionGroup(null, stringResource(R.string.survey_note_calibration), listOf(SelfReportSurvey.calibration), answers, ::select)
-                        2 -> QuestionGroup(null, null, SelfReportSurvey.phaseQuestions, answers, ::select)
-                        3 -> QuestionGroup(symptomAnchorTitle(answers["P2"]), stringResource(R.string.survey_note_symptom), symptomOrder, answers, ::select)
-                        4 -> QuestionGroup(null, null, SelfReportSurvey.amplitudeQuestions, answers, ::select)
-                        else -> QuestionGroup(null, stringResource(R.string.survey_note_optional), SelfReportSurvey.optionalQuestions, answers, ::select)
+                        1 -> QuestionGroup(null, listOf(stringResource(R.string.survey_note_calibration)), listOf(SelfReportSurvey.calibration), answers, ::select)
+                        // 복수 응답 안내(2026-09-09) — 체크 모양만으로는 여러 개를 골라도 된다는 걸 모른다
+                        2 -> QuestionGroup(null, listOf(stringResource(R.string.survey_note_multiple)), SelfReportSurvey.phaseQuestions, answers, ::select)
+                        3 -> QuestionGroup(symptomAnchorTitle(answers["P2"]), listOf(stringResource(R.string.survey_note_symptom)), symptomOrder, answers, ::select)
+                        4 -> QuestionGroup(null, emptyList(), SelfReportSurvey.amplitudeQuestions, answers, ::select)
+                        // 저장 위치 재고지(2026-09-09 베타) — 인트로에 이미 한 줄 있지만, 답하기를 망설이는 자리는 이 페이지다
+                        else -> QuestionGroup(
+                            null,
+                            listOf(stringResource(R.string.survey_note_optional), stringResource(R.string.survey_note_optional_local)),
+                            SelfReportSurvey.optionalQuestions, answers, ::select,
+                        )
                     }
                     // 다음 = 우하단 글씨만, 이전 = 모든 문항 단계에(2026-08-05 베타 피드백)
                     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -157,18 +170,23 @@ fun SelfReportFlow(previousAnswers: Map<String, String> = emptyMap(), onSubmit: 
 
 @Composable
 private fun QuestionGroup(
-    title: String?, note: String?, questions: List<SurveyQuestion>, answers: Map<String, String>,
+    title: String?, notes: List<String>, questions: List<SurveyQuestion>, answers: Map<String, String>,
     onSelect: (SurveyQuestion, SurveyChoice) -> Unit,
 ) {
     val ink = Ink
     Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
         if (title != null) Text(title, style = Fonts.almanac(19), color = ink.text)
-        if (note != null) Text(note, style = Fonts.system(13), color = ink.text.copy(alpha = 0.55f))
+        if (notes.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                for (note in notes) Text(note, style = Fonts.system(13), color = ink.text.copy(alpha = 0.55f))
+            }
+        }
         for (question in questions) {
+            val picked = SelfReportSurvey.values(answers[question.id])
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(question.text, style = Fonts.almanacBody(16, bold = true), color = ink.text, modifier = Modifier.padding(bottom = 4.dp))
                 for (choice in question.choices) {
-                    ChoiceRow(choice, selected = answers[question.id] == choice.value) { onSelect(question, choice) }
+                    ChoiceRow(choice, selected = choice.value in picked, multiple = question.allowsMultiple) { onSelect(question, choice) }
                 }
             }
         }
@@ -177,7 +195,7 @@ private fun QuestionGroup(
 
 // 문항 = 세리프 표제 + 라디오·괘선 리스트(책력 개방 조판). 측정 로직·저장 키는 무변경.
 @Composable
-private fun ChoiceRow(choice: SurveyChoice, selected: Boolean, onClick: () -> Unit) {
+private fun ChoiceRow(choice: SurveyChoice, selected: Boolean, multiple: Boolean, onClick: () -> Unit) {
     val ink = Ink
     Row(
         Modifier
@@ -188,7 +206,8 @@ private fun ChoiceRow(choice: SurveyChoice, selected: Boolean, onClick: () -> Un
             .padding(vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Radio(selected)
+        // 복수 문항은 라디오가 아니라 체크 — 하나만 고르는 줄로 읽히면 여러 개를 고를 생각을 못 한다
+        if (multiple) CheckSquare(selected) else Radio(selected)
         Text(choice.label, style = Fonts.system(15, if (selected) FontWeight.SemiBold else FontWeight.Normal), color = ink.text.copy(alpha = if (selected) 1f else 0.75f))
     }
 }
@@ -202,6 +221,31 @@ private fun Radio(selected: Boolean) {
         Modifier.size(16.dp).drawBehind {
             drawCircle(color, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx()), radius = size.minDimension / 2 - 1f)
             if (selected) drawCircle(color, radius = size.minDimension * 0.28f)
+        },
+    )
+}
+
+/** SF square / checkmark.square.fill 대용 */
+@Composable
+private fun CheckSquare(selected: Boolean) {
+    val ink = Ink
+    val color = if (selected) ink.text else ink.text.copy(alpha = 0.3f)
+    val paper = ink.paper
+    Box(
+        Modifier.size(16.dp).drawBehind {
+            val inset = 1.5.dp.toPx()
+            val corner = androidx.compose.ui.geometry.CornerRadius(3.dp.toPx())
+            if (selected) {
+                drawRoundRect(color, topLeft = Offset(inset / 2, inset / 2), size = Size(size.width - inset, size.height - inset), cornerRadius = corner)
+                val check = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(size.width * 0.27f, size.height * 0.52f)
+                    lineTo(size.width * 0.44f, size.height * 0.69f)
+                    lineTo(size.width * 0.74f, size.height * 0.35f)
+                }
+                drawPath(check, paper, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.8.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+            } else {
+                drawRoundRect(color, topLeft = Offset(inset, inset), size = Size(size.width - inset * 2, size.height - inset * 2), cornerRadius = corner, style = androidx.compose.ui.graphics.drawscope.Stroke(width = inset))
+            }
         },
     )
 }
@@ -246,7 +290,10 @@ private fun Intro(prefilled: Boolean) {
 /** 증상 문항의 시간 앵커 — TempoCore `symptomAnchorLine`은 라벨을 문장에 합성하므로 번역 키가 아니다. 합성만 앱으로 가져온다. */
 @Composable
 private fun symptomAnchorTitle(p2: String?): String {
-    if (p2 == null || p2 == "none" || p2 == "unknown") return stringResource(R.string.survey_anchor_fallback)
-    val choice = SelfReportSurvey.phaseChoices.firstOrNull { it.value == p2 } ?: return stringResource(R.string.survey_anchor_fallback)
-    return stringResource(R.string.survey_anchor_format, choice.label)
+    // 복수 응답(2026-09-09)이면 고른 것을 전부 나열한다 — tempocore symptomAnchorLine과 같은 규칙.
+    val labels = SelfReportSurvey.values(p2)
+        .filter { it !in SelfReportSurvey.exclusivePhaseValues }
+        .mapNotNull { value -> SelfReportSurvey.phaseChoices.firstOrNull { it.value == value }?.label }
+    if (labels.isEmpty()) return stringResource(R.string.survey_anchor_fallback)
+    return stringResource(R.string.survey_anchor_format, labels.joinToString(" · "))
 }
