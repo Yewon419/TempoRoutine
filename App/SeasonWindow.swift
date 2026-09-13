@@ -88,7 +88,7 @@ private struct SeasonPhotoDrift: View {
         Image(assetName)
             .resizable()
             .aspectRatio(contentMode: .fill)
-            .colorEffect(ShaderLibrary.filmGrain(.float(0.16)))
+            .colorEffect(ShaderLibrary.filmGrain(.float(0.09)))   // 0.16 → 0.09(94차-2 찰칵: 프로토보다 훨씬 거칠었다)
             .scaleEffect(settled || reduceMotion ? 1.0 : 1.06)
             .onAppear {
                 guard !reduceMotion else { return }

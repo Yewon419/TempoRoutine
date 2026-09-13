@@ -7,8 +7,9 @@
 #include <SwiftUI/SwiftUI.h>
 using namespace metal;
 
+// 찰칵 실측(2026-09-13 94차-2): 1px 해시는 3x 화면에서 영상 노이즈처럼 촘촘했다 → 2px 셀로 키우고 진폭은 호출부에서 낮춘다.
 [[ stitchable ]] half4 filmGrain(float2 position, half4 color, float amount) {
-    float2 p = floor(position);
+    float2 p = floor(position * 0.5);
     float n = fract(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
     half g = half((n - 0.5) * amount);
     return half4(clamp(color.rgb + g * color.a, half3(0.0), half3(1.0)), color.a);
