@@ -355,14 +355,10 @@ struct CheckInCard: View {
                 .accessibilityLabel(Loc.str("사진 지우기"))
             }
         } else {
+            // 빈 자리 = 전폭 16:9 점선 상자(베타 09-13 "사진 첨부 탭을 16:9 직사각형으로 크게") —
+            // 사진이 들어갈 자리를 미리 보여준다. 들어가면 위 분기(200 높이 사진)로 바뀐다.
             PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
-                HStack(spacing: 6) {
-                    Image(systemName: "photo")
-                        .font(.caption)
-                    Text("사진 넣기")
-                        .font(.caption)
-                }
-                .foregroundStyle(Ink.text.opacity(0.55))
+                photoDropZone
             }
             .onChange(of: photoItem) { _, item in
                 guard let item else { return }
@@ -377,6 +373,25 @@ struct CheckInCard: View {
                 }
             }
         }
+    }
+
+    private var photoDropZone: some View {
+        let shape: RoundedRectangle = RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
+        let dashed: StrokeStyle = StrokeStyle(lineWidth: 1, dash: [5, 4])
+        return ZStack {
+            shape.fill(Ink.text.opacity(0.03))
+            shape.strokeBorder(Ink.text.opacity(0.28), style: dashed)
+            VStack(spacing: 6) {
+                Image(systemName: "photo")
+                    .font(.title3)
+                Text("사진 넣기")
+                    .font(.caption)
+            }
+            .foregroundStyle(Ink.text.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity)
+        .aspectRatio(16.0 / 9.0, contentMode: .fit)
+        .contentShape(Rectangle())
     }
 
     private func removePhoto() {
