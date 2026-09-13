@@ -15375,6 +15375,75 @@
         }
       }
     },
+    "계절 반복": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By season"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "季節で繰り返し"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按季节重复"
+          }
+        }
+      }
+    },
+    "날짜 반복": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By date"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付で繰り返し"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按日期重复"
+          }
+        }
+      }
+    },
+    "매일·매주·매달 반복하는 루틴과 목표가 여기 모여요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines and goals that repeat daily, weekly, or monthly gather here."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日・毎週・毎月繰り返すルーティンと目標がここに集まります。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日、每周、每月重复的例行事项和目标会汇集在这里。"
+          }
+        }
+      }
+    },
     "오늘 생리 기록": {
       "extractionState": "manual",
       "localizations": {
