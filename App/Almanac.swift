@@ -854,9 +854,10 @@ struct SectionChrome: ViewModifier {
                 .padding(.vertical, 14)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Rectangle().fill(Ink.surface.opacity(0.6)))
-                .overlay(alignment: .top) { Rectangle().fill(Ink.accent.opacity(0.24)).frame(height: 1) }
-                .overlay(alignment: .bottom) { Rectangle().fill(Ink.accent.opacity(0.24)).frame(height: 1) }
+                // 0.6 → 0.88(베타 09-13 "일정 저거 너무 투명하다" — 은필 지면과 색이 가까워 선화가 그대로 비쳤다)
+                .background(Rectangle().fill(Ink.surface.opacity(0.88)))
+                .overlay(alignment: .top) { Rectangle().fill(Ink.accent.opacity(0.32)).frame(height: 1) }
+                .overlay(alignment: .bottom) { Rectangle().fill(Ink.accent.opacity(0.32)).frame(height: 1) }
                 .padding(.horizontal, -20)   // 컨테이너 padding(20)을 상쇄해 화면 폭으로
         } else {
             content
