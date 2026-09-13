@@ -10,6 +10,10 @@ data class SurveyQuestion(
     val text: String,
     val choices: List<SurveyChoice>,
     val isOptional: Boolean = false,
+    /** 복수 응답 문항인가(2026-09-09 베타 "이거 복수답 가능하게 해줘" — P1·P2).
+     *  저장은 선택한 value를 쉼표로 이은 한 문자열이다 — 응답 맵이 Map<String, String>이라
+     *  배열을 담을 자리가 없고, 분석은 쉼표로 다시 가르면 된다(`SelfReportSurvey.values`). */
+    val allowsMultiple: Boolean = false,
 )
 
 object SelfReportSurvey {
@@ -24,11 +28,16 @@ object SelfReportSurvey {
     )
 
     /** 2026-09-04 베타("중간에 조금 그래요 추가") — 이진 척도에 중간값을 넣는다.
-     *  순서는 강도 내림차순. 옛 응답(worse·same)은 값이 그대로라 그대로 읽힌다. */
+     *  순서는 강도 내림차순. 옛 응답(worse·same)은 값이 그대로라 그대로 읽힌다.
+     *  2026-09-09 라벨 = 예/보통이에요/아니요(사용자 지시) — 종전 「심해져요/조금 그래요/비슷해요」는
+     *  동의 축과 비교 축이 섞여 "기운이 넘쳐요 → 심해져요" 같은 조합이 나왔다. 값·채점은 무변경.
+     *  2026-09-09 2차(베타 "예 아니요 늘 달라요 이렇게 고치자" → "늘 달라요 말고 그때그때 달라요 로"):
+     *  중간 라벨만 「그때그때 달라요」로. ⚠ 라벨 축이 강도에서 변동성으로 바뀌지만 채점은 1점 유지
+     *  (대표님 결정) — 0으로 접으면 그 답이 계열 점수에서 통째로 사라진다(2026-09-04와 같은 이유). */
     private val symptomChoices = listOf(
-        SurveyChoice("worse", "심해져요"),
-        SurveyChoice("somewhat", "조금 그래요"),
-        SurveyChoice("same", "비슷해요"),
+        SurveyChoice("worse", "예"),
+        SurveyChoice("somewhat", "그때그때 달라요"),
+        SurveyChoice("same", "아니요"),
     )
 
     private val frequencyChoices = listOf(
@@ -56,11 +65,24 @@ object SelfReportSurvey {
         ),
     )
 
-    /** 순서 고정 — P1이 먼저다. */
+    /** 순서 고정 — P1이 먼저다.
+     *  2026-09-09 복수 응답 허용(베타) — 좋은 때·안 좋은 때가 한 곳으로 안 모이는 사람이 있다.
+     *  ⚠ 웹 사전 설문은 단일 선택이라 이 문항만 형식이 갈린다. 대조할 때 앱 응답은 다치(多値)로
+     *  들어온다고 보고 가를 것(`values`). 채점(SelfReportScoring)은 P1·P2를 쓰지 않아 무영향. */
     val phaseQuestions = listOf(
-        SurveyQuestion("P1", "한 주기 중에 컨디션이 가장 좋은 때는 언제인가요", phaseChoices),
-        SurveyQuestion("P2", "반대로, 가장 안 좋은 때는 언제인가요", phaseChoices),
+        SurveyQuestion("P1", "한 주기 중에 컨디션이 가장 좋은 때는 언제인가요", phaseChoices, allowsMultiple = true),
+        SurveyQuestion("P2", "반대로, 가장 안 좋은 때는 언제인가요", phaseChoices, allowsMultiple = true),
     )
+
+    /** 복수 응답 저장값을 개별 value로 가른다. 단일 응답이면 원소 하나짜리 리스트. */
+    fun values(raw: String?): List<String> {
+        if (raw.isNullOrEmpty()) return emptyList()
+        return raw.split(",").filter { it.isNotEmpty() }
+    }
+
+    /** 다른 선택지와 같이 고를 수 없는 값 — 「딱히 없어요」·「잘 모르겠어요」.
+     *  위상을 하나도 안 짚은 답과 여러 개를 짚은 답이 한 응답에 섞이면 해석이 불가능해진다. */
+    val exclusivePhaseValues: Set<String> = setOf("none", "unknown")
 
     /** 제시 순서만 랜덤화한다. Q7은 프로브(합성점수 제외), Q8은 역문항. */
     val symptomQuestions = listOf(
@@ -74,15 +96,17 @@ object SelfReportSurvey {
         SurveyQuestion("Q8", "오히려 기운이 넘쳐요", symptomChoices),
     )
 
-    /** 이 셋만 다점 척도 — 진폭과 기능 지장의 상관을 재는 유일한 쌍. */
+    /** 이 셋만 다점 척도 — 진폭과 기능 지장의 상관을 재는 유일한 쌍.
+     *  2026-09-09 Q9 5지 → 3지(베타 "이거 선택지 너무 많음", 대표님 「유형과 1:1」 선택):
+     *  선택지가 곧 유형이다(비슷해요 = 안단테 · 많이 달라요 = 비바체 · 매번 달라요 = 루바토).
+     *  ⚠ 대가 = 진폭 해상도가 4단에서 2단으로 내려가 Q10·Q11과의 상관 측정이 거의 무의미해진다.
+     *  옛 응답값(slight·total)은 채점 집합에 그대로 남겨 과거 기록이 같은 유형으로 읽히게 한다. */
     val amplitudeQuestions = listOf(
         SurveyQuestion(
             "Q9", "한 주기 안에서 가장 좋은 때와 가장 안 좋은 때, 얼마나 다른가요",
             listOf(
-                SurveyChoice("same", "거의 비슷해요"),
-                SurveyChoice("slight", "조금 달라요"),
-                SurveyChoice("much", "꽤 달라요"),
-                SurveyChoice("total", "완전히 다른 사람 같아요"),
+                SurveyChoice("same", "비슷해요"),
+                SurveyChoice("much", "많이 달라요"),
                 SurveyChoice("varies", "매번 달라요"),
             ),
         ),
@@ -117,11 +141,15 @@ object SelfReportSurvey {
             for (q in phaseQuestions + symptomQuestions + amplitudeQuestions) add(q.id)
         }
 
-    /** P2 응답을 증상 문항의 시간 앵커 문구로 바꾼다. "딱히 없어요"·"모르겠어요"는 폴백. */
+    /** P2 응답을 증상 문항의 시간 앵커 문구로 바꾼다. "딱히 없어요"·"모르겠어요"는 폴백.
+     *  복수 응답(2026-09-09)이면 고른 것을 전부 나열한다 — 하나만 골라 앵커로 삼으면 나머지를
+     *  고른 이유가 화면에서 사라진다. */
     fun symptomAnchorLine(p2: String?): String {
-        if (p2 == null || p2 == "none" || p2 == "unknown") return FALLBACK_ANCHOR
-        val choice = phaseChoices.firstOrNull { it.value == p2 } ?: return FALLBACK_ANCHOR
-        return "「${choice.label}」, 평소와 비교해서 답해주세요."
+        val labels = values(p2)
+            .filter { it !in exclusivePhaseValues }
+            .mapNotNull { value -> phaseChoices.firstOrNull { it.value == value }?.label }
+        if (labels.isEmpty()) return FALLBACK_ANCHOR
+        return "「${labels.joinToString(" · ")}」, 평소와 비교해서 답해주세요."
     }
 
     private const val FALLBACK_ANCHOR = "그나마 힘들었던 때를 떠올려서, 평소와 비교해서 답해주세요."
@@ -134,7 +162,7 @@ data class SelfReportResult(
 )
 
 object SelfReportScoring {
-    /** 문항당 강도 점수 — 심해져요 2 · 조금 그래요 1 · 비슷해요(무응답) 0.
+    /** 문항당 강도 점수 — 예 2 · 그때그때 달라요 1 · 아니요(무응답) 0.
      *  중간 선택지를 0으로 접으면 그 답이 계열 점수에서 통째로 사라진다(2026-09-04). */
     private fun weight(value: String?): Int = when (value) {
         "worse" -> 2
@@ -142,6 +170,8 @@ object SelfReportScoring {
         else -> 0
     }
 
+    /** `total`·`slight`는 2026-09-09 Q9 축소로 화면에서 사라진 값이다 — 그 전에 답한 기록이
+     *  유형 없는 응답으로 떨어지지 않게 집합에는 남긴다. */
     private val vivaceAnswers = setOf("much", "total")
     private val andanteAnswers = setOf("same", "slight")
 
@@ -162,7 +192,7 @@ object SelfReportScoring {
         return RhythmType.RUBATO
     }
 
-    /** 무성의 응답 판별 — Q1~Q7 전부 "심해져요"인데 역문항 Q8도 "심해져요"면 모순이다. */
+    /** 무성의 응답 판별 — Q1~Q7 전부 "예"(worse)인데 역문항 Q8도 "예"면 모순이다. */
     fun isStraightLining(answers: Map<String, String>): Boolean {
         val probes = listOf("Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7")
         return probes.all { answers[it] == "worse" } && answers["Q8"] == "worse"

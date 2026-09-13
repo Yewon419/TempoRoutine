@@ -1,6 +1,8 @@
 # 템포루틴 Android CI (MASTER §5.13)
 # tempocore 테스트(iOS TempoCore 이식 동치 — 골든 픽스처 포함) + 앱 debug 빌드. Linux 러너, 분 단위.
 # iOS 잡(ci.yml)은 android/** 변경에 돌지 않게 paths-ignore로 분리돼 있다.
+# TempoCore/** 도 여기서 돈다 — iOS 코어만 바뀌면 tempocore 1:1 이식 누락을 어느 잡도 못 잡았다
+# (2026-09-13 실측: 09-09 설문 개정이 Android에 4일간 미반영). 초록불은 동기화 증명이 아니라 경보용이다.
 
 name: Android
 
@@ -9,11 +11,13 @@ on:
     branches: [main]
     paths:
       - "android/**"
+      - "TempoCore/**"
       - "tools/review-sample-backup.json"
       - ".github/workflows/android.yml"
   pull_request:
     paths:
       - "android/**"
+      - "TempoCore/**"
       - "tools/review-sample-backup.json"
       - ".github/workflows/android.yml"
   workflow_dispatch:
