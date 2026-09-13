@@ -27,6 +27,8 @@ struct OnboardingFlow: View {
     // 광고 스틸 한 컷 + 두 줄이라 되살렸다(대표님 "온보딩을 줄인 김에 계절 설명만 늘리자").
     @State private var step = 0   // 0 = 언어 선택(2026-08-22 베타 "첫 탭을 따로") — 재진입은 1부터
     @State private var seasonPage = 0   // 2단계 안 계절 인덱스 0~3 = 겨울·봄·여름·가을(앱 순서)
+    @State private var seasonRevealed = false   // 사계절 장 등장 연출 트리거(J2) — 장마다 false→true
+    @State private var brandSlide = 0           // 브랜드 장 슬라이드 0 무드 · 1 본문 · 2 고지
     private static let seasonOrder: [CyclePhase] = [.menstrual, .follicular, .ovulation, .luteal]
     /// 첫 화면 언어 선택(2026-08-21) — 저장값이 없으면 시스템 따름이라 어느 칩도 선택 상태가 아니다
     @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
@@ -97,7 +99,9 @@ struct OnboardingFlow: View {
         var dialStep: Int? = nil      // 진행 다이얼 1~3
         var photo: CyclePhase? = nil  // 사계절 장 — 창에 찰 계절 사진(SeasonWindow)
         var titleColor: Color? = nil  // 표제 계절색(사계절 장만)
-        var seasonDots: Int? = nil    // 사계절 장 위치(0~3) — eyebrow의 「N / 4」를 대신하는 점 인디케이터
+        var seasonDots: Int? = nil    // 사계절 장 위치(0~3) — J2에선 호수 숫자 「01 / 04」가 이 값을 쓴다
+        var tag: String? = nil        // 사계절 장 크레딧 왼쪽 한 마디(J2) — 「주기의 시작」
+        var slides = false            // 브랜드 장 — 무드·본문·고지를 한 자리에서 차례로(2026-09-13 베타 "탭 설명이 너무 많다")
     }
 
     private static let dialTotal = 3
@@ -114,7 +118,7 @@ struct OnboardingFlow: View {
                          // 비의료 고지(5.1.1(ix) 방어) — 문구 = 2026-08-05 사용자 지정
                          fine: [Loc.str("템포루틴은 당신이 기록해 놓은 과거를 기반으로\n당신만의 템포를 보여주는 앱입니다.\n의학적 진단이나 조언은 포함되어 있지 않습니다.")],
                          spot: .hero, content: LensContent(ring: true, drawsRing: true, nodes: true, orbit: true),
-                         bare: true)
+                         bare: true, slides: true)
         case 2:
             // 사계절 4장(2026-09-12) — 계절마다 한 컷, 티저 광고 스틸이 렌즈 창에 찬다(SeasonWindow).
             // 카피 = seasonMeta의 허락 톤 그대로: 단계명(M-1c)·처방·인구 평균 없음. 마지막 장에만 「처방하지 않는다」 고지.
@@ -128,7 +132,7 @@ struct OnboardingFlow: View {
                                 Loc.str("템포루틴은 처방하지 않고, 당신의 기록 안에서 당신의 계절을 찾아요.")]
                              : [],
                          spot: .hero, hideLens: true, bare: true, photo: phase, titleColor: meta.color,
-                         seasonDots: seasonPage)
+                         seasonDots: seasonPage, tag: seasonTag(phase))
         case 3:
             return Stage(eyebrow: Loc.str("당신의 테마"), title: Loc.str("어떤 지면으로\n시작할까요?"),
                          spot: .dial, content: dial(1), dialStep: 1)
@@ -172,6 +176,16 @@ struct OnboardingFlow: View {
         case .follicular: Loc.str("생리가 끝난 뒤예요.")
         case .ovulation: Loc.str("배란 무렵이에요.")
         case .luteal: Loc.str("생리 전이에요.")
+        }
+    }
+
+    /// 크레딧 한 마디(J2) — 본문 첫 줄의 요약. 처방·단계명 없음.
+    private func seasonTag(_ phase: CyclePhase) -> String {
+        switch phase {
+        case .menstrual: Loc.str("주기의 시작")
+        case .follicular: Loc.str("가벼워지는 때")
+        case .ovulation: Loc.str("가장 밝은 때")
+        case .luteal: Loc.str("가장 긴 계절")
         }
     }
 
@@ -243,11 +257,18 @@ struct OnboardingFlow: View {
                 .animation(reduceMotion ? nil : .spring(response: entering ? 0.9 : 0.72, dampingFraction: 0.86), value: stageKey)
                 VStack(alignment: .leading, spacing: 0) {
                     topBar(current)
-                    // 사계절 장은 카피가 아래로 — 사진의 주 피사체가 상단에 있어 둘이 같은 자리를 다퉜다(C안).
-                    if current.photo != nil {
-                        Spacer(minLength: 0)
-                        copyBlock(current)
+                    // 사계절 장 = 편집 조판 J2(SeasonEditorial, 2026-09-13) — 숫자·글리프·카피가 화면 전체를 쓴다.
+                    // 장이 바뀌면(.id) 옛 장은 짧게 가라앉고 새 장은 seasonRevealed가 튕기며 스태거 등장.
+                    if let phase = current.photo {
+                        SeasonEditorial(phase: phase, index: current.seasonDots ?? 0, title: current.title,
+                                        kicker: seasonMeta(for: phase).plain,
+                                        deck: current.body.joined(separator: " "), tag: current.tag ?? "",
+                                        fine: current.fine.isEmpty ? nil : current.fine.joined(separator: " "),
+                                        revealed: seasonRevealed, reduceMotion: reduceMotion)
                             .padding(.bottom, 86)   // 하단 CTA 시트(52 + 여백)를 비운다
+                            .id(stageKey)
+                            .transition(.asymmetric(insertion: .identity,
+                                                    removal: .opacity.combined(with: .offset(y: 10))))
                     } else {
                         copyBlock(current)
                             .padding(.top, 8)
@@ -259,6 +280,21 @@ struct OnboardingFlow: View {
                 .frame(width: column)
                 .frame(maxWidth: .infinity)
                 .opacity(entering ? 0 : 1)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.28), value: stageKey)   // 사계절 장 퇴장 박자
+                // 장마다 등장 연출을 처음부터: 사계절 = revealed 튕김, 브랜드 = 슬라이드 0부터 2.2초 간격
+                .task(id: stageKey) {
+                    seasonRevealed = false
+                    brandSlide = 0
+                    try? await Task.sleep(for: .milliseconds(60))
+                    guard !Task.isCancelled else { return }
+                    seasonRevealed = true
+                    guard step == 1 else { return }   // 브랜드 장만 슬라이드(Stage를 @Sendable 클로저에 안 잡는다)
+                    for i in 1..<3 {
+                        try? await Task.sleep(for: .milliseconds(2200))
+                        guard !Task.isCancelled else { return }
+                        brandSlide = i
+                    }
+                }
                 if entering { enterTitle }
             }
             .overlay(alignment: .bottom) { sheet(current, column: column).opacity(entering ? 0 : 1) }
@@ -398,7 +434,7 @@ struct OnboardingFlow: View {
                     finishOnboarding()
                 } label: {
                     Image(systemName: "xmark")
-                        .foregroundStyle(Ink.text.opacity(0.6))
+                        .foregroundStyle(chromeInk(current))
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("온보딩 닫기")
@@ -409,7 +445,7 @@ struct OnboardingFlow: View {
                     goBack()
                 } label: {
                     Image(systemName: "chevron.left")
-                        .foregroundStyle(Ink.text.opacity(0.6))
+                        .foregroundStyle(chromeInk(current))
                         .frame(width: 44, height: 44)
                 }
             }
@@ -422,6 +458,11 @@ struct OnboardingFlow: View {
             }
         }
         .frame(height: 44)
+    }
+
+    /// 상단 버튼 잉크 — 사계절 장(어두운 사진)만 지면색(J2)
+    private func chromeInk(_ current: Stage) -> Color {
+        current.photo != nil ? Ink.frost.opacity(0.85) : Ink.text.opacity(0.6)
     }
 
     private func goBack() {
@@ -455,6 +496,53 @@ struct OnboardingFlow: View {
         .accessibilityLabel(Loc.fmt("한 달 안의 사계절 %1$lld / 4", index + 1))
     }
 
+    /// 브랜드 장 슬라이드 — 무드(18 명조) → 본문(15) → 비의료 고지(10.5, 종전 12에서 축소)가 한 자리에서
+    /// 2.2초 간격으로 교체되고 고지에서 멈춘다(brandSlide는 body의 .task가 돌린다). 한 화면엔 표제 + 한 블록뿐.
+    /// VoiceOver는 타이머를 기다리지 않도록 세 블록을 한 라벨로 읽는다.
+    private func brandSlides(_ current: Stage) -> some View {
+        ZStack(alignment: .topLeading) {
+            slide(brandMood(current), on: brandSlide == 0)
+            slide(brandBody(current), on: brandSlide == 1)
+            slide(brandFine(current), on: brandSlide == 2)
+        }
+        .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(([current.mood ?? ""] + current.body + current.fine).joined(separator: " "))
+    }
+
+    private func brandMood(_ current: Stage) -> some View {
+        Text(current.mood ?? "")
+            .font(LensSpec.serif(18, bold: false))
+            .foregroundStyle(Ink.text.opacity(0.92))
+    }
+
+    private func brandBody(_ current: Stage) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(current.body, id: \.self) { line in Text(line) }
+        }
+        .font(.system(size: 15))
+        .lineSpacing(5)
+        .foregroundStyle(Ink.text.opacity(0.72))
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func brandFine(_ current: Stage) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(current.fine, id: \.self) { line in Text(line) }
+        }
+        .font(.system(size: 10.5))
+        .lineSpacing(3)
+        .foregroundStyle(Ink.text.opacity(0.5))
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func slide<V: View>(_ view: V, on: Bool) -> some View {
+        view
+            .opacity(on ? 1 : 0)
+            .offset(y: on || reduceMotion ? 0 : 8)
+            .animation(reduceMotion ? .easeOut(duration: 0.3) : .easeOut(duration: 0.5), value: brandSlide)
+    }
+
     // ── 카피 블록 — 표제·본문은 은필 명조, 언어·심플 지면은 산세리프(지면과 함께 서체도 열린다) ──
     private func copyBlock(_ current: Stage) -> some View {
         let plain = plainSurface
@@ -481,14 +569,15 @@ struct OnboardingFlow: View {
                         .lineSpacing(5)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                // 사계절 장은 mood·body의 대비를 벌린다 — 16/15로 두면 한 덩어리로 읽혔다(2026-09-12 C안).
+                // 브랜드 장 = 슬라이드(무드 → 본문 → 고지 한 자리 교체, 2026-09-13). 나머지 장은 종전 세로 쌓기.
+                if current.slides { brandSlides(current) }
                 let photoStage = current.photo != nil
-                if let mood = current.mood {
+                if !current.slides, let mood = current.mood {
                     Text(mood)
                         .font(LensSpec.serif(photoStage ? 18 : 16, bold: false))
                         .foregroundStyle(Ink.text.opacity(photoStage ? 0.95 : 0.9))
                 }
-                if !current.body.isEmpty {
+                if !current.slides, !current.body.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
                         ForEach(current.body, id: \.self) { line in Text(line) }
                     }
@@ -497,7 +586,7 @@ struct OnboardingFlow: View {
                     .foregroundStyle(Ink.text.opacity(photoStage ? 0.62 : 0.72))
                     .fixedSize(horizontal: false, vertical: true)
                 }
-                if !current.fine.isEmpty {
+                if !current.slides, !current.fine.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
                         ForEach(current.fine, id: \.self) { line in Text(line) }
                     }
@@ -567,7 +656,7 @@ struct OnboardingFlow: View {
                 ghostButton("직접 기록할게요") { pushBaseline(1) }
             } else {
                 Button(primaryLabel) { lightFeedback += 1; primaryAction() }
-                    .buttonStyle(InkCapsuleButtonStyle())
+                    .buttonStyle(InkCapsuleButtonStyle(inverted: current.photo != nil))   // 어두운 사진 위 = 지면색 알약(J2)
                     .disabled(!primaryEnabled)
                     .opacity(primaryEnabled ? 1 : 0.35)
             }

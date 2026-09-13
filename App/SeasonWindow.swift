@@ -44,36 +44,55 @@ struct SeasonWindow: View {
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        // 계절 사이 전환 = 크로스페이드(카피 전환 0.42와 같은 박자). 창 크기는 바깥이 애니메이션한다.
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.42), value: phase)
+        // 계절 사이 전환 = 크로스페이드 0.6(J2 — 카피 등장 스태거와 겹치게 조금 길게). 창 크기는 바깥이 애니메이션한다.
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: phase)
     }
 
     private var photo: some View {
-        Image(Self.assetName(phase))
-            .resizable()
-            .aspectRatio(contentMode: .fill)
+        // 사진마다 새 인스턴스(.id) — 느린 확대 드리프트가 장마다 처음부터(J2 전환, 2026-09-13)
+        SeasonPhotoDrift(assetName: Self.assetName(phase), reduceMotion: reduceMotion)
             .id(phase)
             .transition(.opacity)
     }
 
     /// 서리 스크림 — 위는 카피 자리(56%까지 스러짐), 아래는 CTA 자리(26%). 시안 B 값 그대로.
-    /// 서리 스크림 — 위는 상태바·뒤로가기 보호만(17%까지), 아래는 카피 자리(66%까지).
-    /// ⚠ 2026-09-12 C안: 종전 값(상단 56%)은 사진의 주 피사체(인물 머리·얼굴)를 통째로 지웠다.
-    /// 사진을 넣은 이유가 화면에 남지 않아 카피를 아래로 내리고 스크림도 뒤집었다.
+    /// 먹 그라데이션(J2, 2026-09-13 대표님 확정 — 프로토 ?variant=j 값 그대로): 아래는 카피 자리(68%까지),
+    /// 위는 상태바·뒤로가기 보호(24%까지). 활자는 전부 지면색(흰)이라 스크림이 어둡다.
+    /// (C안의 서리 스크림은 2026-09-12 하루 살았다 — "매거진스러운 디자인" 요청으로 어두운 방향 확정.)
+    private static let inkShade = Color(red: 18 / 255, green: 20 / 255, blue: 23 / 255)
+
     private var scrim: some View {
         ZStack {
             LinearGradient(stops: [
-                .init(color: Ink.frost.opacity(0.58), location: 0),
-                .init(color: Ink.frost.opacity(0.16), location: 0.09),
-                .init(color: Ink.frost.opacity(0), location: 0.17),
+                .init(color: Color.black.opacity(0.46), location: 0),
+                .init(color: Color.black.opacity(0), location: 0.24),
             ], startPoint: .top, endPoint: .bottom)
             LinearGradient(stops: [
-                .init(color: Ink.frost.opacity(0.97), location: 0),
-                .init(color: Ink.frost.opacity(0.94), location: 0.22),
-                .init(color: Ink.frost.opacity(0.76), location: 0.37),
-                .init(color: Ink.frost.opacity(0.30), location: 0.52),
-                .init(color: Ink.frost.opacity(0), location: 0.66),
+                .init(color: Self.inkShade.opacity(0.94), location: 0),
+                .init(color: Self.inkShade.opacity(0.74), location: 0.24),
+                .init(color: Self.inkShade.opacity(0.22), location: 0.50),
+                .init(color: Self.inkShade.opacity(0), location: 0.68),
             ], startPoint: .bottom, endPoint: .top)
         }
+    }
+}
+
+/// 사진 한 장 = 필름 그레인 + 느린 확대 드리프트(1.06 → 1.0, 1.6초). 장이 바뀌면 SeasonWindow가 새 인스턴스를
+/// 만들어 드리프트가 처음부터 다시 돈다(크로스페이드와 겹쳐 「사진이 숨 쉬는」 전환). Reduce Motion = 정지.
+private struct SeasonPhotoDrift: View {
+    let assetName: String
+    let reduceMotion: Bool
+    @State private var settled = false
+
+    var body: some View {
+        Image(assetName)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .colorEffect(ShaderLibrary.filmGrain(.float(0.16)))
+            .scaleEffect(settled || reduceMotion ? 1.0 : 1.06)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeOut(duration: 1.6)) { settled = true }
+            }
     }
 }

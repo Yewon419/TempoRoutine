@@ -423,14 +423,16 @@ struct GlassSheet: ViewModifier {
 
 /// 주 행동 — 먹 캡슐 52. 누르면 흰 먹이 중심에서 번진다(inkBleed).
 struct InkCapsuleButtonStyle: ButtonStyle {
+    /// 반전 = 지면색 알약 + 먹 글자(사계절 장의 어두운 사진 위, J2 2026-09-13)
+    var inverted = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 17, weight: .medium))
-            .foregroundStyle(Ink.paper)
+            .foregroundStyle(inverted ? Ink.text : Ink.paper)
             .frame(maxWidth: .infinity)
             .frame(height: 52)
-            .background(Ink.text, in: Capsule())
+            .background(inverted ? Ink.frost : Ink.text, in: Capsule())
             .overlay {
                 Circle()
                     .fill(Color.white.opacity(0.16))

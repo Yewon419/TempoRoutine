@@ -15444,6 +15444,38 @@
         }
       }
     },
+    "주기의 시작": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Where the cycle begins" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "周期のはじまり" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "周期的开始" } }
+      }
+    },
+    "가벼워지는 때": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Getting lighter" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "軽くなるころ" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "变得轻盈的时候" } }
+      }
+    },
+    "가장 밝은 때": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The brightest days" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "いちばん明るいころ" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "最明亮的时候" } }
+      }
+    },
+    "가장 긴 계절": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The longest season" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "いちばん長い季節" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "最长的季节" } }
+      }
+    },
     "오늘 생리 기록": {
       "extractionState": "manual",
       "localizations": {
