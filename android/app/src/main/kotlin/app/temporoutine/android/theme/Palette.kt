@@ -3,7 +3,6 @@
 
 package app.temporoutine.android.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -83,13 +82,14 @@ val LocalDarkAppearance = staticCompositionLocalOf { false }
 val Ink: Palette
     @Composable get() = LocalInk.current
 
+/** 2026-09-09 다크 모드 전면 제거(iOS 78차, 대표님 결정) — 기기 설정과 무관하게 라이트 고정.
+ *  다크 팔레트 값·LocalDarkAppearance는 iOS처럼 데이터로 남긴다(호출처 무수정). */
 @Composable
 fun TempoTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
     CompositionLocalProvider(
-        LocalInk provides if (dark) StandardTheme.dark else StandardTheme.light,
+        LocalInk provides StandardTheme.light,
         LocalChrome provides StandardTheme.chrome,
-        LocalDarkAppearance provides dark,
+        LocalDarkAppearance provides false,
         content = content,
     )
 }
