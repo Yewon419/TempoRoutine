@@ -13,6 +13,9 @@
     <string name="season_plain_summer">배란 무렵</string>
     <string name="season_plain_autumn">생리 전</string>
     <string name="today_period_toggle">생리 기록</string>
+    <string name="today_period_log_hint">날짜를 골라 생리 기록을 고쳐요</string>
+    <string name="today_period_today">오늘</string>
+    <string name="today_period_today_a11y">오늘 생리 기록</string>
     <string name="today_cold_title">계절 기록 전</string>
     <string name="today_cold_body">첫 생리 시작일을 기록하면, 당신의 계절이 시작돼요.</string>
     <string name="today_cold_cta">첫 생리일 기록</string>

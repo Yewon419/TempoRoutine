@@ -25,8 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,6 +49,7 @@ import app.temporoutine.android.TempoApp
 import app.temporoutine.android.selfreport.SelfReportFlow
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
+import app.temporoutine.android.theme.MatteSwitch
 import app.temporoutine.android.theme.SeasonLight
 import app.temporoutine.android.theme.milkGlass
 import app.temporoutine.android.today.InfoBadge
@@ -296,17 +295,10 @@ private fun ToggleRow(name: String, value: Boolean, onChange: (Boolean) -> Unit)
     }
 }
 
+/** 무광 스위치(iOS 은필 v2 2026-09-07 — SettingsView `.toggleStyle(MatteToggleStyle())`) */
 @Composable
 private fun TempoSwitch(value: Boolean, onChange: (Boolean) -> Unit) {
-    val ink = Ink
-    Switch(
-        checked = value, onCheckedChange = onChange,
-        colors = SwitchDefaults.colors(
-            checkedTrackColor = ink.text, checkedThumbColor = ink.paper,
-            uncheckedTrackColor = ink.text.copy(alpha = 0.12f), uncheckedThumbColor = ink.text.copy(alpha = 0.6f),
-            uncheckedBorderColor = Color.Transparent,
-        ),
-    )
+    MatteSwitch(checked = value, onCheckedChange = onChange)
 }
 
 @Composable

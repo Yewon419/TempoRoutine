@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
@@ -38,7 +36,17 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -54,6 +62,7 @@ import app.temporoutine.android.theme.BrandMark
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.GroundHaze
 import app.temporoutine.android.theme.Ink
+import app.temporoutine.android.theme.MatteSwitchTrack
 import app.temporoutine.android.theme.Radius
 import app.temporoutine.android.theme.SeasonLight
 import app.temporoutine.android.theme.chromeGlass
@@ -112,7 +121,7 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, b
                     .padding(bottom = bottomPadding),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                LargeHeader(state, onTogglePeriod)
+                LargeHeader(state, onTogglePeriod, onOpenLogSheet)
                 StateSurfaces(state, onOpenLogSheet)
                 TodaySections(state, vm, hazeState)
                 val record = state.checkIns.firstOrNull { it.day == state.today }
@@ -124,7 +133,7 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, b
 }
 
 @Composable
-private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit) {
+private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit, onOpenLogSheet: () -> Unit) {
     val ink = Ink
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -175,7 +184,7 @@ private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit) {
             GroundHaze(Modifier.padding(top = 2.dp)) {
                 Text(moodline, style = Fonts.almanacBody(17), color = ink.text.copy(alpha = 0.85f))
             }
-            PeriodToggle(state.isPeriodToday, onTogglePeriod, Modifier.padding(top = 8.dp))
+            PeriodRow(state.isPeriodToday, onTogglePeriod, onOpenLogSheet, Modifier.padding(top = 8.dp))
         } else {
             Text(stringResource(R.string.today_cold_title), style = Fonts.almanac(44), color = ink.text)
         }
@@ -202,31 +211,55 @@ private fun DateStamp(state: TodayUiState) {
     }
 }
 
+/** 생리 기록 줄(iOS 91-3, 2026-09-12) = 왼쪽 시트 진입 캡슐(캘린더 SeasonHeaderRow와 같은 생김새) + 오른쪽 「오늘」 무광 스위치.
+ *  캡슐이 「생리 기록」을 말하니 스위치 라벨은 「오늘」 — 한 줄이 "생리 기록 · 오늘 [스위치]"로 읽힌다. */
 @Composable
-private fun PeriodToggle(isOn: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+private fun PeriodRow(isOn: Boolean, onToggle: () -> Unit, onOpenLogSheet: () -> Unit, modifier: Modifier = Modifier) {
     val ink = Ink
     val haptic = LocalHapticFeedback.current
-    Row(
-        modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(stringResource(R.string.today_period_toggle), style = Fonts.almanacBody(15), color = ink.text)
-        Spacer(Modifier.padding(horizontal = 6.dp))
-        Switch(
-            checked = isOn,
-            onCheckedChange = {
-                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                onToggle()
-            },
-            colors = SwitchDefaults.colors(
-                checkedTrackColor = ink.text,
-                checkedThumbColor = ink.paper,
-                uncheckedTrackColor = ink.text.copy(alpha = 0.12f),
-                uncheckedThumbColor = ink.text.copy(alpha = 0.6f),
-                uncheckedBorderColor = Color.Transparent,
-            ),
-        )
+    val hint = stringResource(R.string.today_period_log_hint)
+    val toggleLabel = stringResource(R.string.today_period_today_a11y)
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .heightIn(min = 44.dp)
+                .clickable(onClickLabel = hint) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onOpenLogSheet()
+                },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                Modifier.border(1.dp, ink.text.copy(alpha = 0.3f), CircleShape).padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(7.dp).background(ink.record, CircleShape))
+                Text(stringResource(R.string.today_period_toggle), style = Fonts.system(12, FontWeight.SemiBold), color = ink.text)
+            }
+        }
+        Spacer(Modifier.weight(1f).widthIn(min = 12.dp))
+        // 라벨을 스위치 바로 앞에(2026-08-23 대표님 "오른쪽 버튼 앞에 바짝") — 라벨까지 한 토글
+        Row(
+            Modifier
+                .heightIn(min = 44.dp)
+                .semantics { contentDescription = toggleLabel }
+                .toggleable(
+                    value = isOn,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    role = Role.Switch,
+                    onValueChange = {
+                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                        onToggle()
+                    },
+                ),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.today_period_today), style = Fonts.almanacBody(15), color = ink.text)
+            MatteSwitchTrack(isOn)
+        }
     }
 }
 
