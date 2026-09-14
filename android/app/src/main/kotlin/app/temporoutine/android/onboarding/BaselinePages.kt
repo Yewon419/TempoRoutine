@@ -46,6 +46,7 @@ import app.temporoutine.android.R
 import app.temporoutine.android.calendar.MonthLayout
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
+import app.temporoutine.android.theme.Radius
 import app.temporoutine.android.theme.milkGlass
 import dev.chrisbanes.haze.HazeState
 import java.time.DayOfWeek
@@ -167,7 +168,7 @@ fun OnboardingCalendar(markedDays: Set<LocalDate>, today: LocalDate, onTapDay: (
 @Composable
 private fun DayCell(day: LocalDate, marked: Boolean, future: Boolean, modifier: Modifier, onTap: () -> Unit) {
     val ink = Ink
-    val shape = RoundedCornerShape(10.dp)
+    val shape = RoundedCornerShape(Radius.inner)
     Box(
         modifier
             .height(40.dp)

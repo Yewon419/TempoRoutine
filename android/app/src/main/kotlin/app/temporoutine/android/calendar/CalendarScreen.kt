@@ -83,6 +83,7 @@ import app.temporoutine.android.theme.BrandMark
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.LocalChrome
+import app.temporoutine.android.theme.Radius
 import app.temporoutine.android.theme.SeasonGlyph
 import app.temporoutine.android.theme.SeasonLight
 import app.temporoutine.android.today.TodayViewModel
@@ -356,7 +357,7 @@ private fun BandBarView(bar: BandBar, unit: Dp) {
     val ink = Ink
     val seg = bar.segment
     val width = (unit * seg.length - 2.dp).coerceAtLeast(0.dp)
-    val r = 2.dp
+    val r = Radius.hairline
     Box(
         Modifier
             .offset(x = unit * seg.column + 1.dp, y = BAND_TOP + BAND_SLOT * bar.lane)
@@ -479,7 +480,7 @@ private fun Cell(render: MonthRender, index: Int, date: LocalDate, today: LocalD
                         .padding(horizontal = 1.dp)
                         .padding(bottom = 1.dp)
                         .height(11.dp)
-                        .background(ink.text.copy(alpha = 0.13f), androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
+                        .background(ink.text.copy(alpha = 0.13f), androidx.compose.foundation.shape.RoundedCornerShape(Radius.hairline)),
                     contentAlignment = Alignment.CenterStart,
                 ) {
                     Text(mark.title, style = Fonts.system(9, FontWeight.SemiBold), color = ink.text.copy(alpha = 0.85f),

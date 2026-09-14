@@ -54,6 +54,7 @@ import app.temporoutine.android.theme.BrandMark
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.GroundHaze
 import app.temporoutine.android.theme.Ink
+import app.temporoutine.android.theme.Radius
 import app.temporoutine.android.theme.SeasonLight
 import app.temporoutine.android.theme.chromeGlass
 import app.temporoutine.core.CyclePhase
@@ -253,7 +254,7 @@ private fun StateSurfaces(state: TodayUiState, onOpenLogSheet: () -> Unit) {
             color = ink.text,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ink.record.copy(alpha = 0.12f), androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                .background(ink.record.copy(alpha = 0.12f), androidx.compose.foundation.shape.RoundedCornerShape(Radius.card))
                 .padding(14.dp),
         )
     }

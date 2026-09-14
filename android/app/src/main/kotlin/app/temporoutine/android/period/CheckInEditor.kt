@@ -36,6 +36,7 @@ import app.temporoutine.android.data.CheckInDraft
 import app.temporoutine.android.data.DailyCheckInEntity
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
+import app.temporoutine.android.theme.Radius
 import app.temporoutine.android.theme.milkGlass
 import app.temporoutine.android.today.SeedBurstOverlay
 import app.temporoutine.android.today.SignalChips
@@ -59,7 +60,7 @@ fun CheckInEditor(day: LocalDate, record: DailyCheckInEntity?, signals: TrackedS
 
     SeedBurstOverlay(trigger = burst, modifier = Modifier.fillMaxWidth()) {
     Column(
-        Modifier.fillMaxWidth().alpha(if (isFuture) 0.45f else 1f).milkGlass(hazeState, radius = 14.dp).padding(16.dp),
+        Modifier.fillMaxWidth().alpha(if (isFuture) 0.45f else 1f).milkGlass(hazeState, radius = Radius.card).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

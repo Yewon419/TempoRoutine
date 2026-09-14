@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import app.temporoutine.android.R
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
+import app.temporoutine.android.theme.Radius
 import app.temporoutine.android.theme.SeasonLight
 import app.temporoutine.android.today.CheckCircle
 import app.temporoutine.android.today.TodayUiState
@@ -238,7 +239,7 @@ private fun DayPill(day: LocalDate, selected: Boolean, recorded: Boolean, future
             )
         }
         Box(
-            Modifier.size(38.dp, 52.dp).background(if (recorded) ink.record.copy(alpha = 0.38f) else ink.text.copy(alpha = 0.06f), RoundedCornerShape(19.dp)),
+            Modifier.size(38.dp, 52.dp).background(if (recorded) ink.record.copy(alpha = 0.38f) else ink.text.copy(alpha = 0.06f), CircleShape),
             contentAlignment = Alignment.BottomCenter,
         ) {
             Text(day.dayOfMonth.toString(), style = Fonts.system(11, FontWeight.Medium).copy(fontFeatureSettings = "tnum"),
@@ -254,7 +255,7 @@ private fun PeriodRow(recorded: Boolean, enabled: Boolean, onTap: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .alpha(if (enabled) 1f else 0.5f)
-            .background(ink.record.copy(alpha = 0.10f), RoundedCornerShape(14.dp))
+            .background(ink.record.copy(alpha = 0.10f), RoundedCornerShape(Radius.card))
             .clickable(enabled = enabled, onClick = onTap)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),

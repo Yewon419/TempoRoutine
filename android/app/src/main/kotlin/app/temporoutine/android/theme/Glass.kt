@@ -26,7 +26,7 @@ import dev.chrisbanes.haze.hazeEffect
 
 /** 밀크 글래스 지면 — ultraThin blur + Ink.surface 스크림 + accent 18% 1dp 테두리. */
 @Composable
-fun Modifier.milkGlass(hazeState: HazeState, radius: Dp = 16.dp): Modifier {
+fun Modifier.milkGlass(hazeState: HazeState, radius: Dp = Radius.card): Modifier {
     val ink = Ink
     val shape = RoundedCornerShape(radius)
     return this
