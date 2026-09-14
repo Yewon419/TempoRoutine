@@ -224,3 +224,10 @@
   `adb install ~/...apk`를 하면 파일을 못 찾는다 — 설치는 `C:/...` 형식으로 주거나 변수를 끄고 실행한다.
 - **계측 테스트에 실제 시각을 쓰지 말 것.** 씨앗 지급은 `completedAt < day + 2일`이라 고정 날짜 + `Instant.now()` 조합은
   이틀 뒤부터 깨진다(2026-09-06 실측 — Phase 1 테스트가 시한폭탄이었다). `persist(..., now = )`로 시계를 주입한다.
+- **strings.xml 키를 지우기 전에 `grep -rn "R.string.<키>" app/src`로 참조를 전수한다.** 이름 접두어로 소속을 판단하지 말 것
+  (2026-09-14 실측: 온보딩 장을 걷으며 `ob_sig_*`를 지웠는데 설정 「기록할 것」이 같은 키를 써서 컴파일이 깨졌다).
+- **화면보다 큰 `requiredSize`는 넘친 만큼 가운데로 밀린다** — 좌표로 놓는 큰 원(온보딩 렌즈의 마지막 창)은
+  `wrapContentSize(Alignment.TopStart, unbounded = true)` 뒤에 `offset` + `requiredSize`(2026-09-14 실측).
+- **iOS 이식 중 Git Bash heredoc으로 한글 든 python을 돌릴 땐 `PYTHONUTF8=1`.** 없으면 stdin이 CP949로 읽혀 치환 매치가 0이 된다.
+  strings.xml에 python으로 넣은 `\n`이 실제 개행으로 들어가면 표제가 한 줄로 붙으니, 쓰고 나서 `grep`으로 줄 수를 확인할 것.
+- **에뮬레이터 수치(콜드 스타트 등)는 호스트 여유 메모리부터 본다** — 0.6GB에선 릴리스 빌드도 10초대가 나왔다(2026-09-14). 채택하지 말고 재측정.
