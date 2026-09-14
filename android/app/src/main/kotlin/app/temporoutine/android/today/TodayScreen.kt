@@ -131,7 +131,7 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, b
                 StateSurfaces(state, onOpenLogSheet)
                 TodaySections(state, vm, hazeState)
                 val record = state.checkIns.firstOrNull { it.day == state.today }
-                CheckInCard(day = state.today, record = record, signals = state.trackedSignals, vm = vm, hazeState = hazeState, isToday = true)
+                CheckInCard(day = state.today, record = record, signals = state.trackedSignals, phaseInfo = state.info, vm = vm, hazeState = hazeState, isToday = true)
             }
         }
         CompactBar(state, collapsed, Modifier.align(Alignment.TopCenter).zIndex(1f).chromeGlass(compactHaze))

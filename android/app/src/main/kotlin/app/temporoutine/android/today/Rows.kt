@@ -3,6 +3,9 @@
 
 package app.temporoutine.android.today
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -28,7 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.res.stringResource
@@ -51,6 +56,7 @@ import app.temporoutine.android.data.onceShows
 import app.temporoutine.android.data.sortedByTimeOfDay
 import app.temporoutine.android.data.spanDays
 import app.temporoutine.android.data.toLocalDate
+import app.temporoutine.android.onboarding.rememberReduceMotion
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.core.InputSchedule
@@ -165,7 +171,7 @@ private fun InputRow(item: InputItemEntity, checked: Boolean, state: TodayUiStat
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CheckCircle(checked = checked, size = 16.dp, tint = if (checked) ink.text else ink.text.copy(alpha = 0.35f))
+                StampCheck(checked = checked)   // 먹 도장 체크(iOS 은필 v2 2026-09-07)
                 Text(
                     item.title,
                     style = Fonts.almanacBody(14),
@@ -250,6 +256,39 @@ fun QuickDeletable(kindLabel: String, title: String, onDelete: () -> Unit, conte
             confirmButton = { TextButton(onClick = { confirm = false; onDelete() }) { Text(stringResource(R.string.delete), color = Ink.danger) } },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel)) } },
         )
+    }
+}
+
+/** 먹 도장 체크(iOS Almanac.swift StampCheck) — 22 원 안에 먹이 차오르고 체크가 찍힌다(루틴 행). 지우면 원만 남는다.
+ *  spring(response 0.32, damping 0.62) → k = (2π/0.32)² ≈ 385.5. 상태는 행의 접근성 값이 말한다. */
+@Composable
+fun StampCheck(checked: Boolean, modifier: Modifier = Modifier) {
+    val ink = Ink
+    val reduceMotion = rememberReduceMotion()
+    val t by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = if (reduceMotion) snap() else spring(dampingRatio = 0.62f, stiffness = 385.5f),
+        label = "stampCheck",
+    )
+    Canvas(modifier.size(22.dp)) {
+        val r = size.minDimension / 2
+        val c = center
+        val rim = 1.4.dp.toPx()
+        drawCircle(ink.text.copy(alpha = 0.35f), r - rim / 2, c, style = Stroke(width = rim))
+        drawCircle(ink.text, r * (0.01f + 0.99f * t.coerceAtLeast(0f)), c)
+        // 체크 = SF checkmark 11 bold 대용 — 불투명도·크기 0.5→1·회전 −12°→0
+        val shown = t.coerceIn(0f, 1f)
+        withTransform({
+            rotate(-12f * (1f - t), c)
+            scale(0.5f + 0.5f * t, 0.5f + 0.5f * t, c)
+        }) {
+            val p = Path().apply {
+                moveTo(c.x - 4.2.dp.toPx(), c.y + 0.2.dp.toPx())
+                lineTo(c.x - 1.2.dp.toPx(), c.y + 3.2.dp.toPx())
+                lineTo(c.x + 4.4.dp.toPx(), c.y - 3.0.dp.toPx())
+            }
+            drawPath(p, ink.paper.copy(alpha = shown), style = Stroke(width = 1.9.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        }
     }
 }
 
