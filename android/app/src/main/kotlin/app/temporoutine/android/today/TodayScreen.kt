@@ -56,6 +56,7 @@ import app.temporoutine.android.theme.GroundHaze
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.SeasonLight
 import app.temporoutine.android.theme.chromeGlass
+import app.temporoutine.core.CyclePhase
 import androidx.compose.ui.unit.Dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -152,10 +153,14 @@ private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit) {
             }
             GroundHaze {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val seasonInk = ink.season(info.phase).copy(alpha = 0.85f)
+                    // 평문 뜻이 먼저(iOS 81차): 「생리 중 · 4일차 · 예측 기반」
+                    Text(stringResource(seasonPlainRes(info.phase)), style = Fonts.almanacBody(13), color = seasonInk)
+                    Text("·", style = Fonts.almanacBody(13), color = ink.text.copy(alpha = 0.35f))
                     Text(
                         stringResource(R.string.today_day_in_phase, info.dayInPhase),
                         style = Fonts.almanacBody(13),
-                        color = ink.season(info.phase).copy(alpha = 0.85f),
+                        color = seasonInk,
                     )
                     val badge = when {
                         state.snapshot.isSingleRecord -> stringResource(R.string.today_badge_prediction)
@@ -174,6 +179,13 @@ private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit) {
             Text(stringResource(R.string.today_cold_title), style = Fonts.almanac(44), color = ink.text)
         }
     }
+}
+
+private fun seasonPlainRes(phase: CyclePhase): Int = when (phase) {
+    CyclePhase.MENSTRUAL -> R.string.season_plain_winter
+    CyclePhase.FOLLICULAR -> R.string.season_plain_spring
+    CyclePhase.OVULATION -> R.string.season_plain_summer
+    CyclePhase.LUTEAL -> R.string.season_plain_autumn
 }
 
 @Composable

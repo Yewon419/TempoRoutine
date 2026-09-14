@@ -7,6 +7,11 @@
     <string name="today_day_in_phase">%1$d일차</string>
     <string name="today_badge_prediction">예측 기반</string>
     <string name="today_badge_projected">예상</string>
+    <!-- 계절명 옆 평문 뜻(iOS 81차 SeasonMeta.plain) — 「겨울」이 무엇인지 설명 없이 읽히게. 의학 단계명 금지 유지. -->
+    <string name="season_plain_winter">생리 중</string>
+    <string name="season_plain_spring">생리 끝난 뒤</string>
+    <string name="season_plain_summer">배란 무렵</string>
+    <string name="season_plain_autumn">생리 전</string>
     <string name="today_period_toggle">생리 기록</string>
     <string name="today_cold_title">계절 기록 전</string>
     <string name="today_cold_body">첫 생리 시작일을 기록하면, 당신의 계절이 시작돼요.</string>
@@ -16,11 +21,11 @@
 
     <!-- 구획 -->
     <string name="section_schedule">일정</string>
-    <string name="section_input" translatable="false">Input</string>
-    <string name="section_output" translatable="false">Output</string>
+    <string name="section_input">루틴</string>
+    <string name="section_output">목표</string>
     <string name="section_schedule_info">약속이나 생일같은 일정을 적어봐요. 텍스트에서 시간을 자동으로 읽어올수도 있어요.</string>
-    <string name="section_input_info">식단이나 운동처럼 나를 채우는 일들이에요.\n각 계절에 맞는 인풋으로 당신을 채워봐요.</string>
-    <string name="section_output_info">프로젝트나 공부처럼 내보내는 일들이에요. 계절에 따라 분량을 조절해보면 어떨까요?</string>
+    <string name="section_input_info">식단·운동·물 마시기처럼 매일 하는 일이에요.\n체크만 하면 돼요.</string>
+    <string name="section_output_info">공부·프로젝트처럼 조금씩 진행하는 일이에요. 진행도를 남겨요.</string>
     <string name="section_info_a11y">%1$s 설명</string>
     <string name="ok">확인</string>
     <string name="empty_none">아직 없어요</string>
@@ -43,9 +48,9 @@
     <string name="timer_start">시작</string>
     <string name="timer_reset">초기화</string>
 
-    <!-- 체크인 -->
-    <string name="checkin_title_today">오늘의 체크인</string>
-    <string name="checkin_title_day">이날의 체크인</string>
+    <!-- 컨디션 기록 -->
+    <string name="checkin_title_today">오늘의 기록</string>
+    <string name="checkin_title_day">이날의 기록</string>
     <string name="checkin_energy">에너지는</string>
     <string name="checkin_energy_low">낮음</string>
     <string name="checkin_mid">보통</string>
@@ -108,7 +113,7 @@
     <string name="ob_splash_a11y">템포루틴</string>
     <string name="ob_splash_hint">탭하면 건너뜁니다</string>
     <string name="ob_back">뒤로</string>
-    <string name="ob_start">시작</string>
+    <string name="ob_start">시작하기</string>
     <string name="ob_next">다음</string>
     <string name="ob_brand">템포루틴</string>
     <string name="ob_intro_title">당신 몸의\n템포에 맞게.</string>
@@ -130,7 +135,7 @@
     <string name="ob_season_winter">스스로에게 휴식을 줘도 괜찮은 시간</string>
     <string name="ob_seasons_foot1">상단의 설명은 일반적인 경향입니다.</string>
     <string name="ob_seasons_foot2">당신의 계절은 기록이 쌓이며 맞춰집니다.</string>
-    <string name="ob_baseline_eyebrow">기준일</string>
+    <string name="ob_baseline_eyebrow">내 주기</string>
     <string name="ob_duration_title">생리는 보통\n며칠간 하나요?</string>
     <string name="ob_unit_days">일</string>
     <string name="ob_calendar_title">마지막 생리는...</string>
@@ -217,7 +222,7 @@
     <string name="settings_export">JSON으로 내보내기</string>
     <string name="settings_import">백업 가져오기</string>
     <string name="settings_privacy">개인정보 처리방침</string>
-    <string name="settings_data_foot_counts">이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$d일 · 체크인 %2$d건</string>
+    <string name="settings_data_foot_counts">이 파일엔 생리·컨디션 기록이 들어있어요. 지금 저장된 기록: 생리 %1$d일 · 컨디션 기록 %2$d건</string>
     <string name="settings_data_foot_transfer">기기를 바꾸시나요? 내보내기 파일을 새 기기로 보내고 「백업 가져오기」로 열면 기록이 이어져요.</string>
     <string name="settings_export_done">내보냈어요.</string>
     <string name="settings_export_failed">내보내기에 실패했어요. 다시 시도해 주세요.</string>
@@ -227,7 +232,7 @@
     <string name="settings_import_corrupt">가져올 수 없는 파일이에요.</string>
     <string name="settings_wipe">모든 기록 삭제</string>
     <string name="settings_wipe_confirm">비우기</string>
-    <string name="settings_wipe_confirm_body">생리·체크인·계획 기록이 모두 지워져요. 8초 안에 되돌릴 수 있어요.</string>
+    <string name="settings_wipe_confirm_body">생리·컨디션 기록·계획이 모두 지워져요. 8초 안에 되돌릴 수 있어요.</string>
     <string name="settings_wipe_done">모든 기록을 삭제했어요.</string>
     <string name="settings_undo">되돌리기</string>
     <string name="ob_close">온보딩 닫기</string>
