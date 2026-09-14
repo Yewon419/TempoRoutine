@@ -69,6 +69,12 @@ val syncIosAssets by tasks.registering(Copy::class) {
         into("drawable-nodpi"); rename { "onboarding_splash.png" }
     }
     from(File(iosRoot, "App/Sounds/signature.mp3")) { into("raw") }
+    // 온보딩 사계절 장 사진(티저 광고 스틸 1080×1920, iOS 89차) — 필름 그레인은 로드 시 비트맵에 굽는다(SeasonWindow.kt)
+    for (season in listOf("Winter", "Spring", "Summer", "Autumn")) {
+        from(File(iosRoot, "App/Assets.xcassets/SeasonPhoto$season.imageset/SeasonPhoto$season.jpg")) {
+            into("drawable-nodpi"); rename { "season_photo_${season.lowercase()}.jpg" }
+        }
+    }
 }
 android.sourceSets["main"].res.srcDir(iosAssetsRes)
 tasks.named("preBuild") { dependsOn(syncIosAssets) }

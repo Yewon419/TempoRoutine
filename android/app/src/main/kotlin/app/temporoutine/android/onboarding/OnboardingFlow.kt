@@ -7,10 +7,12 @@
 package app.temporoutine.android.onboarding
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -79,6 +81,7 @@ import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.LightAppearance
 import app.temporoutine.android.theme.rememberReduceMotion
+import app.temporoutine.android.theme.springStiffness
 import app.temporoutine.core.CyclePhase
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -193,7 +196,7 @@ private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
         val fullH = maxHeight.value
         val safeH = fullH - safeTop - safeBottom
         val column = min(fullW, COLUMN_MAX_DP)
-        val (heroCenter, _) = LensSpot.hero.resolve(fullW, safeH, column)
+        val (heroCenter, heroDiameter) = LensSpot.hero.resolve(fullW, safeH, column)
 
         // ── 지면 — 평면 위에 은필(frost + 겨울 계절광 + 선화)이 렌즈 중심에서 원형으로 열린다 ──
         OnboardingGround(
@@ -205,6 +208,28 @@ private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
                     clipPath(Path().apply { addOval(Rect(c, radius)) }) { this@drawWithContent.drawContent() }
                 },
         )
+
+        // ── 사계절 창 — 브랜드 렌즈 자리에서 열려 화면을 덮는다. 사계절 장 밖에서는 덮인 채 사라지고, 브랜드로 돌아가면 오므라든다 ──
+        val windowSpec = if (reduceMotion) snap() else spring<Float>(dampingRatio = 0.86f, stiffness = springStiffness(0.9f))
+        val windowOpen = step == OnboardingStep.SEASONS && !entering
+        val windowDiameter by animateFloatAsState(if (step != OnboardingStep.BRAND) max(fullW, safeH) * 2.2f else heroDiameter, windowSpec, label = "seasonWindowD")
+        val windowAlpha by animateFloatAsState(if (windowOpen) 1f else 0f, windowSpec, label = "seasonWindowAlpha")
+        val photos = rememberSeasonPhotos(
+            wanted = when (step) {
+                OnboardingStep.BRAND -> setOf(CyclePhase.MENSTRUAL)   // 창이 열릴 때 빈 원이 안 보이게 미리 굽는다
+                OnboardingStep.SEASONS -> seasonNeighbors(seasonPage)
+                else -> emptySet()
+            },
+            cellPx = rememberGrainCellPx(fullW, fullH),
+        )
+        if (windowOpen || windowAlpha > 0.001f) {
+            SeasonWindow(
+                phase = seasonOrder[seasonPage.coerceIn(0, 3)],
+                center = Offset(heroCenter.x, heroCenter.y + safeTop),
+                diameter = windowDiameter, photos = photos, reduceMotion = reduceMotion,
+                modifier = Modifier.graphicsLayer { alpha = windowAlpha },
+            )
+        }
 
         // ── 템포 렌즈 — 단계가 자리·배율·속 그림을 고른다. 마지막엔 화면을 덮는 창이 된다 ──
         val lens = lensStage(stageKey, periodLength, cycleLengthAnswer)
@@ -223,10 +248,11 @@ private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
             Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
+                .windowInsetsPadding(WindowInsets.navigationBars)
                 .graphicsLayer { alpha = contentAlpha },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(Modifier.width(column.dp).padding(start = 24.dp, end = 24.dp, top = 8.dp)) {
+            Column(Modifier.width(column.dp).weight(1f).padding(start = 24.dp, end = 24.dp, top = 8.dp)) {
                 val photo = step == OnboardingStep.SEASONS
                 OnboardingTopBar(
                     showBack = showBack, onBack = ::back,
@@ -236,14 +262,24 @@ private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
                 )
                 AnimatedContent(
                     targetState = stageKey,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.TopStart,
                     transitionSpec = {
-                        if (reduceMotion) fadeIn(snap()) togetherWith fadeOut(snap())
-                        else (fadeIn(tween(420, easing = EaseOut)) + slideInVertically(tween(420, easing = EaseOut)) { with(density) { 12.dp.roundToPx() } }) togetherWith
-                            (fadeOut(tween(420, easing = EaseOut)) + slideOutVertically(tween(420, easing = EaseOut)) { with(density) { -6.dp.roundToPx() } })
+                        when {
+                            reduceMotion -> fadeIn(snap()) togetherWith fadeOut(snap())
+                            // 사계절 장끼리 — 옛 장은 짧게 가라앉고(0.28) 새 장은 스태거가 등장을 맡는다
+                            initialState.step == OnboardingStep.SEASONS && targetState.step == OnboardingStep.SEASONS ->
+                                EnterTransition.None togetherWith (fadeOut(tween(280, easing = EaseOut)) + slideOutVertically(tween(280, easing = EaseOut)) { with(density) { 10.dp.roundToPx() } })
+                            else -> (fadeIn(tween(420, easing = EaseOut)) + slideInVertically(tween(420, easing = EaseOut)) { with(density) { 12.dp.roundToPx() } }) togetherWith
+                                (fadeOut(tween(420, easing = EaseOut)) + slideOutVertically(tween(420, easing = EaseOut)) { with(density) { -6.dp.roundToPx() } })
+                        }
                     },
                     label = "obCopy",
                 ) { key ->
-                    CopyBlock(
+                    if (key.step == OnboardingStep.SEASONS) {
+                        // 사계절 장 = 편집 조판 J2 — 숫자·글리프·카피가 화면 전체를 쓴다. 하단 CTA 자리(52 + 여백)를 비운다
+                        SeasonEditorial(seasonOrder[key.seasonPage.coerceIn(0, 3)], key.seasonPage, seasonRevealed, reduceMotion, Modifier.padding(bottom = 86.dp))
+                    } else CopyBlock(
                         key = key, brandSlide = brandSlide, reduceMotion = reduceMotion,
                         modifier = Modifier.padding(top = 8.dp).then(
                             if (key.step == OnboardingStep.BRAND) Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { primaryAction() }
@@ -370,14 +406,7 @@ private fun CopyBlock(key: StageKey, brandSlide: Int, reduceMotion: Boolean, mod
                 Title(stringResource(R.string.ob_brand_title), hero = true)
                 BrandSlides(brandSlide, reduceMotion)
             }
-            OnboardingStep.SEASONS -> {
-                // Phase A 자리 — 사계절 편집 조판(J2)은 SeasonEditorial이 대체한다
-                val phase = seasonOrder[key.seasonPage.coerceIn(0, 3)]
-                Eyebrow(stringResource(R.string.ob_season_eyebrow))
-                Text(seasonCopy(phase).name, style = LensType.serif(36), color = ink.season(phase))
-                Body(listOf(seasonDeck(phase)))
-                if (key.seasonPage == 3) Fine(listOf(stringResource(R.string.ob_season_fine)))
-            }
+            OnboardingStep.SEASONS -> Unit   // SeasonEditorial이 그린다
             OnboardingStep.BASELINE -> {
                 Eyebrow(stringResource(R.string.ob_baseline_eyebrow))
                 when (key.baselinePage) {
@@ -439,12 +468,6 @@ private fun Body(lines: List<String>) {
     }
 }
 
-@Composable
-private fun Fine(lines: List<String>) {
-    Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        for (line in lines) Text(line, style = Fonts.system(12).copy(lineHeight = (12 * 1.35f + 4f).sp), color = Ink.text.copy(alpha = 0.5f))
-    }
-}
 
 /** 브랜드 장 슬라이드 — 무드(18 명조) → 본문(15) → 비의료 고지(10.5)가 한 자리에서 2.2초 간격으로 교체되고 고지에서 멈춘다.
  *  스크린리더는 타이머를 기다리지 않도록 세 블록을 한 라벨로 읽는다. */
