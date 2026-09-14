@@ -71,6 +71,12 @@ import androidx.compose.ui.unit.Dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.sp
+import app.temporoutine.android.cycle.PhaseInfo
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -119,7 +125,7 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, b
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(20.dp)
                     .padding(bottom = bottomPadding),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),   // 16 → 12(iOS 86차)
             ) {
                 LargeHeader(state, onTogglePeriod, onOpenLogSheet)
                 StateSurfaces(state, onOpenLogSheet)
@@ -145,44 +151,24 @@ private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit, onOpenL
         val copy = state.copy
         if (info != null && copy != null) {
             val titleColor = ink.season(info.phase).copy(alpha = if (state.snapshot.isSingleRecord) 0.6f else 1f)
-            Row(
-                Modifier.padding(top = 6.dp).fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                Text(
-                    copy.name,
-                    style = Fonts.almanac(58),
-                    color = titleColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Spacer(Modifier.weight(1f))
-                DateStamp(state)
-            }
+            // 표제는 하나(iOS 은필 v2 2026-09-07 — 계절명 58과 날짜 도장 44가 표제 둘로 경쟁했다). 날짜는 메타 줄로.
+            Text(
+                copy.name,
+                style = Fonts.almanac(58),
+                color = titleColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 6.dp),
+            )
             GroundHaze {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    val seasonInk = ink.season(info.phase).copy(alpha = 0.85f)
-                    // 평문 뜻이 먼저(iOS 81차): 「생리 중 · 4일차 · 예측 기반」
-                    Text(stringResource(seasonPlainRes(info.phase)), style = Fonts.almanacBody(13), color = seasonInk)
-                    Text("·", style = Fonts.almanacBody(13), color = ink.text.copy(alpha = 0.35f))
-                    Text(
-                        stringResource(R.string.today_day_in_phase, info.dayInPhase),
-                        style = Fonts.almanacBody(13),
-                        color = seasonInk,
-                    )
-                    val badge = when {
-                        state.snapshot.isSingleRecord -> stringResource(R.string.today_badge_prediction)
-                        info.projected -> stringResource(R.string.today_badge_projected)
-                        else -> null
-                    }
-                    if (badge != null) Text(badge, style = Fonts.almanacBody(13), color = ink.text.copy(alpha = 0.45f))
-                }
+                // 한 Text로 잇는다(iOS 73차) — Row의 Text들은 줄을 못 바꿔 큰 글씨·좁은 폭에서 밀린다.
+                Text(metaLine(state, info), style = Fonts.almanacBody(13))
             }
             val moodline = (state.moodline ?: copy.moodline).replace(". ", ".\n")
-            GroundHaze(Modifier.padding(top = 2.dp)) {
-                Text(moodline, style = Fonts.almanacBody(17), color = ink.text.copy(alpha = 0.85f))
+            GroundHaze(Modifier.padding(top = 8.dp)) {
+                // 17 → 18 · 줄 간격 +3 · 0.88(iOS 은필 v2 — 표제 아래 둘째 목소리)
+                val body = Fonts.almanacBody(18)
+                Text(moodline, style = body.copy(lineHeight = (body.lineHeight.value + 3).sp), color = ink.text.copy(alpha = 0.88f))
             }
             PeriodRow(state.isPeriodToday, onTogglePeriod, onOpenLogSheet, Modifier.padding(top = 8.dp))
         } else {
@@ -198,16 +184,32 @@ private fun seasonPlainRes(phase: CyclePhase): Int = when (phase) {
     CyclePhase.LUTEAL -> R.string.season_plain_autumn
 }
 
+/** 메타 줄(iOS TodayView.metaLine) — 「생리 중 · 5일차 예상 · 9월 14일 월요일」. 뱃지는 dim 0.45, 날짜 0.6, 점 0.35. */
 @Composable
-private fun DateStamp(state: TodayUiState) {
+private fun metaLine(state: TodayUiState, info: PhaseInfo): AnnotatedString {
     val ink = Ink
-    val locale = Locale.getDefault()
-    val monthWeekday = remember(state.today, locale) {
-        state.today.format(DateTimeFormatter.ofPattern("M월 E", locale))
+    val seasonInk = ink.season(info.phase).copy(alpha = 0.85f)
+    val dot = ink.text.copy(alpha = 0.35f)
+    val plain = stringResource(seasonPlainRes(info.phase))
+    val day = stringResource(R.string.today_day_in_phase, info.dayInPhase)
+    val badge = when {
+        state.snapshot.isSingleRecord -> stringResource(R.string.today_badge_prediction)
+        info.projected -> stringResource(R.string.today_badge_projected)
+        else -> null
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.Bottom) {
-        Text(state.today.dayOfMonth.toString(), style = Fonts.almanac(44), color = ink.text.copy(alpha = 0.85f))
-        Text(monthWeekday, style = Fonts.almanacBody(12), color = ink.text.copy(alpha = 0.55f), modifier = Modifier.padding(bottom = 6.dp))
+    val datePattern = stringResource(R.string.today_meta_date_pattern)
+    val locale = Locale.getDefault()
+    val date = remember(state.today, datePattern, locale) { state.today.format(DateTimeFormatter.ofPattern(datePattern, locale)) }
+    return buildAnnotatedString {
+        withStyle(SpanStyle(color = seasonInk)) { append(plain) }
+        withStyle(SpanStyle(color = dot)) { append(" · ") }
+        withStyle(SpanStyle(color = seasonInk)) { append(day) }
+        if (badge != null) {
+            append(" ")
+            withStyle(SpanStyle(color = ink.text.copy(alpha = 0.45f))) { append(badge) }
+        }
+        withStyle(SpanStyle(color = dot)) { append(" · ") }
+        withStyle(SpanStyle(color = ink.text.copy(alpha = 0.6f))) { append(date) }
     }
 }
 

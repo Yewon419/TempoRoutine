@@ -7,6 +7,7 @@
     <string name="today_day_in_phase">%1$d일차</string>
     <string name="today_badge_prediction">예측 기반</string>
     <string name="today_badge_projected">예상</string>
+    <string name="today_meta_date_pattern" translatable="false">M월 d일 EEEE</string>
     <!-- 계절명 옆 평문 뜻(iOS 81차 SeasonMeta.plain) — 「겨울」이 무엇인지 설명 없이 읽히게. 의학 단계명 금지 유지. -->
     <string name="season_plain_winter">생리 중</string>
     <string name="season_plain_spring">생리 끝난 뒤</string>
