@@ -1,27 +1,16 @@
 // 템포루틴 Android — 온보딩 상태 (iOS OnboardingFlow의 @Query·AppSettings 쓰기·PeriodStore 경유를 한 곳에)
 // 분기의 유일한 기준 = 에피소드 수(§5.7). 캘린더 쓰기는 전부 PeriodStore(중앙 쓰기 경로) 경유.
-// ③ 예시 칩은 실제 아이템을 담고, 재탭 = 빠짐 — 지우려면 참조가 필요해 담은 id를 VM이 들고 있는다(회전 생존).
+// 2026-09-14 iOS 84차 이식: 예시 칩(하루의 구성)·추적 항목·설문 장이 빠져 그 쓰기 경로도 걷었다 — 추적 항목은 기본값, 설문은 설정 진입.
 
 package app.temporoutine.android.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.temporoutine.android.TempoApp
-import app.temporoutine.android.data.InputItemEntity
-import app.temporoutine.android.data.OutputItemEntity
-import app.temporoutine.android.data.OutputSubtaskEntity
+import app.temporoutine.android.cycle.CycleSnapshot
+import app.temporoutine.android.cycle.PhaseInfo
 import app.temporoutine.android.data.PeriodDayEntity
-import app.temporoutine.android.data.SelfReportEntity
-import app.temporoutine.core.ExportCodec
-import app.temporoutine.core.InputSchedule
-import app.temporoutine.core.OutputProgressKind
-import app.temporoutine.core.OutputSchedule
 import app.temporoutine.core.PeriodMath
-import app.temporoutine.core.SelfReportSurvey
-import app.temporoutine.core.SurveyChoice
-import app.temporoutine.core.SurveyQuestion
-import app.temporoutine.core.TrackedSignals
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -29,8 +18,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
 import java.time.LocalDate
 
 data class BaselineState(
@@ -40,30 +27,14 @@ data class BaselineState(
     val episodeCount: Int get() = PeriodMath.episodeStarts(periodDays.map { it.day }).size
 }
 
-/** ③ 예시 칩 키 — iOS와 동일 문자열. */
-enum class ExampleChip(val key: String) {
-    INPUT_MEDITATION("input-meditation"), INPUT_TEA("input-tea"), OUTPUT_STUDY("output-study"), OUTPUT_LISTENING("output-listening"),
-}
-
 class OnboardingViewModel(private val app: TempoApp) : ViewModel() {
 
     val baseline: StateFlow<BaselineState> = app.db.periodDays().observeAll()
         .map { BaselineState(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BaselineState())
 
-    /** ⑥ 설문 응답 존재 — 있으면 primary가 「오늘 화면으로」로 바뀐다. */
-    val hasSelfReport: StateFlow<Boolean> = app.db.selfReports().observeAll()
-        .map { it.isNotEmpty() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    /** 담긴 예시 칩 → 실제 아이템 id */
-    private val exampleIds = MutableStateFlow<Map<ExampleChip, String>>(emptyMap())
-    val addedExamples: StateFlow<Set<ExampleChip>> = exampleIds.map { it.keys }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
-
     /** 캘린더 탭 직렬화 — iOS `busy` 플래그 대응. 잠금 안에서 DB를 다시 읽어 연타 중복 삽입을 막는다. */
     private val calendarLock = Mutex()
-    private val exampleLock = Mutex()
 
     fun savePeriodLengthPrior(days: Int) {
         viewModelScope.launch { app.settings.setPeriodLengthPrior(days) }
@@ -85,77 +56,10 @@ class OnboardingViewModel(private val app: TempoApp) : ViewModel() {
         }
     }
 
-    /** ③ 예시 칩 탭 = 실제 아이템 추가, 다시 탭 = 빠짐. 문안·카테고리·스케줄은 iOS toggleExample 그대로. */
-    fun toggleExample(chip: ExampleChip, title: String, subtaskTitle: (Int) -> String) {
-        viewModelScope.launch {
-            exampleLock.withLock {
-                val current = exampleIds.value
-                val existingId = current[chip]
-                if (existingId != null) {
-                    removeExample(chip, existingId)
-                    exampleIds.value = current - chip
-                    return@withLock
-                }
-                val id = when (chip) {
-                    ExampleChip.INPUT_MEDITATION -> insertInput(title, category = "other")
-                    ExampleChip.INPUT_TEA -> insertInput(title, category = "food")
-                    ExampleChip.OUTPUT_STUDY -> {
-                        val item = OutputItemEntity(title = title, scheduleJson = OutputItemEntity.encodeSchedule(OutputSchedule.Once),
-                            progressKind = OutputProgressKind.SUBTASKS.rawValue)
-                        app.db.outputs().insert(item)
-                        app.db.outputs().insertSubtasks((1..6).map { OutputSubtaskEntity(ownerId = item.id, title = subtaskTitle(it), order = it - 1) })
-                        item.id
-                    }
-                    ExampleChip.OUTPUT_LISTENING -> {
-                        val item = OutputItemEntity(title = title, scheduleJson = OutputItemEntity.encodeSchedule(OutputSchedule.Once),
-                            progressKind = OutputProgressKind.TIMER.rawValue, targetSeconds = 30 * 60)
-                        app.db.outputs().insert(item)
-                        item.id
-                    }
-                }
-                exampleIds.value = current + (chip to id)
-            }
-        }
-    }
-
-    private suspend fun insertInput(title: String, category: String): String {
-        val item = InputItemEntity(title = title, category = category, scheduleJson = InputItemEntity.encodeSchedule(InputSchedule.Daily))
-        app.db.inputs().insert(item)
-        return item.id
-    }
-
-    private suspend fun removeExample(chip: ExampleChip, id: String) {
-        when (chip) {
-            ExampleChip.INPUT_MEDITATION, ExampleChip.INPUT_TEA -> {
-                val dao = app.db.inputs()
-                val item = dao.all().firstOrNull { it.id == id } ?: return
-                dao.deleteSubtasks(id); dao.deleteCompletions(id); dao.deleteProgress(id); dao.delete(item)
-            }
-            ExampleChip.OUTPUT_STUDY, ExampleChip.OUTPUT_LISTENING -> {
-                val dao = app.db.outputs()
-                val item = dao.all().firstOrNull { it.id == id } ?: return
-                dao.deleteSubtasks(id); dao.delete(item)
-            }
-        }
-    }
-
-    /** ④ 현재 추적 항목(재진입·회전 시 토글 초기값) */
-    suspend fun currentSignals(): TrackedSignals = app.settings.current().trackedSignals
-
-    /** ④ pain·irritability = false 고정(2026-08-05 병합) — 입력 행이 없는데 켜두면 백업 복원 경로에서 유령 행이 부활한다. */
-    fun saveTrackedSignals(sleep: Boolean, appetite: Boolean, note: Boolean) {
-        viewModelScope.launch {
-            app.settings.setTrackedSignals(TrackedSignals(sleep = sleep, pain = false, appetite = appetite, note = note, irritability = false))
-        }
-    }
-
-    /** ⑥ 설문 제출 — 화이트리스트 밖 키가 섞이지 않게 한 번 거른다(웹 서버와 같은 규칙). */
-    fun submitSelfReport(answers: Map<String, String>) {
-        viewModelScope.launch {
-            val cleaned = SurveyLogic.whitelist(answers)
-            val json = ExportCodec.json.encodeToString(MapSerializer(String.serializer(), String.serializer()), cleaned)
-            app.db.selfReports().insert(SelfReportEntity(answersJson = json))
-        }
+    /** 마지막 「오늘」 전환의 부제 재료 — iOS enterSubtitle(계절 · N일차). 계절 기록 전이면 null. */
+    suspend fun todayPhase(today: LocalDate): PhaseInfo? {
+        val s = app.settings.current()
+        return CycleSnapshot(app.db.periodDays().all().map { it.day }, s.cycleLengthPrior, s.periodLengthPrior).phaseInfo(today)
     }
 
     /** 온보딩 종료 한 창구 — 재진입 표식도 여기서 내린다(다음 첫 실행과 혼동 방지). */
@@ -175,41 +79,11 @@ object BaselineLogic {
 
     /** 다음 달 1일이 오늘 이후면 앞으로 못 간다. */
     fun canGoForward(monthStart: LocalDate, today: LocalDate): Boolean = monthStart.plusMonths(1) <= today
-}
 
-/** 설문 순수 규칙(iOS SelfReportFlow.canAdvance·finish 필터) — 단위 테스트 대상. */
-object SurveyLogic {
-    const val TOTAL_STEPS = 5
-
-    /** 선택 문항 단계 말고는 그 화면의 문항이 전부 채워져야 넘어간다. */
-    fun canAdvance(step: Int, answers: Map<String, String>): Boolean = when (step) {
-        0 -> true
-        1 -> answers[SelfReportSurvey.calibration.id] != null
-        2 -> SelfReportSurvey.phaseQuestions.all { answers[it.id] != null }
-        3 -> SelfReportSurvey.symptomQuestions.all { answers[it.id] != null }
-        4 -> SelfReportSurvey.amplitudeQuestions.all { answers[it.id] != null }
-        else -> true
-    }
-
-    /** 문항이 하나뿐인 장 — 선택이 곧 그 장의 답. 1장 = 캘리브레이션 단문항. */
-    fun isSingleQuestionStep(step: Int): Boolean = step == 1
-
-    /** 복수 문항 토글(iOS SelfReportFlow.toggledMultiValue, 2026-09-09) — 선택 순서가 아니라 **선택지 순서**로
-     *  이어 저장한다(같은 답이면 같은 문자열). 「딱히 없어요」·「잘 모르겠어요」는 배타 — 고르면 나머지가 빠지고,
-     *  반대로 다른 것을 고르면 빠진다. 전부 해제되면 null(= 무응답). */
-    fun toggledMultiValue(question: SurveyQuestion, choice: SurveyChoice, current: String?): String? {
-        val picked = SelfReportSurvey.values(current).toMutableSet()
-        when {
-            choice.value in picked -> picked.remove(choice.value)
-            choice.value in SelfReportSurvey.exclusivePhaseValues -> { picked.clear(); picked.add(choice.value) }
-            else -> { picked.removeAll(SelfReportSurvey.exclusivePhaseValues); picked.add(choice.value) }
-        }
-        val ordered = question.choices.map { it.value }.filter { it in picked }
-        return ordered.takeIf { it.isNotEmpty() }?.joinToString(",")
-    }
-
-    fun whitelist(answers: Map<String, String>): Map<String, String> {
-        val allowed = SelfReportSurvey.allQuestionIDs
-        return answers.filterKeys { it in allowed }
+    /** 자(ruler) 드래그 위치 → 값. edge = 좌단 여백(엄지 반지름 22), usable = 트랙 폭 − 2·edge. 단위는 호출자가 맞춘다(px). */
+    fun rulerValue(x: Float, edge: Float, usable: Float, range: IntRange): Int {
+        val count = range.last - range.first
+        val raw = (x - edge) / usable.coerceAtLeast(1f) * count
+        return (range.first + Math.round(raw)).coerceIn(range)
     }
 }

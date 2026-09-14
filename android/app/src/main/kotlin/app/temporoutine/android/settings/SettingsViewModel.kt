@@ -9,7 +9,7 @@ import app.temporoutine.android.TempoApp
 import app.temporoutine.android.data.BackupStore
 import app.temporoutine.android.data.SelfReportEntity
 import app.temporoutine.android.data.SettingsSnapshot
-import app.temporoutine.android.onboarding.SurveyLogic
+import app.temporoutine.android.selfreport.SurveyLogic
 import app.temporoutine.core.ExportCodec
 import app.temporoutine.core.ExportEnvelopeV1
 import app.temporoutine.core.TrackedSignals

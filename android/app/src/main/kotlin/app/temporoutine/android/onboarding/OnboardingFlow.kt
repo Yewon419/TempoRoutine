@@ -1,18 +1,29 @@
-// 템포루틴 Android — 온보딩 (iOS OnboardingFlow.swift 이식, P0 축소: 언어·테마·건강 연동·튜토리얼 단계 없음)
-// ① 인트로 탭 진행 3장면 → ② 기준일 순차(지속일 → 캘린더 → 에피소드 1개면 주기) → ③ 세 가지 카드(탭 진행 3장 + 예시 칩)
-// → ④ 추적 항목 → ⑤ 저장 위치 → ⑥ 리듬 설문(primary 「시작하기」 + 「지금은 넘어가기」).
-// 진행 점은 인트로 숨김·2단계부터. 하단 액션 바는 전 스텝 공통 위치. 라이트 고정(LightAppearance).
+// 템포루틴 Android — 온보딩 「템포 렌즈」 (iOS OnboardingFlow.swift 이식, 84~94차 구조)
+// 흐름: 스플래시 → 브랜드(슬라이드 3) → 사계절 4장 → 내 주기(지속일 → 캘린더 → 에피소드 1개면 주기) → 저장 위치 → 「오늘」.
+// iOS 대비 P0 축소(MASTER §5.13): 언어 장(ko만 출시)·테마 장(은필 1종)·건강 앱 연동 장(Health Connect P1) 없음.
+// 진행 다이얼은 테마 장이 빠져 2칸(내 주기 1/2 · 저장 2/2). 입력은 하단 유리 시트, CTA 위치는 전 장 공통.
+// 2026-09-09 다이어트에서 걷어낸 것 = 사이클 싱킹 강의·하루의 구성·기록할 것·리듬 설문 — 개념은 화면의 빈 상태·ⓘ가 말한다.
 
 package app.temporoutine.android.onboarding
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,17 +31,16 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -41,50 +51,49 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.temporoutine.android.R
 import app.temporoutine.android.TempoApp
-import app.temporoutine.android.selfreport.SelfReportFlow
+import app.temporoutine.android.cycle.seasonCopy
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.LightAppearance
-import app.temporoutine.android.theme.MotifStyle
-import app.temporoutine.android.theme.SeasonLight
+import app.temporoutine.android.theme.rememberReduceMotion
 import app.temporoutine.core.CyclePhase
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlin.math.max
+import kotlin.math.min
 
-enum class OnboardingStep { INTRO, BASELINE, CARDS, SIGNALS, STORAGE, SURVEY }
+enum class OnboardingStep { BRAND, SEASONS, BASELINE, STORAGE }
 
-private enum class BaselinePage { DURATION, CALENDAR, CYCLE }
+enum class BaselinePage { DURATION, CALENDAR, CYCLE }
 
-private const val COLUMN_MAX_DP = 560   // 태블릿 중앙 조판(iOS centeredColumn(560))
+private const val COLUMN_MAX_DP = 560f   // 태블릿 중앙 조판(iOS centeredColumn(560))
+private const val DIAL_TOTAL = 2
 
-/** iOS accessibilityReduceMotion 대응 — 시스템 애니메이터 배율 0(개발자 옵션·접근성 「애니메이션 제거」). */
-@Composable
-fun rememberReduceMotion(): Boolean {
-    val context = LocalContext.current
-    return remember {
-        android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
-    }
-}
+/** 사계절 장 순서 = 앱 순서(겨울·봄·여름·가을) */
+val seasonOrder = listOf(CyclePhase.MENSTRUAL, CyclePhase.FOLLICULAR, CyclePhase.OVULATION, CyclePhase.LUTEAL)
 
 @Composable
 fun OnboardingFlow(app: TempoApp, isRevisit: Boolean = false) {
@@ -96,253 +105,417 @@ private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
     val ink = Ink
     val vm: OnboardingViewModel = viewModel { OnboardingViewModel(app) }
     val baseline by vm.baseline.collectAsState()
-    val addedExamples by vm.addedExamples.collectAsState()
-    val hasReport by vm.hasSelfReport.collectAsState()
-    val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val reduceMotion = rememberReduceMotion()
-    val hazeState = rememberHazeState()
     val today = remember { LocalDate.now() }
 
-    var step by rememberSaveable { mutableStateOf(OnboardingStep.INTRO) }
-    var introScene by rememberSaveable { mutableIntStateOf(0) }
-    var introEntered by remember { mutableStateOf(false) }
-    var showSplash by remember { mutableStateOf(!SplashGate.shownThisLaunch) }
+    var step by rememberSaveable { mutableStateOf(OnboardingStep.BRAND) }
+    var seasonPage by rememberSaveable { mutableIntStateOf(0) }
     var baselinePage by rememberSaveable { mutableStateOf(BaselinePage.DURATION) }
     val baselineStack = remember { mutableStateListOf<BaselinePage>() }
     var periodLength by rememberSaveable { mutableIntStateOf(5) }
     var cycleLengthAnswer by rememberSaveable { mutableIntStateOf(28) }
-    var cardPage by rememberSaveable { mutableIntStateOf(0) }
-    var toggles by remember { mutableStateOf(SignalToggles()) }
-    var showSurvey by remember { mutableStateOf(false) }
-    val exMeditation = stringResource(R.string.ob_ex_meditation)
-    val exTea = stringResource(R.string.ob_ex_tea)
-    val exStudy = stringResource(R.string.ob_ex_study_item)
-    val exListening = stringResource(R.string.ob_ex_listening_item)
-    val chapterFormat = stringResource(R.string.ob_ex_chapter)
+    var showSplash by remember { mutableStateOf(!SplashGate.shownThisLaunch) }
+    var entering by remember { mutableStateOf(false) }
+    var enterSubtitle by remember { mutableStateOf("") }
+    var brandSlide by remember { mutableIntStateOf(0) }
+    var seasonRevealed by remember { mutableStateOf(false) }
+    // 은필 열림 — iOS는 언어 → 브랜드 순간 렌즈 중심에서 지면이 원형으로 열린다. Android는 언어 장이 없어 스플래시가 걷히는 순간.
+    val reveal = remember { Animatable(if (showSplash) 0f else 1f) }
 
     fun tick() = haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-    fun finish() = vm.finish()
-    // 재진입(설정 「온보딩 다시 보기」)은 좌상단 X로 즉시 나갈 수 있다 — 첫 실행엔 X가 없다(최초 설정은 건너뛸 수 없다)
-    fun close() { tick(); finish() }
-    fun leaveBaseline() { step = OnboardingStep.CARDS }
-    fun pushBaseline(page: BaselinePage) { tick(); baselineStack.add(baselinePage); baselinePage = page }
-    fun advanceIntro() { tick(); if (introScene < 2) introScene += 1 else step = OnboardingStep.BASELINE }
-    /** ③ 장 안에서 진행, 마지막 장이면 ④로(인트로와 같은 탭 진행 문법) */
-    fun advanceCardPage() { tick(); if (cardPage < 2) cardPage += 1 else step = OnboardingStep.SIGNALS }
-    fun toggleExample(chip: ExampleChip) {
-        tick()
-        val title = when (chip) {
-            ExampleChip.INPUT_MEDITATION -> exMeditation
-            ExampleChip.INPUT_TEA -> exTea
-            ExampleChip.OUTPUT_STUDY -> exStudy
-            ExampleChip.OUTPUT_LISTENING -> exListening
-        }
-        vm.toggleExample(chip, title) { n -> chapterFormat.format(n) }
-    }
-    // ④ 진입 시 현재 추적 항목을 토글 초기값으로(iOS onAppear)
-    LaunchedEffect(step) {
-        if (step != OnboardingStep.SIGNALS) return@LaunchedEffect
-        val cur = vm.currentSignals()
-        toggles = SignalToggles(sleep = cur.sleep, appetite = cur.appetite, note = cur.note)
-    }
+    val stageKey = StageKey(step, seasonPage, baselinePage)
 
-    // "시작/다음" 버튼 1000ms 지연 노출 — 인트로 (재)진입마다 리셋. 스플래시가 걷힌 뒤에야 시작.
-    LaunchedEffect(step, showSplash) {
-        if (step != OnboardingStep.INTRO || showSplash) return@LaunchedEffect
-        introEntered = false
-        if (reduceMotion) { introEntered = true; return@LaunchedEffect }
-        delay(30)
-        introEntered = true
+    fun commitFinish() = vm.finish()
+    /** 온보딩 종료 한 창구 — 마지막 연출(렌즈가 창이 된다) 뒤 커밋. 재진입·모션 축소는 즉시. */
+    fun finishOnboarding() {
+        if (entering) return
+        if (reduceMotion || isRevisit) { commitFinish(); return }
+        entering = true
     }
-
-    val primaryEnabled = !(step == OnboardingStep.BASELINE && baselinePage == BaselinePage.CALENDAR) || baseline.episodeCount >= 1
-    val primaryLabel = when {
-        step == OnboardingStep.INTRO && introScene == 0 -> stringResource(R.string.ob_start)
-        // ⑥ 설문 미답 = 설문 시작이 primary. 답이 있으면 마무리만 남는다.
-        step == OnboardingStep.SURVEY -> if (hasReport) stringResource(R.string.ob_to_today) else stringResource(R.string.ob_survey_start)
-        else -> stringResource(R.string.ob_next)
-    }
+    fun pushBaseline(page: BaselinePage) { baselineStack.add(baselinePage); baselinePage = page }
     fun primaryAction() {
+        tick()
         when (step) {
-            OnboardingStep.INTRO -> advanceIntro()
+            OnboardingStep.BRAND -> { step = OnboardingStep.SEASONS; seasonPage = 0 }   // 사계절은 재진입에도 보여준다(설명 장)
+            OnboardingStep.SEASONS -> if (seasonPage < 3) seasonPage += 1 else step = OnboardingStep.BASELINE
             OnboardingStep.BASELINE -> when (baselinePage) {
                 BaselinePage.DURATION -> { vm.savePeriodLengthPrior(periodLength); pushBaseline(BaselinePage.CALENDAR) }   // §5.3 층 2 M 초기값
-                BaselinePage.CALENDAR -> if (BaselineLogic.asksCycleLength(baseline.episodeCount)) pushBaseline(BaselinePage.CYCLE) else leaveBaseline()
-                BaselinePage.CYCLE -> { vm.saveCycleLengthPrior(cycleLengthAnswer); leaveBaseline() }
+                BaselinePage.CALENDAR -> if (BaselineLogic.asksCycleLength(baseline.episodeCount)) pushBaseline(BaselinePage.CYCLE) else step = OnboardingStep.STORAGE
+                BaselinePage.CYCLE -> { vm.saveCycleLengthPrior(cycleLengthAnswer); step = OnboardingStep.STORAGE }
             }
-            OnboardingStep.CARDS -> advanceCardPage()
-            OnboardingStep.SIGNALS -> { vm.saveTrackedSignals(toggles.sleep, toggles.appetite, toggles.note); step = OnboardingStep.STORAGE }
-            OnboardingStep.STORAGE -> step = OnboardingStep.SURVEY
-            OnboardingStep.SURVEY -> if (hasReport) finish() else showSurvey = true
+            OnboardingStep.STORAGE -> finishOnboarding()   // 저장 위치 = 마지막 장
         }
     }
-    val showBack = step != OnboardingStep.INTRO || introScene > 0
+    val showBack = step != OnboardingStep.BRAND
     fun back() {
         tick()
         when {
-            step == OnboardingStep.INTRO -> introScene -= 1
+            step == OnboardingStep.SEASONS && seasonPage > 0 -> seasonPage -= 1   // 사계절 안에서는 장 단위로
             step == OnboardingStep.BASELINE && baselineStack.isNotEmpty() -> baselinePage = baselineStack.removeAt(baselineStack.lastIndex)
-            step == OnboardingStep.CARDS && cardPage > 0 -> cardPage -= 1
             else -> {
                 step = OnboardingStep.entries[step.ordinal - 1]
-                if (step == OnboardingStep.INTRO) introScene = 2
-                if (step == OnboardingStep.CARDS) cardPage = 2   // ④에서 돌아오면 마지막 장부터(인트로와 동형)
+                if (step == OnboardingStep.SEASONS) seasonPage = 3   // 사계절로 되돌아오면 마지막 장(가을)부터
             }
         }
     }
+    val primaryEnabled = !(step == OnboardingStep.BASELINE && baselinePage == BaselinePage.CALENDAR) || baseline.episodeCount >= 1
 
-    Box(Modifier.fillMaxSize().background(ink.paper)) {
-        SeasonLight(phase = CyclePhase.MENSTRUAL, modifier = Modifier.fillMaxSize().hazeSource(hazeState), motif = MotifStyle.ONBOARDING)   // 온보딩 = 겨울 배경 고정
-        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
-            Column(
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .widthIn(max = COLUMN_MAX_DP.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
-            ) {
-                TopBar(showBack, onBack = ::back, onClose = if (isRevisit) ::close else null)
-                Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    when (step) {
-                        OnboardingStep.INTRO -> IntroStep(introScene, active = !showSplash, reduceMotion = reduceMotion, onTap = ::advanceIntro)
-                        OnboardingStep.BASELINE -> Crossfade(baselinePage, animationSpec = tween(if (reduceMotion) 0 else 250), label = "baselinePage") { page ->
-                            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                                when (page) {
-                                    BaselinePage.DURATION -> DurationPage(periodLength) { tick(); periodLength = it }
-                                    BaselinePage.CALENDAR -> CalendarPage(baseline.markedDays, today, hazeState) { day -> tick(); vm.tapCalendarDay(day, periodLength, today) }
-                                    BaselinePage.CYCLE -> CyclePage(cycleLengthAnswer) { tick(); cycleLengthAnswer = it }
-                                }
-                            }
-                        }
-                        OnboardingStep.CARDS -> Crossfade(cardPage, animationSpec = tween(if (reduceMotion) 0 else 400), label = "cardPage") { page ->
-                            Column(
-                                Modifier
-                                    .fillMaxSize()
-                                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = ::advanceCardPage),
-                                verticalArrangement = Arrangement.spacedBy(14.dp),
-                            ) {
-                                CardsStep(page, addedExamples, reduceMotion, onToggle = ::toggleExample)
-                            }
-                        }
-                        OnboardingStep.SIGNALS -> SignalsStep(toggles, hazeState) { tick(); toggles = it }
-                        OnboardingStep.STORAGE -> StorageStep(hazeState)
-                        OnboardingStep.SURVEY -> SurveyStep(hasReport)
-                    }
+    // 장마다 등장 연출을 처음부터: 사계절 = revealed 튕김, 브랜드 = 슬라이드 0부터 2.2초 간격.
+    // 스플래시가 덮고 있는 동안은 소모하지 않는다(iOS는 언어 장이 앞에 있어 브랜드가 스플래시 밑에서 시작할 일이 없다).
+    LaunchedEffect(stageKey, showSplash) {
+        seasonRevealed = false
+        brandSlide = 0
+        if (showSplash) return@LaunchedEffect
+        delay(60)
+        seasonRevealed = true
+        if (step != OnboardingStep.BRAND) return@LaunchedEffect
+        for (i in 1..2) { delay(2_200); brandSlide = i }
+    }
+    LaunchedEffect(showSplash) {
+        if (showSplash || reveal.value >= 1f) return@LaunchedEffect
+        if (reduceMotion) reveal.snapTo(1f) else reveal.animateTo(1f, tween(1_250, easing = EaseOut))
+    }
+    LaunchedEffect(entering) {
+        if (!entering) return@LaunchedEffect
+        enterSubtitle = vm.todayPhase(today)?.let { seasonCopy(it.phase).name + " · " + app.getString(R.string.today_day_in_phase, it.dayInPhase) } ?: ""
+        delay(1_500)
+        commitFinish()
+    }
+
+    val contentAlpha by animateFloatAsState(if (entering) 0f else 1f, if (reduceMotion) snap() else tween(280, easing = EaseOut), label = "obContent")
+
+    BoxWithConstraints(Modifier.fillMaxSize().background(OnboardingFlatColor)) {
+        val density = LocalDensity.current
+        val safeTop = with(density) { WindowInsets.statusBars.getTop(this).toDp().value }
+        val safeBottom = with(density) { WindowInsets.navigationBars.getBottom(this).toDp().value }
+        val fullW = maxWidth.value
+        val fullH = maxHeight.value
+        val safeH = fullH - safeTop - safeBottom
+        val column = min(fullW, COLUMN_MAX_DP)
+        val (heroCenter, _) = LensSpot.hero.resolve(fullW, safeH, column)
+
+        // ── 지면 — 평면 위에 은필(frost + 겨울 계절광 + 선화)이 렌즈 중심에서 원형으로 열린다 ──
+        OnboardingGround(
+            Modifier
+                .fillMaxSize()
+                .drawWithContent {
+                    val radius = max(1f, reveal.value * max(size.width, size.height) * 2.6f) / 2f
+                    val c = Offset(heroCenter.x.dp.toPx(), (heroCenter.y + safeTop).dp.toPx())
+                    clipPath(Path().apply { addOval(Rect(c, radius)) }) { this@drawWithContent.drawContent() }
+                },
+        )
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .graphicsLayer { alpha = contentAlpha },
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(Modifier.width(column.dp).padding(start = 24.dp, end = 24.dp, top = 8.dp)) {
+                val photo = step == OnboardingStep.SEASONS
+                OnboardingTopBar(
+                    showBack = showBack, onBack = ::back,
+                    onClose = if (isRevisit) ({ tick(); finishOnboarding() }) else null,
+                    chrome = if (photo) ink.frost.copy(alpha = 0.85f) else ink.text.copy(alpha = 0.6f),
+                    dialStep = dialStep(step),
+                )
+                AnimatedContent(
+                    targetState = stageKey,
+                    transitionSpec = {
+                        if (reduceMotion) fadeIn(snap()) togetherWith fadeOut(snap())
+                        else (fadeIn(tween(420, easing = EaseOut)) + slideInVertically(tween(420, easing = EaseOut)) { with(density) { 12.dp.roundToPx() } }) togetherWith
+                            (fadeOut(tween(420, easing = EaseOut)) + slideOutVertically(tween(420, easing = EaseOut)) { with(density) { -6.dp.roundToPx() } })
+                    },
+                    label = "obCopy",
+                ) { key ->
+                    CopyBlock(
+                        key = key, brandSlide = brandSlide, reduceMotion = reduceMotion,
+                        modifier = Modifier.padding(top = 8.dp).then(
+                            if (key.step == OnboardingStep.BRAND) Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { primaryAction() }
+                            else Modifier,
+                        ),
+                    )
                 }
-            }
-            // 하단 액션 바 — 전 스텝 공통 위치
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = COLUMN_MAX_DP.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .padding(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 10.dp)
-                    .windowInsetsPadding(WindowInsets.navigationBars),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                val introGate = step != OnboardingStep.INTRO || introEntered || reduceMotion
-                PrimaryButton(
-                    primaryLabel, enabled = introGate && primaryEnabled,
-                    modifier = Modifier
-                        .staggerIn(if (step == OnboardingStep.INTRO) introEntered else true, if (step == OnboardingStep.INTRO) 1000 else 0, 420, reduceMotion)
-                        .alpha(if (primaryEnabled) 1f else 0.35f),
-                ) { tick(); primaryAction() }
-                if (step == OnboardingStep.BASELINE && baselinePage == BaselinePage.CALENDAR) {
-                    GhostButton(stringResource(R.string.ob_calendar_later)) { tick(); leaveBaseline() }   // 구 "기억 안 나요" 승계 — S0 처리
-                }
-                if (step == OnboardingStep.BASELINE && baselinePage == BaselinePage.CYCLE) {
-                    GhostButton(stringResource(R.string.ob_cycle_unknown)) { tick(); vm.saveCycleLengthPrior(null); leaveBaseline() }
-                }
-                // ⑥ 설문 건너뛰기 — 설문은 primary로 승격하되 강요는 안 한다
-                if (step == OnboardingStep.SURVEY && !hasReport) {
-                    GhostButton(stringResource(R.string.ob_survey_skip)) { tick(); finish() }
-                    Text(stringResource(R.string.ob_survey_skip_hint), style = Fonts.system(12), color = ink.text.copy(alpha = 0.45f), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                }
-                if (step >= OnboardingStep.BASELINE) Dots(step)
             }
         }
+
+        // ── 하단 유리 시트 — 단계 콘텐츠 + 행동(전 장 공통 위치) ──
+        val bare = step == OnboardingStep.BRAND || step == OnboardingStep.SEASONS
+        Column(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .width(column.dp)
+                .graphicsLayer { alpha = contentAlpha }
+                .glassSheet(bare)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(start = 24.dp, end = 24.dp, top = if (bare) 0.dp else 22.dp, bottom = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            AnimatedContent(
+                targetState = stageKey,
+                transitionSpec = {
+                    if (reduceMotion) fadeIn(snap()) togetherWith fadeOut(snap())
+                    else (fadeIn(tween(420, easing = EaseOut)) + slideInVertically(tween(420, easing = EaseOut)) { with(density) { 12.dp.roundToPx() } }) togetherWith
+                        (fadeOut(tween(420, easing = EaseOut)) + slideOutVertically(tween(420, easing = EaseOut)) { with(density) { 10.dp.roundToPx() } })
+                },
+                label = "obSheet",
+            ) { key ->
+                SheetBody(
+                    key = key, periodLength = periodLength, cycleLength = cycleLengthAnswer, markedDays = baseline.markedDays, today = today,
+                    onPeriodLength = { tick(); periodLength = it }, onCycleLength = { tick(); cycleLengthAnswer = it },
+                    onTapDay = { day -> tick(); vm.tapCalendarDay(day, periodLength, today) },
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                InkCapsuleButton(
+                    title = if (step == OnboardingStep.STORAGE) stringResource(R.string.ob_start) else stringResource(R.string.ob_next),   // 마지막 장 하나만 「시작하기」
+                    inverted = step == OnboardingStep.SEASONS,   // 어두운 사진 위 = 지면색 알약(J2)
+                    enabled = primaryEnabled,
+                    onClick = ::primaryAction,
+                )
+                if (step == OnboardingStep.BASELINE && baselinePage == BaselinePage.CALENDAR) {
+                    GhostUnderlineButton(stringResource(R.string.ob_calendar_later)) { tick(); step = OnboardingStep.STORAGE }   // 구 "기억 안 나요" 승계 — S0 처리
+                }
+                if (step == OnboardingStep.BASELINE && baselinePage == BaselinePage.CYCLE) {
+                    GhostUnderlineButton(stringResource(R.string.ob_cycle_unknown)) { tick(); vm.saveCycleLengthPrior(null); step = OnboardingStep.STORAGE }
+                }
+                if (step == OnboardingStep.STORAGE) OnboardingCaption(stringResource(R.string.ob_storage_foot))
+            }
+        }
+
+        if (entering) EnterTitle(enterSubtitle, reduceMotion)
         if (showSplash) {
             Box(Modifier.fillMaxSize().zIndex(1f)) { OnboardingSplash(reduceMotion) { showSplash = false } }
         }
     }
-    // 설문을 제출하고 닫혔으면 온보딩도 끝낸다 — "오늘 화면으로"를 한 번 더 누르게 하지 않는다.
-    if (showSurvey) {
-        var submitted by remember { mutableStateOf(false) }
-        SelfReportFlow(
-            onSubmit = { submitted = true; vm.submitSelfReport(it) },
-            onDismiss = { showSurvey = false; if (submitted) scope.launch { finish() } },
-        )
-    }
 }
 
+/** 단계 정체성 — 카피·시트 전환(크로스페이드)과 렌즈 이동의 트리거 */
+data class StageKey(val step: OnboardingStep, val seasonPage: Int, val baselinePage: BaselinePage)
+
+private fun dialStep(step: OnboardingStep): Int? = when (step) {
+    OnboardingStep.BASELINE -> 1
+    OnboardingStep.STORAGE -> 2
+    else -> null
+}
+
+// ── 상단: X(재진입) · back · 진행 다이얼 VoiceOver 자리(다이얼 그림은 렌즈가 그린다) ──
 @Composable
-private fun TopBar(showBack: Boolean, onBack: () -> Unit, onClose: (() -> Unit)? = null) {
-    val ink = Ink
-    val label = stringResource(R.string.ob_back)
+private fun OnboardingTopBar(showBack: Boolean, onBack: () -> Unit, onClose: (() -> Unit)?, chrome: Color, dialStep: Int?) {
+    val backLabel = stringResource(R.string.ob_back)
     val closeLabel = stringResource(R.string.ob_close)
     Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically) {
         if (onClose != null) {
             Box(Modifier.size(44.dp).semantics { contentDescription = closeLabel }.clickable(onClick = onClose), contentAlignment = Alignment.Center) {
-                Canvas(Modifier.size(15.dp)) {
-                    val s = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                    drawLine(ink.text.copy(alpha = 0.6f), androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(size.width, size.height), s.width, StrokeCap.Round)
-                    drawLine(ink.text.copy(alpha = 0.6f), androidx.compose.ui.geometry.Offset(size.width, 0f), androidx.compose.ui.geometry.Offset(0f, size.height), s.width, StrokeCap.Round)
+                Canvas(Modifier.size(14.dp)) {
+                    val w = 1.8.dp.toPx()
+                    drawLine(chrome, Offset(0f, 0f), Offset(size.width, size.height), w, StrokeCap.Round)
+                    drawLine(chrome, Offset(size.width, 0f), Offset(0f, size.height), w, StrokeCap.Round)
                 }
             }
         }
         if (showBack) {
-            Box(Modifier.size(44.dp).semantics { contentDescription = label }.clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(44.dp).semantics { contentDescription = backLabel }.clickable(onClick = onBack), contentAlignment = Alignment.Center) {
                 Canvas(Modifier.size(10.dp, 17.dp)) {
                     val p = Path().apply { moveTo(size.width, 0f); lineTo(0f, size.height / 2); lineTo(size.width, size.height) }
-                    drawPath(p, ink.text.copy(alpha = 0.6f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+                    drawPath(p, chrome, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
                 }
+            }
+        }
+        Spacer(Modifier.weight(1f))
+        if (dialStep != null) {
+            val label = stringResource(R.string.ob_progress_a11y, dialStep, DIAL_TOTAL)
+            Box(Modifier.size(44.dp).clearAndSetSemantics { contentDescription = label })
+        }
+    }
+}
+
+// ── 카피 블록 — 표제·본문은 Gowun Batang(프로토 활자) ──
+@Composable
+private fun CopyBlock(key: StageKey, brandSlide: Int, reduceMotion: Boolean, modifier: Modifier = Modifier) {
+    val ink = Ink
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        when (key.step) {
+            OnboardingStep.BRAND -> {
+                Eyebrow(stringResource(R.string.ob_brand))
+                Title(stringResource(R.string.ob_brand_title), hero = true)
+                BrandSlides(brandSlide, reduceMotion)
+            }
+            OnboardingStep.SEASONS -> {
+                // Phase A 자리 — 사계절 편집 조판(J2)은 SeasonEditorial이 대체한다
+                val phase = seasonOrder[key.seasonPage.coerceIn(0, 3)]
+                Eyebrow(stringResource(R.string.ob_season_eyebrow))
+                Text(seasonCopy(phase).name, style = LensType.serif(36), color = ink.season(phase))
+                Body(listOf(seasonDeck(phase)))
+                if (key.seasonPage == 3) Fine(listOf(stringResource(R.string.ob_season_fine)))
+            }
+            OnboardingStep.BASELINE -> {
+                Eyebrow(stringResource(R.string.ob_baseline_eyebrow))
+                when (key.baselinePage) {
+                    BaselinePage.DURATION -> Title(stringResource(R.string.ob_duration_title))
+                    BaselinePage.CALENDAR -> {
+                        Title(stringResource(R.string.ob_calendar_title))
+                        Body(listOf(stringResource(R.string.ob_calendar_line1), stringResource(R.string.ob_calendar_line2)))
+                    }
+                    BaselinePage.CYCLE -> {
+                        Title(stringResource(R.string.ob_cycle_title))
+                        Body(listOf(stringResource(R.string.ob_cycle_line)))
+                    }
+                }
+            }
+            OnboardingStep.STORAGE -> {
+                Eyebrow(stringResource(R.string.ob_storage_eyebrow))
+                Title(stringResource(R.string.ob_storage_title))
+                Body(listOf(stringResource(R.string.ob_storage_line)))
             }
         }
     }
 }
 
-/** 진행 점 — 지난·현재 스텝 채움 + 현재 스텝만 알약형(시안 .ob-dot). */
 @Composable
-private fun Dots(step: OnboardingStep) {
+fun seasonDeck(phase: CyclePhase): String = stringResource(
+    when (phase) {
+        CyclePhase.MENSTRUAL -> R.string.ob_season_deck_winter
+        CyclePhase.FOLLICULAR -> R.string.ob_season_deck_spring
+        CyclePhase.OVULATION -> R.string.ob_season_deck_summer
+        CyclePhase.LUTEAL -> R.string.ob_season_deck_autumn
+    },
+)
+
+@Composable
+fun seasonTag(phase: CyclePhase): String = stringResource(
+    when (phase) {
+        CyclePhase.MENSTRUAL -> R.string.ob_season_tag_winter
+        CyclePhase.FOLLICULAR -> R.string.ob_season_tag_spring
+        CyclePhase.OVULATION -> R.string.ob_season_tag_summer
+        CyclePhase.LUTEAL -> R.string.ob_season_tag_autumn
+    },
+)
+
+@Composable
+private fun Eyebrow(text: String) {
+    Text(text, style = LensType.serif(12, bold = false).copy(letterSpacing = 2.sp), color = Ink.text.copy(alpha = 0.55f))
+}
+
+@Composable
+private fun Title(text: String, hero: Boolean = false) {
+    val size = if (hero) 36 else 30
+    Text(text, style = LensType.serif(size).copy(lineHeight = (size * 1.2f + 5f).sp), color = Ink.text)
+}
+
+@Composable
+private fun Body(lines: List<String>) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        for (line in lines) Text(line, style = Fonts.system(15).copy(lineHeight = (15 * 1.35f + 5f).sp), color = Ink.text.copy(alpha = 0.72f))
+    }
+}
+
+@Composable
+private fun Fine(lines: List<String>) {
+    Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        for (line in lines) Text(line, style = Fonts.system(12).copy(lineHeight = (12 * 1.35f + 4f).sp), color = Ink.text.copy(alpha = 0.5f))
+    }
+}
+
+/** 브랜드 장 슬라이드 — 무드(18 명조) → 본문(15) → 비의료 고지(10.5)가 한 자리에서 2.2초 간격으로 교체되고 고지에서 멈춘다.
+ *  스크린리더는 타이머를 기다리지 않도록 세 블록을 한 라벨로 읽는다. */
+@Composable
+private fun BrandSlides(slide: Int, reduceMotion: Boolean) {
     val ink = Ink
-    Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-        for (s in OnboardingStep.entries) {
-            Box(
-                Modifier
-                    .size(width = if (s == step) 16.dp else 6.dp, height = 6.dp)
-                    .background(if (s <= step) ink.text else ink.text.copy(alpha = 0.22f), CircleShape),
-            )
+    val mood = stringResource(R.string.ob_brand_mood)
+    val body1 = stringResource(R.string.ob_brand_body1)
+    val body2 = stringResource(R.string.ob_brand_body2)
+    val fine = stringResource(R.string.ob_brand_fine)
+    val all = listOf(mood, body1, body2, fine).joinToString(" ")
+    Box(Modifier.fillMaxWidth().heightIn(min = 100.dp).clearAndSetSemantics { contentDescription = all }) {
+        Slide(on = slide == 0, reduceMotion) { Text(mood, style = LensType.serif(18, bold = false), color = ink.text.copy(alpha = 0.92f)) }
+        Slide(on = slide == 1, reduceMotion) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                val style = Fonts.system(15).copy(lineHeight = (15 * 1.35f + 5f).sp)
+                Text(body1, style = style, color = ink.text.copy(alpha = 0.72f))
+                Text(body2, style = style, color = ink.text.copy(alpha = 0.72f))
+            }
+        }
+        Slide(on = slide == 2, reduceMotion) {
+            Text(fine, style = Fonts.system(10).copy(fontSize = 10.5.sp, lineHeight = (10.5f * 1.35f + 3f).sp), color = ink.text.copy(alpha = 0.5f))
         }
     }
 }
 
 @Composable
-fun PrimaryButton(title: String, enabled: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val ink = Ink
-    Box(
-        modifier
-            .fillMaxWidth()
-            .background(ink.text, CircleShape)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 15.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(title, style = Fonts.system(17, FontWeight.SemiBold), color = ink.paper, textAlign = TextAlign.Center)
+private fun Slide(on: Boolean, reduceMotion: Boolean, content: @Composable () -> Unit) {
+    val t by animateFloatAsState(if (on) 1f else 0f, tween(if (reduceMotion) 300 else 500, easing = EaseOut), label = "brandSlide")
+    Box(Modifier.graphicsLayer { alpha = t; translationY = if (reduceMotion) 0f else (1f - t) * 8.dp.toPx() }) { content() }
+}
+
+// ══ 시트 콘텐츠 ══
+@Composable
+private fun SheetBody(
+    key: StageKey, periodLength: Int, cycleLength: Int, markedDays: Set<LocalDate>, today: LocalDate,
+    onPeriodLength: (Int) -> Unit, onCycleLength: (Int) -> Unit, onTapDay: (LocalDate) -> Unit,
+) {
+    val unit = stringResource(R.string.ob_unit_days)
+    when (key.step) {
+        OnboardingStep.BRAND, OnboardingStep.SEASONS -> Unit   // 시트 없음(bare)
+        OnboardingStep.BASELINE -> when (key.baselinePage) {
+            BaselinePage.DURATION -> RulerSlider(periodLength, 1..10, unit, onPeriodLength)
+            BaselinePage.CALENDAR -> OnboardingCalendar(markedDays, today, onTapDay)
+            BaselinePage.CYCLE -> RulerSlider(cycleLength, 21..35, unit, onCycleLength)
+        }
+        OnboardingStep.STORAGE -> StorageRows()
     }
 }
 
+/** ⑤ 저장 위치 — P0는 기기 저장뿐(§7 privacy-washing 금지: 실제 활성인 저장처만 적는다) */
 @Composable
-fun GhostButton(title: String, onClick: () -> Unit) {
+private fun StorageRows() {
     val ink = Ink
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
-            .padding(vertical = 13.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(title, style = Fonts.system(15), color = ink.text.copy(alpha = 0.55f), textAlign = TextAlign.Center)
+    Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Canvas(Modifier.width(20.dp).height(18.dp)) {
+            val w = 12.dp.toPx()
+            val c = ink.text.copy(alpha = 0.6f)
+            drawRoundRect(c, topLeft = Offset((size.width - w) / 2, 0f), size = androidx.compose.ui.geometry.Size(w, size.height),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.5.dp.toPx()), style = Stroke(width = 1.4.dp.toPx()))
+            drawCircle(c, radius = 0.9.dp.toPx(), center = Offset(size.width / 2, size.height - 2.5.dp.toPx()))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(R.string.ob_storage_device), style = Fonts.system(16), color = ink.text)
+            Text(stringResource(R.string.ob_storage_device_sub), style = Fonts.system(13), color = ink.text.copy(alpha = 0.55f))
+        }
+        Canvas(Modifier.size(12.dp)) {
+            val p = Path().apply { moveTo(size.width * 0.05f, size.height * 0.55f); lineTo(size.width * 0.4f, size.height * 0.9f); lineTo(size.width * 0.95f, size.height * 0.15f) }
+            drawPath(p, ink.text.copy(alpha = 0.6f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+        }
     }
+}
+
+// ── 마지막: 렌즈가 창이 되고 「오늘」이 뜬다 ──
+@Composable
+private fun EnterTitle(subtitle: String, reduceMotion: Boolean) {
+    val ink = Ink
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shown = true }
+    val t by animateFloatAsState(if (shown) 1f else 0f, if (reduceMotion) snap() else tween(500, delayMillis = 350, easing = EaseOut), label = "enterTitle")
+    Column(
+        Modifier.fillMaxSize().graphicsLayer { alpha = t }.clearAndSetSemantics { },
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringResource(R.string.ob_enter_title), style = LensType.serif(44), color = ink.text)
+        Text(subtitle, style = Fonts.system(14), color = ink.text.copy(alpha = 0.55f))
+    }
+}
+
+/** 온보딩 활자 = 프로토 그대로 Gowun Batang(표제·무드·큰 숫자 Bold, eyebrow·라벨 Regular) — iOS LensSpec.serif */
+object LensType {
+    fun serif(size: Int, bold: Boolean = true) = serif(size.toFloat(), bold)
+    fun serif(size: Float, bold: Boolean = true) = androidx.compose.ui.text.TextStyle(
+        fontFamily = Fonts.gowunBatang,
+        fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+        fontSize = size.sp,
+        lineHeight = (size * 1.2f).sp,
+    )
 }

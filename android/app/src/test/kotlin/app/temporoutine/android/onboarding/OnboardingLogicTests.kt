@@ -1,8 +1,7 @@
-// 온보딩 순수 규칙 — 캘린더 채움 캡·에피소드 분기·달 이동 상한·설문 canAdvance·저장 화이트리스트를 고정.
+// 온보딩 순수 규칙 — 캘린더 채움 캡·에피소드 분기·달 이동 상한·자 입력 값을 고정.
 
 package app.temporoutine.android.onboarding
 
-import app.temporoutine.core.SelfReportSurvey
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import kotlin.test.assertEquals
@@ -32,44 +31,12 @@ class OnboardingLogicTests {
         assertTrue(BaselineLogic.canGoForward(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 9, 1)), "다음 달 1일 = 오늘이면 가능")
     }
 
-    @Test fun surveyAdvanceRules() {
-        assertTrue(SurveyLogic.canAdvance(0, emptyMap()))
-        assertFalse(SurveyLogic.canAdvance(1, emptyMap()))
-        assertTrue(SurveyLogic.canAdvance(1, mapOf("C1" to "within1m")))
-        val phase = SelfReportSurvey.phaseQuestions.associate { it.id to "menstrual" }
-        assertFalse(SurveyLogic.canAdvance(2, phase - "P2"))
-        assertTrue(SurveyLogic.canAdvance(2, phase))
-        val symptoms = SelfReportSurvey.symptomQuestions.associate { it.id to "same" }
-        assertTrue(SurveyLogic.canAdvance(3, symptoms))
-        assertFalse(SurveyLogic.canAdvance(3, symptoms - symptoms.keys.first()))
-        val amplitude = SelfReportSurvey.amplitudeQuestions.associate { it.id to it.choices.first().value }
-        assertTrue(SurveyLogic.canAdvance(4, amplitude))
-        assertTrue(SurveyLogic.canAdvance(5, emptyMap()), "선택 문항 단계는 빈 채로 제출 가능")
-        assertTrue(SurveyLogic.isSingleQuestionStep(1)); assertFalse(SurveyLogic.isSingleQuestionStep(2))
-    }
-
-    /** P1·P2 복수 응답 토글(2026-09-09) — 선택지 순서 저장 · 배타 값 · 전부 해제 = 무응답. */
-    @Test fun multiValueToggle() {
-        val p1 = SelfReportSurvey.phaseQuestions.first()
-        fun pick(value: String) = p1.choices.first { it.value == value }
-
-        // 누른 순서와 무관하게 선택지 순서로 이어진다
-        val a = SurveyLogic.toggledMultiValue(p1, pick("before"), null)
-        assertEquals("before", a)
-        assertEquals("menstrual,before", SurveyLogic.toggledMultiValue(p1, pick("menstrual"), a))
-        // 재탭 해제, 마지막 하나까지 빼면 null
-        assertEquals("menstrual", SurveyLogic.toggledMultiValue(p1, pick("before"), "menstrual,before"))
-        assertEquals(null, SurveyLogic.toggledMultiValue(p1, pick("menstrual"), "menstrual"))
-        // 배타 값을 고르면 나머지가 빠지고, 다른 값을 고르면 배타 값이 빠진다
-        assertEquals("unknown", SurveyLogic.toggledMultiValue(p1, pick("unknown"), "menstrual,before"))
-        assertEquals("mid", SurveyLogic.toggledMultiValue(p1, pick("mid"), "none"))
-        // 복수 응답도 canAdvance에선 채워진 답이다
-        assertTrue(SurveyLogic.canAdvance(2, mapOf("P1" to "menstrual,before", "P2" to "none")))
-    }
-
-    @Test fun whitelistDropsUnknownKeys() {
-        val cleaned = SurveyLogic.whitelist(mapOf("C1" to "within1m", "P1" to "mid", "bogus" to "x"))
-        assertEquals(mapOf("C1" to "within1m", "P1" to "mid"), cleaned)
-        assertTrue(SelfReportSurvey.allQuestionIDs.containsAll(cleaned.keys))
+    /** 자(ruler) 위치 → 값 — 좌단 22dp 여백 기준 반올림 + 범위 캡(iOS RulerSlider). */
+    @Test fun rulerValueRoundsAndClamps() {
+        val usable = 300f
+        assertEquals(1, BaselineLogic.rulerValue(0f, 22f, usable, 1..10), "왼쪽 여백 안 = 최솟값")
+        assertEquals(10, BaselineLogic.rulerValue(22f + usable + 40f, 22f, usable, 1..10), "오른쪽 넘침 = 최댓값")
+        assertEquals(5, BaselineLogic.rulerValue(22f + usable * 4 / 9, 22f, usable, 1..10))
+        assertEquals(28, BaselineLogic.rulerValue(22f + usable * 7 / 14 + 1f, 22f, usable, 21..35))
     }
 }

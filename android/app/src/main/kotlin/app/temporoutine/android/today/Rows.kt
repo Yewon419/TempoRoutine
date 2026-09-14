@@ -56,7 +56,7 @@ import app.temporoutine.android.data.onceShows
 import app.temporoutine.android.data.sortedByTimeOfDay
 import app.temporoutine.android.data.spanDays
 import app.temporoutine.android.data.toLocalDate
-import app.temporoutine.android.onboarding.rememberReduceMotion
+import app.temporoutine.android.theme.rememberReduceMotion
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.core.InputSchedule

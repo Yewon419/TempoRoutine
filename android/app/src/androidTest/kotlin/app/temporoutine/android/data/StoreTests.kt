@@ -123,7 +123,7 @@ class StoreTests {
     /** 온보딩 ⑥ 설문 제출 — 화이트리스트 밖 키가 저장되지 않고, JSON 왕복 후에도 답이 그대로 읽힌다. */
     @Test fun selfReportSubmitRoundTrip() = runBlocking {
         val raw = mapOf("C1" to "within1m", "P1" to "mid", "Q1" to "somewhat", "bogus" to "x")
-        val cleaned = app.temporoutine.android.onboarding.SurveyLogic.whitelist(raw)
+        val cleaned = app.temporoutine.android.selfreport.SurveyLogic.whitelist(raw)
         val serializer = kotlinx.serialization.builtins.MapSerializer(
             kotlinx.serialization.serializer<String>(),
             kotlinx.serialization.serializer<String>(),

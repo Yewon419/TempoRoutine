@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import app.temporoutine.android.onboarding.rememberReduceMotion
 
 /** 조작 가능한 스위치 — 트랙 자체가 토글이다(설정 행처럼 행도 따로 뒤집는 곳에 쓴다). */
 @Composable

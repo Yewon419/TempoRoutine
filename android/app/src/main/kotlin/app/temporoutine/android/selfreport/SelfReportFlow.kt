@@ -49,7 +49,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.temporoutine.android.R
-import app.temporoutine.android.onboarding.SurveyLogic
 import app.temporoutine.android.theme.Fonts
 import app.temporoutine.android.theme.Ink
 import app.temporoutine.android.theme.MotifStyle

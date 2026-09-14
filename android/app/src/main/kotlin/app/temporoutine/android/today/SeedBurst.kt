@@ -23,7 +23,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
-import app.temporoutine.android.onboarding.rememberReduceMotion
+import app.temporoutine.android.theme.rememberReduceMotion
 import app.temporoutine.android.theme.Ink
 import kotlinx.coroutines.delay
 

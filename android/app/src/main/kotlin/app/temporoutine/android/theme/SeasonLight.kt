@@ -145,7 +145,7 @@ private fun feathered(source: ImageBitmap, fraction: Float): ImageBitmap {
     return out.asImageBitmap()
 }
 
-private fun contrastMatrix(c: Float): ColorMatrix {
+internal fun contrastMatrix(c: Float): ColorMatrix {
     val t = (1f - c) / 2f * 255f
     return ColorMatrix(floatArrayOf(
         c, 0f, 0f, 0f, t,
