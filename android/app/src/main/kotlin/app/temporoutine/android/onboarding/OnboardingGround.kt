@@ -37,13 +37,12 @@ private val motifFilter = ColorFilter.colorMatrix(contrastMatrix(0.88f))
 fun OnboardingGround(modifier: Modifier = Modifier, motifAlpha: Float = 0.11f) {
     val motif = ImageBitmap.imageResource(R.drawable.motif_winter)
     val frost = Ink.frost
-    Canvas(modifier) { drawOnboardingGround(motif, frost, motifAlpha) }
+    Canvas(modifier) { drawOnboardingGround(motif, frost, motifAlpha, size.width, size.height) }
 }
 
-fun DrawScope.drawOnboardingGround(motif: ImageBitmap, frost: Color, motifAlpha: Float) {
-    val w = size.width
-    val h = size.height
-    drawRect(frost)
+/** w·h = 화면 전체 크기(px). 렌즈는 자기 크기가 아니라 화면 크기로 같은 지면을 그린 뒤 옮기고 키운다. */
+fun DrawScope.drawOnboardingGround(motif: ImageBitmap, frost: Color, motifAlpha: Float, w: Float, h: Float) {
+    drawRect(frost, size = androidx.compose.ui.geometry.Size(w, h))
     light(lightTopRight, rx = 0.9f * w, ry = 0.6f * h, at = Offset(0.8f * w, 0f))
     light(lightBottomLeft, rx = 0.7f * w, ry = 0.5f * h, at = Offset(0.1f * w, h))
     // 프로토 폭 402 기준 비례(태블릿은 430에서 캡)

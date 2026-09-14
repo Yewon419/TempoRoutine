@@ -206,6 +206,19 @@ private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
                 },
         )
 
+        // ── 템포 렌즈 — 단계가 자리·배율·속 그림을 고른다. 마지막엔 화면을 덮는 창이 된다 ──
+        val lens = lensStage(stageKey, periodLength, cycleLengthAnswer)
+        val (spotCenter, spotDiameter) = lens.spot.resolve(fullW, safeH, column)
+        TempoLens(
+            center = if (entering) Offset(fullW / 2, safeTop + safeH / 2) else Offset(spotCenter.x, spotCenter.y + safeTop),
+            diameter = if (entering) max(fullW, safeH) * 2.2f else spotDiameter,
+            magnify = if (entering) 1.02f else lens.spot.magnify,
+            content = if (entering) LensContent() else lens.content,
+            visible = entering || !lens.hidden,
+            entering = entering,
+            fullWidth = fullW, fullHeight = fullH, reduceMotion = reduceMotion,
+        )
+
         Column(
             Modifier
                 .fillMaxSize()
@@ -294,6 +307,20 @@ private fun OnboardingBody(app: TempoApp, isRevisit: Boolean) {
 
 /** 단계 정체성 — 카피·시트 전환(크로스페이드)과 렌즈 이동의 트리거 */
 data class StageKey(val step: OnboardingStep, val seasonPage: Int, val baselinePage: BaselinePage)
+
+private data class LensStage(val spot: LensSpot, val content: LensContent, val hidden: Boolean = false)
+
+/** 단계 → 렌즈 자리·속 그림(iOS Stage.spot/content). 사계절 장은 렌즈 대신 사진 창이 뜬다. */
+private fun lensStage(key: StageKey, periodLength: Int, cycleLength: Int): LensStage = when (key.step) {
+    OnboardingStep.BRAND -> LensStage(LensSpot.hero, LensContent(ring = true, drawsRing = true, nodes = true, orbit = true))
+    OnboardingStep.SEASONS -> LensStage(LensSpot.hero, LensContent(), hidden = true)
+    OnboardingStep.BASELINE -> when (key.baselinePage) {
+        BaselinePage.DURATION -> LensStage(LensSpot.mid, LensContent(ring = true, number = periodLength, arcFraction = periodLength.toFloat() / cycleLength.coerceAtLeast(1), progress = 1f / DIAL_TOTAL))
+        BaselinePage.CALENDAR -> LensStage(LensSpot.dial, LensContent(progress = 1f / DIAL_TOTAL))
+        BaselinePage.CYCLE -> LensStage(LensSpot.mid, LensContent(ring = true, number = cycleLength, ticks = cycleLength, progress = 1f / DIAL_TOTAL))
+    }
+    OnboardingStep.STORAGE -> LensStage(LensSpot.dial, LensContent(progress = 2f / DIAL_TOTAL))
+}
 
 private fun dialStep(step: OnboardingStep): Int? = when (step) {
     OnboardingStep.BASELINE -> 1
