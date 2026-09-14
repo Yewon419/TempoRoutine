@@ -3,10 +3,15 @@
 
 package app.temporoutine.android.theme
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import app.temporoutine.core.CyclePhase
 
 data class Palette(
@@ -86,13 +91,37 @@ val Ink: Palette
  *  다크 팔레트 값·LocalDarkAppearance는 iOS처럼 데이터로 남긴다(호출처 무수정). */
 @Composable
 fun TempoTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(
-        LocalInk provides StandardTheme.light,
-        LocalChrome provides StandardTheme.chrome,
-        LocalDarkAppearance provides false,
-        content = content,
-    )
+    // M3 기본 보라(다이얼로그 확인 버튼·DatePicker 선택일·컨테이너 라벤더)를 걷어 은필 먹·지면으로.
+    // bodyLarge = Default: MaterialTheme이 ProvideTextStyle(bodyLarge)로 감싸 스타일 없는 Text까지 바꾸는 걸 막는다.
+    MaterialTheme(
+        colorScheme = materialScheme(StandardTheme.light),
+        typography = Typography().copy(bodyLarge = TextStyle.Default),
+    ) {
+        CompositionLocalProvider(
+            LocalInk provides StandardTheme.light,
+            LocalChrome provides StandardTheme.chrome,
+            LocalDarkAppearance provides false,
+            content = content,
+        )
+    }
 }
+
+/** 은필 → M3 색 역할. 강조 = 먹, 표면 = 지면·서리, tonal elevation 틴트 없음. */
+private fun materialScheme(p: Palette): ColorScheme = lightColorScheme(
+    primary = p.text, onPrimary = p.paper,
+    primaryContainer = p.text.copy(alpha = 0.08f), onPrimaryContainer = p.text,
+    secondary = p.accent, onSecondary = p.paper,
+    secondaryContainer = p.text.copy(alpha = 0.08f), onSecondaryContainer = p.text,
+    tertiary = p.accent, onTertiary = p.paper,
+    background = p.paper, onBackground = p.text,
+    surface = p.paper, onSurface = p.text,
+    surfaceVariant = p.frost, onSurfaceVariant = p.text.copy(alpha = 0.6f),
+    surfaceTint = Color.Transparent,
+    error = p.danger, onError = p.paper,
+    outline = p.accent.copy(alpha = 0.45f), outlineVariant = p.accent.copy(alpha = 0.18f),
+    surfaceContainerLowest = p.paper, surfaceContainerLow = p.paper, surfaceContainer = p.frost,
+    surfaceContainerHigh = p.frost, surfaceContainerHighest = p.frost,
+)
 
 /** 온보딩 라이트 고정(iOS `.preferredColorScheme(.light)`, 2026-09-04) — 팔레트·계절광 감쇠 둘 다 라이트로. */
 @Composable

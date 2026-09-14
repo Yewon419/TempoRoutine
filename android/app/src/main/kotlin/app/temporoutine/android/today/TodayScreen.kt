@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -245,7 +246,6 @@ private fun PeriodRow(isOn: Boolean, onToggle: () -> Unit, onOpenLogSheet: () ->
         Row(
             Modifier
                 .heightIn(min = 44.dp)
-                .semantics { contentDescription = toggleLabel }
                 .toggleable(
                     value = isOn,
                     interactionSource = remember { MutableInteractionSource() },
@@ -255,7 +255,9 @@ private fun PeriodRow(isOn: Boolean, onToggle: () -> Unit, onOpenLogSheet: () ->
                         haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                         onToggle()
                     },
-                ),
+                )
+                // 라벨을 행 노드 하나에 — 자식 「오늘」 텍스트를 걷어야 스크린리더가 「오늘 생리 기록, 스위치, 켜짐」 한 번에 읽는다
+                .clearAndSetSemantics { contentDescription = toggleLabel },
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
