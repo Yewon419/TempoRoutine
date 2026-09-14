@@ -58,7 +58,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -155,11 +157,14 @@ fun CalendarScreen(state: CalendarUiState, vm: CalendarViewModel, hazeState: Haz
                 .padding(bottom = bottomPadding),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SeasonHeaderRow(state, onOpenLogSheet)
-            Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically) {
-                BrandMark(diameter = 22.dp, color = ink.text.copy(alpha = 0.75f), modifier = Modifier.padding(start = 6.dp))
+            // 헤더 블록은 간격 6으로 조인다(iOS 은필 v2 — 12·12로 헤더가 화면 3분의 1을 먹었다). 바깥 간격은 격자·범례 몫
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                SeasonHeaderRow(state, onOpenLogSheet)
+                Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically) {
+                    BrandMark(diameter = 22.dp, color = ink.text.copy(alpha = 0.75f), modifier = Modifier.padding(start = 6.dp))
+                }
+                MonthHeader(state, vm)
             }
-            MonthHeader(state, vm)
             WeekdayRow(state.firstDayOfWeek)
             MonthCarousel(state, vm, Modifier.weight(1f).fillMaxWidth())
             Legend()
@@ -225,13 +230,22 @@ private fun MonthHeader(state: CalendarUiState, vm: CalendarViewModel) {
 @Composable
 private fun Chevron(left: Boolean, label: String, onClick: () -> Unit) {
     val ink = Ink
+    // 괘선 원 버튼 36(iOS 은필 v2) — surface 0.5 채움 · accent 0.45 괘선 · 셰브론 먹 0.75. 히트 44 유지
     Box(Modifier.size(44.dp).semantics { contentDescription = label }.clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(12.dp, 18.dp)) {
-            val p = Path().apply {
-                if (left) { moveTo(size.width, 0f); lineTo(0f, size.height / 2); lineTo(size.width, size.height) }
-                else { moveTo(0f, 0f); lineTo(size.width, size.height / 2); lineTo(0f, size.height) }
+        Box(
+            Modifier
+                .size(36.dp)
+                .background(ink.surface.copy(alpha = ink.surface.alpha * 0.5f), CircleShape)
+                .border(1.dp, ink.accent.copy(alpha = 0.45f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Canvas(Modifier.size(7.dp, 12.dp)) {
+                val p = Path().apply {
+                    if (left) { moveTo(size.width, 0f); lineTo(0f, size.height / 2); lineTo(size.width, size.height) }
+                    else { moveTo(0f, 0f); lineTo(size.width, size.height / 2); lineTo(0f, size.height) }
+                }
+                drawPath(p, ink.text.copy(alpha = 0.75f), style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
-            drawPath(p, ink.text, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
         }
     }
 }
@@ -254,7 +268,8 @@ private fun WeekdayRow(firstDayOfWeek: DayOfWeek) {
                 else -> ink.accent
             }
             Text(
-                dow.getDisplayName(TextStyle.NARROW, locale), style = Fonts.system(11), color = color,
+                // 번들 명조 + 자간 1(iOS 은필 v2 — 책력 요일 줄)
+                dow.getDisplayName(TextStyle.NARROW, locale), style = Fonts.almanacBody(11).copy(letterSpacing = 1.sp), color = color,
                 modifier = Modifier.weight(1f).padding(bottom = 4.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
@@ -461,7 +476,17 @@ private fun Cell(render: MonthRender, index: Int, date: LocalDate, today: LocalD
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(Modifier.size(NUMBER_BOX), contentAlignment = Alignment.Center) {
-            if (isToday) Box(Modifier.size(NUMBER_BOX).background(ink.text, CircleShape))
+            // 은필 헤일로(iOS 은필 v2): 33 링 accent 0.55 → 31 frost 원판(지면색 2 틈) → 27 먹 채움. 셀 밖으로 그려 잘리지 않는다
+            if (isToday) Box(
+                Modifier
+                    .size(NUMBER_BOX)
+                    .drawBehind {
+                        val line = 1.dp.toPx()
+                        drawCircle(ink.accent.copy(alpha = 0.55f), radius = 16.5.dp.toPx() - line / 2, style = Stroke(width = line))
+                        drawCircle(ink.frost, radius = 15.5.dp.toPx())
+                    }
+                    .background(ink.text, CircleShape),
+            )
             Text(date.dayOfMonth.toString(), style = Fonts.calendarNumber(isToday), color = numberColor)
         }
         Spacer(Modifier.height(3.5.dp))
