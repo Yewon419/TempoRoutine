@@ -69,6 +69,10 @@ val syncIosAssets by tasks.registering(Copy::class) {
         into("drawable-nodpi"); rename { "onboarding_splash.png" }
     }
     from(File(iosRoot, "App/Sounds/signature.mp3")) { into("raw") }
+    // 콜드 런치 스플래시 심볼(흰 로고, iOS 2026-08-30 — 은필은 계절광 지면 + 스크림 위에 이것만)
+    from(File(iosRoot, "App/Assets.xcassets/SplashLogo.imageset/SplashLogo.png")) {
+        into("drawable-nodpi"); rename { "splash_logo.png" }
+    }
     // 온보딩 사계절 장 사진(티저 광고 스틸 1080×1920, iOS 89차) — 필름 그레인은 로드 시 비트맵에 굽는다(SeasonWindow.kt)
     for (season in listOf("Winter", "Spring", "Summer", "Autumn")) {
         from(File(iosRoot, "App/Assets.xcassets/SeasonPhoto$season.imageset/SeasonPhoto$season.jpg")) {

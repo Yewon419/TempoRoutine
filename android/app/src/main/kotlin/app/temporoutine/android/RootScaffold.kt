@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,9 +72,11 @@ fun RootScaffold(app: TempoApp, openLogSheetInitially: Boolean = false) {
     Box(Modifier.fillMaxSize().background(ink.paper)) {
         val loaded = settings ?: return@Box
         if (!loaded.onboardingDone) {
+            SideEffect { LaunchSplashGate.shown = true }   // 온보딩을 거친 프로세스는 콜드 런치 스플래시를 띄우지 않는다
             OnboardingFlow(app, isRevisit = loaded.onboardingRevisit)
             return@Box
         }
+        var showLaunchSplash by remember { mutableStateOf(!LaunchSplashGate.shown) }
         // 유리 층은 소스가 서로 겹치면 피드백이 난다 — 층마다 상태를 따로 둔다(2026-09-07).
         // ground = 카드(밀크 글래스)가 보는 지면 / tab = 탭바가 보는 화면 전체(지면 + 스크롤 콘텐츠).
         val hazeState = rememberHazeState()
@@ -90,6 +93,10 @@ fun RootScaffold(app: TempoApp, openLogSheetInitially: Boolean = false) {
             }
         }
         TabBar(tab, onSelect = { tab = it }, Modifier.align(Alignment.BottomCenter).chromeGlass(tabHaze))
+        if (showLaunchSplash) {
+            val today by todayVm.state.collectAsState()
+            LaunchSplash(phase = today.info?.phase) { showLaunchSplash = false }
+        }
     }
 }
 
