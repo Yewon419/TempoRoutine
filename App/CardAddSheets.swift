@@ -572,9 +572,10 @@ struct QuickCardBar: View {
             }
             modelContext.insert(item)
         default:
-            // 단발 + 체크리스트 — OutputAddSheet의 기본(2026-09-12 대표님 결정, 종전 퍼센트).
+            // 단발 + 체크만 — 빠른 바엔 체크리스트 항목을 적을 자리가 없어 빈 체크리스트가 됐다
+            // (베타 09-15 "상호작용 아예 안 되는 걸로 추가된다"). 시트의 기본은 체크리스트 그대로(2026-09-12).
             // 칩이 있으면 그 진행 방식(nil = 체크만)
-            let progress: OutputProgressKind = picked.map { $0.kind ?? .checkOnly } ?? .subtasks
+            let progress: OutputProgressKind = picked.map { $0.kind ?? .checkOnly } ?? .checkOnly
             let item = OutputItem(title: name, schedule: .once, progressKind: progress,
                                   createdAt: anchorDate(for: day))
             item.timeMinutes = timeMinutes

@@ -262,7 +262,7 @@ struct OnboardingFlow: View {
                     if let phase = current.photo {
                         SeasonEditorial(phase: phase, index: current.seasonDots ?? 0, title: current.title,
                                         kicker: seasonMeta(for: phase).plain,
-                                        deck: current.body.joined(separator: " "), tag: current.tag ?? "",
+                                        deck: current.body.joined(separator: "\n"), tag: current.tag ?? "",   // 줄바꿈은 카피가 정한 자리(베타 09-14)
                                         fine: current.fine.isEmpty ? nil : current.fine.joined(separator: " "),
                                         revealed: seasonRevealed, reduceMotion: reduceMotion)
                             .padding(.bottom, 86)   // 하단 CTA 시트(52 + 여백)를 비운다

@@ -660,26 +660,32 @@ struct DayDetailView: View {
     }
 
     @ViewBuilder
+    /// 체크만(2026-08-18) — 저장은 percent 0↔1. 완료는 종전대로 파생(isComplete).
+    /// 항목이 하나도 없는 체크리스트도 이걸 쓴다(베타 09-15) — 오늘 탭 checkOnlyControl과 동형.
+    private func checkOnlyControl(_ item: OutputItem) -> some View {
+        Button {
+            item.percent = item.percent >= 1 ? 0 : 1
+            if item.percent >= 1 { confirmFeedback += 1 } else { lightFeedback += 1 }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: item.percent >= 1 ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(item.percent >= 1 ? Ink.text : Ink.text.opacity(0.35))
+                Text(item.percent >= 1 ? Loc.str("완료") : Loc.str("체크"))
+                    .font(.footnote)
+                    .foregroundStyle(Ink.text.opacity(item.percent >= 1 ? 1 : 0.6))
+                Spacer()
+            }
+        }
+        .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
+    }
+
     private func progressControl(_ item: OutputItem) -> some View {
         switch item.progressKind {
         case .checkOnly:
-            // 체크만(2026-08-18) — 저장은 percent 0↔1. 완료는 종전대로 파생(isComplete).
-            Button {
-                item.percent = item.percent >= 1 ? 0 : 1
-                if item.percent >= 1 { confirmFeedback += 1 } else { lightFeedback += 1 }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: item.percent >= 1 ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(item.percent >= 1 ? Ink.text : Ink.text.opacity(0.35))
-                    Text(item.percent >= 1 ? Loc.str("완료") : Loc.str("체크"))
-                        .font(.footnote)
-                        .foregroundStyle(Ink.text.opacity(item.percent >= 1 ? 1 : 0.6))
-                    Spacer()
-                }
-            }
-            .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
+            checkOnlyControl(item)
         case .subtasks:
             let list = (item.subtasks ?? []).sorted { $0.order < $1.order }
+            if list.isEmpty { checkOnlyControl(item) }
             ForEach(list) { sub in
                 Button {
                     confirmFeedback += 1
