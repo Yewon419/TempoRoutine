@@ -23,8 +23,43 @@ final class EventOverlay {
     private let store = EKEventStore()
     private(set) var authorized: Bool
 
+    // ── 조회 캐시(2026-09-15 베타 "일정 추가가 너무 느리다") ──
+    // `events(on:)`·`holidayNames`는 EKEventStore 동기 쿼리라 수십~수백 ms인데, 오늘 탭은 렌더마다 세 번,
+    // 캘린더는 `computeRender`마다 한 번 불렀다 — 일정 하나 넣으면 두 탭이 다시 그려지며 메인 스레드가
+    // 그만큼 멈췄다. 결과를 날짜·구간 키로 들고 있다가 시스템 캘린더가 바뀔 때(EKEventStoreChanged)·
+    // 권한이 바뀔 때만 비운다. @Observable 추적에서 뺀다(캐시 채움이 뷰 무효화를 부르면 안 된다).
+    @ObservationIgnored private var eventCache: [Date: [OverlayEvent]] = [:]
+    @ObservationIgnored private var holidayCache: [String: [Date: [String]]?] = [:]
+    @ObservationIgnored private var calendarCache: (holiday: [EKCalendar], normal: [EKCalendar])?
+
     private init() {
         authorized = EKEventStore.authorizationStatus(for: .event) == .fullAccess
+        NotificationCenter.default.addObserver(forName: .EKEventStoreChanged, object: store, queue: .main) { _ in
+            Task { @MainActor in EventOverlay.shared.invalidate() }
+        }
+    }
+
+    private func invalidate() {
+        eventCache.removeAll()
+        holidayCache.removeAll()
+        calendarCache = nil
+    }
+
+    private var calendars: (holiday: [EKCalendar], normal: [EKCalendar]) {
+        if let calendarCache { return calendarCache }
+        let all = store.calendars(for: .event)
+        let holiday = all.filter { c in
+            let title = c.title.lowercased()
+            return Self.holidayKeywords.contains { title.contains($0) }
+        }
+        // 공휴일 캘린더는 일정 행에서 제외 — 공휴일 표기는 셀 글줄·상세 표제가 담당(중복 방지)
+        let normal = all.filter { c in
+            let title = c.title.lowercased()
+            return !title.contains("공휴일") && !title.contains("holiday")
+        }
+        let pair = (holiday: holiday, normal: normal)
+        calendarCache = pair
+        return pair
     }
 
     /// 시스템 프롬프트는 거부 후 재요청 불가 — 이 경우 설정 앱 유도만 가능(§3.6.1)
@@ -39,6 +74,7 @@ final class EventOverlay {
     func requestAccess() async {
         let granted = (try? await store.requestFullAccessToEvents()) ?? false
         authorized = granted
+        invalidate()   // 권한이 바뀌면 빈 결과로 채워 둔 캐시가 거짓이 된다
     }
 
     /// 애플 기본 캘린더의 공휴일 구독 캘린더(제목 "공휴일"/"holiday") — 표기 소스(2026-07-28)
@@ -52,12 +88,7 @@ final class EventOverlay {
         "festività", "helligdage", "helgdagar", "vapaapäivät",
     ]
 
-    private var holidayCalendars: [EKCalendar] {
-        store.calendars(for: .event).filter { c in
-            let title = c.title.lowercased()
-            return Self.holidayKeywords.contains { title.contains($0) }
-        }
-    }
+    private var holidayCalendars: [EKCalendar] { calendars.holiday }
 
     /// 내장 한국 공휴일 표를 써도 되는가 — **한국 지역 기기의 폴백 전용**이다.
     /// 애플 캘린더가 있으면 그쪽이 각 나라 공휴일을 준다. 없을 때 다른 나라 기기에
@@ -69,6 +100,14 @@ final class EventOverlay {
     /// 구간의 공휴일 이름(일 단위 키). 미연동·공휴일 캘린더 없음 = nil — 호출측이 내장 테이블 폴백.
     func holidayNames(from start: Date, to end: Date) -> [Date: [String]]? {
         guard authorized else { return nil }
+        let cacheKey = "\(start.timeIntervalSinceReferenceDate)-\(end.timeIntervalSinceReferenceDate)"
+        if let hit = holidayCache[cacheKey] { return hit }
+        let result = fetchHolidayNames(from: start, to: end)
+        holidayCache[cacheKey] = result
+        return result
+    }
+
+    private func fetchHolidayNames(from start: Date, to end: Date) -> [Date: [String]]? {
         let calendars = holidayCalendars
         guard !calendars.isEmpty else { return nil }
         let cal = Calendar.current
@@ -96,20 +135,19 @@ final class EventOverlay {
         guard authorized else { return [] }
         let cal = Calendar.current
         let start = cal.startOfDay(for: day)
+        if let hit = eventCache[start] { return hit }
         guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return [] }
-        // 공휴일 캘린더는 일정 행에서 제외 — 공휴일 표기는 셀 글줄·상세 표제가 담당(중복 방지)
-        let normal = store.calendars(for: .event).filter { c in
-            let title = c.title.lowercased()
-            return !title.contains("공휴일") && !title.contains("holiday")
-        }
+        let normal = calendars.normal
         let predicate = store.predicateForEvents(withStart: start, end: end,
                                                  calendars: normal.isEmpty ? nil : normal)
-        return store.events(matching: predicate)
+        let result = store.events(matching: predicate)
             .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
             .map {
                 OverlayEvent(id: "\($0.eventIdentifier ?? UUID().uuidString)-\($0.startDate.timeIntervalSince1970)",
                              title: $0.title ?? "", isAllDay: $0.isAllDay, start: $0.startDate)
             }
+        eventCache[start] = result
+        return result
     }
 }
 

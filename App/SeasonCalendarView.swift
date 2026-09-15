@@ -54,6 +54,14 @@ struct SeasonCalendarView: View {
     // 드래그 프레임마다 body가 재평가된다 — 월 렌더 데이터(마크·띠·스타일·형광펜)는 여기 캐시로만
     // 읽는다. 드래그 시작 때 3개 달을 한 번 계산하고, 전환이 끝나면 비운다(성능 결함 수정 2026-07-27).
     @State private var renderCache: [Date: MonthRender] = [:]
+    /// 달 렌더 메모(2026-09-15 베타 "일정 추가가 너무 느리다") — 종전엔 body가 돌 때마다 `computeRender`
+    /// (EventKit 공휴일 조회 + 31일×일정 occurs + 주기 앵커 전개)를 새로 했다. 햅틱 카운터 하나만 바뀌어도.
+    /// 참조 타입이라 body 안에서 채워도 상태 갱신을 안 부른다. 데이터 도장(dataStamp)이 바뀌면 통째로 버린다.
+    private final class RenderMemo {
+        var stamp = 0
+        var byMonth: [Date: MonthRender] = [:]
+    }
+    @State private var renderMemo = RenderMemo()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme   // 상단 계절광 다크 감쇠
     @State private var pressFeedback = 0        // 길게 누르기 진입 햅틱(중간 — 탭보다 강하게)
@@ -998,8 +1006,39 @@ struct SeasonCalendarView: View {
     }
 
     // ── 그리드 (캐러셀 한 패널 — interactive = 중앙 달만 제스처·접근성) ──
+    /// 렌더 입력 전체의 도장 — 일정(제목·날짜·기간·반복)·루틴/목표(스케줄·완료)·생리 기록·오늘·캘린더 권한.
+    /// O(N) 해시라 occurs 행렬보다 훨씬 싸다. 편집(제목 변경)도 잡힌다.
+    private var dataStamp: Int {
+        var h = Hasher()
+        h.combine(today)
+        h.combine(EventOverlay.shared.authorized)
+        for s in schedules {
+            h.combine(s.id); h.combine(s.title); h.combine(s.date); h.combine(s.endDate)
+            h.combine(s.isAllDay); h.combine(s.repeatRule.rawValue)
+        }
+        for item in inputs { h.combine(item.id); h.combine(item.title); h.combine(item.scheduleData); h.combine(item.createdAt) }
+        for item in outputs {
+            h.combine(item.id); h.combine(item.title); h.combine(item.scheduleData); h.combine(item.createdAt)
+            h.combine(item.isComplete)
+        }
+        for p in periodDays { h.combine(p.day) }
+        return h.finalize()
+    }
+
+    private func memoizedRender(_ layout: MonthLayout) -> MonthRender {
+        let stamp = dataStamp
+        if renderMemo.stamp != stamp {
+            renderMemo.stamp = stamp
+            renderMemo.byMonth.removeAll()
+        }
+        if let hit = renderMemo.byMonth[layout.start] { return hit }
+        let render = computeRender(layout)
+        renderMemo.byMonth[layout.start] = render
+        return render
+    }
+
     private func grid(layout: MonthLayout, interactive: Bool) -> some View {
-        let render = renderCache[layout.start] ?? computeRender(layout)
+        let render = renderCache[layout.start] ?? memoizedRender(layout)
         return VStack(spacing: 4) {
             ForEach(0..<layout.rowCount, id: \.self) { row in
                 // ⚠ .top 정렬(2026-08-25 베타 "일정이 많아지면 계절 줄이 어긋나") — 기본 .center는
