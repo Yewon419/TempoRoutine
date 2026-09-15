@@ -22,6 +22,7 @@ struct CheckInCard: View {
     @State private var draftSleep = 0
     @State private var draftAppetite = 0
     @State private var draftNote = ""
+    @State private var noteSaveTask: Task<Void, Never>?   // 글 저장 디바운스(2026-09-15)
     @State private var draftSymptoms: Set<CheckInSymptom> = []   // 아픈 날 증상(2026-09-01)
     /// 한 줄 기록 사진(2026-09-04 베타) — 파일 이름만 든다. 최대 1장이라 배열이 아니다.
     @State private var draftPhotoName: String?
@@ -130,11 +131,31 @@ struct CheckInCard: View {
                 .font(.almanacBody(.subheadline, size: 15))   // 본문 = 명조(피드와 동일)
                 .foregroundStyle(Ink.text)
                 .focused($noteFocused)
-                .onChange(of: draftNote) { persistDraft() }
+                .onChange(of: draftNote) { scheduleNotePersist() }
+                .onChange(of: noteFocused) { _, focused in if !focused { flushNotePersist() } }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
+        .onDisappear { flushNotePersist() }
+    }
+
+    /// 글은 키 입력마다 저장하지 않는다(2026-09-15 베타 "사진 들어가니까 타자 레전드 느려짐") — 한 글자마다
+    /// SwiftData 쓰기 + 카드 전체 재렌더가 돌았다. 0.5초 쉬면 저장하고, 포커스가 빠지거나 카드가 사라지면 즉시.
+    private func scheduleNotePersist() {
+        noteSaveTask?.cancel()
+        noteSaveTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            persistDraft()
+        }
+    }
+
+    private func flushNotePersist() {
+        guard noteSaveTask != nil else { return }
+        noteSaveTask?.cancel()
+        noteSaveTask = nil
+        persistDraft()
     }
 
     /// 영어·일본어 칩이 길어 한 줄에 안 들어가면 칩이 낱말 중간에서 꺾였다(2026-08-22 베타

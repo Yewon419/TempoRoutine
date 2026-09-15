@@ -44,18 +44,28 @@ enum CheckInPhotoStore {
         }
     }
 
+    /// 디코드 캐시(2026-09-15 베타 "오늘 한 줄에 사진 들어가니까 타자가 느려짐") — 체크인 카드는 키 입력마다
+    /// body가 돌고, 그때마다 `UIImage(contentsOfFile:)`로 1600px JPEG를 다시 읽어 디코드했다. 한 번 읽은 건 여기.
+    /// NSCache는 스레드 안전·메모리 압박 시 자동 비움. 쓰기 경로(save·delete·purge)가 캐시를 같이 갱신한다.
+    nonisolated(unsafe) private static let cache = NSCache<NSString, UIImage>()
+
     static func image(named name: String?) -> UIImage? {
-        guard let name, let url = url(for: name) else { return nil }
-        return UIImage(contentsOfFile: url.path)
+        guard let name else { return nil }
+        if let hit = cache.object(forKey: name as NSString) { return hit }
+        guard let url = url(for: name), let image = UIImage(contentsOfFile: url.path) else { return nil }
+        cache.setObject(image, forKey: name as NSString)
+        return image
     }
 
     static func delete(_ name: String?) {
         guard let name, let url = url(for: name) else { return }
+        cache.removeObject(forKey: name as NSString)
         try? FileManager.default.removeItem(at: url)
     }
 
     /// 전체 삭제·앱 초기화 — 기록이 사라지면 사진도 남을 이유가 없다
     static func purgeAll() {
+        cache.removeAllObjects()
         guard let directory else { return }
         try? FileManager.default.removeItem(at: directory)
     }
