@@ -1160,7 +1160,6 @@ struct TodayView: View {
         }
     }
 
-    @ViewBuilder
     /// 체크만(2026-08-18) — 저장은 percent 0↔1. 완료는 종전대로 파생(isComplete).
     /// 항목이 하나도 없는 체크리스트도 이걸 쓴다(베타 09-15 "상호작용 아예 안 되는 걸로 추가된다").
     private func checkOnlyControl(_ item: OutputItem) -> some View {
@@ -1180,6 +1179,7 @@ struct TodayView: View {
         .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
     }
 
+    @ViewBuilder
     private func outputProgress(_ item: OutputItem) -> some View {
         switch item.progressKind {
         case .checkOnly:
