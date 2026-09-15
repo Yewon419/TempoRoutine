@@ -20,28 +20,28 @@ struct TwoDayProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TwoDayEntry) -> Void) {
-        completion(entry(for: .now, snapshot: WidgetSnapshot.load()))
+        completion(entry(for: AppDay.today(), at: .now, snapshot: WidgetSnapshot.load()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TwoDayEntry>) -> Void) {
         let snapshot = WidgetSnapshot.load()
         let cal = Calendar.current
-        let today = cal.startOfDay(for: .now)
+        let today = AppDay.today(calendar: cal)   // 논리적 오늘(새벽 4시 경계)
         // 자정마다 하루씩 밀린다 — 앱을 안 열어도 스냅샷 범위(+34일)만큼 버틴다
         var entries: [TwoDayEntry] = []
         for offset in 0...6 {
             guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
-            entries.append(entry(for: day, snapshot: snapshot))
+            entries.append(entry(for: day, at: AppDay.entryTime(for: day, calendar: cal), snapshot: snapshot))
         }
-        let next = cal.date(byAdding: .day, value: 7, to: today) ?? today
+        let next = AppDay.boundary(of: cal.date(byAdding: .day, value: 7, to: today) ?? today, calendar: cal)
         completion(Timeline(entries: entries, policy: .after(next)))
     }
 
-    private func entry(for date: Date, snapshot: WidgetSnapshot?) -> TwoDayEntry {
+    private func entry(for date: Date, at time: Date? = nil, snapshot: WidgetSnapshot?) -> TwoDayEntry {
         let cal = Calendar.current
         let day = cal.startOfDay(for: date)
         let next = cal.date(byAdding: .day, value: 1, to: day) ?? day
-        return TwoDayEntry(date: day,
+        return TwoDayEntry(date: time ?? day,
                            today: snapshot?.entry(for: day),
                            tomorrow: snapshot?.entry(for: next))
     }

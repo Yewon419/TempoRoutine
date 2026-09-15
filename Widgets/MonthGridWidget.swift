@@ -22,11 +22,11 @@ struct MonthProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<MonthEntry>) -> Void) {
         let snapshot = WidgetSnapshot.load()
         let cal = Calendar.current
-        let today = cal.startOfDay(for: .now)
+        let today = AppDay.today(calendar: cal)
         var entries: [MonthEntry] = []
         for offset in 0..<7 {
             guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
-            entries.append(MonthEntry(date: offset == 0 ? Date() : day, snapshot: snapshot))
+            entries.append(MonthEntry(date: AppDay.entryTime(for: day, calendar: cal), snapshot: snapshot))
         }
         completion(Timeline(entries: entries, policy: .atEnd))
     }

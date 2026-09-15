@@ -19,18 +19,18 @@ struct WeekProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (WeekEntry) -> Void) {
-        completion(weekEntry(for: .now, snapshot: WidgetSnapshot.load()))
+        completion(weekEntry(for: AppDay.today(), snapshot: WidgetSnapshot.load()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<WeekEntry>) -> Void) {
         let snapshot = WidgetSnapshot.load()
         let cal = Calendar.current
-        let today = cal.startOfDay(for: .now)
+        let today = AppDay.today(calendar: cal)
         var entries: [WeekEntry] = []
         for offset in 0..<7 {
             guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
             let base = weekEntry(for: day, snapshot: snapshot)
-            entries.append(WeekEntry(date: offset == 0 ? Date() : day, days: base.days))
+            entries.append(WeekEntry(date: AppDay.entryTime(for: day, calendar: cal), days: base.days))
         }
         completion(Timeline(entries: entries, policy: .atEnd))
     }
@@ -140,17 +140,17 @@ struct ScheduleProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (ScheduleEntry) -> Void) {
-        completion(ScheduleEntry(date: .now, day: WidgetSnapshot.load()?.entry(for: .now)))
+        completion(ScheduleEntry(date: .now, day: WidgetSnapshot.load()?.entry(for: AppDay.today())))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<ScheduleEntry>) -> Void) {
         let snapshot = WidgetSnapshot.load()
         let cal = Calendar.current
-        let today = cal.startOfDay(for: .now)
+        let today = AppDay.today(calendar: cal)
         var entries: [ScheduleEntry] = []
         for offset in 0..<7 {
             guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
-            entries.append(ScheduleEntry(date: offset == 0 ? Date() : day,
+            entries.append(ScheduleEntry(date: AppDay.entryTime(for: day, calendar: cal),
                                          day: snapshot?.entry(for: day)))
         }
         completion(Timeline(entries: entries, policy: .atEnd))

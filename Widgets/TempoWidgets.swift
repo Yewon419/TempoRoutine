@@ -528,19 +528,19 @@ struct SeasonProvider: TimelineProvider {
         if context.isPreview {
             completion(SeasonEntry(date: .now, day: sampleDay))
         } else {
-            completion(SeasonEntry(date: .now, day: WidgetSnapshot.load()?.entry(for: .now)))
+            completion(SeasonEntry(date: .now, day: WidgetSnapshot.load()?.entry(for: AppDay.today())))
         }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<SeasonEntry>) -> Void) {
         let snapshot = WidgetSnapshot.load()
         let cal = Calendar.current
-        let today = cal.startOfDay(for: .now)
+        let today = AppDay.today(calendar: cal)
         var entries: [SeasonEntry] = []
         // 오늘은 지금 시각으로, 이후 6일은 자정마다 — 앱을 안 열어도 일차가 굴러간다
         for offset in 0..<7 {
             guard let day = cal.date(byAdding: .day, value: offset, to: today) else { continue }
-            entries.append(SeasonEntry(date: offset == 0 ? Date() : day,
+            entries.append(SeasonEntry(date: AppDay.entryTime(for: day, calendar: cal),
                                        day: snapshot?.entry(for: day)))
         }
         completion(Timeline(entries: entries, policy: .atEnd))

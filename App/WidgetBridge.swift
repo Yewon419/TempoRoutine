@@ -18,7 +18,7 @@ enum WidgetBridge {
         guard !DevMode.active else { return }
         guard let url = WidgetShared.snapshotURL else { return }   // App Group 미프로비저닝이면 조용히 통과
         let cal = Calendar.current
-        let today = cal.startOfDay(for: .now)
+        let today = AppDay.today(calendar: cal)
         let snapshot = CycleSnapshot(periodDays: periodDays)
         let recordedDays = Set(periodDays.map(\.day))
         var days: [WidgetDay] = []
@@ -139,7 +139,7 @@ enum WidgetBridge {
             case .once, .daily, .weekly, .monthly:
                 // 완료된 Output의 미래 발생 숨김(§5.5.2) — 하루 상세와 동일 규칙.
                 // 위젯은 미래 날짜(-35...34일)를 실제로 그리므로 이 분기가 필요하다(2026-08-20 감사)
-                let future = day > cal.startOfDay(for: .now)
+                let future = day > AppDay.today(calendar: cal)
                 if item.isComplete && future { return false }
                 return item.occursByCalendar(on: day)
             case .cycleAnchored(let r):
