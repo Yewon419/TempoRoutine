@@ -44,7 +44,7 @@ struct RhythmView: View {
     @AppStorage("rhythmLastSignal") private var lastSignalRaw = SignalKind.energy.rawValue
 
     private var cal: Calendar { Calendar.current }
-    private var today: Date { cal.startOfDay(for: .now) }
+    private var today: Date { AppDay.today(calendar: cal) }
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
     /// 축 프로필 — `P`(생리 전 저컨디션 윈도우) 서술의 출처(§5.3 층 2)
     private var axis: AxisProfile { AxisProfile(checkIns: checkIns, snapshot: snapshot) }
@@ -924,7 +924,7 @@ struct RhythmView: View {
                     .foregroundStyle(meta.color)
                 }
                 Spacer()
-                if cal.isDateInToday(entry.day) {
+                if AppDay.isToday(entry.day, calendar: cal) {
                     Text("오늘")
                         .font(.almanacBody(.caption2, size: 11))
                         .foregroundStyle(Ink.text.opacity(0.7))

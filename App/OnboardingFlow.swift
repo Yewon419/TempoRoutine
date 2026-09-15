@@ -418,7 +418,7 @@ struct OnboardingFlow: View {
     }
 
     private var enterSubtitle: String {
-        let today = Calendar.current.startOfDay(for: .now)
+        let today = AppDay.today()
         guard let info = CycleSnapshot(periodDays: periodDays).phaseInfo(on: today) else { return "" }
         return "\(info.meta.name) · \(Loc.fmt("%lld일차", info.dayInPhase))"
     }

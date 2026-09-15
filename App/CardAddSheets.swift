@@ -556,7 +556,7 @@ struct QuickCardBar: View {
         let name = trimmed
         guard !name.isEmpty else { return }
         let cal = Calendar.current
-        let pastDay = cal.startOfDay(for: day) < cal.startOfDay(for: .now)
+        let pastDay = cal.startOfDay(for: day) < AppDay.today(calendar: cal)
         // 시각은 제목에서 읽되 원문은 그대로 둔다(시트의 applyTitleTimeParse와 같은 규칙)
         let timeMinutes = ScheduleTextParser.parse(name).start?.minutesOfDay
         switch kind {
@@ -658,7 +658,7 @@ struct InputAddSheet: View {
             // 주기 지도 칸 경유(2026-08-18) — 그 칸의 일차까지 미리 맞춘다
             if let presetDayOffset { _offset = State(initialValue: presetDayOffset) }
         } else {
-            _repeats = State(initialValue: cal.startOfDay(for: day) >= cal.startOfDay(for: .now))
+            _repeats = State(initialValue: cal.startOfDay(for: day) >= AppDay.today(calendar: cal))
             _title = State(initialValue: presetTitle)   // 빠른 추가 바를 위로 끌어올린 초안(2026-09-08)
         }
     }
@@ -937,7 +937,7 @@ struct InputAddSheet: View {
             let cal = Calendar.current
             let item = InputItem(title: title, category: category, schedule: schedule,
                                  createdAt: anchorDate(for: day),
-                                 backfilled: cal.startOfDay(for: day) < cal.startOfDay(for: .now))
+                                 backfilled: cal.startOfDay(for: day) < AppDay.today(calendar: cal))
             item.timeMinutes = timeMinutes
             applyProgress(to: item)
             modelContext.insert(item)
@@ -1150,7 +1150,7 @@ struct OutputAddSheet: View {
                 // 기존 아이템의 과거 목표일은 min으로 살려 편집은 막지 않는다
                 InkRow(label: Loc.str("목표일")) {
                     DatePicker("", selection: $targetDate,
-                               in: min(targetDate, Calendar.current.startOfDay(for: .now))...,
+                               in: min(targetDate, AppDay.today())...,
                                displayedComponents: [.date])
                         .labelsHidden()
                         .tint(Ink.text)

@@ -177,7 +177,7 @@ struct TodayView: View {
 
 
     private var cal: Calendar { Calendar.current }
-    private var today: Date { cal.startOfDay(for: .now) }
+    private var today: Date { AppDay.today(calendar: cal) }   // 논리적 오늘(새벽 4시 경계, AppDay)
     private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
 
     /// 계절 넘김 판정(A1) — 순수 계산, 저장은 카드 닫기·첫 실행 task가 한다.

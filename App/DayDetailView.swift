@@ -107,7 +107,7 @@ struct DayDetailView: View {
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정·월 이동 등, 확정 아님)
 
     private var cal: Calendar { Calendar.current }
-    private var today: Date { cal.startOfDay(for: .now) }
+    private var today: Date { AppDay.today(calendar: cal) }
     private var isFuture: Bool { day > today }
 
     /// 활판 라틴 스탬프 `Tuesday, 28 July` — 캘린더 latinMonthFormatter와 같은 en_US 고정
@@ -510,7 +510,7 @@ struct DayDetailView: View {
                     // 오늘로 고정해 과거 날짜 타이머는 버튼 무반응·오늘 레코드 오염. 지난날
                     // 실시간 측정은 의미도 없어 시작 자체를 막는다)
                     if let goal = row.item.progressGoal, !isFuture,
-                       cal.isDateInToday(day) || (goal.kind != .timer && goal.kind != .stopwatch) {
+                       AppDay.isToday(day, calendar: cal) || (goal.kind != .timer && goal.kind != .stopwatch) {
                         InputProgressControl(
                             goal: goal,
                             itemID: row.item.id,

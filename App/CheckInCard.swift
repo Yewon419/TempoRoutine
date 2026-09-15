@@ -39,7 +39,7 @@ struct CheckInCard: View {
 
     private var cal: Calendar { Calendar.current }
     private var normalizedDay: Date { cal.startOfDay(for: day) }
-    private var isToday: Bool { normalizedDay == cal.startOfDay(for: .now) }
+    private var isToday: Bool { AppDay.isToday(normalizedDay, calendar: cal) }   // 새벽 4시 경계(AppDay)
     private var record: DailyCheckIn? { checkIns.first { $0.day == normalizedDay } }
 
     private var title: String { isToday ? Loc.str("오늘의 기록") : Loc.str("이날의 기록") }

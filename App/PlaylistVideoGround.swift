@@ -21,7 +21,7 @@ struct PlaylistVideoGround: View {
 
     private var phase: CyclePhase {
         CycleSnapshot(periodDays: periodDays)
-            .phase(on: Calendar.current.startOfDay(for: .now)) ?? .menstrual
+            .phase(on: AppDay.today()) ?? .menstrual
     }
 
     var body: some View {

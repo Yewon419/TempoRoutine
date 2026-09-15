@@ -29,7 +29,7 @@ struct SeasonCalendarView: View {
     @Query(sort: \OutputItem.createdAt) private var outputs: [OutputItem]
     @Query private var checkIns: [DailyCheckIn]   // 씨앗 스티커 근거(2026-08-09)
 
-    @State private var monthAnchor = Calendar.current.startOfDay(for: .now)
+    @State private var monthAnchor = AppDay.today()
     @State private var showLogSheet = false
     @State private var showNotices = false          // 소식란(2026-08-09)
     /// 생리 기록 숨기기(2026-09-02 대표님) — 켜면 전 테마의 「생리 기록」 버튼이 숨고
@@ -94,7 +94,7 @@ struct SeasonCalendarView: View {
     })
 
     private var cal: Calendar { Calendar.current }
-    private var today: Date { cal.startOfDay(for: .now) }
+    private var today: Date { AppDay.today(calendar: cal) }   // 「오늘」 원도 새벽 4시 경계(AppDay)
     private var recordedDays: Set<Date> { Set(periodDays.map(\.day)) }
     private var starts: [Date] { PeriodMath.episodeStarts(days: periodDays.map(\.day)) }
     // CycleParams 경유(개정 M) — 직접 CyclePredictor를 부르면 prior·M 반영이 스냅샷과 갈라진다
@@ -785,7 +785,7 @@ struct SeasonCalendarView: View {
     /// 정지 = 오늘 달로 되돌아오기(시안 §4.4 ③ 계약). 이미 오늘 달이면 아무 일 없음.
     private func returnToTodayMonth() {
         guard dragX == 0, !monthAnimating else { return }
-        let now = cal.startOfDay(for: .now)
+        let now = AppDay.today(calendar: cal)
         guard !cal.isDate(now, equalTo: monthStart, toGranularity: .month) else { return }
         monthAnchor = now
     }

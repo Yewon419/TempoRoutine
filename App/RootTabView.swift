@@ -179,7 +179,7 @@ struct RootTabView: View {
                 ZStack {
                     if SplashGround.pictorial {
                         SplashGround(phase: CycleSnapshot(periodDays: periodDays)
-                            .phase(on: Calendar.current.startOfDay(for: .now)))
+                            .phase(on: AppDay.today()))
                         Image("SplashLogo")
                             .resizable()
                             .scaledToFit()

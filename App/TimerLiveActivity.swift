@@ -122,7 +122,7 @@ final class TimerIntentHandler: TimerIntentHandling {
                                 in context: ModelContext) -> (any TimerBacking)? {
         let id = command.itemID
         if command.isInput {
-            let day = Calendar.current.startOfDay(for: .now)
+            let day = AppDay.today()
             var descriptor = FetchDescriptor<InputProgress>(
                 predicate: #Predicate { $0.itemID == id && $0.occurredOn == day })
             descriptor.fetchLimit = 1
