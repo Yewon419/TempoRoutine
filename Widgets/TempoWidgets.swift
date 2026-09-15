@@ -261,12 +261,23 @@ enum WThemeStore {
     /// 떨어져 새 기본 테마가 은필 지면으로 그려졌다(2026-08-12). 키를 그대로 들고 간다.
     /// ⚠ 스냅샷을 두 번 읽지 않는다 — 파일 I/O라 렌더마다 반복하면 비싸다.
     /// 테마 키와 포인트색을 한 번에 꺼내 둘 다 캐시한다.
-    nonisolated(unsafe) private static let snapshot: WidgetSnapshot? = WidgetSnapshot.load()
-    nonisolated(unsafe) static let key: String = snapshot?.theme ?? "plain"
+    /// ⚠ 2026-09-15 정정(베타 "테마 바꿔도 위젯 안 바뀜"): 위젯 익스텐션 프로세스는 렌더 1회로 안 죽고
+    /// 타임라인 갱신을 여러 번 살아 넘긴다 — `static let`은 첫 테마를 박제했다. 2초 TTL 캐시로 바꿔
+    /// 갱신마다 새 스냅샷을 읽되 한 렌더 안의 반복 접근은 파일 I/O 한 번으로 막는다.
+    nonisolated(unsafe) private static var cached: WidgetSnapshot?
+    nonisolated(unsafe) private static var cachedAt: Date = .distantPast
+    private static var snapshot: WidgetSnapshot? {
+        if Date.now.timeIntervalSince(cachedAt) > 2 {
+            cached = WidgetSnapshot.load()
+            cachedAt = .now
+        }
+        return cached
+    }
+    static var key: String { snapshot?.theme ?? "plain" }
     /// 포인트컬러의 선택 색(2026-08-17). nil = 다홍(기존 설치의 스냅샷엔 이 필드가 없다).
-    nonisolated(unsafe) static let point: String? = snapshot?.pointColor
+    static var point: String? { snapshot?.pointColor }
     /// 날씨 테마의 현재 조건(2026-08-19). 시간대는 엔트리 시각으로 계산(WSky.daypart).
-    nonisolated(unsafe) static let wx: String? = snapshot?.wxCondition
+    static var wx: String? { snapshot?.wxCondition }
 
     static var palette: WPalette {
         switch key {
