@@ -178,7 +178,7 @@ struct RootTabView: View {
                 // 전 테마 동일 이미지가 테마 정체성을 지우던 것의 교정(2026-08-30 대표님 지시).
                 ZStack {
                     if SplashGround.pictorial {
-                        SplashGround(phase: CycleSnapshot(periodDays: periodDays)
+                        SplashGround(phase: CycleSnapshot.cached(periodDays: periodDays)
                             .phase(on: AppDay.today()))
                         Image("SplashLogo")
                             .resizable()

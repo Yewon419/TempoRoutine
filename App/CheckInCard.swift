@@ -319,7 +319,7 @@ struct CheckInCard: View {
 
     /// 피드 머리줄 — 날짜(명조) · 계절 글리프 + 「계절 N일차」. 계절 기록 전이면 날짜만.
     private var feedHeader: some View {
-        let info = CycleSnapshot(periodDays: periodDays).phaseInfo(on: normalizedDay)
+        let info = CycleSnapshot.cached(periodDays: periodDays).phaseInfo(on: normalizedDay)
         return HStack(spacing: 8) {
             // 오늘 카드는 날짜를 안 적는다(2026-09-09 베타 "오늘 한 줄에선 날짜 빼") — 표제 메타 줄과 중복.
             if !isToday {

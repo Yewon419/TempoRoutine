@@ -117,3 +117,22 @@ struct CycleSnapshot {
         return nil
     }
 }
+
+/// 뷰 전용 메모(2026-09-15 전체 최적화) — 같은 periodDays면 재사용. 종전엔 `snapshot` 계산 프로퍼티가
+/// body 한 번에 20번 넘게 init(에피소드 스캔·평균·신뢰도)을 돌렸다. 단일 엔트리: 모든 화면이 같은 periodDays를 본다.
+/// 쓰기 경로는 메인(뷰)뿐 — ThemeStore와 같은 nonisolated(unsafe) 관례.
+enum CycleSnapshotMemo {
+    nonisolated(unsafe) private static var last: (key: Int, snapshot: CycleSnapshot)?
+
+    static func cached(periodDays: [PeriodDay]) -> CycleSnapshot {
+        let key = RenderStamp.periodDays(periodDays)
+        if let last, last.key == key { return last.snapshot }
+        let fresh = CycleSnapshot(periodDays: periodDays)
+        last = (key, fresh)
+        return fresh
+    }
+}
+
+extension CycleSnapshot {
+    static func cached(periodDays: [PeriodDay]) -> CycleSnapshot { CycleSnapshotMemo.cached(periodDays: periodDays) }
+}

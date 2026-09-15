@@ -244,7 +244,7 @@ struct PurchaseHistoryView: View {
                 WeatherSky()
             } else {
                 Ink.paper
-                SeasonLight(phase: CycleSnapshot(periodDays: periodDays)
+                SeasonLight(phase: CycleSnapshot.cached(periodDays: periodDays)
                     .phase(on: AppDay.today()),
                             motif: .open)
             }

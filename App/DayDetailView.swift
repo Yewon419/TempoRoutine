@@ -120,7 +120,7 @@ struct DayDetailView: View {
     private static func latinStamp(_ date: Date) -> String {
         latinStampFormatter.string(from: date)
     }
-    private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
+    private var snapshot: CycleSnapshot { CycleSnapshot.cached(periodDays: periodDays) }
 
     var body: some View {
         ZStack {

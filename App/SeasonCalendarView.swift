@@ -655,7 +655,7 @@ struct SeasonCalendarView: View {
     /// 글줄 계약이 「일정 + 주기 occurrence」만 명시(daily는 전 셀 노이즈이기도). projected는 faded.
     private func monthMarks(_ layout: MonthLayout) -> [Date: [(title: String, projected: Bool, isSchedule: Bool)]] {
         var marks: [Date: [(title: String, projected: Bool, isSchedule: Bool)]] = [:]
-        let snap = CycleSnapshot(periodDays: periodDays)
+        let snap = CycleSnapshot.cached(periodDays: periodDays)
         for dayNumber in 1...layout.daysInMonth {
             guard let d = cal.date(byAdding: .day, value: dayNumber - 1, to: layout.start) else { continue }
             let day = cal.startOfDay(for: d)

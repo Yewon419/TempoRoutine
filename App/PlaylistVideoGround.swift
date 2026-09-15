@@ -20,7 +20,7 @@ struct PlaylistVideoGround: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var phase: CyclePhase {
-        CycleSnapshot(periodDays: periodDays)
+        CycleSnapshot.cached(periodDays: periodDays)
             .phase(on: AppDay.today()) ?? .menstrual
     }
 

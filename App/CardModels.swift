@@ -179,7 +179,7 @@ final class InputItem {
     var timeMinutes: Int?
 
     var schedule: InputSchedule {
-        get { (try? JSONDecoder().decode(InputSchedule.self, from: scheduleData)) ?? .daily }
+        get { ScheduleCodec.input(scheduleData) }   // 접근마다 JSONDecoder 생성·디코드하던 것 → 캐시(2026-09-15)
         set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
     }
 
@@ -354,7 +354,7 @@ final class OutputItem {
     var timeMinutes: Int?
 
     var schedule: OutputSchedule {
-        get { (try? JSONDecoder().decode(OutputSchedule.self, from: scheduleData)) ?? .daily }
+        get { ScheduleCodec.output(scheduleData) }
         set { scheduleData = (try? JSONEncoder().encode(newValue)) ?? scheduleData }
     }
 
@@ -461,4 +461,33 @@ func sortedByTimeOfDay<T>(_ items: [T], time: (T) -> Int?) -> [T] {
         case (.none, .none): a.offset < b.offset
         }
     }.map(\.element)
+}
+
+// ── 스케줄 디코드 캐시 (2026-09-15 전체 최적화) ──
+// `schedule` 계산 프로퍼티는 접근마다 JSONDecoder를 새로 만들어 디코드했다. 오늘 탭·캘린더·위젯 발행이
+// 아이템마다 여러 번 읽으니(캘린더 한 달 = 아이템×31일) 순수 낭비였다. Data가 키 — 값이 같으면 같은 스케줄.
+final class ScheduleBox<T> {
+    let value: T
+    init(_ value: T) { self.value = value }
+}
+
+enum ScheduleCodec {
+    nonisolated(unsafe) private static let inputCache = NSCache<NSData, ScheduleBox<InputSchedule>>()
+    nonisolated(unsafe) private static let outputCache = NSCache<NSData, ScheduleBox<OutputSchedule>>()
+
+    static func input(_ data: Data) -> InputSchedule {
+        let key = data as NSData
+        if let hit = inputCache.object(forKey: key) { return hit.value }
+        let decoded = (try? JSONDecoder().decode(InputSchedule.self, from: data)) ?? .daily
+        inputCache.setObject(ScheduleBox(decoded), forKey: key)
+        return decoded
+    }
+
+    static func output(_ data: Data) -> OutputSchedule {
+        let key = data as NSData
+        if let hit = outputCache.object(forKey: key) { return hit.value }
+        let decoded = (try? JSONDecoder().decode(OutputSchedule.self, from: data)) ?? .daily
+        outputCache.setObject(ScheduleBox(decoded), forKey: key)
+        return decoded
+    }
 }

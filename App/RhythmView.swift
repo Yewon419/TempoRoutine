@@ -45,28 +45,38 @@ struct RhythmView: View {
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { AppDay.today(calendar: cal) }
-    private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
+    private var snapshot: CycleSnapshot { CycleSnapshot.cached(periodDays: periodDays) }
     /// 축 프로필 — `P`(생리 전 저컨디션 윈도우) 서술의 출처(§5.3 층 2)
-    private var axis: AxisProfile { AxisProfile(checkIns: checkIns, snapshot: snapshot) }
-    private var profile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
+    // 파생 통계 메모(2026-09-15 전체 최적화) — 프로필·표본·집계를 body 한 번에 여러 번 새로 만들던 것.
+    @State private var axisMemo = RenderMemo<AxisProfile>()
+    @State private var profileMemo = RenderMemo<EnergyProfile>()
+    @State private var samplesMemo = RenderMemo<[SignalSample]>()
+    @State private var summariesMemo = RenderMemo<[PhaseSignalSummary]>()
+    private var derivedStamp: Int { RenderStamp.combine(RenderStamp.checkIns(checkIns), RenderStamp.periodDays(periodDays)) }
+    private var axis: AxisProfile { axisMemo.get(stamp: derivedStamp) { AxisProfile(checkIns: checkIns, snapshot: snapshot) } }
+    private var profile: EnergyProfile { profileMemo.get(stamp: derivedStamp) { EnergyProfile(checkIns: checkIns, snapshot: snapshot) } }
     // 유형 카드(비바체·안단테·루바토)는 2026-08-09 사용자 결정으로 UI에서 내림 —
     // 엔진(WindowStats)·내보내기(rhythmSummary)·자기돌봄 소비처(AxisProfile)는 유지.
     private var unlockedPhases: [CyclePhase] { Self.allPhases.filter { profile.level(for: $0) != nil } }
 
     // ── 신호 패널 입력 (§5.6.3 — DailyCheckIn → SignalSample, 계산은 RhythmEngine) ──
     private var signalSamples: [SignalSample] {
-        // 증상 가중(2026-09-01) — 질병(가중 0)은 아예 안 넘긴다
-        checkIns.compactMap {
-            let w = $0.aggregationWeight
-            guard w > 0 else { return nil }
-            return SignalSample(day: $0.day, energy: $0.energy, mood: $0.mood,
-                                sleep: $0.sleep, appetite: $0.appetite, weight: w)
+        samplesMemo.get(stamp: derivedStamp) {
+            // 증상 가중(2026-09-01) — 질병(가중 0)은 아예 안 넘긴다
+            checkIns.compactMap {
+                let w = $0.aggregationWeight
+                guard w > 0 else { return nil }
+                return SignalSample(day: $0.day, energy: $0.energy, mood: $0.mood,
+                                    sleep: $0.sleep, appetite: $0.appetite, weight: w)
+            }
         }
     }
     private var signalSummaries: [PhaseSignalSummary] {
-        RhythmEngine.summaries(samples: signalSamples, periodStarts: snapshot.starts,
-                               averageLength: snapshot.averageLength,
-                               menstrualLength: snapshot.menstrualLength)
+        summariesMemo.get(stamp: derivedStamp) {
+            RhythmEngine.summaries(samples: signalSamples, periodStarts: snapshot.starts,
+                                   averageLength: snapshot.averageLength,
+                                   menstrualLength: snapshot.menstrualLength)
+        }
     }
     // 기념 배지 보관함(2026-08-31 업적, 2026-09-04 배지로 교체) — 방송 카운터로 달성 수 갱신
     @State private var showAchievements = false

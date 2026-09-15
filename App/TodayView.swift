@@ -178,7 +178,7 @@ struct TodayView: View {
 
     private var cal: Calendar { Calendar.current }
     private var today: Date { AppDay.today(calendar: cal) }   // 논리적 오늘(새벽 4시 경계, AppDay)
-    private var snapshot: CycleSnapshot { CycleSnapshot(periodDays: periodDays) }
+    private var snapshot: CycleSnapshot { CycleSnapshot.cached(periodDays: periodDays) }
 
     /// 계절 넘김 판정(A1) — 순수 계산, 저장은 카드 닫기·첫 실행 task가 한다.
     /// 겨울도 인사한다(2026-09-12) — 종전엔 리캡(A3)이 겨울을 맡는다고 건너뛰었는데, 리캡이 오늘 탭에서
@@ -193,7 +193,12 @@ struct TodayView: View {
     private var todayInfo: (meta: SeasonMeta, dayInCycle: Int, dayInPhase: Int, projected: Bool)? { snapshot.phaseInfo(on: today) }
 
     // 단계별 에너지 프로필(2026-07-23) — 표본 3개+면 무드라인·Input 예시 개인화, 미달이면 기본 유지
-    private var energyProfile: EnergyProfile { EnergyProfile(checkIns: checkIns, snapshot: snapshot) }
+    @State private var profileMemo = RenderMemo<EnergyProfile>()   // 접근마다 O(N) 재계산하던 것(2026-09-15)
+    private var energyProfile: EnergyProfile {
+        profileMemo.get(stamp: RenderStamp.combine(RenderStamp.checkIns(checkIns), RenderStamp.periodDays(periodDays))) {
+            EnergyProfile(checkIns: checkIns, snapshot: snapshot)
+        }
+    }
     private var todayEnergyLevel: EnergyLevel? {
         snapshot.phase(on: today).flatMap { energyProfile.level(for: $0) }
     }

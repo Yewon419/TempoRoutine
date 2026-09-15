@@ -419,7 +419,7 @@ struct OnboardingFlow: View {
 
     private var enterSubtitle: String {
         let today = AppDay.today()
-        guard let info = CycleSnapshot(periodDays: periodDays).phaseInfo(on: today) else { return "" }
+        guard let info = CycleSnapshot.cached(periodDays: periodDays).phaseInfo(on: today) else { return "" }
         return "\(info.meta.name) · \(Loc.fmt("%lld일차", info.dayInPhase))"
     }
 

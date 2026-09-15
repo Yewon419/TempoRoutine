@@ -458,7 +458,7 @@ struct SettingsView: View {
                     PlaylistVideoGround()   // 플리 = 계절 배경 영상(§4.4 ⑪)
                 } else {
                     Ink.paper
-                    SeasonLight(phase: CycleSnapshot(periodDays: periodDays).phase(on: AppDay.today()), motif: .open)
+                    SeasonLight(phase: CycleSnapshot.cached(periodDays: periodDays).phase(on: AppDay.today()), motif: .open)
                 }
             }
             .ignoresSafeArea()
