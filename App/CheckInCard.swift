@@ -297,6 +297,10 @@ struct CheckInCard: View {
         draftSleep = 0
         draftAppetite = 0
         draftSymptoms = []
+        // 사진도 같이 비운다(2026-09-16 베타 "어제 넣은 사진인데 오늘도 계속있네") — 여기서 안 비우면
+        // 오늘 record가 없을 때 loadDraft가 덮어쓰지 않아 어제 이름이 남고, persistDraft가 그대로
+        // 오늘 기록에 박는다. 파일은 지우지 않는다 — 어제 record가 아직 그 이름을 참조한다.
+        draftPhotoName = nil
         draftNote = ""
         draftLoaded = false
         loadDraft()
@@ -387,7 +391,8 @@ struct CheckInCard: View {
                     // 고른 사진을 줄여 파일로 저장하고 이름만 기록에 붙인다(원본은 안 들고 온다)
                     guard let data = try? await item.loadTransferable(type: Data.self),
                           let name = CheckInPhotoStore.save(data) else { photoItem = nil; return }
-                    CheckInPhotoStore.delete(draftPhotoName)   // 갈아 끼울 땐 옛 파일을 남기지 않는다
+                    // 갈아 끼울 땐 옛 파일을 남기지 않는다(다른 날이 같이 쓰고 있으면 남긴다)
+                    CheckInStore.releasePhoto(draftPhotoName, excluding: record, in: checkIns)
                     draftPhotoName = name
                     photoItem = nil
                     persistDraft()
@@ -416,48 +421,25 @@ struct CheckInCard: View {
     }
 
     private func removePhoto() {
-        CheckInPhotoStore.delete(draftPhotoName)
+        CheckInStore.releasePhoto(draftPhotoName, excluding: record, in: checkIns)
         draftPhotoName = nil
         persistDraft()
     }
 
-    /// 저장 조건 = 필수 2신호(energy·mood) 또는 노트(§5.5 개정 2026-07-22 — 노트 단독 저장 허용,
-    /// 한 줄 일기 유실 방지). 리듬 집계는 energy·mood 둘 다 1...5인 행만 쓴다(§5.6.3).
+    /// 저장 규칙은 `CheckInStore`가 단독으로 쥔다(2026-09-16) — 생리 기록 시트의 편집기와
+    /// 같은 조건·같은 소급 판정·같은 사진 수명을 쓰기 위해서다(그 파일 머리말에 드리프트 이력).
     private func persistDraft() {
-        let hasSignals = draftEnergy > 0 && draftMood > 0
-        let hasNote = !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        // 증상 단독도 저장(2026-09-01) — 아픈 날은 신호를 안 매길 수 있다. 그 자체가 기록이다.
-        let hasSymptoms = !draftSymptoms.isEmpty
-        // 사진 단독도 기록이다(2026-09-04) — 글은 없고 사진만 남기는 날이 있다
-        let hasPhoto = draftPhotoName != nil
-        if let existing = record {
-            if hasSignals || hasNote || hasSymptoms || hasPhoto {
-                existing.energy = draftEnergy
-                existing.mood = draftMood
-                existing.sleep = draftSleep > 0 ? draftSleep : nil
-                // irritability·pain은 건드리지 않는다 — 입력 행이 사라졌을 뿐(2026-08-05 병합),
-                // 과거에 기록된 값을 0 초안으로 덮어쓰면 리듬 집계 표본이 파괴된다.
-                existing.appetite = draftAppetite > 0 ? draftAppetite : nil
-                existing.symptomSet = draftSymptoms
-                existing.note = hasNote ? draftNote : nil
-                existing.photoName = draftPhotoName
-                if Seeds.stampCompletion(existing, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
-            } else {
-                CheckInPhotoStore.delete(existing.photoName)   // 기록이 사라지면 사진도 남기지 않는다
-                modelContext.delete(existing)   // 전부 해제 = 기록 철회(스킵 무벌점)
-            }
-        } else if hasSignals || hasNote || hasSymptoms || hasPhoto {
-            // 지난 날짜에 쓰는 기록 = 회상 기반이라 적합 가중치가 다르다(v1.5 §3-4).
-            // 판정 기준은 "카드가 보고 있는 날 ≠ 오늘" — 자정 넘겨 마무리하는 하루도 여기 걸린다.
-            let created = DailyCheckIn(day: normalizedDay, energy: draftEnergy, mood: draftMood,
-                                       isBackfilled: !isToday)
-            created.sleep = draftSleep > 0 ? draftSleep : nil
-            created.appetite = draftAppetite > 0 ? draftAppetite : nil
-            created.symptomSet = draftSymptoms
-            created.note = hasNote ? draftNote : nil
-            created.photoName = draftPhotoName
-            if Seeds.stampCompletion(created, signals: signals) { seedEarned += 1 }   // 씨앗 도장+연출
-            modelContext.insert(created)
+        var draft = CheckInDraft()
+        draft.energy = draftEnergy
+        draft.mood = draftMood
+        draft.sleep = draftSleep
+        draft.appetite = draftAppetite
+        draft.note = draftNote
+        draft.symptoms = draftSymptoms
+        draft.photoName = draftPhotoName
+        if CheckInStore.apply(draft, day: normalizedDay, record: record, all: checkIns,
+                              context: modelContext, signals: signals) {
+            seedEarned += 1   // 씨앗 도장+연출
         }
     }
 }

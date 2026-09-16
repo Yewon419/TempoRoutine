@@ -324,9 +324,16 @@ struct CheckInEditor: View {
     /// 전부 채웠는가»로 판정하므로, 식욕을 켠 사람은 이 시트로 기록해선 영영 씨앗을 못 받았다.
     @State private var draftAppetite = 0
     @State private var draftNote = ""
+    /// 이 편집기가 **안 건드리는** 필드(증상·사진). 그래도 초안에 싣고 그대로 돌려준다 —
+    /// 안 실으면 「내용이 남았는가」 판정이 화면에 보이는 것만 보게 되고, 칩을 해제한 순간
+    /// 증상·사진이 붙은 기록이 통째로 지워진다(2026-09-16 감사에서 실결함으로 확인).
+    @State private var draftSymptoms: Set<CheckInSymptom> = []
+    @State private var draftPhotoName: String?
     @State private var lightFeedback = 0   // 작은 햅틱(§4 — 신호 선택, 확정 아님)
     @State private var seedEarned = 0      // 씨앗 획득 연출 트리거(2026-08-09)
 
+    /// 미래 금지 판정은 **달력 기준** 그대로다 — AppDay(새벽 4시)로 바꾸면 00~04시에 달력상
+    /// 오늘이 미래로 잡혀 기록이 막힌다. 소급 플래그만 AppDay 기준(CheckInStore).
     private var today: Date { Calendar.current.startOfDay(for: .now) }
     private var isFuture: Bool { day > today }
     private var record: DailyCheckIn? { checkIns.first { $0.day == day } }
@@ -421,35 +428,26 @@ struct CheckInEditor: View {
         draftSleep = record?.sleep ?? 0
         draftAppetite = record?.appetite ?? 0
         draftNote = record?.note ?? ""
+        draftSymptoms = record?.symptomSet ?? []
+        draftPhotoName = record?.photoName
     }
 
-    /// 저장 조건 = 필수 2신호(energy·mood) 또는 노트(§5.5 개정 2026-07-22 — 노트 단독 저장 허용).
-    /// 전부 해제 = 기록 철회. 리듬 집계는 energy·mood 둘 다 1...5인 행만(§5.6.3).
+    /// 저장 규칙은 `CheckInStore`가 단독으로 쥔다(2026-09-16) — 오늘 탭 `CheckInCard`와 조건·소급
+    /// 판정·사진 수명을 공유한다. 종전엔 여기만 조건이 「신호 또는 노트」에 머물러, 증상·사진만
+    /// 남은 기록이 칩 해제 한 번에 삭제됐다(2026-09-01·09-04 개정 미추종).
     private func persist() {
         guard !isFuture else { return }
-        let hasSignals = draftEnergy > 0 && draftMood > 0
-        let hasNote = !draftNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        if let existing = record {
-            if hasSignals || hasNote {
-                existing.energy = draftEnergy
-                existing.mood = draftMood
-                existing.sleep = draftSleep > 0 ? draftSleep : nil
-                existing.appetite = draftAppetite > 0 ? draftAppetite : nil
-                existing.note = hasNote ? draftNote : nil
-                if Seeds.stampCompletion(existing, signals: AppSettings.trackedSignals) { seedEarned += 1 }
-            } else {
-                modelContext.delete(existing)
-            }
-        } else if hasSignals || hasNote {
-            // 소급 플래그(2026-08-20 감사 — CheckInCard와 동일 규칙. 스트립은 -90일까지
-            // 선택 가능한데 여기만 플래그가 빠져 지난 날 기록이 당일 가중치로 섞였다)
-            let new = DailyCheckIn(day: day, energy: draftEnergy, mood: draftMood,
-                                   isBackfilled: !Calendar.current.isDateInToday(day))
-            new.sleep = draftSleep > 0 ? draftSleep : nil
-            new.appetite = draftAppetite > 0 ? draftAppetite : nil
-            new.note = hasNote ? draftNote : nil
-            if Seeds.stampCompletion(new, signals: AppSettings.trackedSignals) { seedEarned += 1 }
-            modelContext.insert(new)
+        var draft = CheckInDraft()
+        draft.energy = draftEnergy
+        draft.mood = draftMood
+        draft.sleep = draftSleep
+        draft.appetite = draftAppetite
+        draft.note = draftNote
+        draft.symptoms = draftSymptoms
+        draft.photoName = draftPhotoName
+        if CheckInStore.apply(draft, day: day, record: record, all: checkIns,
+                              context: modelContext, signals: AppSettings.trackedSignals) {
+            seedEarned += 1
         }
     }
 }

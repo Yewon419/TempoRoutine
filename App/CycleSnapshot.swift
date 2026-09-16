@@ -125,7 +125,12 @@ enum CycleSnapshotMemo {
     nonisolated(unsafe) private static var last: (key: Int, snapshot: CycleSnapshot)?
 
     static func cached(periodDays: [PeriodDay]) -> CycleSnapshot {
-        let key = RenderStamp.periodDays(periodDays)
+        // 키에 prior도 넣는다(2026-09-16) — 스냅샷은 periodDays만이 아니라 온보딩 보고값
+        // (cycleLengthPrior·periodLengthPrior)으로도 계산된다(CycleParams). 설정 「온보딩 다시 보기」로
+        // 주기 길이만 다시 답하면 periodDays는 그대로라, 키가 같아 옛 값으로 계속 예측했다.
+        let key = RenderStamp.combine(RenderStamp.periodDays(periodDays),
+                                      AppSettings.cycleLengthPrior ?? -1,
+                                      AppSettings.periodLengthPrior ?? -1)
         if let last, last.key == key { return last.snapshot }
         let fresh = CycleSnapshot(periodDays: periodDays)
         last = (key, fresh)

@@ -177,7 +177,10 @@ struct TodayView: View {
 
 
     private var cal: Calendar { Calendar.current }
-    private var today: Date { AppDay.today(calendar: cal) }   // 논리적 오늘(새벽 4시 경계, AppDay)
+    /// 논리적 오늘(새벽 4시 경계, AppDay). 시계를 **관측**해서 읽는다 — 계산 프로퍼티만 두면
+    /// 앱을 열어둔 채 경계를 넘길 때 다시 그릴 계기가 없어 어제에 박제된다(2026-09-16, DayTicker).
+    private let dayTicker = DayTicker.shared   // @Observable - body 읽기로 추적된다
+    private var today: Date { dayTicker.day }
     private var snapshot: CycleSnapshot { CycleSnapshot.cached(periodDays: periodDays) }
 
     /// 계절 넘김 판정(A1) — 순수 계산, 저장은 카드 닫기·첫 실행 task가 한다.

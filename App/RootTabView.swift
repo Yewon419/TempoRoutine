@@ -265,6 +265,8 @@ struct RootTabView: View {
         .onChange(of: scenePhase) { _, phase in
             guard !DevMode.active else { return }   // 개발자 모드 — 실데이터·실표면 경로 전부 정지
             if phase == .active {
+                // 백그라운드에선 경계 타이머가 늦거나 안 깬다 — 복귀 때 하루 경계를 다시 맞춘다(2026-09-16)
+                DayTicker.shared.refresh()
                 let current = periodDays
                 Task { await HealthMirror.shared.sync(context: modelContext, periodDays: current) }
                 DailyNotices.reschedule(periodDays: periodDays, schedules: schedules)

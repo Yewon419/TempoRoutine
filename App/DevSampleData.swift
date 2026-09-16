@@ -42,6 +42,9 @@ enum DevSampleData {
                 inputProgresses: (try? context.fetch(FetchDescriptor<InputProgress>())) ?? [],
                 selfReports: (try? context.fetch(FetchDescriptor<SelfReportRecord>())) ?? [])
             ExportImport.wipeAll(store, context: context)
+            // 한 줄 기록 사진 — wipeAll은 기록만 지운다. 설정의 삭제 두 경로처럼 파일도 같이
+            // 걷어내야 가리키는 곳 없는 파일만 남지 않는다(2026-09-16 감사).
+            CheckInPhotoStore.purgeAll()
             UserDefaults.standard.removeObject(forKey: "devSampleSeeded")
         }
         // 이미 뭔가 있으면(수동 임포트·직접 기록) 섞지 않는다 — 플래그만 세운다

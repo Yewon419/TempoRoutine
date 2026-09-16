@@ -44,7 +44,9 @@ struct RhythmView: View {
     @AppStorage("rhythmLastSignal") private var lastSignalRaw = SignalKind.energy.rawValue
 
     private var cal: Calendar { Calendar.current }
-    private var today: Date { AppDay.today(calendar: cal) }
+    /// 논리적 오늘 — 시계 관측 근거는 DayTicker 머리말(2026-09-16)
+    private let dayTicker = DayTicker.shared   // @Observable - body 읽기로 추적된다
+    private var today: Date { dayTicker.day }
     private var snapshot: CycleSnapshot { CycleSnapshot.cached(periodDays: periodDays) }
     /// 축 프로필 — `P`(생리 전 저컨디션 윈도우) 서술의 출처(§5.3 층 2)
     // 파생 통계 메모(2026-09-15 전체 최적화) — 프로필·표본·집계를 body 한 번에 여러 번 새로 만들던 것.

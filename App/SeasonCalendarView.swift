@@ -94,7 +94,9 @@ struct SeasonCalendarView: View {
     })
 
     private var cal: Calendar { Calendar.current }
-    private var today: Date { AppDay.today(calendar: cal) }   // 「오늘」 원도 새벽 4시 경계(AppDay)
+    /// 「오늘」 원도 새벽 4시 경계(AppDay). 시계 관측 근거는 DayTicker 머리말(2026-09-16).
+    private let dayTicker = DayTicker.shared   // @Observable - body 읽기로 추적된다
+    private var today: Date { dayTicker.day }
     private var recordedDays: Set<Date> { Set(periodDays.map(\.day)) }
     private var starts: [Date] { PeriodMath.episodeStarts(days: periodDays.map(\.day)) }
     // CycleParams 경유(개정 M) — 직접 CyclePredictor를 부르면 prior·M 반영이 스냅샷과 갈라진다
