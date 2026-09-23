@@ -451,3 +451,28 @@ struct CheckInEditor: View {
         }
     }
 }
+
+/// 생리 기록 진입 간략형(2026-09-23 베타 "글자를 빼고 빨간 원 그려진 버튼 하나로") — 설정
+/// 「생리 기록 간략화」가 켜지면 오늘·캘린더 탭의 「● 생리 기록」 캡슐 대신 이 점 버튼이 선다.
+/// 외곽선은 자리의 문법을 따른다(캡슐 자리 = 원, 티켓 직각 라벨 자리 = 사각).
+struct PeriodLogDot: View {
+    static let storageKey = "compactPeriodEntry"
+
+    let stroke: Color
+    var square = false
+
+    var body: some View {
+        ZStack {
+            if square {
+                Rectangle().stroke(stroke, lineWidth: 1).frame(width: 24, height: 24)
+            } else {
+                Circle().stroke(stroke, lineWidth: 1).frame(width: 32, height: 32)
+            }
+            Circle().fill(Ink.record).frame(width: square ? 10 : 12, height: square ? 10 : 12)
+        }
+        .frame(width: square ? 32 : 44, height: square ? 32 : 44)
+        .contentShape(Rectangle())
+        .accessibilityElement()
+        .accessibilityLabel(Loc.str("생리 기록"))
+    }
+}

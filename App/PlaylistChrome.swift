@@ -184,6 +184,7 @@ struct PlaylistRecordHeader: View {
     let onNext: () -> Void
     /// 생리 기록(2026-09-02 재배치 — 범례 줄에서 컨트롤 줄 우측으로. nil = 버튼 없음)
     var onLog: (() -> Void)?
+    @AppStorage(PeriodLogDot.storageKey) private var compactPeriodEntry = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var spinning = false
@@ -236,15 +237,19 @@ struct PlaylistRecordHeader: View {
                 .overlay(alignment: .trailing) {
                     if let onLog {
                         Button(action: onLog) {
-                            HStack(spacing: 5) {
-                                Circle().fill(Ink.record).frame(width: 7, height: 7)
-                                Text("생리 기록")
+                            if compactPeriodEntry {
+                                PeriodLogDot(stroke: Ink.text.opacity(0.3))
+                            } else {
+                                HStack(spacing: 5) {
+                                    Circle().fill(Ink.record).frame(width: 7, height: 7)
+                                    Text("생리 기록")
+                                }
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Ink.text)
+                                .padding(.horizontal, 11)
+                                .padding(.vertical, 7)
+                                .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
                             }
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Ink.text)
-                            .padding(.horizontal, 11)
-                            .padding(.vertical, 7)
-                            .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
                         }
                     }
                 }

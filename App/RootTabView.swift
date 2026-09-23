@@ -97,9 +97,11 @@ struct RootTabView: View {
             .themeTabBarPlate()
             .tabItem { tabLabel("캘린더", symbol: "calendar", ticketAsset: "TicketIconMoon") }
             .tag(RootTab.calendar.rawValue)
-            RhythmView()
-                .themeTabBarPlate()
-                .tabItem { tabLabel("나의 템포", symbol: "chart.xyaxis.line", ticketAsset: "TicketIconWave") }
+            NavigationStack {   // 한 줄 기록 → 하루 상세 push(2026-09-23)
+                RhythmView()
+            }
+            .themeTabBarPlate()
+            .tabItem { tabLabel("나의 템포", symbol: "chart.xyaxis.line", ticketAsset: "TicketIconWave") }
                 .tag(RootTab.rhythm.rawValue)
             NavigationStack {
                 SettingsView()

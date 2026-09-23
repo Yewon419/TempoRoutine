@@ -625,6 +625,11 @@ struct DayDetailView: View {
             ForEach(outputRows) { row in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
+                        // 단일 체크 = 제목 앞 동그라미(2026-09-23 베타, 오늘 탭과 동형). 미래는 조작 금지
+                        if row.item.isSingleCheck {
+                            singleCheckButton(row.item)
+                                .disabled(isFuture)
+                        }
                         Text(row.item.title)
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Ink.text.opacity(row.projected ? 0.55 : 1.0))
@@ -634,7 +639,7 @@ struct DayDetailView: View {
                         if row.projected {
                             Text("예상").font(.caption2).foregroundStyle(Ink.text.opacity(0.45))
                         }
-                        if row.item.isComplete {
+                        if row.item.isComplete && !row.item.isSingleCheck {
                             Text("완료").font(.caption2.weight(.semibold)).foregroundStyle(Ink.text.opacity(0.6))
                         }
                         Spacer()
@@ -646,7 +651,7 @@ struct DayDetailView: View {
                     }
                     // 미래는 조작 금지(원칙 4 — Input 체크·진행과 동일 가드, 2026-08-20 감사:
                     // 미래 날짜에서 퍼센트·체크리스트를 만지면 아이템 누적에 즉시 반영되던 구멍)
-                    if !isFuture {
+                    if !isFuture && !row.item.isSingleCheck {
                         progressControl(row.item)
                     }
                 }
@@ -657,6 +662,21 @@ struct DayDetailView: View {
                 .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .output(row.item) }
             }
         }
+    }
+
+    /// 단일 체크 목표의 제목 앞 동그라미 — 오늘 탭 singleCheckButton과 동형
+    private func singleCheckButton(_ item: OutputItem) -> some View {
+        Button {
+            item.percent = item.percent >= 1 ? 0 : 1
+            if item.percent >= 1 { confirmFeedback += 1 } else { lightFeedback += 1 }
+        } label: {
+            StampCheck(checked: item.percent >= 1)
+                .padding(.trailing, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(item.title)
+        .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
     }
 
     /// 체크만(2026-08-18) — 저장은 percent 0↔1. 완료는 종전대로 파생(isComplete).

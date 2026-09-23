@@ -432,6 +432,16 @@ final class OutputItem {
     var isComplete: Bool {
         ProgressRule.isFulfilled(goal: progressGoal, state: progressState)
     }
+
+    /// 체크 하나로 끝나는 목표 — 「체크만」 또는 항목 없는 체크리스트(베타 09-15와 같은 판정).
+    /// 행에선 제목 앞 동그라미 하나로 그린다(2026-09-23 베타 "체크 따로 두지 말고 제목 앞에").
+    var isSingleCheck: Bool {
+        switch progressKind {
+        case .checkOnly: true
+        case .subtasks: (subtasks ?? []).isEmpty
+        default: false
+        }
+    }
 }
 
 // 타이머 저장처 통일(2026-08-13) — 두 모델이 이미 같은 이름·같은 뜻으로 갖고 있어

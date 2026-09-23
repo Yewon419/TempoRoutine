@@ -83,6 +83,8 @@ struct RhythmView: View {
     // 기념 배지 보관함(2026-08-31 업적, 2026-09-04 배지로 교체) — 방송 카운터로 달성 수 갱신
     @State private var showAchievements = false
     @AppStorage(Achievements.revisionKey) private var achievementRevision = 0
+    // 한 줄 기록 날짜·사진 탭 = 그날 하루 상세 push(2026-09-23 베타) — 캘린더 날짜 탭과 같은 문법
+    @State private var pushedDiaryDay: Date?
 
     /// 보관함 진입 카드 — 달성 수만 말하고 재촉하지 않는다(§7)
     private var achievementEntry: some View {
@@ -193,6 +195,12 @@ struct RhythmView: View {
             if TutorialGate.active { TutorialGate.markDone() }
         }
         .sheet(isPresented: $showAchievements) { AchievementShelfView() }
+        // 이 탭 루트는 제목 없는 조판 — 막대를 숨기고, push된 하루 상세에서만 뒤로 막대를 보인다
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationDestination(item: $pushedDiaryDay) { day in
+            DayDetailView(day: day)
+                .toolbar(.visible, for: .navigationBar)
+        }
         .confirmationDialog("무엇을 추가할까요?",
                             isPresented: Binding(get: { addingSeason != nil && addKind == nil },
                                                  set: { if !$0 && addKind == nil { addingSeason = nil } }),
@@ -922,40 +930,11 @@ struct RhythmView: View {
         let phase = snapshot.phase(on: entry.day)
         let meta = phase.map(seasonMeta(for:))
         return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Text(entry.day.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
-                    .font(.almanacBody(.caption, size: 12))
-                    .foregroundStyle(Ink.text.opacity(0.55))
-                // 계절 글리프 + 「계절 N일차」(2026-09-07 피드 머리줄 — 오늘 탭 작성 셀과 동형)
-                if let meta, let info = snapshot.phaseInfo(on: entry.day) {
-                    HStack(spacing: 4) {
-                        SeasonGlyph(phase: meta.phase, size: 11)
-                        Text(Loc.fmt("%1$@ %2$@일차", "\(meta.name)", "\(info.dayInPhase)"))
-                            .font(.almanacBody(.caption, size: 12, weight: .bold))
-                    }
-                    .foregroundStyle(meta.color)
-                }
-                Spacer()
-                if AppDay.isToday(entry.day, calendar: cal) {
-                    Text("오늘")
-                        .font(.almanacBody(.caption2, size: 11))
-                        .foregroundStyle(Ink.text.opacity(0.7))
-                        .padding(.horizontal, 8).padding(.vertical, 2)
-                        .overlay(Capsule().stroke(Ink.accent.opacity(0.4), lineWidth: 1))
-                }
-            }
+            Button { pushedDiaryDay = entry.day } label: { diaryHeader(entry, meta: meta) }
+                .buttonStyle(.plain)
             if let image = CheckInPhotoStore.image(named: entry.photoName) {
-                // 높이를 확정하고 잘라 낸다 — maxHeight만 주면 scaledToFill이 원본 비율대로
-                // 부풀어 칸 밖으로 넘친다(2026-09-05 체크인 카드에서 실제로 터진 자리)
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)   // 240 → 200(2026-09-07 피드 칸 통일)
-                    .clipped()
-                    .contentShape(Rectangle())
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
-                    .allowsHitTesting(false)
+                Button { pushedDiaryDay = entry.day } label: { polaroid(image) }
+                    .buttonStyle(.plain)
             }
             // 한 줄 일기 본문 — 한글이 주라 시스템 세리프면 고딕 폴백(2026-08-01 베타 피드백)
             if let note = entry.note, !note.isEmpty {
@@ -969,6 +948,53 @@ struct RhythmView: View {
         .almanacRule()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(entry.day.formatted(Loc.dateTime.month().day())), \(meta?.name ?? ""), \(entry.note ?? "")")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { pushedDiaryDay = entry.day }
+    }
+
+    /// 폴라로이드(2026-09-23 베타 "사진 정사각형으로 넣고 폴라로이드같은 처리") — 정사각 도판 +
+    /// 흰 인화지 테두리, 아래 여백만 두껍게. 피드 칸 폭을 다 쓰면 과해서 상한을 두고 가운데 놓는다.
+    private func polaroid(_ image: UIImage) -> some View {
+        let side: CGFloat = 240
+        return Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: side, height: side)
+            .clipped()
+            .padding(.horizontal, 10)
+            .padding(.top, 10)
+            .padding(.bottom, 34)
+            .background(Color.white)
+            .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+    }
+
+    private func diaryHeader(_ entry: DailyCheckIn, meta: SeasonMeta?) -> some View {
+        HStack(spacing: 8) {
+            Text(entry.day.formatted(Loc.dateTime.month().day().weekday(.abbreviated)))
+                .font(.almanacBody(.caption, size: 12))
+                .foregroundStyle(Ink.text.opacity(0.55))
+            // 계절 글리프 + 「계절 N일차」(2026-09-07 피드 머리줄 — 오늘 탭 작성 셀과 동형)
+            if let meta, let info = snapshot.phaseInfo(on: entry.day) {
+                HStack(spacing: 4) {
+                    SeasonGlyph(phase: meta.phase, size: 11)
+                    Text(Loc.fmt("%1$@ %2$@일차", "\(meta.name)", "\(info.dayInPhase)"))
+                        .font(.almanacBody(.caption, size: 12, weight: .bold))
+                }
+                .foregroundStyle(meta.color)
+            }
+            Spacer()
+            if AppDay.isToday(entry.day, calendar: cal) {
+                Text("오늘")
+                    .font(.almanacBody(.caption2, size: 11))
+                    .foregroundStyle(Ink.text.opacity(0.7))
+                    .padding(.horizontal, 8).padding(.vertical, 2)
+                    .overlay(Capsule().stroke(Ink.accent.opacity(0.4), lineWidth: 1))
+            }
+        }
+        .contentShape(Rectangle())   // Spacer 여백까지 눌린다
     }
 
     private func seasonRow(phase: CyclePhase, routines: [SeasonRoutine]) -> some View {

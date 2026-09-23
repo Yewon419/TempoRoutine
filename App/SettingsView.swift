@@ -33,6 +33,7 @@ struct SettingsView: View {
     @State private var showCachePurgeConfirm = false
     /// 생리 기록 프라이버시(2026-09-02 대표님) — 켜면 캘린더 탭 버튼이 숨고 설정이 진입점
     @AppStorage("hideCalendarPeriodEntry") private var hidePeriodEntry = false
+    @AppStorage(PeriodLogDot.storageKey) private var compactPeriodEntry = false
     @State private var showPeriodSheet = false
     @State private var cacheBytes = 0
     /// 언어 변경 대기값(2026-08-22 대표님 "언어 바꾸면 앱 재시작") — 피커는 이 값에 묶고, 확인을
@@ -254,11 +255,17 @@ struct SettingsView: View {
                         }
                         .foregroundStyle(Ink.onSky)
                     }
+                    // 간략화(2026-09-23 베타) — 오늘·캘린더 탭 버튼의 글자를 빼고 빨간 점만 남긴다
+                    Toggle("생리 기록 간략화", isOn: $compactPeriodEntry)
+                        .tint(Ink.text)
                 } footer: {
-                    if hidePeriodEntry {
-                        Text("캘린더 탭의 「생리 기록」 버튼이 숨겨져요. 기록은 여기서 할 수 있어요.")
-                            .foregroundStyle(Ink.groundSub)
+                    VStack(alignment: .leading, spacing: 6) {
+                        if hidePeriodEntry {
+                            Text("캘린더 탭의 「생리 기록」 버튼이 숨겨져요. 기록은 여기서 할 수 있어요.")
+                        }
+                        Text("간략화를 켜면 오늘·캘린더 탭의 「생리 기록」 버튼이 글자 없이 빨간 점 하나로 바뀌어요.")
                     }
+                    .foregroundStyle(Ink.groundSub)
                 }
 
                 // HealthKit read-write 미러 (§5.7·§8.2.6 — 조건부 카피)

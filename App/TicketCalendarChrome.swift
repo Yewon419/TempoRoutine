@@ -189,6 +189,7 @@ struct TicketMonthHeader: View {
     let phase: CyclePhase?
     /// nil = 생리 기록 버튼 없음(2026-09-02 숨기기 스위치 — 설정 행이 진입점)
     let onLogTap: (() -> Void)?
+    @AppStorage(PeriodLogDot.storageKey) private var compactPeriodEntry = false
 
     var body: some View {
         // 세로 중앙(2026-08-31 대표님 "아래 디자인 요소들 정렬, 위로 쏠린 느낌") — 도판·스텁은
@@ -248,18 +249,22 @@ struct TicketMonthHeader: View {
     /// 생리 기록 = 알약이 아니라 직각 모노 라벨. 둥근 캡슐은 이 테마의 직각·모노 문법에서 튄다.
     private var logButton: some View {
         Button(action: onLogTap ?? {}) {
-            HStack(spacing: 5) {
-                Circle().fill(Ink.record).frame(width: 6, height: 6)
-                Text("생리 기록")
-                    .font(.system(size: 9, design: .monospaced))
-                    .kerning(1.1)
+            if compactPeriodEntry {
+                PeriodLogDot(stroke: Ink.text.opacity(0.26), square: true)
+            } else {
+                HStack(spacing: 5) {
+                    Circle().fill(Ink.record).frame(width: 6, height: 6)
+                    Text("생리 기록")
+                        .font(.system(size: 9, design: .monospaced))
+                        .kerning(1.1)
+                }
+                .foregroundStyle(Ink.text)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .overlay(
+                    Rectangle().stroke(Ink.text.opacity(0.26), lineWidth: 1)
+                )
             }
-            .foregroundStyle(Ink.text)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .overlay(
-                Rectangle().stroke(Ink.text.opacity(0.26), lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
     }

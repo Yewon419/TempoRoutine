@@ -35,6 +35,7 @@ struct SeasonCalendarView: View {
     /// 생리 기록 숨기기(2026-09-02 대표님) — 켜면 전 테마의 「생리 기록」 버튼이 숨고
     /// 진입은 설정 행이 대신한다. 기록 표시(코랄 하이라이트)는 그대로 — 지시 범위가 진입점.
     @AppStorage("hideCalendarPeriodEntry") private var hidePeriodEntry = false
+    @AppStorage(PeriodLogDot.storageKey) private var compactPeriodEntry = false
     /// 티켓 히어로 = 화면 배경(2026-09-01 베타 "저거를 배경으로 깔아놓고 흰색 박스의 칸을
     /// 조정하는 식으로") — 표식 줄의 화면 기준 하단 y. 유화가 상태바·좌우 여백까지 이 높이로 깔린다.
     @State private var ticketHeroBottom: CGFloat = 0
@@ -492,15 +493,19 @@ struct SeasonCalendarView: View {
                 Button {
                     showLogSheet = true
                 } label: {
-                    HStack(spacing: 5) {
-                        Circle().fill(Ink.record).frame(width: 7, height: 7)
-                        Text("생리 기록")
+                    if compactPeriodEntry {
+                        PeriodLogDot(stroke: Ink.text.opacity(0.3))
+                    } else {
+                        HStack(spacing: 5) {
+                            Circle().fill(Ink.record).frame(width: 7, height: 7)
+                            Text("생리 기록")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Ink.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
                     }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Ink.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .overlay(Capsule().stroke(Ink.text.opacity(0.3), lineWidth: 1))
                 }
                 .coachAnchor(.calendarLog)   // 기능 튜토리얼(2026-07-23)
             }

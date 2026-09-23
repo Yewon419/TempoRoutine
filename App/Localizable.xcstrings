@@ -2482,6 +2482,29 @@
         }
       }
     },
+    "간략화를 켜면 오늘·캘린더 탭의 「생리 기록」 버튼이 글자 없이 빨간 점 하나로 바뀌어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When on, the Period log button on the Today and Calendar tabs becomes a single red dot with no label."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンにすると、今日・カレンダータブの「生理記録」ボタンが文字なしの赤い点ひとつになります。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启后，今天和日历标签页的「经期记录」按钮会变成一个不带文字的红点。"
+          }
+        }
+      }
+    },
     "루틴 삭제": {
       "extractionState": "manual",
       "localizations": {
@@ -8064,6 +8087,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "寻找属于你的速度。"
+          }
+        }
+      }
+    },
+    "생리 기록 간략화": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simplify period log button"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生理記録ボタンを簡略化"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简化经期记录按钮"
           }
         }
       }

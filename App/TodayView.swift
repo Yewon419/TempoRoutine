@@ -134,6 +134,7 @@ struct TodayView: View {
     /// 예정일 초과 안내를 접은 날("yyyy-MM-dd", 2026-09-04 베타). 하루짜리 표식이라
     /// 날짜를 저장한다 — 불리언이면 다음 날에도 접힌 채로 남는다.
     @AppStorage("overdueNoteHiddenDay") private var overdueNoteHiddenDay = ""
+    @AppStorage(PeriodLogDot.storageKey) private var compactPeriodEntry = false
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.horizontalSizeClass) private var hSize   // 아이패드 2열(2026-07-23)
@@ -744,15 +745,19 @@ struct TodayView: View {
             lightFeedback += 1
             showLogSheet = true
         } label: {
-            HStack(spacing: 5) {
-                Circle().fill(Ink.record).frame(width: 7, height: 7)
-                Text("생리 기록")
+            if compactPeriodEntry {
+                PeriodLogDot(stroke: Ink.onGround(Ink.text.opacity(0.3), white: 0.5))
+            } else {
+                HStack(spacing: 5) {
+                    Circle().fill(Ink.record).frame(width: 7, height: 7)
+                    Text("생리 기록")
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .overlay(Capsule().stroke(Ink.onGround(Ink.text.opacity(0.3), white: 0.5), lineWidth: 1))
             }
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(Ink.onGround(Ink.text, white: 0.88))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .overlay(Capsule().stroke(Ink.onGround(Ink.text.opacity(0.3), white: 0.5), lineWidth: 1))
         }
         .accessibilityHint(Loc.str("날짜를 골라 생리 기록을 고쳐요"))
     }
@@ -1137,11 +1142,14 @@ struct TodayView: View {
             ForEach(todayOutputs) { item in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
+                        if item.isSingleCheck {
+                            singleCheckButton(item)
+                        }
                         Text(item.title).font(.almanacBody(.subheadline, size: 14, weight: .bold)).foregroundStyle(Ink.text)   // 15 → 14(행 제목 일괄)
                         if let target = item.targetDate {
                             DDayBadge(target: target, from: today)
                         }
-                        if item.isComplete {
+                        if item.isComplete && !item.isSingleCheck {   // 단일 체크는 동그라미가 완료를 말한다
                             Text("완료").font(.caption2.weight(.semibold)).foregroundStyle(Ink.text.opacity(0.6))
                         }
                         Spacer()
@@ -1151,7 +1159,9 @@ struct TodayView: View {
                                 .foregroundStyle(Ink.text.opacity(0.5))
                         }
                     }
-                    outputProgress(item)
+                    if !item.isSingleCheck {
+                        outputProgress(item)
+                    }
                 }
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
@@ -1166,6 +1176,22 @@ struct TodayView: View {
                 .foregroundStyle(Ink.text.opacity(0.55))
                 .padding(.top, 2)
         }
+    }
+
+    /// 단일 체크 목표의 제목 앞 동그라미(2026-09-23 베타 "ㅇ제자엠티장소 이런식으로") — 루틴 행과
+    /// 같은 먹 도장. 저장 규칙은 checkOnlyControl과 같다(percent 0↔1).
+    private func singleCheckButton(_ item: OutputItem) -> some View {
+        Button {
+            item.percent = item.percent >= 1 ? 0 : 1
+            if item.percent >= 1 { confirmFeedback += 1 } else { lightFeedback += 1 }
+        } label: {
+            StampCheck(checked: item.percent >= 1)
+                .padding(.trailing, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(item.title)
+        .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
     }
 
     /// 체크만(2026-08-18) — 저장은 percent 0↔1. 완료는 종전대로 파생(isComplete).
