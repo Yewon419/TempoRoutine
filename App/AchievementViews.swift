@@ -84,6 +84,7 @@ struct AchievementBannerHost: View {
                     .foregroundStyle(Ink.text)
             }
             Spacer(minLength: 0)
+            BadgeSeedReward(count: id.seedReward, received: true, plus: true)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -234,6 +235,10 @@ struct AchievementCell: View {
                 .foregroundStyle(Ink.text.opacity(unlocked ? 0.6 : 0.35))
                 .multilineTextAlignment(.center)
                 .lineLimit(2, reservesSpace: true)
+            // 보상 씨앗(2026-09-23) — 숨은 배지는 발견 전엔 보상도 가린다
+            if !hiddenLocked {
+                BadgeSeedReward(count: id.seedReward, received: unlocked)
+            }
             Spacer(minLength: 0)
             if let unlockedAt {
                 Text(unlockedAt.formatted(Loc.dateTime.year().month().day()))
@@ -247,5 +252,29 @@ struct AchievementCell: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .milkGlass()
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// 배지 보상 씨앗 표기 — 씨앗 글리프 + 개수(오늘 탭 SeedBadge와 같은 문법, 돈 문법 금지).
+/// 받기 전엔 흐리게, 배너에선 「+N」.
+struct BadgeSeedReward: View {
+    let count: Int
+    let received: Bool
+    var plus = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            SeedGlyph()
+                .fill(Ink.text.opacity(0.7))
+                .frame(width: 8, height: 11)
+                .rotationEffect(.degrees(16))
+            Text(verbatim: plus ? "+\(count)" : "\(count)")
+                .font(.almanacBody(.caption, size: 12, weight: .bold))
+                .monospacedDigit()
+                .foregroundStyle(Ink.text.opacity(0.8))
+        }
+        .opacity(received ? 1 : 0.45)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Loc.fmt("씨앗 %lld개", count))
     }
 }

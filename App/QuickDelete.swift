@@ -69,6 +69,9 @@ private struct QuickDeletableRow: ViewModifier {
     @Binding var feedback: Int
     let completions: [ItemCompletion]
     let context: ModelContext
+    // 길게 누르기 = 수정·삭제 둘 다(2026-09-23 베타 "길게 클릭하면 삭제랑 수정 둘다 띄워줘").
+    // 수정 시트도 행이 든다 — 화면마다 편집 상태를 따로 두면 body 체인이 늘고 화면별로 빠진다.
+    @State private var editing = false
 
     func body(content: Content) -> some View {
         content
@@ -79,6 +82,14 @@ private struct QuickDeletableRow: ViewModifier {
                                      set: { if !$0 { target = nil } }),
                 titleVisibility: .visible
             ) {
+                Button("수정") {
+                    target = nil
+                    // 다이얼로그가 걷히기 전에 시트를 올리면 같은 호스트의 연속 표시가 씹힐 수 있다
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(300))
+                        editing = true
+                    }
+                }
                 Button("삭제", role: .destructive) {
                     target?.delete(from: context, completions: completions)
                     target = nil
@@ -87,6 +98,18 @@ private struct QuickDeletableRow: ViewModifier {
             } message: {
                 Text("이 항목과 기록이 함께 지워져요. 되돌릴 수 없어요.")
             }
+            .sheet(isPresented: $editing) {
+                editSheet.themeColorScheme()
+            }
+    }
+
+    @ViewBuilder
+    private var editSheet: some View {
+        switch item {
+        case .schedule(let schedule): ScheduleAddSheet(defaultDate: schedule.date, editing: schedule)
+        case .input(let input): InputAddSheet(currentSeason: nil, editing: input)
+        case .output(let output): OutputAddSheet(editing: output)
+        }
     }
 }
 

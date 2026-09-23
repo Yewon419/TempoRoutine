@@ -8114,6 +8114,29 @@
         }
       }
     },
+    "수정": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編集"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑"
+          }
+        }
+      }
+    },
     "컨디션을 기록하면 계절마다 어땠는지 보여요.": {
       "extractionState": "manual",
       "localizations": {

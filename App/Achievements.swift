@@ -90,6 +90,29 @@ enum AchievementID: String, CaseIterable, Codable {
         }
     }
 
+    /// 달성 보상 씨앗(2026-09-23 베타 "여기에도 씨앗 보상 걸자. 1-10개 사이") — 난이도 비례.
+    var seedReward: Int {
+        switch self {
+        case .firstCheckIn: 1
+        case .selfReport:   2
+        case .mascotNap:    2
+        case .seasonTap:    2
+        case .firstTheme:   2
+        case .checkIns10:   3
+        case .nightOwl:     3
+        case .checkIns50:   5
+        case .themes3:      5
+        case .firstCycle:   5
+        case .coffeeFriend: 5
+        case .newYear:      5
+        case .seeds100:     5
+        case .checkIns100:  8
+        case .fourSeasons:  8
+        case .checkIns365:  10
+        case .anniversary:  10
+        }
+    }
+
     /// 배지 안에 새기는 기호(2026-09-04 배지 전환). 미달성·히든은 표면이 알아서 가린다.
     var symbol: String {
         switch self {
@@ -175,8 +198,15 @@ final class Achievements {
         var next = ledger
         next.unlocked[id.rawValue] = .now
         ledger = next
+        grantSeeds(id)
         bannerQueue.append(id)
         if pendingBanner == nil { advanceBanner() }
+    }
+
+    /// 배지 씨앗은 공지 수령 원장(claims)에 `badge:` 키로 적는다 — 배지당 1회·동기화·백업·병합이
+    /// 공지와 같은 규칙으로 따라온다. claim이 멱등이라 소급 지급과 겹쳐도 한 번이다.
+    private func grantSeeds(_ id: AchievementID) {
+        _ = Seeds.claim(noticeID: "badge:\(id.rawValue)", seeds: id.seedReward)
     }
 
     /// 배너 하나 닫힘 → 다음 큐. 연출 뷰가 사라질 때 부른다.
@@ -239,6 +269,12 @@ final class Achievements {
     /// 앱 시작 1회 — 첫 실행일 기록 + 1주년 판정.
     /// 첫 실행일이 없던 구 사용자는 오늘부터 센다(설치일을 소급 추정하지 않는다 — 거짓 축하 방지).
     func appLaunched() {
+        // 보상 도입(2026-09-23) 전에 받은 배지 소급 지급 — 원장의 달성 배지 전부, 멱등
+        if !DevMode.active {
+            for raw in ledger.unlocked.keys {
+                if let id = AchievementID(rawValue: raw) { grantSeeds(id) }
+            }
+        }
         let defaults = UserDefaults.standard
         if defaults.object(forKey: Self.firstLaunchKey) == nil {
             defaults.set(Date.now.timeIntervalSinceReferenceDate, forKey: Self.firstLaunchKey)
