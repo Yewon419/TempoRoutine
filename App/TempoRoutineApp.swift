@@ -52,6 +52,18 @@ struct TempoRoutineApp: App {
         // 팔레트 캐시는 첫 렌더 전에 확정돼야 한다(Ink가 정적 캐시를 읽는다 — Theme.swift)
         // 앱 언어 선택 복원(2026-08-21) — 팔레트와 같은 이유로 첫 렌더 전에 확정한다
         Loc.restore()
+        #if DEBUG
+        // 찰칵 전용(2026-09-26 언어 전환 점검) — 사용 중 언어 전환을 재현한다.
+        // `-debugSwitchLanguage <to> [-debugSwitchFrom <from>]`: from(기본 ko)으로 뜬 뒤 3초 후 설정
+        // 「바꾸기」와 같은 `Loc.apply(to)`. 이 인자와 `-appLanguage`는 같이 주지 않는다 — argument
+        // 도메인이 저장값을 가려 전환이 안 먹는다. 릴리스 빌드엔 이 경로가 없다.
+        let debugArgs = UserDefaults.standard
+        if let to = debugArgs.string(forKey: "debugSwitchLanguage").flatMap(AppLanguage.init(rawValue:)) {
+            let from = debugArgs.string(forKey: "debugSwitchFrom").flatMap(AppLanguage.init(rawValue:)) ?? .ko
+            Loc.apply(from)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { Loc.apply(to) }
+        }
+        #endif
         let savedTheme = UserDefaults.standard.string(forKey: ThemeStore.storageKey)
         // 온보딩 전(신규 설치·앱 초기화 직후)은 은필 고정(2026-09-04 베타 "은필라이트로 고정").
         // 저장은 하지 않는다 — 실제 선택·저장은 온보딩 테마 단계가 맡는다.

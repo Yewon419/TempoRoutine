@@ -259,6 +259,90 @@ jobs:
           privacy: location
           wait: '8'
           fail-on-crash: 'false'
+      # ── 찰칵: 언어 전수(2026-09-26 대표님 "언어 바꾸면 화면 깨짐" 점검) ─────────────────
+      #    L = 그 언어로 새로 켠 상태. X = 기기 ko로 뜬 뒤 3초 후 앱 안에서 전환(-debugSwitchLanguage,
+      #    DEBUG 전용) — 설정 「바꾸기」 직후 화면. X 컷엔 -appLanguage를 주지 않는다(TempoRoutineApp.init 주석).
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          defaults: |
+            onboardingDone -bool true
+            devModeActive -bool true
+            tutorialChainDone -bool true
+            coach.today -bool true
+            coach.calendar -bool true
+            coach.rhythm -bool true
+            coach.seed -bool true
+            coach.themeShop -bool true
+          screens: |
+            L-en-today      | -rootTab today    -appTheme standard -appLanguage en -AppleLanguages (en)
+            L-en-calendar   | -rootTab calendar -appTheme standard -appLanguage en -AppleLanguages (en)
+            L-en-rhythm     | -rootTab rhythm   -appTheme standard -appLanguage en -AppleLanguages (en)
+            L-en-settings   | -rootTab settings -appTheme standard -appLanguage en -AppleLanguages (en)
+            L-en-sheet-schedule | -rootTab today -appTheme standard -appLanguage en -AppleLanguages (en) -openSheet schedule -noAutoFocus 1
+            L-en-sheet-input    | -rootTab today -appTheme standard -appLanguage en -AppleLanguages (en) -openSheet input-full
+            L-en-sheet-output   | -rootTab today -appTheme standard -appLanguage en -AppleLanguages (en) -openSheet output -noAutoFocus 1
+            L-ja-today      | -rootTab today    -appTheme standard -appLanguage ja -AppleLanguages (ja)
+            L-ja-calendar   | -rootTab calendar -appTheme standard -appLanguage ja -AppleLanguages (ja)
+            L-ja-rhythm     | -rootTab rhythm   -appTheme standard -appLanguage ja -AppleLanguages (ja)
+            L-ja-settings   | -rootTab settings -appTheme standard -appLanguage ja -AppleLanguages (ja)
+            L-ja-sheet-schedule | -rootTab today -appTheme standard -appLanguage ja -AppleLanguages (ja) -openSheet schedule -noAutoFocus 1
+            L-ja-sheet-input    | -rootTab today -appTheme standard -appLanguage ja -AppleLanguages (ja) -openSheet input-full
+            L-ja-sheet-output   | -rootTab today -appTheme standard -appLanguage ja -AppleLanguages (ja) -openSheet output -noAutoFocus 1
+            L-zh-today      | -rootTab today    -appTheme standard -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            L-zh-calendar   | -rootTab calendar -appTheme standard -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            L-zh-rhythm     | -rootTab rhythm   -appTheme standard -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            L-zh-settings   | -rootTab settings -appTheme standard -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            L-zh-sheet-schedule | -rootTab today -appTheme standard -appLanguage zh-Hans -AppleLanguages (zh-Hans) -openSheet schedule -noAutoFocus 1
+            L-zh-sheet-input    | -rootTab today -appTheme standard -appLanguage zh-Hans -AppleLanguages (zh-Hans) -openSheet input-full
+            L-zh-sheet-output   | -rootTab today -appTheme standard -appLanguage zh-Hans -AppleLanguages (zh-Hans) -openSheet output -noAutoFocus 1
+            X-ko2en-today     | -rootTab today    -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage en
+            X-ko2en-calendar  | -rootTab calendar -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage en
+            X-ko2en-rhythm    | -rootTab rhythm   -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage en
+            X-ko2en-settings  | -rootTab settings -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage en
+            X-ko2ja-today     | -rootTab today    -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage ja
+            X-ko2ja-calendar  | -rootTab calendar -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage ja
+            X-ko2ja-rhythm    | -rootTab rhythm   -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage ja
+            X-ko2ja-settings  | -rootTab settings -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage ja
+            X-ko2zh-today     | -rootTab today    -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage zh-Hans
+            X-ko2zh-calendar  | -rootTab calendar -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage zh-Hans
+            X-ko2zh-rhythm    | -rootTab rhythm   -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage zh-Hans
+            X-ko2zh-settings  | -rootTab settings -appTheme standard -AppleLanguages (ko) -debugSwitchLanguage zh-Hans
+            X-en2ko-today     | -rootTab today    -appTheme standard -AppleLanguages (ko) -debugSwitchFrom en -debugSwitchLanguage ko
+            X-en2ko-settings  | -rootTab settings -appTheme standard -AppleLanguages (ko) -debugSwitchFrom en -debugSwitchLanguage ko
+          output-dir: screenshots-lang
+          artifact-name: screenshots-lang
+          title: '템포루틴 언어 전수 찰칵'
+          privacy: location
+          wait: '10'
+          fail-on-crash: 'false'
+      # ── 찰칵: 온보딩 ja·zh-Hans(2026-09-26 언어 점검 — 기존 온보딩 스텝은 ko + en 3컷뿐) ──
+      - uses: Yewon419/chalkak@main
+        with:
+          app: build/dd/Build/Products/Debug-iphonesimulator/TempoRoutine.app
+          defaults: |
+            onboardingDone -bool false
+          screens: |
+            ob-ja-01-brand   | -onboardingStep 1 -appLanguage ja -AppleLanguages (ja)
+            ob-ja-02-season  | -onboardingStep 2 -onboardingSeasonPage 0 -appLanguage ja -AppleLanguages (ja)
+            ob-ja-03-theme   | -onboardingStep 3 -appLanguage ja -AppleLanguages (ja)
+            ob-ja-04-link    | -onboardingStep 4 -onboardingBaselinePage 0 -appLanguage ja -AppleLanguages (ja)
+            ob-ja-04-cycle   | -onboardingStep 4 -onboardingBaselinePage 3 -appLanguage ja -AppleLanguages (ja)
+            ob-ja-05-storage | -onboardingStep 5 -appLanguage ja -AppleLanguages (ja)
+            ob-zh-01-brand   | -onboardingStep 1 -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            ob-zh-02-season  | -onboardingStep 2 -onboardingSeasonPage 0 -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            ob-zh-03-theme   | -onboardingStep 3 -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            ob-zh-04-link    | -onboardingStep 4 -onboardingBaselinePage 0 -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            ob-zh-04-cycle   | -onboardingStep 4 -onboardingBaselinePage 3 -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            ob-zh-05-storage | -onboardingStep 5 -appLanguage zh-Hans -AppleLanguages (zh-Hans)
+            ob-en-03-theme   | -onboardingStep 3 -appLanguage en -AppleLanguages (en)
+            ob-en-04-cycle   | -onboardingStep 4 -onboardingBaselinePage 3 -appLanguage en -AppleLanguages (en)
+            ob-en-05-storage | -onboardingStep 5 -appLanguage en -AppleLanguages (en)
+          output-dir: screenshots-onboarding-lang
+          artifact-name: screenshots-onboarding-lang
+          title: '템포루틴 온보딩 다국어 찰칵'
+          wait: '6'
+          fail-on-crash: 'false'
 
   testflight:
     name: TestFlight upload (archive + cloud signing)
