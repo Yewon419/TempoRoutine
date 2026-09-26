@@ -13224,6 +13224,98 @@
         }
       }
     },
+    "씨앗이 도착했어요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seeds have arrived"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねが届きました"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "种子到了"
+          }
+        }
+      }
+    },
+    "씨앗 %lld개를 보내 드려요. 아래 버튼을 눌러 받아 가세요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Here are %lld seeds for you. Tap the button below to collect them."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "たねを%lld個お送りします。下のボタンを押して受け取ってください。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送你 %lld 个种子，点下方按钮领取。"
+          }
+        }
+      }
+    },
+    "이미 받은 쿠폰이에요": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've already redeemed this coupon"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このクーポンは受け取り済みです"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这张兑换券已经领取过了"
+          }
+        }
+      }
+    },
+    "쿠폰 하나당 한 번만 받을 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each coupon can be redeemed once."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クーポンは1回だけ受け取れます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每张兑换券只能领取一次。"
+          }
+        }
+      }
+    },
     "씨앗 %lld개로 구매": {
       "extractionState": "manual",
       "localizations": {

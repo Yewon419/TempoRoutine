@@ -18,6 +18,8 @@ struct Notice: Codable, Identifiable, Equatable {
 
 private struct NoticeEnvelope: Codable {
     let notices: [Notice]
+    /// 씨앗 쿠폰(2026-09-26, Coupons.swift). optional = 필드 없는 구 JSON 호환.
+    let coupons: [Coupon]?
 }
 
 @MainActor
@@ -32,8 +34,10 @@ final class NoticeFeed {
     private static let cacheKey = "noticesCache"
     private static let seenKey = "noticesSeen"
     private static let fetchedAtKey = "noticesFetchedAt"
+    private static let couponsCacheKey = "couponsCache"
 
     private(set) var notices: [Notice] = []
+    private(set) var coupons: [Coupon] = []
     /// 캐시도 없이 fetch까지 실패한 상태에서만 빈 화면 안내를 바꾼다
     private(set) var loadFailed = false
 
@@ -42,6 +46,16 @@ final class NoticeFeed {
            let cached = try? JSONDecoder().decode([Notice].self, from: data) {
             notices = cached
         }
+        if let data = UserDefaults.standard.data(forKey: Self.couponsCacheKey),
+           let cached = try? JSONDecoder().decode([Coupon].self, from: data) {
+            coupons = cached
+        }
+    }
+
+    /// 정규화된 입력과 해시가 맞는 쿠폰
+    func coupon(matching normalized: String) -> Coupon? {
+        let digest = Coupon.digest(normalized)
+        return coupons.first { $0.hash.lowercased() == digest }
     }
 
     var seenIDs: Set<String> {
@@ -73,6 +87,10 @@ final class NoticeFeed {
             if let encoded = try? JSONEncoder().encode(notices) {
                 UserDefaults.standard.set(encoded, forKey: Self.cacheKey)
             }
+            coupons = envelope.coupons ?? []
+            if let encoded = try? JSONEncoder().encode(coupons) {
+                UserDefaults.standard.set(encoded, forKey: Self.couponsCacheKey)
+            }
             UserDefaults.standard.set(Date.now.timeIntervalSince1970, forKey: Self.fetchedAtKey)
         } catch {
             loadFailed = notices.isEmpty
@@ -97,6 +115,8 @@ struct NoticesView: View {
     @State private var feedbackSent = false
     /// 개발자 모드 토글 알럿(2026-08-27) — nil = 닫힘, 값 = 토글 후 상태
     @State private var devToggled: Bool?
+    /// 쿠폰 메시지(2026-09-26) — nil = 닫힘
+    @State private var openCoupon: Coupon?
     @FocusState private var feedbackFocused: Bool
     // placeholder 이스터에그(2026-08-31 대표님 지시) — 열 때마다 1/4 확률로 장난 문구가
     // 대신 자리한다. 표시만 바뀐다 — 보내기·개발자 모드 커맨드 판정과 무관.
@@ -150,6 +170,7 @@ struct NoticesView: View {
                 }
             }
         }
+        .overlay { couponLayer }
         .sheet(isPresented: $showMailComposer) {
             FeedbackMailComposer(text: trimmedFeedback) { sent in
                 showMailComposer = false
@@ -179,6 +200,16 @@ struct NoticesView: View {
         .task {
             await feed.refresh(force: true)
             feed.markAllSeen()
+        }
+    }
+
+    @ViewBuilder
+    private var couponLayer: some View {
+        if let coupon = openCoupon {
+            CouponMessage(coupon: coupon) {
+                withAnimation(.easeOut(duration: 0.2)) { openCoupon = nil }
+            }
+            .transition(.opacity)
         }
     }
 
@@ -235,6 +266,13 @@ struct NoticesView: View {
             feedbackText = ""
             feedbackFocused = false
             devToggled = DevMode.toggle()
+            return
+        }
+        // 씨앗 쿠폰(2026-09-26) — 맞는 코드는 피드백으로 보내지 않고 쿠폰 메시지를 띄운다
+        if let coupon = feed.coupon(matching: normalized) {
+            feedbackText = ""
+            feedbackFocused = false
+            withAnimation(.easeOut(duration: 0.2)) { openCoupon = coupon }
             return
         }
         if normalized.hasPrefix("//") { return }   // 커맨드 오타 — 조용히 무시(전송 금지)
