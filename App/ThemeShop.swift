@@ -1077,7 +1077,10 @@ struct ThemePreview: View {
             // 미리보기 갤러리(스크린샷)가 보여준다. 카드는 서체·지면·계절색만 말한다.
         }
         .padding(12)
-        .background { ground(p) }
+        // 지면은 터치를 받지 않는다(2026-09-26 iPad 「미리보기·적용 안 눌림」) — 티켓 사진(정사각)을
+        // scaledToFill로 넓은 띠에 채우면 위아래로 카드 폭만큼 넘치고, clipShape는 그림만 자를 뿐
+        // 히트 영역은 못 자른다. 넘친 투명 사진이 위쪽 카드들의 버튼을 덮었다(iPad 폭 ≈ ±260pt).
+        .background { ground(p).allowsHitTesting(false) }
         .overlay(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).stroke(groundInk(p).opacity(0.12), lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
         // 이 미니 카드가 보여주는 테마 기준 colorScheme — ThemePreviewScreen과 같은 이유
