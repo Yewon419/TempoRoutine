@@ -148,12 +148,8 @@ struct SettingsView: View {
                 // 표제를 앱이 직접 그린다(2026-09-26 대표님 결정) — 시스템 큰 제목은 앱 안 언어 전환
                 // 직후 조판 언어(typesettingLanguage)와 어긋나 ja 「設定」이 「•••」로 잘렸다(찰칵 실측).
                 // 대가: 스크롤 때 상단 바로 접히는 동작은 없다. 뒤로 버튼 라벨용 navigationTitle은 유지.
-                Text("설정")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(Ink.onSky)
-                    .accessibilityAddTraits(.isHeader)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                // ⚠ body 타입체크 한계선(CI 36286986182) — 하위 속성으로 둔다.
+                titleRow
                 // 행 재질 트레이트는 Group에 걸어 안의 전 행에 전파한다(개별 Section 무수정)
                 Group {
                 // 테마(2026-08-09 — 테마 탭 진입 행. 심기·적용·미리보기는 ThemeShopView, §3.8.1)
@@ -480,10 +476,7 @@ struct SettingsView: View {
             .ignoresSafeArea()
         }
         .navigationTitle("설정")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .principal) { EmptyView() } }   // 표제는 목록 첫 줄이 맡는다
-        // 하늘 지면(날씨)의 바 요소를 흰 잉크로(2026-09-03 베타 「설정 글씨 흰색 통일」)
-        .toolbarColorScheme(ThemeStore.chrome.skyGround ? .dark : nil, for: .navigationBar)
+        .modifier(SettingsTitleBar())   // 표제는 목록 첫 줄이 맡는다(모디파이어 체인 한계선이라 묶음)
         .sheet(item: Binding(
             get: { shareURL.map(ShareFile.init) },
             set: { if $0 == nil { shareURL = nil } }
@@ -558,6 +551,15 @@ struct SettingsView: View {
     }
 
     // ── undo 토스트 ──
+    private var titleRow: some View {
+        Text("설정")
+            .font(.largeTitle.bold())
+            .foregroundStyle(Ink.onSky)
+            .accessibilityAddTraits(.isHeader)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+    }
+
     private var undoToast: some View {
         HStack(spacing: 12) {
             Text("모든 기록을 삭제했어요.")
@@ -770,4 +772,15 @@ private struct ActivityShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+/// 설정 상단 바 — 큰 제목 대신 inline + 빈 principal(표제는 목록 첫 줄). 하늘 지면(날씨)은 바 요소를
+/// 흰 잉크로(2026-09-03 베타 「설정 글씨 흰색 통일」). body 체인 한계선이라 모디파이어로 묶었다.
+private struct SettingsTitleBar: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .principal) { EmptyView() } }
+            .toolbarColorScheme(ThemeStore.chrome.skyGround ? .dark : nil, for: .navigationBar)
+    }
 }
