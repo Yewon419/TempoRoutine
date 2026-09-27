@@ -548,7 +548,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@的心情，在%2$@记录得最明亮，在%3$@记录得最平静。"
+            "value": "%1$@，心情在%2$@记录得最明亮，在%3$@记录得最平静。"
           }
         }
       }
@@ -686,7 +686,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 记录显示，食欲在%2$@最好，在%3$@最低。"
+            "value": "%1$@，食欲在%2$@记录得最好，在%3$@记录得最差。"
           }
         }
       }
@@ -709,7 +709,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@的能量在%2$@记录得最高，在%3$@记录得最低。"
+            "value": "%1$@，能量在%2$@记录得最高，在%3$@记录得最低。"
           }
         }
       }
@@ -778,7 +778,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "记录显示，%1$@的睡眠在%2$@最安稳，在%3$@最不踏实。"
+            "value": "%1$@，睡眠在%2$@记录得最安稳，在%3$@记录得最不踏实。"
           }
         }
       }
@@ -8160,6 +8160,29 @@
         }
       }
     },
+    "언제든 내보내고 지울 수 있어요.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can export or delete them anytime."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いつでも書き出し・削除できます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "随时可以导出或删除。"
+          }
+        }
+      }
+    },
     "당신만이 언제든 내보내고 지울 수 있어요.": {
       "extractionState": "manual",
       "localizations": {
@@ -13121,7 +13144,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "使っていた記録があれば、\nそのまま引き継がれます。"
+            "value": "今までの記録も、\nそのまま続きます。"
           }
         },
         "zh-Hans": {
@@ -19494,7 +19517,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "过去 %lld 个周期，"
+            "value": "过去%lld个周期里"
           }
         }
       }
@@ -19517,7 +19540,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "从过去的记录看，"
+            "value": "从过去的记录看"
           }
         }
       }

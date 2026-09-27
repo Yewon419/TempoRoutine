@@ -42,7 +42,10 @@ struct InkSheetScaffold<Content: View, Footer: View>: View {
         HStack {
             Button(action: onCancel) { Text("취소") }
                 .buttonStyle(GhostUnderlineButtonStyle())
-                .frame(width: 64)
+                // 고정 폭 64는 「キャンセル」를 두 줄로 쪼갰다(2026-09-26 찰칵 ja) — 최소 폭으로, 한 줄 고정
+                .lineLimit(1)
+                .fixedSize()
+                .frame(minWidth: 64)
             Spacer()
             Text(eyebrow).eyebrowStyle()
         }

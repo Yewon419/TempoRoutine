@@ -110,6 +110,17 @@ struct TempoRoutineApp: App {
     /// 개발자 모드 관찰 — 소식란 커맨드(//dev)가 이 키를 토글하면 씬이 재평가돼 컨테이너가
     /// 갈아끼워진다. `.id`가 루트를 통째로 다시 세운다(테마·언어 리빌드와 같은 문법).
     @AppStorage(DevMode.key) private var devModeActive = false
+    /// 조판 언어 관찰(2026-09-26 찰칵 언어 전환 점검) — 한자 글꼴 선택·줄바꿈 규칙은 프로세스 시작
+    /// 언어로 굳는다. 앱 안에서 ko → ja·zh로 바꾸면 한자가 한국어 글꼴로 그려지고(「設定」 굵기·폭이
+    /// 다름) 중국어 문장이 띄어쓰기 단위로 끊겼다(「过去 3 / 个周期… / 。」). 새로 켜면 정상이라
+    /// 전환 직후에만 보이는 「화면 깨짐」의 뿌리. 온보딩·시트까지 받도록 씬 루트에 건다.
+    @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.system.rawValue
+
+    /// appLanguage를 읽어 두어야 언어가 바뀔 때 씬이 다시 평가된다(값 자체는 Loc가 해석)
+    private var typesetting: Locale.Language {
+        _ = appLanguage
+        return Loc.locale.language
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -119,6 +130,7 @@ struct TempoRoutineApp: App {
                 // 오늘 탭 잘림). 칩·자·캘린더 격자 같은 밀집 조판은 접근성 크기를 감당하지 못한다 — 접근성
                 // 5단계는 포기하고 xxxLarge까지만 따른다. 시트·풀스크린 커버도 환경을 물려받는다.
                 .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                .typesettingLanguage(typesetting)
             // 다크 = 적응형 토큰으로 대응(Ink — 2026-07-20 사용자 결정). 정식 다크 테마는 미학 패스.
         }
         .modelContainer(devModeActive ? Self.devContainer : Self.container)
