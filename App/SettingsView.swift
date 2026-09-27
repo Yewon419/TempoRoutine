@@ -556,6 +556,7 @@ struct SettingsView: View {
             .font(.largeTitle.bold())
             .foregroundStyle(Ink.onSky)
             .accessibilityAddTraits(.isHeader)
+            .padding(.top, 50)   // 숨긴 바 높이만큼 — 종전 시스템 큰 제목 자리(찰칵 d12accf 전후 대조)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
