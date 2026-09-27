@@ -774,13 +774,11 @@ private struct ActivityShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
-/// 설정 상단 바 — 큰 제목 대신 inline + 빈 principal(표제는 목록 첫 줄). 하늘 지면(날씨)은 바 요소를
-/// 흰 잉크로(2026-09-03 베타 「설정 글씨 흰색 통일」). body 체인 한계선이라 모디파이어로 묶었다.
+/// 설정 상단 바 숨김 — 표제는 목록 첫 줄이 맡는다. inline + 빈 principal로는 inline 제목이 남아
+/// 표제가 두 번 떴다(찰칵 7e9b6a3). 바에 버튼이 없어 숨겨도 잃는 게 없고, 하위 화면(구입 내역)은
+/// 자기 바를 띄우며 뒤로 버튼 라벨은 navigationTitle을 쓴다. body 체인 한계선이라 모디파이어로 묶었다.
 private struct SettingsTitleBar: ViewModifier {
     func body(content: Content) -> some View {
-        content
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .principal) { EmptyView() } }
-            .toolbarColorScheme(ThemeStore.chrome.skyGround ? .dark : nil, for: .navigationBar)
+        content.toolbar(.hidden, for: .navigationBar)
     }
 }
