@@ -145,6 +145,15 @@ struct SettingsView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             List {
+                // 표제를 앱이 직접 그린다(2026-09-26 대표님 결정) — 시스템 큰 제목은 앱 안 언어 전환
+                // 직후 조판 언어(typesettingLanguage)와 어긋나 ja 「設定」이 「•••」로 잘렸다(찰칵 실측).
+                // 대가: 스크롤 때 상단 바로 접히는 동작은 없다. 뒤로 버튼 라벨용 navigationTitle은 유지.
+                Text("설정")
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(Ink.onSky)
+                    .accessibilityAddTraits(.isHeader)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 // 행 재질 트레이트는 Group에 걸어 안의 전 행에 전파한다(개별 Section 무수정)
                 Group {
                 // 테마(2026-08-09 — 테마 탭 진입 행. 심기·적용·미리보기는 ThemeShopView, §3.8.1)
@@ -471,8 +480,9 @@ struct SettingsView: View {
             .ignoresSafeArea()
         }
         .navigationTitle("설정")
-        // 큰 제목 「설정」은 시스템 라벨색이라 하늘 지면에서 검정으로 떨어진다 — 날씨만 흰
-        // 잉크로 뒤집는다(2026-09-03 베타 「설정 글씨 흰색 통일」. 다른 테마는 종전 그대로)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .principal) { EmptyView() } }   // 표제는 목록 첫 줄이 맡는다
+        // 하늘 지면(날씨)의 바 요소를 흰 잉크로(2026-09-03 베타 「설정 글씨 흰색 통일」)
         .toolbarColorScheme(ThemeStore.chrome.skyGround ? .dark : nil, for: .navigationBar)
         .sheet(item: Binding(
             get: { shareURL.map(ShareFile.init) },
