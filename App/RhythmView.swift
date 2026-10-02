@@ -586,9 +586,8 @@ struct RhythmView: View {
                     lastSignalRaw = signal.rawValue
                 }
             }
-            Spacer(minLength: 0)
         }
-        .padding(.leading, 4)
+        .frame(maxWidth: .infinity)   // 가운데 정렬(2026-10-01 베타 "에너지-식욕 저거 가운데 정렬해줘")
         .accessibilityElement(children: .contain)
         .accessibilityLabel("신호 선택")
     }
@@ -953,20 +952,23 @@ struct RhythmView: View {
     }
 
     /// 폴라로이드(2026-09-23 베타 "사진 정사각형으로 넣고 폴라로이드같은 처리") — 정사각 도판 +
-    /// 흰 인화지 테두리, 아래 여백만 두껍게. 피드 칸 폭을 다 쓰면 과해서 상한을 두고 가운데 놓는다.
+    /// 흰 인화지 테두리, 아래 여백만 두껍게. 폭은 카드 가로폭에 거의 닿게(2026-09-25 베타
+    /// "폴라로이드 사이즈 좀더 키워 카드 가로폭에 거의 닿도록" — 종전 240 고정 상한 폐기).
     private func polaroid(_ image: UIImage) -> some View {
-        let side: CGFloat = 240
-        return Image(uiImage: image)
-            .resizable()
-            .scaledToFill()
-            .frame(width: side, height: side)
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            }
             .clipped()
             .padding(.horizontal, 10)
             .padding(.top, 10)
             .padding(.bottom, 34)
             .background(Color.white)
             .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 4)
             .padding(.vertical, 4)
             .contentShape(Rectangle())
     }

@@ -356,10 +356,17 @@ struct CheckInCard: View {
                 // 부풀고, 그 커진 프레임이 카드 밖까지 깔려 **카드 전체의 탭을 가로챘다**.
                 // 높이를 확정(frame(height:))하고 clipped로 자른 뒤 히트 영역까지 프레임으로
                 // 고정한다. 사진 자체는 누를 대상이 아니라 히트테스트를 아예 끈다(지우기는 X 버튼).
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)   // 피드 칸과 동일 높이(2026-09-07)
+                // ⚠ 폭도 확정해야 한다(2026-10-01 베타 "이건 뭔 버그니") — `frame(maxWidth: .infinity)`는
+                // 자식 폭을 받아들이는 상한일 뿐이라, 가로로 긴 사진은 높이 200에 맞춰 채운 폭이 카드보다
+                // 넓어져 오른쪽으로 넘쳤다. 제안 폭을 그대로 쓰는 Color.clear를 틀로 두고 사진은 overlay로.
+                Color.clear
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 200)   // 피드 칸과 동일 높이(2026-09-07)
+                    .overlay {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    }
                     .clipped()
                     .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
