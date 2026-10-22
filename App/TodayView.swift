@@ -301,7 +301,8 @@ struct TodayView: View {
                 guard ThemeStore.chrome.playlistChrome, hSize != .regular else { return }
                 if plStage == 1, top < -64 { plAdvance(0) }
             }
-            compactBar
+            // 티켓(사진 지면)은 컴팩트 바 없음(2026-10-14 베타 "맨 위에 겨울 바 없애자")
+            if !ThemeStore.chrome.photographicGround { compactBar }
             }
         }
     }
@@ -712,19 +713,10 @@ struct TodayView: View {
             Spacer()
         }
         .padding(.vertical, 10)
-        // 사진 지면(티켓) = 발권지 불투명 바(2026-08-25 베타 "상단 가을 바가 너무 어둡다" —
-        // ultraThin이 어두운 유화를 그대로 비쳤다). 그 외 테마는 종전 재질.
         .background {
-            if ThemeStore.chrome.photographicGround {
-                TicketSpec.ticketPaper.ignoresSafeArea(edges: .top)
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(Ink.text.opacity(0.12)).frame(height: 1)   // 경계 극세 괘선(§3.3-⑦ 동조)
-                    }
-            } else {
-                Rectangle().fill(.ultraThinMaterial)
-                    .overlay { Color.skyGlassDim }   // 날씨 = 라이트 재질 위 다크 글래스 잉크판(2026-08-31)
-                    .ignoresSafeArea(edges: .top)
-            }
+            Rectangle().fill(.ultraThinMaterial)
+                .overlay { Color.skyGlassDim }   // 날씨 = 라이트 재질 위 다크 글래스 잉크판(2026-08-31)
+                .ignoresSafeArea(edges: .top)
         }
         .opacity(isCollapsed ? 1 : 0)
         .allowsHitTesting(false)

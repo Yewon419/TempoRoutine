@@ -55,6 +55,8 @@ targets:
         # 기본을 대략적 정확도로 — 날씨엔 시 단위면 충분(프라이버시 최소 수집)
         INFOPLIST_KEY_NSLocationDefaultAccuracyReduced: YES
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: 이 앱에서 남긴 생리 기록을 건강 앱에도 저장해요. 원할 때 끌 수 있어요.
+        # 한 줄 기록 「바로 찍기」(2026-10-14 베타) — 찍은 사진은 이 기기 안에만 둔다(CheckInPhotoStore)
+        INFOPLIST_KEY_NSCameraUsageDescription: 오늘 한 줄에 바로 찍은 사진을 넣기 위해서만 써요. 사진은 이 아이폰 안에만 남아요.
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 4VD7XCCBQN
     # 구입 내역(2026-09-04) — 소모품(커피 한 잔)은 finish 하면 StoreKit 이력에서 지워지는 게

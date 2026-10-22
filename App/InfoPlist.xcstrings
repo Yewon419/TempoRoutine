@@ -1,6 +1,36 @@
 {
   "sourceLanguage": "ko",
   "strings": {
+    "NSCameraUsageDescription": {
+      "comment": "Info.plist 문자열 — 기본값은 project.yml의 INFOPLIST_KEY_*",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used only to add a photo you take right now to Today's one line. Photos stay on this iPhone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「今日の一行」に、その場で撮った写真を添えるためだけに使います。写真はこのiPhoneの中だけに残ります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 한 줄에 바로 찍은 사진을 넣기 위해서만 써요. 사진은 이 아이폰 안에만 남아요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅用于把当场拍的照片放进「今天的一行」。照片只留在这台 iPhone 上。"
+          }
+        }
+      }
+    },
     "CFBundleDisplayName": {
       "comment": "Info.plist 문자열 — 기본값은 project.yml의 INFOPLIST_KEY_*",
       "extractionState": "manual",

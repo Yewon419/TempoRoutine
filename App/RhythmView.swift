@@ -932,7 +932,9 @@ struct RhythmView: View {
             Button { pushedDiaryDay = entry.day } label: { diaryHeader(entry, meta: meta) }
                 .buttonStyle(.plain)
             if let image = CheckInPhotoStore.image(named: entry.photoName) {
-                Button { pushedDiaryDay = entry.day } label: { polaroid(image) }
+                Button { pushedDiaryDay = entry.day } label: {
+                    polaroid(image, focus: CheckInPhotoStore.focus(named: entry.photoName))
+                }
                     .buttonStyle(.plain)
             }
             // 한 줄 일기 본문 — 한글이 주라 시스템 세리프면 고딕 폴백(2026-08-01 베타 피드백)
@@ -954,15 +956,11 @@ struct RhythmView: View {
     /// 폴라로이드(2026-09-23 베타 "사진 정사각형으로 넣고 폴라로이드같은 처리") — 정사각 도판 +
     /// 흰 인화지 테두리, 아래 여백만 두껍게. 폭은 카드 가로폭에 거의 닿게(2026-09-25 베타
     /// "폴라로이드 사이즈 좀더 키워 카드 가로폭에 거의 닿도록" — 종전 240 고정 상한 폐기).
-    private func polaroid(_ image: UIImage) -> some View {
+    /// 도판은 한 줄 기록에서 고른 보일 위치(초점)를 따른다(2026-10-14 베타).
+    private func polaroid(_ image: UIImage, focus: CGPoint) -> some View {
         Color.clear
             .aspectRatio(1, contentMode: .fit)
-            .overlay {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            }
-            .clipped()
+            .overlay { FocusedPhoto(image: image, focus: focus) }
             .padding(.horizontal, 10)
             .padding(.top, 10)
             .padding(.bottom, 34)

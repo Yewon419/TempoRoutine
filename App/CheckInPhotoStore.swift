@@ -32,8 +32,13 @@ enum CheckInPhotoStore {
 
     /// 고른 사진을 줄여서 저장하고 파일 이름을 돌려준다. 실패하면 nil(기록은 건드리지 않는다).
     static func save(_ data: Data) -> String? {
-        guard let image = UIImage(data: data),
-              let jpeg = downscaled(image).jpegData(compressionQuality: 0.8) else { return nil }
+        guard let image = UIImage(data: data) else { return nil }
+        return save(image)
+    }
+
+    /// 카메라로 바로 찍은 사진(2026-10-14 베타) — 같은 축소·저장 경로
+    static func save(_ image: UIImage) -> String? {
+        guard let jpeg = downscaled(image).jpegData(compressionQuality: 0.8) else { return nil }
         let name = UUID().uuidString + ".jpg"
         guard let url = url(for: name) else { return nil }
         do {
@@ -57,15 +62,37 @@ enum CheckInPhotoStore {
         return image
     }
 
+    /// 보일 위치(2026-10-14 베타) = 사진 안의 초점(0~1, 기본 가운데). 사진 파일처럼 이 기기 안에만 둔다 —
+    /// 사진이 동기화·내보내기에 안 실리니 초점도 @Model에 넣지 않고 파일 이름을 키로 따로 둔다.
+    private static let focusKey = "checkInPhotoFocus"
+    static let centerFocus = CGPoint(x: 0.5, y: 0.5)
+
+    static func focus(named name: String?) -> CGPoint {
+        guard let name,
+              let pair = UserDefaults.standard.dictionary(forKey: focusKey)?[name] as? [Double],
+              pair.count == 2 else { return centerFocus }
+        return CGPoint(x: pair[0], y: pair[1])
+    }
+
+    static func setFocus(_ focus: CGPoint, named name: String) {
+        var all = UserDefaults.standard.dictionary(forKey: focusKey) ?? [:]
+        all[name] = [Double(focus.x), Double(focus.y)]
+        UserDefaults.standard.set(all, forKey: focusKey)
+    }
+
     static func delete(_ name: String?) {
         guard let name, let url = url(for: name) else { return }
         cache.removeObject(forKey: name as NSString)
+        var all = UserDefaults.standard.dictionary(forKey: focusKey) ?? [:]
+        all[name] = nil
+        UserDefaults.standard.set(all, forKey: focusKey)
         try? FileManager.default.removeItem(at: url)
     }
 
     /// 전체 삭제·앱 초기화 — 기록이 사라지면 사진도 남을 이유가 없다
     static func purgeAll() {
         cache.removeAllObjects()
+        UserDefaults.standard.removeObject(forKey: focusKey)
         guard let directory else { return }
         try? FileManager.default.removeItem(at: directory)
     }

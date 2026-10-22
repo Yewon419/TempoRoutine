@@ -27,6 +27,11 @@ struct CheckInCard: View {
     /// 한 줄 기록 사진(2026-09-04 베타) — 파일 이름만 든다. 최대 1장이라 배열이 아니다.
     @State private var draftPhotoName: String?
     @State private var photoItem: PhotosPickerItem?
+    /// 보일 위치·바로 찍기(2026-10-14 베타) — 초점은 CheckInPhotoStore가 쥐고, 여기 값은 다시 그리기용 거울
+    @State private var draftFocus: CGPoint = CheckInPhotoStore.centerFocus
+    @State private var focusEditing: PhotoFocusTarget?
+    @State private var showCamera = false
+    @State private var capturedPhotoName: String?
     /// 증상 칩 펼침(2026-09-04 베타 "아픈곳 저렇게 바로 노출하지 말고") — 기본은 접힘.
     /// 이미 적어 둔 증상이 있으면 로드 때 펼친다(기록이 있는데 안 보이면 안 된다).
     @State private var symptomsExpanded = false
@@ -138,6 +143,31 @@ struct CheckInCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .milkGlass()
         .onDisappear { flushNotePersist() }
+        .sheet(item: $focusEditing) { target in
+            if let image = CheckInPhotoStore.image(named: target.id) {
+                PhotoFocusSheet(image: image, initial: CheckInPhotoStore.focus(named: target.id)) { focus in
+                    CheckInPhotoStore.setFocus(focus, named: target.id)
+                    if draftPhotoName == target.id { draftFocus = focus }
+                }
+                .themeColorScheme()
+            }
+        }
+        // 위치 시트는 카메라가 다 내려간 뒤에 띄운다 — 내려가는 중에 다른 시트를 올리면 표시가 무시된다
+        .fullScreenCover(isPresented: $showCamera, onDismiss: {
+            if let name = capturedPhotoName {
+                capturedPhotoName = nil
+                focusEditing = PhotoFocusTarget(id: name)
+            }
+        }) {
+            CameraCapture { image in
+                if let image, let name = CheckInPhotoStore.save(image) {
+                    attachPhoto(name)
+                    capturedPhotoName = name
+                }
+                showCamera = false
+            }
+            .ignoresSafeArea()
+        }
     }
 
     /// 글은 키 입력마다 저장하지 않는다(2026-09-15 베타 "사진 들어가니까 타자 레전드 느려짐") — 한 글자마다
@@ -301,6 +331,7 @@ struct CheckInCard: View {
         // 오늘 record가 없을 때 loadDraft가 덮어쓰지 않아 어제 이름이 남고, persistDraft가 그대로
         // 오늘 기록에 박는다. 파일은 지우지 않는다 — 어제 record가 아직 그 이름을 참조한다.
         draftPhotoName = nil
+        draftFocus = CheckInPhotoStore.centerFocus
         draftNote = ""
         draftLoaded = false
         loadDraft()
@@ -318,6 +349,7 @@ struct CheckInCard: View {
             symptomsExpanded = !draftSymptoms.isEmpty   // 적어 둔 게 있으면 펼친 채로 연다
             draftNote = existing.note ?? ""
             draftPhotoName = existing.photoName
+            draftFocus = CheckInPhotoStore.focus(named: existing.photoName)
         }
     }
 
@@ -359,72 +391,101 @@ struct CheckInCard: View {
                 // ⚠ 폭도 확정해야 한다(2026-10-01 베타 "이건 뭔 버그니") — `frame(maxWidth: .infinity)`는
                 // 자식 폭을 받아들이는 상한일 뿐이라, 가로로 긴 사진은 높이 200에 맞춰 채운 폭이 카드보다
                 // 넓어져 오른쪽으로 넘쳤다. 제안 폭을 그대로 쓰는 Color.clear를 틀로 두고 사진은 overlay로.
-                Color.clear
+                // 보일 위치(2026-10-14 베타)는 FocusedPhoto가 초점 기준으로 채운다 — 틀 확정 원칙은 위와 같다
+                FocusedPhoto(image: image, focus: draftFocus)
                     .frame(maxWidth: .infinity)
                     .frame(height: 200)   // 피드 칸과 동일 높이(2026-09-07)
-                    .overlay {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                    }
-                    .clipped()
                     .contentShape(Rectangle())
                     .clipShape(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous))
                     // 사진 가장자리가 지면에 번지지 않게 안쪽 검정 8% 윤곽(make-interfaces-feel-better)
                     .overlay(RoundedRectangle(cornerRadius: Radius.inner, style: .continuous).strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
                     .allowsHitTesting(false)
-                Button {
-                    removePhoto()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(Ink.paper)
-                        .padding(6)
-                        .background(Ink.text.opacity(0.55), in: Circle())
+                HStack(spacing: 6) {
+                    if let name = draftPhotoName {
+                        photoCornerButton(symbol: "arrow.up.and.down.and.arrow.left.and.right",
+                                          label: Loc.str("사진 위치 조정")) {
+                            focusEditing = PhotoFocusTarget(id: name)
+                        }
+                    }
+                    photoCornerButton(symbol: "xmark", label: Loc.str("사진 지우기")) { removePhoto() }
                 }
-                .buttonStyle(.plain)
                 .padding(8)
-                .accessibilityLabel(Loc.str("사진 지우기"))
             }
         } else {
-            // 빈 자리 = 전폭 16:9 점선 상자(베타 09-13 "사진 첨부 탭을 16:9 직사각형으로 크게") —
-            // 사진이 들어갈 자리를 미리 보여준다. 들어가면 위 분기(200 높이 사진)로 바뀐다.
-            PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
-                photoDropZone
-            }
-            .onChange(of: photoItem) { _, item in
-                guard let item else { return }
-                Task { @MainActor in
-                    // 고른 사진을 줄여 파일로 저장하고 이름만 기록에 붙인다(원본은 안 들고 온다)
-                    guard let data = try? await item.loadTransferable(type: Data.self),
-                          let name = CheckInPhotoStore.save(data) else { photoItem = nil; return }
-                    // 갈아 끼울 땐 옛 파일을 남기지 않는다(다른 날이 같이 쓰고 있으면 남긴다)
-                    CheckInStore.releasePhoto(draftPhotoName, excluding: record, in: checkIns)
-                    draftPhotoName = name
-                    photoItem = nil
-                    persistDraft()
+            photoDropZone
+                .onChange(of: photoItem) { _, item in
+                    guard let item else { return }
+                    Task { @MainActor in
+                        // 고른 사진을 줄여 파일로 저장하고 이름만 기록에 붙인다(원본은 안 들고 온다)
+                        guard let data = try? await item.loadTransferable(type: Data.self),
+                              let name = CheckInPhotoStore.save(data) else { photoItem = nil; return }
+                        photoItem = nil
+                        attachPhoto(name)
+                        focusEditing = PhotoFocusTarget(id: name)   // 넣자마자 보일 위치(2026-10-14 베타)
+                    }
                 }
-            }
         }
     }
 
+    private func photoCornerButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(Ink.paper)
+                .padding(6)
+                .background(Ink.text.opacity(0.55), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    /// 빈 자리 = 전폭 16:9 점선 상자(베타 09-13 "사진 첨부 탭을 16:9 직사각형으로 크게") — 사진이 들어갈
+    /// 자리를 미리 보여준다. 카메라가 있으면 반으로 갈라 「사진 넣기 | 바로 찍기」(2026-10-14 베타).
+    /// PhotosPicker는 앱 밖 프로세스에서 고르게 하므로 사진 접근 권한 문구가 필요 없다(카메라는 필요).
     private var photoDropZone: some View {
         let shape: RoundedRectangle = RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
         let dashed: StrokeStyle = StrokeStyle(lineWidth: 1, dash: [5, 4])
         return ZStack {
             shape.fill(Ink.text.opacity(0.03))
             shape.strokeBorder(Ink.text.opacity(0.28), style: dashed)
-            VStack(spacing: 6) {
-                Image(systemName: "photo")
-                    .font(.title3)
-                Text("사진 넣기")
-                    .font(.caption)
+            HStack(spacing: 0) {
+                PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
+                    dropZoneLabel(symbol: "photo", title: Loc.str("사진 넣기"))
+                }
+                if CameraCapture.isAvailable {
+                    Rectangle()
+                        .fill(Ink.text.opacity(0.18))
+                        .frame(width: 1)
+                        .padding(.vertical, 20)
+                    Button { showCamera = true } label: {
+                        dropZoneLabel(symbol: "camera", title: Loc.str("바로 찍기"))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .foregroundStyle(Ink.text.opacity(0.5))
         }
         .frame(maxWidth: .infinity)
         .aspectRatio(16.0 / 9.0, contentMode: .fit)
+    }
+
+    private func dropZoneLabel(symbol: String, title: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: symbol)
+                .font(.title3)
+            Text(title)
+                .font(.caption)
+        }
+        .foregroundStyle(Ink.text.opacity(0.5))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
+    }
+
+    /// 새 사진을 이 날 기록에 붙인다. 갈아 끼울 땐 옛 파일을 남기지 않는다(다른 날이 같이 쓰고 있으면 남긴다).
+    private func attachPhoto(_ name: String) {
+        CheckInStore.releasePhoto(draftPhotoName, excluding: record, in: checkIns)
+        draftPhotoName = name
+        draftFocus = CheckInPhotoStore.focus(named: name)
+        persistDraft()
     }
 
     private func removePhoto() {
