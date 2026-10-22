@@ -445,12 +445,13 @@ struct CheckInCard: View {
     private var photoDropZone: some View {
         let shape: RoundedRectangle = RoundedRectangle(cornerRadius: Radius.inner, style: .continuous)
         let dashed: StrokeStyle = StrokeStyle(lineWidth: 1, dash: [5, 4])
+        let pickTitle: String = Loc.str("사진 넣기")   // PhotosPicker 라벨 클로저는 메인 액터 밖 — 값은 밖에서 만든다
         return ZStack {
             shape.fill(Ink.text.opacity(0.03))
             shape.strokeBorder(Ink.text.opacity(0.28), style: dashed)
             HStack(spacing: 0) {
                 PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
-                    dropZoneLabel(symbol: "photo", title: Loc.str("사진 넣기"))
+                    DropZoneLabel(symbol: "photo", title: pickTitle)
                 }
                 if CameraCapture.isAvailable {
                     Rectangle()
@@ -458,7 +459,7 @@ struct CheckInCard: View {
                         .frame(width: 1)
                         .padding(.vertical, 20)
                     Button { showCamera = true } label: {
-                        dropZoneLabel(symbol: "camera", title: Loc.str("바로 찍기"))
+                        DropZoneLabel(symbol: "camera", title: Loc.str("바로 찍기"))
                     }
                     .buttonStyle(.plain)
                 }
@@ -466,18 +467,6 @@ struct CheckInCard: View {
         }
         .frame(maxWidth: .infinity)
         .aspectRatio(16.0 / 9.0, contentMode: .fit)
-    }
-
-    private func dropZoneLabel(symbol: String, title: String) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: symbol)
-                .font(.title3)
-            Text(title)
-                .font(.caption)
-        }
-        .foregroundStyle(Ink.text.opacity(0.5))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .contentShape(Rectangle())
     }
 
     /// 새 사진을 이 날 기록에 붙인다. 갈아 끼울 땐 옛 파일을 남기지 않는다(다른 날이 같이 쓰고 있으면 남긴다).
@@ -554,5 +543,24 @@ private struct ChipFlow: Layout {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+    }
+}
+
+/// 사진 자리 점선 상자의 한쪽 라벨(2026-10-14) — 독립 뷰로 둔다. PhotosPicker 라벨 클로저는 메인 액터 밖이라
+/// 카드의 private 메서드를 부르면 Swift 6에서 컴파일이 깨진다(CI 39759747223).
+private struct DropZoneLabel: View {
+    let symbol: String
+    let title: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: symbol)
+                .font(.title3)
+            Text(title)
+                .font(.caption)
+        }
+        .foregroundStyle(Ink.text.opacity(0.5))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
     }
 }
