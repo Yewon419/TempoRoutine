@@ -167,6 +167,11 @@
   `Invalid Pre-Release Train … closed for new build submissions`으로 거부된다(2026-09-07 실측, 0.1.0 승인 후
   첫 dispatch). 승인 뒤 첫 배포 전에 `project.yml`의 MARKETING_VERSION을 **앱·위젯 두 타깃 같이** 올릴 것
   (ASC 표시명 「1.0」과 번들 문자열 0.1.0은 다르다 — 트레인은 번들 문자열 기준).
+  메모리·문서에 승인 기록이 없어도 트레인이 닫혀 있을 수 있다(2026-10-22 실측: 0.1.2가 기록 없이 닫혀 업로드
+  잡 40분을 날렸다). 오랜만의 배포 전엔 ASC에서 최근 승인 버전부터 확인할 것.
+- **`PhotosPicker` 라벨 클로저는 메인 액터 밖이다** — 뷰의 private 메서드(`func … -> some View`)를 부르면
+  Swift 6에서 "non-Sendable 'some View' result … to nonisolated context"로 깨진다(2026-10-22 CI 한 바퀴).
+  라벨은 독립 `View` 구조체로 만들고, `Loc.str` 같은 값은 클로저 밖에서 만들어 넘길 것.
 
 ## Android (`android/`, MASTER §5.13)
 
