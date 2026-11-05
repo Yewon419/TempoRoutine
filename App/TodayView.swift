@@ -1136,8 +1136,9 @@ struct TodayView: View {
                     HStack(spacing: 6) {
                         if item.isSingleCheck {
                             singleCheckButton(item)
+                        } else {
+                            outputTitle(item)
                         }
-                        Text(item.title).font(.almanacBody(.subheadline, size: 14, weight: .bold)).foregroundStyle(Ink.text)   // 15 → 14(행 제목 일괄)
                         if let target = item.targetDate {
                             DDayBadge(target: target, from: today)
                         }
@@ -1172,18 +1173,26 @@ struct TodayView: View {
 
     /// 단일 체크 목표의 제목 앞 동그라미(2026-09-23 베타 "ㅇ제자엠티장소 이런식으로") — 루틴 행과
     /// 같은 먹 도장. 저장 규칙은 checkOnlyControl과 같다(percent 0↔1).
+    /// 제목 글씨도 버튼 라벨에 넣는다(2026-10-23 베타 "체크리스트 글씨 눌러도 체크되게").
     private func singleCheckButton(_ item: OutputItem) -> some View {
         Button {
             item.percent = item.percent >= 1 ? 0 : 1
             if item.percent >= 1 { confirmFeedback += 1 } else { lightFeedback += 1 }
         } label: {
-            StampCheck(checked: item.percent >= 1)
-                .padding(.trailing, 4)
-                .contentShape(Rectangle())
+            HStack(spacing: 6) {
+                StampCheck(checked: item.percent >= 1)
+                    .padding(.trailing, 4)
+                outputTitle(item)
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(item.title)
         .accessibilityValue(item.percent >= 1 ? Loc.str("완료") : Loc.str("미완료"))
+    }
+
+    private func outputTitle(_ item: OutputItem) -> some View {
+        Text(item.title).font(.almanacBody(.subheadline, size: 14, weight: .bold)).foregroundStyle(Ink.text)   // 15 → 14(행 제목 일괄)
     }
 
     /// 체크만(2026-08-18) — 저장은 percent 0↔1. 완료는 종전대로 파생(isComplete).
