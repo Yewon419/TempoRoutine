@@ -159,6 +159,7 @@ struct TodayView: View {
     @State private var expandRequest: CardAddRequest?
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var pendingDelete: QuickDeleteTarget?   // 행 길게 누르기 = 빠른 삭제(2026-07-27)
+    @State private var pushedDay: Date?   // 전날·다음날 화살표 → 그날 하루 상세(2026-10-27 베타)
     @State private var isCollapsed = false
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
@@ -316,6 +317,12 @@ struct TodayView: View {
             quickAddLayer
         }
         .animation(.easeOut(duration: 0.22), value: quickAdd)
+        // 루트는 제목 없는 조판 — 막대를 숨기고, push된 하루 상세에서만 뒤로 막대(나의 템포 탭과 같은 문법)
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationDestination(item: $pushedDay) { day in
+            DayDetailView(day: day)
+                .toolbar(.visible, for: .navigationBar)
+        }
         .sheet(isPresented: $showLogSheet) { PeriodTrackerSheet().themeColorScheme() }
         // 테마 탭 시트 표시는 RootTabView 한 곳 — 진입점이 둘(여기·설정)이라 각자 띄우면
         // 같은 플래그를 보는 시트가 두 개가 된다(2026-08-11). 여기선 플래그만 세운다.
@@ -728,8 +735,28 @@ struct TodayView: View {
         HStack(alignment: .center) {
             periodLogButton
             Spacer(minLength: 12)
+            dayStepArrow(by: -1)
+            dayStepArrow(by: 1)
             periodToggle
+                .padding(.leading, 4)
         }
+    }
+
+    /// 전날·다음날(2026-10-27 베타 "여기에도 전날다음날 이동") — 오늘 탭은 기준일이 늘 오늘이라
+    /// 날짜를 바꾸지 않고 그날 하루 상세를 push한다. 거기서부터는 하루 상세의 이동 바로 이어간다.
+    private func dayStepArrow(by days: Int) -> some View {
+        Button {
+            lightFeedback += 1
+            pushedDay = cal.date(byAdding: .day, value: days, to: today)
+        } label: {
+            Image(systemName: days < 0 ? "chevron.left" : "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Ink.onGround(Ink.text.opacity(0.7), white: 0.85))
+                .frame(width: 34, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(days < 0 ? Loc.str("전날") : Loc.str("다음날"))
     }
 
     private var periodLogButton: some View {

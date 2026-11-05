@@ -86,8 +86,10 @@ struct RootTabView: View {
 
     var body: some View {
         TabView(selection: $rootTab) {
-            TodayView()
-                .background(WidgetRefresher())   // 데이터 변경 → 위젯 재발행(2026-09-15). 루트 체인 대신 탭 안에
+            NavigationStack {   // 전날·다음날 → 하루 상세 push(2026-10-27 베타)
+                TodayView()
+                    .background(WidgetRefresher())   // 데이터 변경 → 위젯 재발행(2026-09-15). 루트 체인 대신 탭 안에
+            }
                 .themeTabBarPlate()
                 .tabItem { tabLabel("오늘", symbol: "circle.inset.filled", ticketAsset: "TicketIconSun") }
                 .tag(RootTab.today.rawValue)
