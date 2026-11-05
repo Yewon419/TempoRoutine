@@ -479,12 +479,18 @@ func sortedByTimeOfDay<T>(_ items: [T], time: (T) -> Int?) -> [T] {
 /// 루틴 정렬(2026-11-05): 직접 옮긴 순서(sortOrder) 먼저, 아직 안 옮긴 것은 그 뒤에 시각순.
 /// 오늘 탭·하루 상세·위젯이 같은 규칙을 쓴다.
 func orderedInputs<T>(_ items: [T], input: (T) -> InputItem) -> [T] {
-    let manual = items.enumerated()
-        .compactMap { pair in input(pair.element).sortOrder.map { (pair.offset, $0, pair.element) } }
-        .sorted { $0.1 == $1.1 ? $0.0 < $1.0 : $0.1 < $1.1 }
-        .map { $0.2 }
-    let rest = sortedByTimeOfDay(items.filter { input($0).sortOrder == nil }) { input($0).timeMinutes }
-    return manual + rest
+    var manual: [(position: Int, order: Int, element: T)] = []
+    var unordered: [T] = []
+    for (position, element) in items.enumerated() {
+        if let order = input(element).sortOrder {
+            manual.append((position: position, order: order, element: element))
+        } else {
+            unordered.append(element)
+        }
+    }
+    manual.sort { a, b in a.order == b.order ? a.position < b.position : a.order < b.order }
+    let rest: [T] = sortedByTimeOfDay(unordered) { input($0).timeMinutes }
+    return manual.map { $0.element } + rest
 }
 
 /// 루틴 하나를 화면 목록의 `index` 자리로 옮긴다(2026-11-05). 화면엔 그날 뜨는 것만 보이므로
