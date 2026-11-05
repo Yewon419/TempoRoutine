@@ -160,6 +160,8 @@ struct TodayView: View {
     @State private var editingSchedule: ScheduleItem?   // 일정 행 탭 = 수정 시트(2026-07-23)
     @State private var pendingDelete: QuickDeleteTarget?   // 행 길게 누르기 = 빠른 삭제(2026-07-27)
     @State private var pushedDay: Date?   // 전날·다음날 화살표 → 그날 하루 상세(2026-10-27 베타)
+    @State private var reorderingInput = false   // 루틴 행이 들려 있는 동안 스크롤 잠금(2026-11-05)
+    @State private var inputRowMids = RowMidStore()
     @State private var isCollapsed = false
     @State private var confirmFeedback = 0   // 확정 순간 햅틱(§4 — 아이템 완료)
     @State private var lightFeedback = 0     // 작은 햅틱(§4 — 진행도 조정 등, 확정 아님)
@@ -294,6 +296,7 @@ struct TodayView: View {
                 }
             }
             .coordinateSpace(name: "todayScroll")
+            .scrollDisabled(reorderingInput)
             .scrollDismissesKeyboard(.interactively)   // 스크롤로도 키보드 닫힘
             // 플리 s1 → s0 되감기 = 맨 위 당김(−64). s2는 폐기(2026-08-26) — 체크인은 상시.
             .onScrollGeometryChange(for: Double.self) { g in
@@ -1001,7 +1004,7 @@ struct TodayView: View {
     // ② Input (오늘) — 하루 상세와 동일 데이터(ItemCompletion) 양방향 동기화.
     // 시각 있는 것 시간순·없으면 맨 뒤(2026-08-09)
     private var todayInputs: [InputItem] {
-        sortedByTimeOfDay(todayInputsUnsorted) { $0.timeMinutes }
+        orderedInputs(todayInputsUnsorted) { $0 }   // 직접 정한 순서 → 시각순(2026-11-05)
     }
 
     private var todayInputsUnsorted: [InputItem] {
@@ -1075,8 +1078,6 @@ struct TodayView: View {
                 }
             }
         }
-        .quickDeletable(.input(item), target: $pendingDelete, feedback: $confirmFeedback,
-                        completions: completions, context: modelContext)
         .accessibilityValue(checked ? Loc.str("완료") : Loc.str("미완료"))
         .accessibilityAction(named: Loc.str("삭제")) { pendingDelete = .input(item) }
     }
@@ -1103,8 +1104,30 @@ struct TodayView: View {
                         .padding(.leading, 26)   // 체크 아이콘 폭만큼 들여쓰기
                     }
                 }
+                .contentShape(Rectangle())
+                .onGeometryChange(for: CGFloat.self) {
+                    $0.frame(in: .named("todayScroll")).midY
+                } action: { mid in
+                    inputRowMids.byID[item.id] = mid
+                }
+                .quickReorderable(.input(item), target: $pendingDelete, feedback: $confirmFeedback,
+                                  completions: completions, context: modelContext,
+                                  onLift: { lifted in
+                                      if lifted { inputRowMids.liftedMid = inputRowMids.byID[item.id] ?? 0 }
+                                      reorderingInput = lifted
+                                  },
+                                  onDrop: { dy in dropInput(item, dy: dy) })
             }
         }
+    }
+
+    /// 놓은 자리 = 들어 올린 행의 중심 + 이동량. 그 위에 중심이 있는 다른 행 수가 새 인덱스다.
+    private func dropInput(_ item: InputItem, dy: CGFloat) {
+        let visible = todayInputs
+        let landing = inputRowMids.liftedMid + dy
+        let index = visible.filter { $0.id != item.id && (inputRowMids.byID[$0.id] ?? .infinity) < landing }.count
+        moveInput(item, toVisibleIndex: index, visible: visible, all: inputs)
+        lightFeedback += 1
     }
 
     // ③ Output (오늘 occurrence) + 계절 레버 카피 — 시각 정렬은 Input과 동일(2026-08-09)
@@ -1323,4 +1346,11 @@ struct DDayBadge: View {
                                      ? Loc.fmt("목표일까지 %lld일", remaining)
                                      : Loc.fmt("목표일에서 %lld일 지남", -remaining)))
     }
+}
+
+/// 루틴 행 세로 중심(오늘 탭 스크롤 좌표) — 참조 저장이라 갱신해도 화면을 다시 그리지 않는다(2026-11-05).
+@MainActor
+final class RowMidStore {
+    var byID: [UUID: CGFloat] = [:]
+    var liftedMid: CGFloat = 0
 }

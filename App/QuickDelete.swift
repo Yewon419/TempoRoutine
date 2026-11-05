@@ -69,13 +69,74 @@ private struct QuickDeletableRow: ViewModifier {
     @Binding var feedback: Int
     let completions: [ItemCompletion]
     let context: ModelContext
+
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(quickDeleteGesture(item, into: $target, feedback: $feedback))
+            .modifier(QuickActionDialog(item: item, target: $target, completions: completions, context: context))
+    }
+}
+
+/// 루틴 행(2026-11-05 베타 "루틴 꾹누르면 순서 변경되게") — 길게 눌러 들어 올린 뒤 끌면 순서 변경,
+/// 끌지 않고 떼면 종전대로 수정·삭제. 들림·이동량은 GestureState라 스크롤에 뺏겨 취소돼도 원위치된다.
+/// 프레임마다 바뀌는 건 이 행의 offset뿐 — 화면 body는 들림 시작·끝에만 다시 그린다(CLAUDE.md 드래그 규칙).
+private struct ReorderableQuickRow: ViewModifier {
+    let item: QuickDeleteTarget
+    @Binding var target: QuickDeleteTarget?
+    @Binding var feedback: Int
+    let completions: [ItemCompletion]
+    let context: ModelContext
+    let onLift: (Bool) -> Void
+    let onDrop: (CGFloat) -> Void
+    @GestureState private var lifted = false
+    @GestureState private var dragY: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .offset(y: dragY)
+            .scaleEffect(lifted ? 1.02 : 1)
+            .zIndex(lifted ? 1 : 0)
+            .simultaneousGesture(pressDrag)
+            .onChange(of: lifted) { _, now in
+                if now { feedback += 1 }
+                onLift(now)
+            }
+            .modifier(QuickActionDialog(item: item, target: $target, completions: completions, context: context))
+    }
+
+    private var pressDrag: some Gesture {
+        LongPressGesture(minimumDuration: 0.45)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($lifted) { value, state, _ in
+                if case .second(true, _) = value { state = true }
+            }
+            .updating($dragY) { value, state, _ in
+                if case .second(true, let drag?) = value { state = drag.translation.height }
+            }
+            .onEnded { value in
+                guard case .second(true, let drag) = value else { return }
+                let dy = drag?.translation.height ?? 0
+                if abs(dy) < 10 {
+                    target = item
+                } else {
+                    onDrop(dy)
+                }
+            }
+    }
+}
+
+/// 수정·삭제 확인 다이얼로그 + 수정 시트 — 행 모디파이어 둘의 공용부.
+private struct QuickActionDialog: ViewModifier {
+    let item: QuickDeleteTarget
+    @Binding var target: QuickDeleteTarget?
+    let completions: [ItemCompletion]
+    let context: ModelContext
     // 길게 누르기 = 수정·삭제 둘 다(2026-09-23 베타 "길게 클릭하면 삭제랑 수정 둘다 띄워줘").
     // 수정 시트도 행이 든다 — 화면마다 편집 상태를 따로 두면 body 체인이 늘고 화면별로 빠진다.
     @State private var editing = false
 
     func body(content: Content) -> some View {
         content
-            .simultaneousGesture(quickDeleteGesture(item, into: $target, feedback: $feedback))
             .confirmationDialog(
                 "\(item.kindLabel) 「\(item.title)」" as String,
                 isPresented: Binding(get: { target?.id == item.id },
@@ -122,6 +183,20 @@ extension View {
                         context: ModelContext) -> some View {
         modifier(QuickDeletableRow(item: item, target: target, feedback: feedback,
                                    completions: completions, context: context))
+    }
+
+    /// 길게 눌러 끌면 순서 변경, 그냥 떼면 수정·삭제(루틴 행 전용, 2026-11-05).
+    /// onLift = 들림 시작·끝(스크롤 잠금용), onDrop = 놓은 순간의 세로 이동량.
+    func quickReorderable(_ item: QuickDeleteTarget,
+                          target: Binding<QuickDeleteTarget?>,
+                          feedback: Binding<Int>,
+                          completions: [ItemCompletion],
+                          context: ModelContext,
+                          onLift: @escaping (Bool) -> Void,
+                          onDrop: @escaping (CGFloat) -> Void) -> some View {
+        modifier(ReorderableQuickRow(item: item, target: target, feedback: feedback,
+                                     completions: completions, context: context,
+                                     onLift: onLift, onDrop: onDrop))
     }
 }
 

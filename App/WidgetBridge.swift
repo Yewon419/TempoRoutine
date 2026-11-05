@@ -121,8 +121,8 @@ enum WidgetBridge {
             }
         }
         guard !rows.isEmpty else { return nil }
-        // 시각 정렬(2026-08-09 — 앱 행과 통일) 후 6줄까지 — 중형 위젯이 5줄을 그린다
-        let ordered = sortedByTimeOfDay(rows) { $0.timeMinutes }
+        // 앱 행과 같은 정렬(직접 정한 순서 → 시각순, 2026-11-05) 후 6줄까지 — 중형 위젯이 5줄을 그린다
+        let ordered = orderedInputs(rows) { $0 }
         let lines = ordered.prefix(6).map {
             WidgetCheckLine(title: $0.title, done: checked($0.id), id: $0.id,
                             progressLabel: progressLabel($0))

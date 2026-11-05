@@ -95,7 +95,8 @@ enum ExportImport {
                              targetSeconds: $0.targetSeconds,
                              subtasks: ($0.subtasks?.isEmpty ?? true) ? nil
                                  : $0.subtasks?.sorted { $0.order < $1.order }
-                                     .map { InputSubtaskDTO(id: $0.id, title: $0.title, order: $0.order) })
+                                     .map { InputSubtaskDTO(id: $0.id, title: $0.title, order: $0.order) },
+                             sortOrder: $0.sortOrder)   // 직접 정한 순서(2026-11-05, 구 봉투 = nil)
             },
             outputItems: store.outputs.map { item in
                 OutputItemDTO(id: item.id, title: item.title, schedule: item.schedule,
@@ -197,6 +198,7 @@ enum ExportImport {
             item.id = dto.id
             item.createdAt = dto.createdAt
             item.timeMinutes = dto.timeMinutes
+            item.sortOrder = dto.sortOrder
             // 진행 방식 정의(2026-08-12) — 구 봉투는 전부 nil이라 종전 단순 체크로 들어온다
             item.progressKind = dto.progressKind
             item.targetSessions = dto.targetSessions ?? 0

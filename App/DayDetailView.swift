@@ -460,7 +460,7 @@ struct DayDetailView: View {
     }
 
     private var inputRows: [InputRow] {
-        sortedByTimeOfDay(inputRowsUnsorted) { $0.item.timeMinutes }
+        orderedInputs(inputRowsUnsorted) { $0.item }   // 직접 정한 순서 → 시각순(2026-11-05)
     }
 
     private var inputRowsUnsorted: [InputRow] {

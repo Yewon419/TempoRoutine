@@ -247,7 +247,8 @@ final class PlannerSync: NSObject {
                              targetSeconds: item.targetSeconds,
                              subtasks: (item.subtasks?.isEmpty ?? true) ? nil
                                  : item.subtasks?.sorted { $0.order < $1.order }
-                                     .map { InputSubtaskDTO(id: $0.id, title: $0.title, order: $0.order) }))
+                                     .map { InputSubtaskDTO(id: $0.id, title: $0.title, order: $0.order) },
+                             sortOrder: item.sortOrder))   // 직접 정한 순서(2026-11-05)
         }
         // Input 그날치 진행(2026-08-12) — 레코드 1개 = 아이템 × 날짜 1개.
         // 실행 중인 타이머는 접힌 경과만 싣는다(실행 상태는 이 기기 것 — Output과 같은 계약).
@@ -428,6 +429,7 @@ final class PlannerSync: NSObject {
             item.createdAt = dto.createdAt
             item.backfilled = dto.backfilled ?? false
             item.timeMinutes = dto.timeMinutes
+            item.sortOrder = dto.sortOrder
             // 진행 방식 정의(2026-08-12) — 구 기기가 올린 레코드는 전부 nil이라 단순 체크로 내려온다
             item.progressKind = dto.progressKind
             item.targetSessions = dto.targetSessions ?? 0

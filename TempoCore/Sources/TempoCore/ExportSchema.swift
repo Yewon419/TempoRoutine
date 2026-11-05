@@ -89,11 +89,15 @@ public struct InputItemDTO: Codable, Equatable, Sendable {
     public var targetSeconds: Int?
     /// 이름·순서만 — 완료 여부는 날짜별이라 아이템에 실을 수 없다(OutputSubtaskDTO와 다른 점)
     public var subtasks: [InputSubtaskDTO]?
+    /// 사용자가 직접 정한 순서(2026-11-05 베타 "루틴 꾹누르면 순서 변경", 같은 optional 패턴 —
+    /// nil = 아직 안 옮긴 아이템, 시각순 정렬을 따른다)
+    public var sortOrder: Int?
 
     public init(id: UUID, title: String, category: InputCategory, schedule: InputSchedule,
                 createdAt: Date, backfilled: Bool? = nil, timeMinutes: Int? = nil,
                 progressKind: OutputProgressKind? = nil, targetSessions: Int? = nil,
-                targetSeconds: Int? = nil, subtasks: [InputSubtaskDTO]? = nil) {
+                targetSeconds: Int? = nil, subtasks: [InputSubtaskDTO]? = nil,
+                sortOrder: Int? = nil) {
         self.id = id
         self.title = title
         self.category = category
@@ -105,6 +109,7 @@ public struct InputItemDTO: Codable, Equatable, Sendable {
         self.targetSessions = targetSessions
         self.targetSeconds = targetSeconds
         self.subtasks = subtasks
+        self.sortOrder = sortOrder
     }
 }
 

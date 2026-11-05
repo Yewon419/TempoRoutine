@@ -177,6 +177,9 @@ final class InputItem {
     /// 하루 중 시각(자정 기준 분, 2026-08-09 사용자 결정) — 제목 시각 파서가 채운다.
     /// 정렬(시각 있는 것 시간순, 없으면 맨 뒤)과 행 표시에만 쓰고 발생 판정엔 관여하지 않는다.
     var timeMinutes: Int?
+    /// 사용자가 직접 정한 순서(2026-11-05 베타 "루틴 꾹누르면 순서 변경") — nil = 아직 안 옮김.
+    /// 정렬은 `orderedInputs`: 순서 있는 것 먼저, 없는 것은 그 뒤에 시각순.
+    var sortOrder: Int?
 
     var schedule: InputSchedule {
         get { ScheduleCodec.input(scheduleData) }   // 접근마다 JSONDecoder 생성·디코드하던 것 → 캐시(2026-09-15)
@@ -471,6 +474,37 @@ func sortedByTimeOfDay<T>(_ items: [T], time: (T) -> Int?) -> [T] {
         case (.none, .none): a.offset < b.offset
         }
     }.map(\.element)
+}
+
+/// 루틴 정렬(2026-11-05): 직접 옮긴 순서(sortOrder) 먼저, 아직 안 옮긴 것은 그 뒤에 시각순.
+/// 오늘 탭·하루 상세·위젯이 같은 규칙을 쓴다.
+func orderedInputs<T>(_ items: [T], input: (T) -> InputItem) -> [T] {
+    let manual = items.enumerated()
+        .compactMap { pair in input(pair.element).sortOrder.map { (pair.offset, $0, pair.element) } }
+        .sorted { $0.1 == $1.1 ? $0.0 < $1.0 : $0.1 < $1.1 }
+        .map { $0.2 }
+    let rest = sortedByTimeOfDay(items.filter { input($0).sortOrder == nil }) { input($0).timeMinutes }
+    return manual + rest
+}
+
+/// 루틴 하나를 화면 목록의 `index` 자리로 옮긴다(2026-11-05). 화면엔 그날 뜨는 것만 보이므로
+/// 전체 목록에서 "옮긴 자리 바로 뒤에 오는 이웃" 앞에 끼워 넣고 전체를 0…n으로 다시 매긴다 —
+/// 다른 날에만 뜨는 루틴도 상대 순서가 유지된다.
+func moveInput(_ moving: InputItem, toVisibleIndex index: Int, visible: [InputItem], all: [InputItem]) {
+    var global = orderedInputs(all) { $0 }.filter { $0.id != moving.id }
+    let others = visible.filter { $0.id != moving.id }
+    let insertAt: Int
+    if index < others.count, let at = global.firstIndex(where: { $0.id == others[index].id }) {
+        insertAt = at
+    } else if let last = others.last, let at = global.firstIndex(where: { $0.id == last.id }) {
+        insertAt = at + 1
+    } else {
+        insertAt = global.count
+    }
+    global.insert(moving, at: insertAt)
+    for (order, item) in global.enumerated() where item.sortOrder != order {
+        item.sortOrder = order
+    }
 }
 
 // ── 스케줄 디코드 캐시 (2026-09-15 전체 최적화) ──
