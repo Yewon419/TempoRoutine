@@ -4,6 +4,7 @@
 package app.temporoutine.android.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -22,8 +23,9 @@ import androidx.room.TypeConverters
         OutputSubtaskEntity::class,
         SelfReportEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],   // v2 = input_items.sortOrder(2026-11-05)
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

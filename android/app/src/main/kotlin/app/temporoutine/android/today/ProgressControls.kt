@@ -56,6 +56,7 @@ import app.temporoutine.core.OutputProgressKind
 import app.temporoutine.core.ProgressGoal
 import kotlinx.coroutines.delay
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.math.roundToInt
 
 // ── Input ──
@@ -63,11 +64,11 @@ import kotlin.math.roundToInt
 @Composable
 fun InputProgressControl(
     item: InputItemEntity, goal: ProgressGoal, subtasks: List<InputSubtaskEntity>,
-    progress: InputProgressEntity?, vm: TodayViewModel, modifier: Modifier = Modifier,
+    progress: InputProgressEntity?, vm: TodayViewModel, day: LocalDate, modifier: Modifier = Modifier,
 ) {
     val ink = Ink
     val haptic = LocalHapticFeedback.current
-    val current = progress ?: InputProgressEntity(itemId = item.id, occurredOn = vm.state.value.today)
+    val current = progress ?: InputProgressEntity(itemId = item.id, occurredOn = day)
     Box(modifier) {
         when (goal.kind) {
             OutputProgressKind.CHECK_ONLY -> Unit   // Input의 "체크만"은 progressKind == null로 표현 — 도달 불가
@@ -79,7 +80,7 @@ fun InputProgressControl(
                         Modifier.fillMaxWidth().clickable {
                             haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                             val live = subtasks.map { it.id }.toSet()
-                            vm.updateInputProgress(item) { p ->
+                            vm.updateInputProgress(item, day) { p ->
                                 val next = (p.doneSubtaskIds intersect live).toMutableSet()
                                 if (isDone) next.remove(sub.id) else next.add(sub.id)
                                 p.withDoneSubtaskIds(next)
@@ -96,20 +97,20 @@ fun InputProgressControl(
             }
             OutputProgressKind.SESSIONS -> SessionProgressControl(current.loggedSessions, goal.targetSessions) { logged, completed ->
                 haptic.performHapticFeedback(if (completed) HapticFeedbackType.Confirm else HapticFeedbackType.TextHandleMove)
-                vm.updateInputProgress(item) { it.copy(loggedSessions = logged) }
+                vm.updateInputProgress(item, day) { it.copy(loggedSessions = logged) }
             }
             OutputProgressKind.PERCENT -> PercentControl(current.percent, labelWidth = 40.dp) { v ->
-                vm.updateInputProgress(item) { it.copy(percent = v.toDouble()) }
+                vm.updateInputProgress(item, day) { it.copy(percent = v.toDouble()) }
             }
             OutputProgressKind.TIMER, OutputProgressKind.STOPWATCH -> TimerProgressControl(
                 backing = current, isTimer = goal.kind == OutputProgressKind.TIMER, targetSeconds = goal.targetSeconds ?: 0,
                 onToggle = { running, now ->
-                    vm.updateInputProgress(item) { p ->
+                    vm.updateInputProgress(item, day) { p ->
                         if (running) p.copy(elapsedAccumSeconds = p.elapsedSeconds(now), timerStartedAt = null)
                         else p.copy(timerStartedAt = now)
                     }
                 },
-                onReset = { vm.updateInputProgress(item) { it.copy(elapsedAccumSeconds = 0.0, timerStartedAt = null) } },
+                onReset = { vm.updateInputProgress(item, day) { it.copy(elapsedAccumSeconds = 0.0, timerStartedAt = null) } },
             )
         }
     }

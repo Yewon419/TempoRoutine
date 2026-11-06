@@ -38,6 +38,13 @@
     <string name="empty_output_cold">생리를 기록하면 계획이 보이기 시작해요.</string>
     <string name="all_day">종일</string>
     <string name="span_day_index">%1$d/%2$d일차</string>
+    <!-- 하루 상세(iOS DayDetailView, 2026-10-27 베타 "오늘 탭 전날·다음날") -->
+    <string name="day_prev">전날</string>
+    <string name="day_next">다음날</string>
+    <string name="day_back">뒤로</string>
+    <string name="day_detail_phase">%1$s %2$d일차</string>
+    <string name="day_detail_header_pattern" translatable="false">M월 EEEE</string>
+    <string name="day_nav_pattern" translatable="false">M월 d일 (E)</string>
     <string name="done">완료</string>
     <string name="not_done">미완료</string>
     <string name="check">체크</string>

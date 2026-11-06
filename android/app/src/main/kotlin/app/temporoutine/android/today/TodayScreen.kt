@@ -31,6 +31,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -79,21 +80,30 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import app.temporoutine.android.cycle.PhaseInfo
 import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 import java.util.Locale
 
 @Composable
 fun TodayRoute(app: TempoApp, vm: TodayViewModel, hazeState: HazeState, bottomPadding: Dp, openLogSheetInitially: Boolean = false) {
     val state by vm.state.collectAsState()
     var showLogSheet by remember { mutableStateOf(openLogSheetInitially) }
-    TodayScreen(state = state, vm = vm, hazeState = hazeState, bottomPadding = bottomPadding,
-        onTogglePeriod = vm::togglePeriodToday, onOpenLogSheet = { showLogSheet = true })
+    // 전날·다음날 화살표 → 그날 하루 상세(2026-10-27 베타, iOS navigationDestination(item: $pushedDay))
+    var pushedDay by rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    val detailDay = pushedDay
+    if (detailDay != null && state.loaded) {
+        DayDetailScreen(anchorDay = detailDay, state = state, vm = vm, hazeState = hazeState, bottomPadding = bottomPadding, onBack = { pushedDay = null })
+    } else {
+        TodayScreen(state = state, vm = vm, hazeState = hazeState, bottomPadding = bottomPadding,
+            onTogglePeriod = vm::togglePeriodToday, onOpenLogSheet = { showLogSheet = true },
+            onStepDay = { days -> pushedDay = state.today.plusDays(days.toLong()) })
+    }
     if (showLogSheet && state.loaded) {
         PeriodTrackerSheet(state = state, vm = vm, onDismiss = { showLogSheet = false })
     }
 }
 
 @Composable
-fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, bottomPadding: Dp, onTogglePeriod: () -> Unit, onOpenLogSheet: () -> Unit) {
+fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, bottomPadding: Dp, onTogglePeriod: () -> Unit, onOpenLogSheet: () -> Unit, onStepDay: (Int) -> Unit) {
     val ink = Ink
     val scroll = rememberScrollState()
     val density = LocalDensity.current
@@ -128,7 +138,7 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, b
                     .padding(bottom = bottomPadding),
                 verticalArrangement = Arrangement.spacedBy(12.dp),   // 16 → 12(iOS 86차)
             ) {
-                LargeHeader(state, onTogglePeriod, onOpenLogSheet)
+                LargeHeader(state, onTogglePeriod, onOpenLogSheet, onStepDay)
                 StateSurfaces(state, onOpenLogSheet)
                 TodaySections(state, vm, hazeState)
                 val record = state.checkIns.firstOrNull { it.day == state.today }
@@ -140,7 +150,7 @@ fun TodayScreen(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState, b
 }
 
 @Composable
-private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit, onOpenLogSheet: () -> Unit) {
+private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit, onOpenLogSheet: () -> Unit, onStepDay: (Int) -> Unit) {
     val ink = Ink
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -171,7 +181,7 @@ private fun LargeHeader(state: TodayUiState, onTogglePeriod: () -> Unit, onOpenL
                 val body = Fonts.almanacBody(18)
                 Text(moodline, style = body.copy(lineHeight = (body.lineHeight.value + 3).sp), color = ink.text.copy(alpha = 0.88f))
             }
-            PeriodRow(state.isPeriodToday, onTogglePeriod, onOpenLogSheet, Modifier.padding(top = 8.dp))
+            PeriodRow(state.isPeriodToday, onTogglePeriod, onOpenLogSheet, onStepDay, Modifier.padding(top = 8.dp))
         } else {
             Text(stringResource(R.string.today_cold_title), style = Fonts.almanac(44), color = ink.text)
         }
@@ -217,7 +227,7 @@ private fun metaLine(state: TodayUiState, info: PhaseInfo): AnnotatedString {
 /** 생리 기록 줄(iOS 91-3, 2026-09-12) = 왼쪽 시트 진입 캡슐(캘린더 SeasonHeaderRow와 같은 생김새) + 오른쪽 「오늘」 무광 스위치.
  *  캡슐이 「생리 기록」을 말하니 스위치 라벨은 「오늘」 — 한 줄이 "생리 기록 · 오늘 [스위치]"로 읽힌다. */
 @Composable
-private fun PeriodRow(isOn: Boolean, onToggle: () -> Unit, onOpenLogSheet: () -> Unit, modifier: Modifier = Modifier) {
+private fun PeriodRow(isOn: Boolean, onToggle: () -> Unit, onOpenLogSheet: () -> Unit, onStepDay: (Int) -> Unit, modifier: Modifier = Modifier) {
     val ink = Ink
     val haptic = LocalHapticFeedback.current
     val hint = stringResource(R.string.today_period_log_hint)
@@ -242,9 +252,19 @@ private fun PeriodRow(isOn: Boolean, onToggle: () -> Unit, onOpenLogSheet: () ->
             }
         }
         Spacer(Modifier.weight(1f).widthIn(min = 12.dp))
+        // 전날·다음날(2026-10-27 베타 "오늘 탭에서 전날 다음날 넘기기") — 누르면 그날 하루 상세
+        DayStepArrow(left = true, label = stringResource(R.string.day_prev), width = 34.dp) {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            onStepDay(-1)
+        }
+        DayStepArrow(left = false, label = stringResource(R.string.day_next), width = 34.dp) {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            onStepDay(1)
+        }
         // 라벨을 스위치 바로 앞에(2026-08-23 대표님 "오른쪽 버튼 앞에 바짝") — 라벨까지 한 토글
         Row(
             Modifier
+                .padding(start = 4.dp)
                 .heightIn(min = 44.dp)
                 .toggleable(
                     value = isOn,

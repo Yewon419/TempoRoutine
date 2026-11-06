@@ -48,6 +48,7 @@ interface InputItemDao {
     @Query("SELECT * FROM input_items ORDER BY createdAt") suspend fun all(): List<InputItemEntity>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: InputItemEntity)
     @Update suspend fun update(item: InputItemEntity)
+    @Update suspend fun updateAll(items: List<InputItemEntity>)
     @Delete suspend fun delete(item: InputItemEntity)
     @Query("DELETE FROM input_items") suspend fun deleteAll()
 

@@ -12,6 +12,7 @@ import app.temporoutine.android.data.ItemCompletionEntity
 import app.temporoutine.android.data.OutputItemEntity
 import app.temporoutine.android.data.OutputSubtaskEntity
 import app.temporoutine.android.data.ScheduleItemEntity
+import app.temporoutine.android.data.reorderedInputs
 import app.temporoutine.core.OutputProgressKind
 import app.temporoutine.core.ProgressRule
 import kotlinx.coroutines.launch
@@ -21,35 +22,47 @@ import java.time.LocalDate
 fun TodayViewModel.isChecked(itemId: String): Boolean =
     state.value.completions.any { it.itemId == itemId && it.occurredOn == state.value.today }
 
-/** Input 체크 토글 — 그날 ItemCompletion 삭제/삽입. */
-fun TodayViewModel.toggleInputCheck(item: InputItemEntity) {
-    val s = state.value
+/** Input 체크 토글 — 그날(`day` = 오늘 탭은 오늘, 하루 상세는 보는 날) ItemCompletion 삭제/삽입. */
+fun TodayViewModel.toggleInputCheck(item: InputItemEntity, day: LocalDate) {
     viewModelScope.launch {
         val dao = app.db.inputs()
-        val existing = dao.completions(item.id, s.today)
+        val existing = dao.completions(item.id, day)
         if (existing.isNotEmpty()) dao.deleteCompletions(existing)
-        else dao.insertCompletion(ItemCompletionEntity(itemId = item.id, occurredOn = s.today))
+        else dao.insertCompletion(ItemCompletionEntity(itemId = item.id, occurredOn = day))
     }
 }
 
 /** 그날 진행 레코드 확보(없으면 생성) 후 변환 적용. 자동 체크 동기(목표 도달 ↔ 체크)까지. */
-fun TodayViewModel.updateInputProgress(item: InputItemEntity, transform: (InputProgressEntity) -> InputProgressEntity) {
+fun TodayViewModel.updateInputProgress(item: InputItemEntity, day: LocalDate, transform: (InputProgressEntity) -> InputProgressEntity) {
     val s = state.value
     viewModelScope.launch {
         val dao = app.db.inputs()
-        val current = dao.progress(item.id, s.today)
-        val next = transform(current ?: InputProgressEntity(itemId = item.id, occurredOn = s.today))
+        val current = dao.progress(item.id, day)
+        val next = transform(current ?: InputProgressEntity(itemId = item.id, occurredOn = day))
         if (current == null) dao.insertProgress(next) else dao.updateProgress(next)
         // 자동 완료 동기 — 스톱워치는 규칙상 항상 미도달이라 제외(iOS TodayView:839-845)
         val goal = item.progressGoal(s.inputSubtasks.count { it.ownerId == item.id }) ?: return@launch
         if (goal.kind == OutputProgressKind.STOPWATCH) return@launch
         val fulfilled = ProgressRule.isFulfilled(goal, next.state(Instant.now()))
-        val checked = dao.completions(item.id, s.today).isNotEmpty()
+        val checked = dao.completions(item.id, day).isNotEmpty()
         if (fulfilled != checked) {
-            if (checked) dao.deleteCompletions(dao.completions(item.id, s.today))
-            else dao.insertCompletion(ItemCompletionEntity(itemId = item.id, occurredOn = s.today))
+            if (checked) dao.deleteCompletions(dao.completions(item.id, day))
+            else dao.insertCompletion(ItemCompletionEntity(itemId = item.id, occurredOn = day))
         }
     }
+}
+
+/** 하루 상세 생리 기록 토글(iOS DayDetailView.periodToggle) — 미래는 호출부에서 막는다. */
+fun TodayViewModel.togglePeriod(day: LocalDate) {
+    val s = state.value
+    viewModelScope.launch { app.periodStore.toggle(day, s.periodDays, s.today) }
+}
+
+/** 끌어 놓은 루틴을 화면 목록의 `index` 자리로(iOS dropInput → moveInput). */
+fun TodayViewModel.moveInput(item: InputItemEntity, toVisibleIndex: Int, visible: List<InputItemEntity>) {
+    val changed = reorderedInputs(item, toVisibleIndex, visible, state.value.inputs)
+    if (changed.isEmpty()) return
+    viewModelScope.launch { app.db.inputs().updateAll(changed) }
 }
 
 fun TodayViewModel.updateOutput(item: OutputItemEntity) {

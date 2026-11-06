@@ -7,7 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +22,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.zIndex
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +52,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
@@ -53,6 +67,7 @@ import app.temporoutine.android.data.dayIndex
 import app.temporoutine.android.data.occurs
 import app.temporoutine.android.data.occursByCalendar
 import app.temporoutine.android.data.onceShows
+import app.temporoutine.android.data.orderedInputs
 import app.temporoutine.android.data.sortedByTimeOfDay
 import app.temporoutine.android.data.spanDays
 import app.temporoutine.android.data.toLocalDate
@@ -65,12 +80,13 @@ import app.temporoutine.core.OutputSchedule
 import app.temporoutine.core.ProgressRule
 import dev.chrisbanes.haze.HazeState
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 
-private val shortTime: DateTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+internal val shortTime: DateTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
 
 /** 자정 기준 분 → 로케일 시각 표기(iOS timeOfDayLabel) */
 fun timeOfDayLabel(minutes: Int): String =
@@ -90,15 +106,17 @@ fun TodaySections(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState)
     // Input — once는 적은 날 또는 체크된 날 / 달력 반복 / 주기 기준은 occurrence 또는 체크
     val checkedIds = remember(state.completions, today) { state.completions.filter { it.occurredOn == today }.map { it.itemId }.toSet() }
     val inputs = remember(state.inputs, checkedIds, state.snapshot, today) {
-        sortedByTimeOfDay(state.inputs.filter { item ->
+        orderedInputs(state.inputs.filter { item ->
             when (val s = item.schedule) {
                 InputSchedule.Once -> item.onceShows(today, zone) || item.id in checkedIds
                 InputSchedule.Daily, InputSchedule.Weekly, InputSchedule.Monthly -> item.occursByCalendar(today, zone)
                 is InputSchedule.CycleAnchored ->
                     state.snapshot.occurrence(s.recurrence, item.createdAt.toLocalDate(zone), today) != null || item.id in checkedIds
             }
-        }) { it.timeMinutes }
+        }) { it }
     }
+    // 루틴 행 중심 y(루트 좌표) — 놓은 자리 계산용. 프레임마다 쓰이니 상태가 아닌 평범한 맵(iOS RowMidStore).
+    val inputRowMids = remember { mutableMapOf<String, Float>() }
     val outputs = remember(state.outputs, state.outputSubtasks, state.snapshot, today) {
         sortedByTimeOfDay(state.outputs.filter { item ->
             when (val s = item.schedule) {
@@ -119,7 +137,12 @@ fun TodaySections(state: TodayUiState, vm: TodayViewModel, hazeState: HazeState)
     }
     Section(CardKind.INPUT, hazeState) {
         if (inputs.isEmpty()) EmptyRow(stringResource(R.string.empty_none))
-        else inputs.forEach { InputRow(it, it.id in checkedIds, state, vm) }
+        else inputs.forEach { item ->
+            InputRow(item, item.id in checkedIds, state, vm, inputRowMids) { landing ->
+                val index = inputs.count { it.id != item.id && (inputRowMids[it.id] ?: Float.POSITIVE_INFINITY) < landing }
+                vm.moveInput(item, index, inputs)
+            }
+        }
     }
     Section(CardKind.OUTPUT, hazeState) {
         if (outputs.isEmpty()) {
@@ -155,18 +178,26 @@ private fun ScheduleRow(item: ScheduleItemEntity, state: TodayUiState, vm: Today
 // ── Input ──
 
 @Composable
-private fun InputRow(item: InputItemEntity, checked: Boolean, state: TodayUiState, vm: TodayViewModel) {
+private fun InputRow(
+    item: InputItemEntity, checked: Boolean, state: TodayUiState, vm: TodayViewModel,
+    rowMids: MutableMap<String, Float>, onDrop: (landing: Float) -> Unit,
+) {
     val ink = Ink
     val haptic = LocalHapticFeedback.current
     val subtasks = remember(state.inputSubtasks, item.id) { state.inputSubtasks.filter { it.ownerId == item.id }.sortedBy { it.order } }
     val progress = remember(state.inputProgress, item.id, state.today) { state.inputProgress.firstOrNull { it.itemId == item.id && it.occurredOn == state.today } }
     val goal = item.progressGoal(subtasks.size)
-    QuickDeletable(kindLabel = stringResource(R.string.section_input), title = item.title, onDelete = { vm.deleteInput(item) }) {
+    ReorderableQuickRow(
+        kindLabel = stringResource(R.string.section_input), title = item.title, onDelete = { vm.deleteInput(item) },
+        onMeasured = { mid -> rowMids[item.id] = mid },
+        liftedMid = { rowMids[item.id] ?: 0f },
+        onDrop = onDrop,
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(
                 Modifier.fillMaxWidth().combinedClickable(onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                    vm.toggleInputCheck(item)
+                    vm.toggleInputCheck(item, state.today)
                 }),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -182,7 +213,7 @@ private fun InputRow(item: InputItemEntity, checked: Boolean, state: TodayUiStat
                 item.timeMinutes?.let { Text(timeOfDayLabel(it), style = Fonts.system(12), color = ink.text.copy(alpha = 0.5f)) }
             }
             if (goal != null) {
-                InputProgressControl(item, goal, subtasks, progress, vm, Modifier.padding(start = 26.dp))
+                InputProgressControl(item, goal, subtasks, progress, vm, state.today, Modifier.padding(start = 26.dp))
             }
         }
     }
@@ -196,24 +227,48 @@ private fun OutputRow(item: OutputItemEntity, state: TodayUiState, vm: TodayView
     val subtasks = remember(state.outputSubtasks, item.id) { state.outputSubtasks.filter { it.ownerId == item.id }.sortedBy { it.order } }
     val done = subtasks.count { it.isDone }
     val complete = ProgressRule.isFulfilled(item.progressGoal(subtasks.size), item.progressState(done))
+    // iOS OutputItem.isSingleCheck — 「체크만」 또는 항목 없는 체크리스트
+    val singleCheck = item.kind == OutputProgressKind.CHECK_ONLY || (item.kind == OutputProgressKind.SUBTASKS && subtasks.isEmpty())
     QuickDeletable(kindLabel = stringResource(R.string.section_output), title = item.title, onDelete = { vm.deleteOutput(item) }) {
         Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(item.title, style = Fonts.almanacBody(14, bold = true), color = ink.text)
-                item.targetDate?.let { DDayBadge(it, state) }
-                if (complete) Text(stringResource(R.string.done), style = Fonts.system(11, FontWeight.SemiBold), color = ink.text.copy(alpha = 0.6f))
+                if (singleCheck) SingleCheckButton(item, vm)
+                else Text(item.title, style = Fonts.almanacBody(14, bold = true), color = ink.text)
+                item.targetDate?.let { DDayBadge(it, state.today) }
+                if (complete && !singleCheck) Text(stringResource(R.string.done), style = Fonts.system(11, FontWeight.SemiBold), color = ink.text.copy(alpha = 0.6f))
                 Spacer(Modifier.weight(1f))
                 item.timeMinutes?.let { Text(timeOfDayLabel(it), style = Fonts.system(12), color = ink.text.copy(alpha = 0.5f)) }
             }
-            OutputProgressControl(item, subtasks, vm)
+            if (!singleCheck) OutputProgressControl(item, subtasks, vm)
         }
     }
 }
 
+/** iOS singleCheckButton — 제목 앞 먹 도장(2026-09-23 베타), 제목 글씨도 눌린다(2026-10-23 베타). 저장은 percent 0↔1. */
 @Composable
-private fun DDayBadge(target: Instant, state: TodayUiState) {
+private fun SingleCheckButton(item: OutputItemEntity, vm: TodayViewModel) {
+    val haptic = LocalHapticFeedback.current
+    val done = item.percent >= 1
+    val stateText = stringResource(if (done) R.string.done else R.string.not_done)
+    Row(
+        Modifier
+            .combinedClickable(onClick = {
+                haptic.performHapticFeedback(if (done) HapticFeedbackType.TextHandleMove else HapticFeedbackType.Confirm)
+                vm.updateOutput(item.copy(percent = if (done) 0.0 else 1.0))
+            })
+            .semantics(mergeDescendants = true) { stateDescription = stateText },
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StampCheck(checked = done)
+        Text(item.title, style = Fonts.almanacBody(14, bold = true), color = Ink.text)
+    }
+}
+
+@Composable
+fun DDayBadge(target: Instant, from: LocalDate) {
     val ink = Ink
-    val remaining = ChronoUnit.DAYS.between(state.today, target.toLocalDate()).toInt()
+    val remaining = ChronoUnit.DAYS.between(from, target.toLocalDate()).toInt()
     val label = when {
         remaining == 0 -> "D-DAY"
         remaining > 0 -> "D-$remaining"
@@ -233,30 +288,118 @@ private fun DDayBadge(target: Instant, state: TodayUiState) {
 
 // ── 공용 ──
 
-/** iOS quickDeletable — 길게 누르기(0.45s) → 확인 다이얼로그. */
-@OptIn(ExperimentalFoundationApi::class)
+/** iOS quickDeletable — 길게 누르기 → 확인 다이얼로그.
+ *  Initial 패스로 본다 — 종전 combinedClickable(Main 패스)은 자식 탭이 up을 먼저 먹어, 길게 눌렀다 떼면 체크가 토글되고
+ *  다이얼로그는 안 떴다(2026-11-06 에뮬레이터 실측). 스크린리더용 길게 누르기 동작은 semantics로 유지. */
 @Composable
 fun QuickDeletable(kindLabel: String, title: String, onDelete: () -> Unit, content: @Composable () -> Unit) {
     val haptic = LocalHapticFeedback.current
     var confirm by remember { mutableStateOf(false) }
+    val deleteLabel = stringResource(R.string.delete)
     androidx.compose.foundation.layout.Box(
-        Modifier.combinedClickable(
-            onClick = {},
-            onLongClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                confirm = true
+        Modifier
+            .semantics { onLongClick(label = deleteLabel) { confirm = true; true } }
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    if (!awaitLongPressInitial(down)) return@awaitEachGesture
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    confirm = true
+                    // 뗄 때까지 전부 소비 — 자식 탭이 같이 눌리지 않게
+                    do {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        event.changes.forEach { it.consume() }
+                    } while (event.changes.any { it.pressed })
+                }
             },
-        ),
     ) { content() }
-    if (confirm) {
-        AlertDialog(
-            onDismissRequest = { confirm = false },
-            title = { Text("$kindLabel 「$title」") },
-            text = { Text(stringResource(R.string.delete_confirm_body)) },
-            confirmButton = { TextButton(onClick = { confirm = false; onDelete() }) { Text(stringResource(R.string.delete), color = Ink.danger) } },
-            dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel)) } },
-        )
-    }
+    if (confirm) DeleteConfirmDialog(kindLabel, title, onDismiss = { confirm = false }, onDelete = onDelete)
+}
+
+/** Initial 패스 길게 누르기 대기 — 성립하면 true. 그 전에 떼거나 슬롭을 넘으면(스크롤) false. */
+private suspend fun AwaitPointerEventScope.awaitLongPressInitial(down: PointerInputChange): Boolean =
+    withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+        var c: PointerInputChange? = down
+        while (c != null && c.pressed && !c.isConsumed && (c.position - down.position).getDistance() <= viewConfiguration.touchSlop) {
+            c = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id }
+        }
+        false
+    } ?: true
+
+/** iOS ReorderableQuickRow(2026-11-05 베타 "루틴 꾹누르면 순서 변경") — 길게 누르면 행이 들리고, 끌면 순서 변경,
+ *  거의 안 움직이고 떼면 종전 삭제 확인. 들린 동안 이벤트를 소비해 바깥 스크롤이 따라오지 않는다. */
+@Composable
+private fun ReorderableQuickRow(
+    kindLabel: String, title: String, onDelete: () -> Unit,
+    onMeasured: (mid: Float) -> Unit, liftedMid: () -> Float, onDrop: (landing: Float) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+    val tapSlop = with(LocalDensity.current) { 10.dp.toPx() }
+    var confirm by remember { mutableStateOf(false) }
+    var lifted by remember { mutableStateOf(false) }
+    var dragY by remember { mutableFloatStateOf(0f) }
+    var startMid by remember { mutableFloatStateOf(0f) }
+    // pointerInput(Unit)은 첫 합성의 람다를 붙든다 — 목록이 바뀐 뒤의 onDrop을 부르도록
+    val currentDrop by rememberUpdatedState(onDrop)
+    val currentMid by rememberUpdatedState(liftedMid)
+    val deleteLabel = stringResource(R.string.delete)
+    androidx.compose.foundation.layout.Box(
+        Modifier
+            .onGloballyPositioned { onMeasured(it.positionInRoot().y + it.size.height / 2f) }
+            .semantics { onLongClick(label = deleteLabel) { confirm = true; true } }
+            .zIndex(if (lifted) 1f else 0f)
+            .graphicsLayer {
+                translationY = dragY
+                val s = if (lifted) 1.02f else 1f
+                scaleX = s; scaleY = s
+            }
+            // Initial 패스 — 자식(체크·타이머 버튼)보다 먼저 본다. 들린 뒤엔 전부 소비해 자식 탭·바깥 스크롤을 끊는다.
+            // (detectDragGesturesAfterLongPress는 Main 패스라 제자리에서 떼면 자식이 up을 먼저 먹어 체크가 토글되고 다이얼로그가 안 떴다.)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    if (!awaitLongPressInitial(down)) return@awaitEachGesture
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    startMid = currentMid()
+                    dragY = 0f
+                    lifted = true
+                    var ended = false
+                    try {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            val c = event.changes.firstOrNull { it.id == down.id }
+                            event.changes.forEach { it.consume() }
+                            if (c == null || !c.pressed) { ended = c != null; break }
+                            dragY += c.position.y - c.previousPosition.y
+                        }
+                    } finally {
+                        val dy = dragY
+                        lifted = false
+                        dragY = 0f
+                        if (ended) {
+                            if (kotlin.math.abs(dy) < tapSlop) confirm = true
+                            else {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                currentDrop(startMid + dy)
+                            }
+                        }
+                    }
+                }
+            },
+    ) { content() }
+    if (confirm) DeleteConfirmDialog(kindLabel, title, onDismiss = { confirm = false }, onDelete = onDelete)
+}
+
+@Composable
+private fun DeleteConfirmDialog(kindLabel: String, title: String, onDismiss: () -> Unit, onDelete: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("$kindLabel 「$title」") },
+        text = { Text(stringResource(R.string.delete_confirm_body)) },
+        confirmButton = { TextButton(onClick = { onDismiss(); onDelete() }) { Text(stringResource(R.string.delete), color = Ink.danger) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }
 
 /** 먹 도장 체크(iOS Almanac.swift StampCheck) — 22 원 안에 먹이 차오르고 체크가 찍힌다(루틴 행). 지우면 원만 남는다.

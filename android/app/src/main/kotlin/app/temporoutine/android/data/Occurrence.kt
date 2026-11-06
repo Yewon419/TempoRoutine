@@ -134,3 +134,26 @@ fun <T> sortedByTimeOfDay(items: List<T>, time: (T) -> Int?): List<T> =
             else -> a.index - b.index
         }
     }.map { it.value }
+
+/** 루틴 정렬(iOS orderedInputs, 2026-11-05): 직접 옮긴 순서(sortOrder) 먼저, 아직 안 옮긴 것은 그 뒤에 시각순. */
+fun <T> orderedInputs(items: List<T>, input: (T) -> InputItemEntity): List<T> {
+    val (manual, unordered) = items.withIndex().partition { input(it.value).sortOrder != null }
+    val sortedManual = manual.sortedWith(compareBy({ input(it.value).sortOrder }, { it.index })).map { it.value }
+    return sortedManual + sortedByTimeOfDay(unordered.map { it.value }) { input(it).timeMinutes }
+}
+
+/** iOS moveInput — 루틴 하나를 화면 목록의 `index` 자리로 옮긴다. 화면엔 그날 뜨는 것만 보이므로 전체 목록에서
+ *  "옮긴 자리 바로 뒤에 오는 이웃" 앞에 끼워 넣고 전체를 0…n으로 다시 매긴다. 반환 = sortOrder가 바뀐 엔티티만. */
+fun reorderedInputs(moving: InputItemEntity, toVisibleIndex: Int, visible: List<InputItemEntity>, all: List<InputItemEntity>): List<InputItemEntity> {
+    val global = orderedInputs(all) { it }.filter { it.id != moving.id }.toMutableList()
+    val others = visible.filter { it.id != moving.id }
+    val atNeighbor = others.getOrNull(toVisibleIndex)?.let { n -> global.indexOfFirst { it.id == n.id } } ?: -1
+    val afterLast = others.lastOrNull()?.let { l -> global.indexOfFirst { it.id == l.id } } ?: -1
+    val insertAt = when {
+        atNeighbor >= 0 -> atNeighbor
+        afterLast >= 0 -> afterLast + 1
+        else -> global.size
+    }
+    global.add(insertAt, moving)
+    return global.withIndex().filter { (order, item) -> item.sortOrder != order }.map { (order, item) -> item.copy(sortOrder = order) }
+}

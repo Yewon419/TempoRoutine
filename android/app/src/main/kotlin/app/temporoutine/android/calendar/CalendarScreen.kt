@@ -11,6 +11,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.saveable.rememberSaveable
+import app.temporoutine.android.today.DayDetailScreen
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -116,15 +119,23 @@ fun CalendarRoute(app: TempoApp, todayVm: TodayViewModel, hazeState: HazeState, 
     val state by vm.state.collectAsState()
     val todayState by todayVm.state.collectAsState()
     var showLogSheet by remember { mutableStateOf(false) }
-    // 숨기기 스위치(설정) — 진입점만 지운다. 오늘 화면 스위치로는 계속 기록할 수 있다.
-    CalendarScreen(state, vm, hazeState, bottomPadding, onOpenLogSheet = if (hidePeriodEntry) null else ({ showLogSheet = true }))
+    // 날짜 탭 → 그날 하루 상세(iOS 캘린더 → DayDetailView, MASTER §3 「날짜 탭 → 하루 상세」)
+    var pushedDay by rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    val detailDay = pushedDay
+    if (detailDay != null && todayState.loaded) {
+        DayDetailScreen(anchorDay = detailDay, state = todayState, vm = todayVm, hazeState = hazeState, bottomPadding = bottomPadding, onBack = { pushedDay = null })
+    } else {
+        // 숨기기 스위치(설정) — 진입점만 지운다. 오늘 화면 스위치로는 계속 기록할 수 있다.
+        CalendarScreen(state, vm, hazeState, bottomPadding, onOpenLogSheet = if (hidePeriodEntry) null else ({ showLogSheet = true }),
+            onOpenDay = { pushedDay = it })
+    }
     if (showLogSheet && todayState.loaded) {
         PeriodTrackerSheet(state = todayState, vm = todayVm, onDismiss = { showLogSheet = false })
     }
 }
 
 @Composable
-fun CalendarScreen(state: CalendarUiState, vm: CalendarViewModel, hazeState: HazeState, bottomPadding: Dp, onOpenLogSheet: (() -> Unit)?) {
+fun CalendarScreen(state: CalendarUiState, vm: CalendarViewModel, hazeState: HazeState, bottomPadding: Dp, onOpenLogSheet: (() -> Unit)?, onOpenDay: (LocalDate) -> Unit) {
     val ink = Ink
     val chrome = LocalChrome.current
     Box(Modifier.fillMaxSize().background(ink.frost)) {
@@ -166,7 +177,7 @@ fun CalendarScreen(state: CalendarUiState, vm: CalendarViewModel, hazeState: Haz
                 MonthHeader(state, vm)
             }
             WeekdayRow(state.firstDayOfWeek)
-            MonthCarousel(state, vm, Modifier.weight(1f).fillMaxWidth())
+            MonthCarousel(state, vm, onOpenDay, Modifier.weight(1f).fillMaxWidth())
             Legend()
         }
     }
@@ -279,7 +290,7 @@ private fun WeekdayRow(firstDayOfWeek: DayOfWeek) {
 // ── 캐러셀 ──
 
 @Composable
-private fun MonthCarousel(state: CalendarUiState, vm: CalendarViewModel, modifier: Modifier) {
+private fun MonthCarousel(state: CalendarUiState, vm: CalendarViewModel, onOpenDay: (LocalDate) -> Unit, modifier: Modifier) {
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     BoxWithConstraints(modifier.clipToBounds()) {
@@ -335,7 +346,7 @@ private fun MonthCarousel(state: CalendarUiState, vm: CalendarViewModel, modifie
             for (off in -1..1) {
                 val render = state.renders[state.anchor.plusMonths(off.toLong())]
                 Box(Modifier.width(panelWidth).fillMaxHeight()) {
-                    if (render != null && (off == 0 || sidesVisible)) MonthGrid(render, state.today, interactive = off == 0)
+                    if (render != null && (off == 0 || sidesVisible)) MonthGrid(render, state.today, interactive = off == 0, onOpenDay)
                 }
             }
         }
@@ -345,7 +356,7 @@ private fun MonthCarousel(state: CalendarUiState, vm: CalendarViewModel, modifie
 // ── 격자 ──
 
 @Composable
-private fun MonthGrid(render: MonthRender, today: LocalDate, interactive: Boolean) {
+private fun MonthGrid(render: MonthRender, today: LocalDate, interactive: Boolean, onOpenDay: (LocalDate) -> Unit) {
     val layout = render.layout
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(ROW_SPACING)) {
         for (row in 0 until layout.rowCount) {
@@ -354,7 +365,7 @@ private fun MonthGrid(render: MonthRender, today: LocalDate, interactive: Boolea
                 Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) {
                     for (col in 0 until 7) {
                         val index = row * 7 + col
-                        Box(Modifier.weight(1f).fillMaxHeight()) { CellOrBlank(render, index, today, interactive) }
+                        Box(Modifier.weight(1f).fillMaxHeight()) { CellOrBlank(render, index, today, interactive, onOpenDay) }
                     }
                 }
                 // 여러 날 띠 — 행 오버레이(셀 밖 좌표계). y = 33.5 + lane*13, x = unit*col + 1, w = unit*len − 2
@@ -399,10 +410,10 @@ private fun BandBarView(bar: BandBar, unit: Dp) {
 }
 
 @Composable
-private fun CellOrBlank(render: MonthRender, index: Int, today: LocalDate, interactive: Boolean) {
+private fun CellOrBlank(render: MonthRender, index: Int, today: LocalDate, interactive: Boolean, onOpenDay: (LocalDate) -> Unit) {
     val layout = render.layout
     val date = layout.date(index)
-    if (date != null) { Cell(render, index, date, today, interactive); return }
+    if (date != null) { Cell(render, index, date, today, interactive, onOpenDay); return }
     // 마지막 주 후행 빈칸 = 계절 꼬리 페이드(0.25 → 0)
     val firstTrailing = layout.firstTrailing
     val lastDay = layout.start.plusDays((layout.daysInMonth - 1).toLong())
@@ -425,8 +436,9 @@ private fun CellOrBlank(render: MonthRender, index: Int, today: LocalDate, inter
 }
 
 @Composable
-private fun Cell(render: MonthRender, index: Int, date: LocalDate, today: LocalDate, interactive: Boolean) {
+private fun Cell(render: MonthRender, index: Int, date: LocalDate, today: LocalDate, interactive: Boolean, onOpenDay: (LocalDate) -> Unit) {
     val ink = Ink
+    val haptic = LocalHapticFeedback.current
     val style = render.style[date] ?: CellStyle(null, false)
     val isToday = date == today
     val bandCount = render.bands.countByIndex[index] ?: 0
@@ -462,6 +474,11 @@ private fun Cell(render: MonthRender, index: Int, date: LocalDate, today: LocalD
         Modifier
             .fillMaxSize()
             .then(if (interactive) Modifier.semantics { contentDescription = a11y } else Modifier.clearAndSetSemantics { })
+            // 탭 = 하루 상세. 가로로 끌면 슬롭에서 탭이 취소되고 캐러셀 draggable이 가져간다(가운데 달만)
+            .then(if (interactive) Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onOpenDay(date)
+            } else Modifier)
             .drawBehind {
                 val phase = style.phase ?: return@drawBehind
                 val inset = 3.dp.toPx()

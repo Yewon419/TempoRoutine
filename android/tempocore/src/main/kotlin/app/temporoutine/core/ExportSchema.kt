@@ -94,6 +94,8 @@ data class InputItemDTO(
     val targetSessions: Int? = null,
     val targetSeconds: Int? = null,
     val subtasks: List<InputSubtaskDTO>? = null,
+    /** 사용자가 직접 정한 순서(2026-11-05 베타 "루틴 꾹누르면 순서 변경"). null = 아직 안 옮긴 아이템, 시각순 정렬. */
+    val sortOrder: Int? = null,
 )
 
 /** Input 체크리스트 항목 — 이름·순서만. isDone이 없는 게 OutputSubtaskDTO와의 차이다. */

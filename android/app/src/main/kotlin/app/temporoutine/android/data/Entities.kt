@@ -120,6 +120,8 @@ data class InputItemEntity(
     /** 지난 날짜에 소급해 적은 기록인가 — .once의 "완료 전까지 이어짐"을 끈다. */
     val backfilled: Boolean = false,
     val timeMinutes: Int? = null,            // 자정 기준 분
+    /** 직접 정한 순서(2026-11-05, 스키마 v2). null = 안 옮김 → 시각순. */
+    val sortOrder: Int? = null,
 ) {
     val schedule: InputSchedule
         get() = decodeOrNull(scheduleJson, InputSchedule.serializer()) ?: InputSchedule.Daily

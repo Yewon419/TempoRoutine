@@ -83,6 +83,7 @@ object ExportImport {
                     targetSessions = item.targetSessions.takeIf { it > 0 },
                     targetSeconds = item.targetSeconds,
                     subtasks = subs.takeIf { it.isNotEmpty() }?.map { InputSubtaskDTO(uuid(it.id), it.title, it.order) },
+                    sortOrder = item.sortOrder,
                 )
             },
             outputItems = store.outputs.map { item ->
@@ -185,7 +186,7 @@ object ExportImport {
                 progressKindRaw = dto.progressKind?.rawValue ?: "",
                 targetSessions = dto.targetSessions ?: 0, targetSeconds = dto.targetSeconds,
                 scheduleJson = InputItemEntity.encodeSchedule(dto.schedule), createdAt = dto.createdAt,
-                backfilled = dto.backfilled ?: false, timeMinutes = dto.timeMinutes,
+                backfilled = dto.backfilled ?: false, timeMinutes = dto.timeMinutes, sortOrder = dto.sortOrder,
             )
         }
         // 서브태스크 id를 보존한다 — 진행 레코드의 완료 id가 이 id를 가리킨다
