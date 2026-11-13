@@ -475,7 +475,9 @@ struct DayDetailView: View {
                 }
                 return nil
             case .daily, .weekly, .monthly:
-                return item.occursByCalendar(on: day) ? InputRow(item: item, projected: false) : nil
+                // 완료한 날은 반복·시작일을 나중에 바꿔도 남는다(2026-11-13 사용자 결정 "해낸 걸 없애면 안 되지")
+                return item.occursByCalendar(on: day) || isCompleted(item.id)
+                    ? InputRow(item: item, projected: false) : nil
             case .cycleAnchored(let r):
                 if let occ = snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: day) {
                     return InputRow(item: item, projected: occ.projected)

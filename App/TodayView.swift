@@ -1015,7 +1015,7 @@ struct TodayView: View {
                 // 완료한 이력이 있으면 그 완료일에는 기록으로 남는다(isChecked = 오늘 완료)
                 item.onceShows(on: today) || isChecked(item.id)
             case .daily, .weekly, .monthly:
-                item.occursByCalendar(on: today)
+                item.occursByCalendar(on: today) || isChecked(item.id)
             case .cycleAnchored(let r):
                 snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: today) != nil
                     || isChecked(item.id)

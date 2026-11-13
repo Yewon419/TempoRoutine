@@ -93,7 +93,7 @@ struct AgentAgenda {
         let shown = inputs.filter { item in
             switch item.schedule {
             case .once: return isDone(item.id, on: day) || item.onceShows(on: day)
-            case .daily, .weekly, .monthly: return item.occursByCalendar(on: day)
+            case .daily, .weekly, .monthly: return item.occursByCalendar(on: day) || isDone(item.id, on: day)
             case .cycleAnchored: return false
             }
         }

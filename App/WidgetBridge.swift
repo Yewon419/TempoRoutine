@@ -114,7 +114,7 @@ enum WidgetBridge {
                 // 적어 넣은 그날에만(2026-08-20 개정 — 오늘 탭·하루 상세와 동일 규칙)
                 return item.onceShows(on: day) || checked(item.id)
             case .daily, .weekly, .monthly:
-                return item.occursByCalendar(on: day)
+                return item.occursByCalendar(on: day) || checked(item.id)
             case .cycleAnchored(let r):
                 return snapshot.occurrence(of: r, createdAt: cal.startOfDay(for: item.createdAt), on: day) != nil
                     || checked(item.id)
