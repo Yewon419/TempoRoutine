@@ -128,6 +128,8 @@ WRAPPERS: tuple[str, ...] = (
 # 값 컨텍스트 판정에서 제외 — 저장 키·탐지 낱말·센티널·포맷 키(각 근거는 해당 소스 주석)
 VALUE_CTX_SKIP_FILES: frozenset[str] = frozenset({"QuickAdd.swift", "EventOverlay.swift", "Localization.swift",
                                                   "TimerIntents.swift", "SignalPanel.swift",
+                                                  # App Intents 메타(선택지·오류) = LocalizedStringResource 자리, 시스템이 카탈로그로 번역
+                                                  "AgentIntents.swift",
                                                   "DevSampleData.swift",   # dev 표본 일기 = 사용자 데이터, UI 카피 아님
                                                   "SeasonTapEffect.swift"})  # 검표 도장 「확인」 = 한국어 고정(인쇄물, §2.3-5 규약)
 VALUE_CTX_SKIP_TEXT: frozenset[str] = frozenset({"종일"})

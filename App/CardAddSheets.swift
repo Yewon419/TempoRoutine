@@ -238,14 +238,9 @@ struct ScheduleAddSheet: View {
                                       isAllDay: allDay, repeatRule: repeatRule,
                                       reminderMinutes: reminderMinutes)
         } else {
-            let item = ScheduleItem(title: title, date: start, isAllDay: allDay,
-                                    repeatRule: repeatRule,
-                                    endDate: allDay ? allDayEndDate : end,
-                                    reminderMinutes: reminderMinutes)
-            modelContext.insert(item)
-            ScheduleReminder.schedule(id: item.id, title: item.title, date: start,
-                                      isAllDay: allDay, repeatRule: repeatRule,
-                                      reminderMinutes: reminderMinutes)
+            insertScheduleItem(into: modelContext, title: title, start: start, isAllDay: allDay,
+                               repeatRule: repeatRule, endDate: allDay ? allDayEndDate : end,
+                               reminderMinutes: reminderMinutes)
         }
         confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
         dismiss()
@@ -934,13 +929,8 @@ struct InputAddSheet: View {
             item.timeMinutes = timeMinutes
             applyProgress(to: item)
         } else {
-            let cal = Calendar.current
-            let item = InputItem(title: title, category: category, schedule: schedule,
-                                 createdAt: anchorDate(for: day),
-                                 backfilled: cal.startOfDay(for: day) < AppDay.today(calendar: cal))
-            item.timeMinutes = timeMinutes
-            applyProgress(to: item)
-            modelContext.insert(item)
+            insertInputItem(into: modelContext, title: title, category: category, schedule: schedule,
+                            day: day, timeMinutes: timeMinutes) { applyProgress(to: $0) }
         }
         confirmHaptic()   // 등록 확정(2026-08-09 사용자 지시)
         dismiss()
@@ -1318,6 +1308,36 @@ func anchorDate(for day: Date) -> Date {
     comps.minute = time.minute
     comps.second = time.second
     return cal.date(from: comps) ?? day
+}
+
+/// 일정 생성 공용 경로 — 추가 시트와 에이전트 인텐트(MASTER §5.14)가 같이 쓴다. 알림 예약까지가 생성이다.
+@MainActor
+@discardableResult
+func insertScheduleItem(into context: ModelContext, title: String, start: Date, isAllDay: Bool,
+                        repeatRule: ScheduleRepeat, endDate: Date?, reminderMinutes: Int) -> ScheduleItem {
+    let item = ScheduleItem(title: title, date: start, isAllDay: isAllDay, repeatRule: repeatRule,
+                            endDate: endDate, reminderMinutes: reminderMinutes)
+    context.insert(item)
+    ScheduleReminder.schedule(id: item.id, title: item.title, date: start, isAllDay: isAllDay,
+                              repeatRule: repeatRule, reminderMinutes: reminderMinutes)
+    return item
+}
+
+/// 루틴(Input) 생성 공용 경로 — 추가 시트와 에이전트 인텐트(§5.14). `day` = 시작되는 날.
+/// createdAt·backfilled 규칙은 여기 한 곳. `configure`는 insert 전에 돈다(진행 방식 등 — 종전 시트 순서 유지).
+@MainActor
+@discardableResult
+func insertInputItem(into context: ModelContext, title: String, category: InputCategory,
+                     schedule: InputSchedule, day: Date, timeMinutes: Int?,
+                     configure: (InputItem) -> Void = { _ in }) -> InputItem {
+    let cal = Calendar.current
+    let item = InputItem(title: title, category: category, schedule: schedule,
+                         createdAt: anchorDate(for: day),
+                         backfilled: cal.startOfDay(for: day) < AppDay.today(calendar: cal))
+    item.timeMinutes = timeMinutes
+    configure(item)
+    context.insert(item)
+    return item
 }
 
 /// 빠른 추가 칩(2026-08-16 사용자 지시) — 온보딩 ③ 예시 칩과 같은 문법.
