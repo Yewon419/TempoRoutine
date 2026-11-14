@@ -227,16 +227,8 @@ struct ScheduleAddSheet: View {
 
     private func save() {
         if let item = editing {
-            item.title = title
-            item.date = start
-            item.isAllDay = allDay
-            item.repeatRule = repeatRule
-            item.endDate = allDay ? allDayEndDate : end
-            item.reminderMinutes = reminderMinutes
-            ScheduleReminder.cancel(id: item.id)   // 알림 재예약 — 시간·반복이 바뀌었을 수 있음
-            ScheduleReminder.schedule(id: item.id, title: title, date: start,
-                                      isAllDay: allDay, repeatRule: repeatRule,
-                                      reminderMinutes: reminderMinutes)
+            updateScheduleItem(item, title: title, start: start, isAllDay: allDay, repeatRule: repeatRule,
+                               endDate: allDay ? allDayEndDate : end, reminderMinutes: reminderMinutes)
         } else {
             insertScheduleItem(into: modelContext, title: title, start: start, isAllDay: allDay,
                                repeatRule: repeatRule, endDate: allDay ? allDayEndDate : end,
@@ -1321,6 +1313,23 @@ func insertScheduleItem(into context: ModelContext, title: String, start: Date, 
     ScheduleReminder.schedule(id: item.id, title: item.title, date: start, isAllDay: isAllDay,
                               repeatRule: repeatRule, reminderMinutes: reminderMinutes)
     return item
+}
+
+/// 일정 수정 공용 경로 — 수정 시트와 에이전트 인텐트(§5.14 Phase 2). 알림 재예약까지가 수정이다
+/// (시간·반복이 바뀌었을 수 있음).
+@MainActor
+func updateScheduleItem(_ item: ScheduleItem, title: String, start: Date, isAllDay: Bool,
+                        repeatRule: ScheduleRepeat, endDate: Date?, reminderMinutes: Int) {
+    item.title = title
+    item.date = start
+    item.isAllDay = isAllDay
+    item.repeatRule = repeatRule
+    item.endDate = endDate
+    item.reminderMinutes = reminderMinutes
+    ScheduleReminder.cancel(id: item.id)
+    ScheduleReminder.schedule(id: item.id, title: title, date: start,
+                              isAllDay: isAllDay, repeatRule: repeatRule,
+                              reminderMinutes: reminderMinutes)
 }
 
 /// 루틴(Input) 생성 공용 경로 — 추가 시트와 에이전트 인텐트(§5.14). `day` = 시작되는 날.
